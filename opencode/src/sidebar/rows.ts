@@ -10,7 +10,21 @@ import {
 } from "../gating";
 import { elapsedLabel, FIVE_HOUR_SECS, WEEKLY_SECS } from "./windows";
 
-export type SidebarRow = [label: string, value: string];
+/**
+ * Colour role for a row, resolved against the host theme by the panel: `ok` /
+ * `warn` / `crit` are headroom (green / amber / red), `accent` is the theme's
+ * accent hue, `muted` is for continuations and rules, `base` is plain text.
+ */
+export type Tone = "base" | "muted" | "accent" | "ok" | "warn" | "crit";
+
+export type SidebarRow = [label: string, value: string, tone?: Tone];
+
+/** Headroom severity: comfortable to 70%, tight to 90%, over after that. */
+export function pctTone(pct: number): Tone {
+	if (pct >= 90) return "crit";
+	if (pct >= 70) return "warn";
+	return "ok";
+}
 
 /**
  * The sidebar is 42 columns wide with 2+2 padding, and our panel keeps one more
@@ -22,7 +36,7 @@ export const ROW_WIDTH = 37;
 
 /** A horizontal rule between blocks. */
 export function separator(): SidebarRow {
-	return ["─".repeat(ROW_WIDTH), ""];
+	return ["─".repeat(ROW_WIDTH), "", "muted"];
 }
 
 /** Truncate to `width`, ellipsis included. */
@@ -33,6 +47,12 @@ export function clip(text: string, width: number = ROW_WIDTH): string {
 /** Value budget for a labelled row: the panel draws `label: value`. */
 export function valueWidth(label: string): number {
 	return ROW_WIDTH - label.length - 2;
+}
+
+/** How the panel splits a row: a muted label (or banner) and a toned value. */
+export function parts(row: SidebarRow): [label: string, value: string] {
+	if (row[0] === "") return [`  ${row[1]}`, ""];
+	return [row[1] ? `${row[0]}: ` : row[0], row[1]];
 }
 
 /** Rendered width of a row, as the panel draws it. */
@@ -135,8 +155,8 @@ function windowRows(
 	].join(" · ");
 	// Compact on the use line (`$0.55/$14`, no spaces) so larger numbers still fit.
 	return [
-		[label, `${money(used)}/${money(w.cap)} (${pct}%)`],
-		...(detail ? [["", detail] as SidebarRow] : []),
+		[label, `${money(used)}/${money(w.cap)} (${pct}%)`, pctTone(pct)],
+		...(detail ? [["", detail, "muted"] as SidebarRow] : []),
 	];
 }
 
@@ -152,7 +172,7 @@ export function usageRows(
 			typeof usage.monthlyCap === "number"
 				? ` · $${usage.monthlyCap}/mo credits`
 				: "";
-		rows.push(["Plan", `${usage.plan}${credits}`]);
+		rows.push(["Plan", `${usage.plan}${credits}`, "base"]);
 	}
 	if (
 		typeof usage.monthlyCap === "number" &&
@@ -164,6 +184,7 @@ export function usageRows(
 		rows.push([
 			"Monthly",
 			`${money(used)} / ${money(usage.monthlyCap)} (${pct}%)`,
+			pctTone(pct),
 		]);
 	}
 	rows.push(...windowRows("5-hour", usage.fiveHour, now, FIVE_HOUR_SECS));
@@ -173,7 +194,7 @@ export function usageRows(
 		if (typeof usage.requests === "number")
 			parts.push(`${count(usage.requests)} requests`);
 		if (typeof usage.cost === "number") parts.push(money(usage.cost));
-		rows.push(["Period", parts.join(" · ")]);
+		rows.push(["Period", parts.join(" · "), "base"]);
 	}
 	return rows;
 }
@@ -185,20 +206,26 @@ export function modelRows(
 	usage?: ModelUsage,
 ): SidebarRow[] {
 	if (!meta) return [];
-	const rows: SidebarRow[] = [["Model", clip(meta.name, valueWidth("Model"))]];
+	const rows: SidebarRow[] = [
+		["Model", clip(meta.name, valueWidth("Model")), "accent"],
+	];
 	if (usage) {
 		// CommandCode is subscription-billed, so opencode records cost 0 for
 		// its models: show spend only when the harness actually priced it.
 		const spent = usage.cost > 0 ? ` · ${money(usage.cost)}` : "";
-		rows.push(["Usage (this model)", `${count(usage.requests)} req${spent}`]);
+		rows.push([
+			"Usage (this model)",
+			`${count(usage.requests)} req${spent}`,
+			"base",
+		]);
 	}
-	if (meta.tier) rows.push(["Tier", TIER_DISPLAY[meta.tier]]);
+	if (meta.tier) rows.push(["Tier", TIER_DISPLAY[meta.tier], "base"]);
 	// Min plan is the fallback, not a second opinion: the docs' access rule
 	// (models.md's Min plan column) covers models the gating snapshot has no
 	// tier for, and showing both read as redundant once gating could refresh.
-	else if (meta.minPlan) rows.push(["Min plan", meta.minPlan]);
+	else if (meta.minPlan) rows.push(["Min plan", meta.minPlan, "base"]);
 	if (typeof meta.allowance === "number")
-		rows.push(["Allowance", `${money(meta.allowance)}/mo`]);
+		rows.push(["Allowance", `${money(meta.allowance)}/mo`, "base"]);
 	if (meta.rates) {
 		// In/out leads; the cache rates ride on an indented continuation, since
 		// all three on one line overflows the sidebar. Cache write appears only
@@ -214,12 +241,14 @@ export function modelRows(
 		rows.push([
 			"Rates",
 			`${rate(meta.rates.input)}/${rate(meta.rates.output)} in/out`,
+			"base",
 		]);
-		rows.push(["", cache.join(" · ")]);
+		rows.push(["", cache.join(" · "), "muted"]);
 	}
 	if (typeof meta.intelligence === "number")
-		rows.push(["Intelligence", String(meta.intelligence)]);
-	if (typeof meta.tps === "number") rows.push(["Tok/s", String(meta.tps)]);
+		rows.push(["Intelligence", String(meta.intelligence), "base"]);
+	if (typeof meta.tps === "number")
+		rows.push(["Tok/s", String(meta.tps), "base"]);
 	return rows;
 }
 

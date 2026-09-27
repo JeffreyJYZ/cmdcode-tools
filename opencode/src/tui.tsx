@@ -13,119 +13,12 @@
 import type { Plugin as TuiPluginNs } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
 import type { JSX } from "@opentui/solid";
-import {
-	createEffect,
-	createMemo,
-	createSignal,
-	For,
-	onCleanup,
-	Show,
-} from "solid-js";
-import { minPlan } from "./catalog";
 import { runCmduse } from "./cli";
-import { loadMeta, loadUsage } from "./sidebar/data";
-import {
-	type ModelMeta,
-	type ModelUsage,
-	modelKey,
-	modelRows,
-	type SidebarRow,
-	separator,
-	tierFor,
-	usageRows,
-} from "./sidebar/rows";
-import { loadModelUsage, periodStart } from "./sidebar/usageDb";
+import { hostColors, legacyColors, Panel } from "./sidebar/panel";
+import { useRows } from "./sidebar/useRows";
 
 // Plugin id is a stable contract (test/tui.test.ts pins it); the slot id is separate.
 const ID = "command-code.tui";
-// Account totals (plan, credits, rolling windows) come from cmduse; a minute is
-// plenty — the numbers move on request boundaries, not continuously, and each
-// poll is a process spawn.
-const POLL_MS = 60_000;
-
-/** Shared panel: bold title, one line per row. Renders nothing when empty. */
-function Panel(props: {
-	rows: () => SidebarRow[];
-	text: () => RGBA;
-	muted: () => RGBA;
-}) {
-	return (
-		<Show when={props.rows().length > 0}>
-			<box>
-				<text fg={props.text()}>
-					<b>Command Code</b>
-				</text>
-				<For each={props.rows()}>
-					{(row) => (
-						<text fg={props.muted()}>
-							{row[0] === ""
-								? `  ${row[1]}`
-								: row[1]
-									? `${row[0]}: ${row[1]}`
-									: row[0]}
-						</text>
-					)}
-				</For>
-			</box>
-		</Show>
-	);
-}
-
-/** Usage (polled) + model meta (cached), reduced to sidebar rows. */
-function useRows(
-	activeModelId: () => string | undefined,
-	active: () => boolean,
-) {
-	const [usage, setUsage] = createSignal<ReturnType<typeof usageRows>>([]);
-	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(new Map());
-	const [modelUsage, setModelUsage] = createSignal<ModelUsage | undefined>();
-
-	void loadMeta()
-		.then(setMeta)
-		.catch(() => {});
-	const refresh = async () => {
-		try {
-			const snapshot = await loadUsage();
-			setUsage(usageRows(snapshot));
-			// opencode's own store carries the per-model half cmduse lacks.
-			const id = activeModelId();
-			setModelUsage(
-				id
-					? (loadModelUsage(id, periodStart(snapshot.periodEnd)) ?? undefined)
-					: undefined,
-			);
-		} catch {
-			// cmduse missing/offline: keep the last snapshot
-		}
-	};
-	// Poll only while this session is on one of our models. The panel returns no
-	// rows otherwise, but an unconditional poll still spawned cmduse for every
-	// session on every provider — and cmduse's spinner writes to /dev/tty.
-	createEffect(() => {
-		if (!active()) return;
-		void refresh();
-		const timer = setInterval(() => void refresh(), POLL_MS);
-		onCleanup(() => clearInterval(timer));
-	});
-
-	return createMemo(() => {
-		if (!active()) return [];
-		const id = activeModelId();
-		const found = id ? (meta().get(modelKey(id)) ?? meta().get(id)) : undefined;
-		// gating keys are model ids, not display names, so tier comes from the
-		// session's id rather than the catalog row.
-		const model = found
-			? {
-					...found,
-					tier: found.tier ?? (id ? tierFor(id) : undefined),
-					minPlan: id ? minPlan(id) : undefined,
-				}
-			: undefined;
-		// Account block, a rule, then the model block: two different subjects, and
-		// without the divider the twelve rows read as one long list.
-		return [...usage(), separator(), ...modelRows(model, modelUsage())];
-	});
-}
 
 const isOurs = (providerID: string | undefined): boolean =>
 	Boolean(providerID?.startsWith("command-code"));
@@ -161,11 +54,7 @@ function PanelV1(props: { api: V1Api; sessionID: string }) {
 		() => isOurs(current()?.providerID),
 	);
 	return (
-		<Panel
-			rows={rows}
-			text={() => props.api.theme.current.text}
-			muted={() => props.api.theme.current.textMuted}
-		/>
+		<Panel rows={rows} colors={() => legacyColors(props.api.theme.current)} />
 	);
 }
 
@@ -190,13 +79,7 @@ function PanelV2(props: { ctx: TuiPluginNs.Context; sessionID: string }) {
 		() => current()?.id,
 		() => isOurs(current()?.providerID),
 	);
-	return (
-		<Panel
-			rows={rows}
-			text={() => ctx.theme.text.default}
-			muted={() => ctx.theme.text.subdued}
-		/>
-	);
+	return <Panel rows={rows} colors={() => hostColors(ctx.theme)} />;
 }
 
 // Plain object, not `Plugin.define` — identity function there too.

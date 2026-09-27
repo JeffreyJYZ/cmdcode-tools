@@ -278,6 +278,17 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   is a cmduse spawn. 0.3.8 made the panel fit its 42-column sidebar: every row is
   budgeted (ROW_WIDTH = 37) and the long ones split onto an indented continuation
   instead of wrapping, plus a rule between the account block and the model block.
+  That release also coloured the panel: rows carry a `tone` (`base` / `muted` /
+  `accent` / `ok` / `warn` / `crit`, see `sidebar/rows.ts`), `sidebar/panel.tsx`
+  maps tones onto the host theme, and headroom is severity-coded — 70% amber,
+  90% red — so a nearly-spent window reads without arithmetic.
+- **The v2 theme tokens are `text.base` / `text.muted`, not `text.default` /
+  `text.subdued`.** The panel passed the latter for a while, so `fg` was
+  `undefined` and the whole section rendered in the terminal's default colour.
+  The authoritative shape ships in `@opencode/theme@<cli version>`
+  (`text.feedback.{success,warning,error,info}.base`, `hue.accent[400]`); the
+  vendored types in `opencode-cmd-provider` are stale. `span`'s props are typed
+  `{}` in opentui 0.5, so colour is per row node, not per segment.
 - **npm publish is interactive: it fails from the agent shell** (`EOTP`, prints
   an auth URL). Build first (`cd opencode && bun run build`) so `dist/` is
   current, then the user runs plain `npm publish` themselves — it opens a

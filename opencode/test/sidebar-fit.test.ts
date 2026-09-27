@@ -3,6 +3,7 @@ import {
 	clip,
 	type ModelMeta,
 	modelRows,
+	parts,
 	ROW_WIDTH,
 	rowWidth,
 	separator,
@@ -10,8 +11,7 @@ import {
 } from "../src/sidebar/rows";
 
 /** The panel draws `label: value`, continuation rows as two spaces + value. */
-const render = (row: [string, string]) =>
-	row[0] === "" ? `  ${row[1]}` : row[1] ? `${row[0]}: ${row[1]}` : row[0];
+const render = (row: Parameters<typeof parts>[0]) => parts(row).join("");
 
 const usage = (over: Partial<Parameters<typeof usageRows>[0]> = {}) => ({
 	plan: "GOAT",

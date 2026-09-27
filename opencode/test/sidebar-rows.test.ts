@@ -4,7 +4,10 @@ import {
 	modelKey,
 	modelRows,
 	money,
+	parts,
+	pctTone,
 	rate,
+	separator,
 	tierFor,
 	until,
 	usageRows,
@@ -49,14 +52,15 @@ describe("usageRows", () => {
 	};
 	test("renders plan, monthly, windows and period", () => {
 		const rows = usageRows(usage, 1_000_000_000_000 - 5 * 60_000);
-		expect(rows[0]).toEqual(["Plan", "GOAT · $70/mo credits"]);
-		expect(rows[1]).toEqual(["Monthly", "$50.56 / $70 (72%)"]);
-		expect(rows[2]).toEqual(["5-hour", "$1.17/$14 (8%)"]);
+		expect(rows[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base"]);
+		expect(rows[1]).toEqual(["Monthly", "$50.56 / $70 (72%)", "warn"]);
+		expect(rows[2]).toEqual(["5-hour", "$1.17/$14 (8%)", "ok"]);
 		expect(rows[3]?.[0]).toBe("");
 		expect(rows[3]?.[1]).toContain("elapsed");
 		expect(rows[3]?.[1]).toContain("resets 5m");
+		expect(rows[3]?.[2]).toBe("muted");
 		expect(rows[4]?.[0]).toBe("Weekly");
-		expect(rows[6]).toEqual(["Period", "6.3K requests · $46.31"]);
+		expect(rows[6]).toEqual(["Period", "6.3K requests · $46.31", "base"]);
 	});
 	test("omits elapsed when the window has not started", () => {
 		const notStarted = {
@@ -82,13 +86,13 @@ describe("modelRows", () => {
 			intelligence: 39.5,
 			tps: 247,
 		});
-		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash"]);
-		expect(rows[1]).toEqual(["Tier", "open source"]);
-		expect(rows[2]).toEqual(["Allowance", "$60/mo"]);
-		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out"]);
-		expect(rows[4]).toEqual(["", "cache read $0.003"]);
-		expect(rows[5]).toEqual(["Intelligence", "39.5"]);
-		expect(rows[6]).toEqual(["Tok/s", "247"]);
+		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "accent"]);
+		expect(rows[1]).toEqual(["Tier", "open source", "base"]);
+		expect(rows[2]).toEqual(["Allowance", "$60/mo", "base"]);
+		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out", "base"]);
+		expect(rows[4]).toEqual(["", "cache read $0.003", "muted"]);
+		expect(rows[5]).toEqual(["Intelligence", "39.5", "base"]);
+		expect(rows[6]).toEqual(["Tok/s", "247", "base"]);
 	});
 	test("adds cache write only when the model has one", () => {
 		const claude = modelRows({
@@ -96,26 +100,63 @@ describe("modelRows", () => {
 			name: "Claude Sonnet 5",
 			rates: { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
 		});
-		expect(claude[1]).toEqual(["Rates", "$2/$10 in/out"]);
-		expect(claude[2]).toEqual(["", "cache read $0.2 · write $2.5"]);
+		expect(claude[1]).toEqual(["Rates", "$2/$10 in/out", "base"]);
+		expect(claude[2]).toEqual(["", "cache read $0.2 · write $2.5", "muted"]);
 	});
 	test("puts period usage under the model name when known", () => {
 		const rows = modelRows(
 			{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },
 			{ requests: 1_234, cost: 8.4 },
 		);
-		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash"]);
-		expect(rows[1]).toEqual(["Usage (this model)", "1.2K req · $8.40"]);
+		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "accent"]);
+		expect(rows[1]).toEqual(["Usage (this model)", "1.2K req · $8.40", "base"]);
 	});
 	test("omits spend when the harness priced it at zero (subscription)", () => {
 		const rows = modelRows(
 			{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },
 			{ requests: 3_110, cost: 0 },
 		);
-		expect(rows[1]).toEqual(["Usage (this model)", "3.1K req"]);
+		expect(rows[1]).toEqual(["Usage (this model)", "3.1K req", "base"]);
 	});
 	test("missing meta yields no rows", () => {
 		expect(modelRows(undefined)).toEqual([]);
+	});
+});
+
+describe("tones", () => {
+	test("severity steps at 70% and 90%", () => {
+		expect(pctTone(0)).toBe("ok");
+		expect(pctTone(69)).toBe("ok");
+		expect(pctTone(70)).toBe("warn");
+		expect(pctTone(89)).toBe("warn");
+		expect(pctTone(90)).toBe("crit");
+		expect(pctTone(140)).toBe("crit");
+	});
+	test("the rule and continuations are muted, the model name is accented", () => {
+		expect(separator()[2]).toBe("muted");
+		const rows = usageRows(
+			{
+				plan: "GOAT",
+				monthlyCap: 70,
+				monthlyCredits: 4.2,
+				fiveHour: { cap: 14, used: 13.9, resetAt: Date.now() + 3_600_000 },
+			},
+			Date.now(),
+		);
+		// 94% of the month and 99% of the window are both over the line.
+		expect(rows[1]?.[2]).toBe("crit");
+		expect(rows[2]?.[2]).toBe("crit");
+	});
+	test("parts splits label from value for the panel", () => {
+		expect(parts(["Tier", "open source", "base"])).toEqual([
+			"Tier: ",
+			"open source",
+		]);
+		expect(parts(["", "cache read $0.003", "muted"])).toEqual([
+			"  cache read $0.003",
+			"",
+		]);
+		expect(parts(["Command Code", "", "muted"])).toEqual(["Command Code", ""]);
 	});
 });
 
@@ -161,7 +202,7 @@ describe("min plan row", () => {
 			name: "DeepSeek V4.1 Flash",
 			minPlan: "Go",
 		});
-		expect(rows[1]).toEqual(["Min plan", "Go"]);
+		expect(rows[1]).toEqual(["Min plan", "Go", "base"]);
 	});
 	test("omits the row when the catalog has no answer", () => {
 		const rows = modelRows({ key: "k", name: "x", minPlan: null });
