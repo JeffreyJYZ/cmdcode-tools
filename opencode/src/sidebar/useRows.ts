@@ -49,13 +49,44 @@ export function seededRows(): SidebarRow[] {
 	return lastSnapshot ? usageRows(lastSnapshot) : [];
 }
 
+/**
+ * The last `Usage (this model)` figure and the model it came from. The account
+ * block above is seeded on remount (`seededRows`); the model block had no such
+ * memory, so that one row blanked on every remount and session switch while the
+ * plan above it stayed up — which reads as the panel having lost the row.
+ */
+let lastModelUsage: { key: string; usage: ModelUsage } | undefined;
+
+/**
+ * Keep the last figure for a model. Keyed canonically because the session's id
+ * and the stored `modelID` differ by vendor prefix and punctuation.
+ */
+export function rememberModelUsage(id: string, usage: ModelUsage): void {
+	lastModelUsage = { key: modelKey(id), usage };
+}
+
+/**
+ * The remembered figure for `id`, or undefined when that model is unseen. An
+ * undefined id is the frame during a session switch: keeping the previous row up
+ * beats blanking it, the same call `wasOurs` makes for the account block.
+ */
+export function seededModelUsage(
+	id: string | undefined,
+): ModelUsage | undefined {
+	if (!lastModelUsage) return undefined;
+	if (id === undefined) return lastModelUsage.usage;
+	return lastModelUsage.key === modelKey(id) ? lastModelUsage.usage : undefined;
+}
+
 export function useRows(
 	activeModelId: () => string | undefined,
 	providerID: () => string | undefined,
 ) {
 	const [usage, setUsage] = createSignal<SidebarRow[]>(seededRows());
 	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(new Map());
-	const [modelUsage, setModelUsage] = createSignal<ModelUsage | undefined>();
+	const [modelUsage, setModelUsage] = createSignal<
+		{ key: string; usage: ModelUsage } | undefined
+	>(lastModelUsage);
 	// Once a session on one of our models has been seen, an unresolved switch
 	// keeps the section up rather than hiding it; a cold start on someone else's
 	// model still shows nothing.
@@ -64,17 +95,20 @@ export function useRows(
 	void loadMeta()
 		.then(setMeta)
 		.catch(() => {});
+	/** Scan the store for one model, remember what it says, and publish it. */
+	const refreshModelUsage = (id: string | undefined, sinceMs: number) => {
+		if (!id) return;
+		const fresh = loadModelUsage(id, sinceMs);
+		if (fresh) rememberModelUsage(id, fresh);
+		setModelUsage(lastModelUsage);
+	};
+
 	const refresh = async () => {
 		try {
 			const snapshot = await loadUsage();
 			rememberSnapshot(snapshot);
 			setUsage(usageRows(snapshot));
-			const id = activeModelId();
-			setModelUsage(
-				id
-					? (loadModelUsage(id, periodStart(snapshot)) ?? undefined)
-					: undefined,
-			);
+			refreshModelUsage(activeModelId(), periodStart(snapshot));
 		} catch {
 			// cmduse missing/offline: keep the last snapshot
 		}
@@ -90,6 +124,24 @@ export function useRows(
 		const timer = setInterval(() => void refresh(), POLL_MS);
 		onCleanup(() => clearInterval(timer));
 	});
+	// `refresh` above is keyed on the provider, so a switch between two of our
+	// models waited for the next minute poll — and showed the previous model's
+	// figure until it landed. Track the id itself: the scan is sqlite (no process
+	// spawn), and the seed keeps the row up while it runs.
+	createEffect(() => {
+		const id = activeModelId();
+		if (sessionKind(providerID()) !== "ours" || !id) return;
+		refreshModelUsage(id, periodStart(lastSnapshot ?? {}));
+	});
+
+	/** Only a figure belonging to the current model counts; else the seed. */
+	const usageFor = (id: string | undefined): ModelUsage | undefined => {
+		const seen = modelUsage();
+		if (seen && (id === undefined || seen.key === modelKey(id))) {
+			return seen.usage;
+		}
+		return seededModelUsage(id);
+	};
 
 	return createMemo(() => {
 		const kind = sessionKind(providerID());
@@ -108,6 +160,10 @@ export function useRows(
 			: undefined;
 		// Account block, a rule, then the model block: two different subjects, and
 		// without the divider the rows read as one long list.
-		return [...usage(), separator(), ...modelRows(model, modelUsage())];
+		return [
+			...usage(),
+			separator(),
+			...modelRows(model, usageFor(id)),
+		];
 	});
 }

@@ -292,7 +292,16 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   an unresolved switch keeps it up. The account block also paints from an in-process
   snapshot (`rememberSnapshot`/`seededRows`) because it is account-wide: without it
   the panel re-armed by waiting a full cmduse spawn, which is the visible "disappears
-  then reloads".
+  then reloads". **The model block needs the same memory, keyed by model**
+  (`rememberModelUsage`/`seededModelUsage`): the account block was seeded on remount
+  while `Usage (this model)` started empty every time, so half the panel persisted and
+  half blanked. Keying matters as much as the memory — the old signal could still hold
+  the *previous* model's figures after a switch, and `refresh` is keyed on the provider,
+  so a switch between two of our models showed the wrong row for up to a minute. The
+  memo accepts a figure only when its key matches the current model, an unresolved id
+  keeps the last row up (the `wasOurs` call), and a separate effect tracks the id so a
+  switch re-reads the store — a sqlite scan, no cmduse spawn — instead of waiting for
+  the poll.
 - **Sidebar colour is opt-in; the default is plain text.** `sidebar/prefs.ts` reads
   `~/.config/opencode/command-code.json` (`{"colors": true}`) with `CMD_COLORS=1|0` as a
   per-run override, and caches the answer for a few seconds so a streaming session does not

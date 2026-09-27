@@ -113,6 +113,10 @@ simply omits those rows. The model's own usage is read from opencode's message s
 (`~/.local/share/opencode/opencode.db`, read-only); CommandCode is subscription-billed, so its
 rows show requests only. Non-CommandCode models show nothing.
 
+Both blocks remember their last reading, so a remount or a session switch repaints instead of
+blanking while the next poll runs. The per-model figure is keyed by model, so switching models
+shows that model's own row (or nothing yet) rather than the previous model's numbers.
+
 The section is plain text unless you ask for colour. To turn it on, write
 `~/.config/opencode/command-code.json`:
 
