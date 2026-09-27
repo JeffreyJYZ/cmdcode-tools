@@ -52,7 +52,7 @@ describe("usageRows", () => {
 	};
 	test("renders plan, monthly, windows and period", () => {
 		const rows = usageRows(usage, 1_000_000_000_000 - 5 * 60_000);
-		expect(rows[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base"]);
+		expect(rows[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base", true]);
 		expect(rows[1]).toEqual(["Monthly", "$50.56 / $70 (72%)", "warn"]);
 		expect(rows[2]).toEqual(["5-hour", "$1.17/$14 (8%)", "ok"]);
 		expect(rows[3]?.[0]).toBe("");
@@ -121,7 +121,7 @@ describe("modelRows", () => {
 			intelligence: 39.5,
 			tps: 247,
 		});
-		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong"]);
+		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong", true]);
 		expect(rows[1]).toEqual(["Tier", "open source", "base"]);
 		expect(rows[2]).toEqual(["Allowance", "$60/mo", "base"]);
 		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out", "base"]);
@@ -143,7 +143,7 @@ describe("modelRows", () => {
 			{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },
 			{ requests: 1_234, cost: 8.4 },
 		);
-		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong"]);
+		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong", true]);
 		expect(rows[1]).toEqual(["Usage (this model)", "1.2K req · $8.40", "base"]);
 	});
 	test("omits spend when the harness priced it at zero (subscription)", () => {

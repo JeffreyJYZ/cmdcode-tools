@@ -19,7 +19,16 @@ import { elapsedLabel, FIVE_HOUR_SECS, WEEKLY_SECS } from "./windows";
  */
 export type Tone = "base" | "muted" | "strong" | "ok" | "warn" | "crit";
 
-export type SidebarRow = [label: string, value: string, tone?: Tone];
+/**
+ * A row. `headline` marks the two rows whose label names the thing the panel is
+ * about (the plan, the active model); the panel colours their labels apart.
+ */
+export type SidebarRow = [
+	label: string,
+	value: string,
+	tone?: Tone,
+	headline?: true,
+];
 
 /** Headroom severity: comfortable to 70%, tight to 90%, over after that. */
 export function pctTone(pct: number): Tone {
@@ -198,7 +207,7 @@ export function usageRows(
 			typeof usage.monthlyCap === "number"
 				? ` · $${usage.monthlyCap}/mo credits`
 				: "";
-		rows.push(["Plan", `${usage.plan}${credits}`, "base"]);
+		rows.push(["Plan", `${usage.plan}${credits}`, "base", true]);
 	}
 	if (
 		typeof usage.monthlyCap === "number" &&
@@ -239,7 +248,7 @@ export function modelRows(
 ): SidebarRow[] {
 	if (!meta) return [];
 	const rows: SidebarRow[] = [
-		["Model", clip(meta.name, valueWidth("Model")), "strong"],
+		["Model", clip(meta.name, valueWidth("Model")), "strong", true],
 	];
 	if (usage) {
 		// CommandCode is subscription-billed, so opencode records cost 0 for

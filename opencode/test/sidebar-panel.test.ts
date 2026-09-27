@@ -28,6 +28,8 @@ describe("panel colours", () => {
 		expect(colors.muted).toBe(text.muted);
 		expect(colors.strong).toBe(text.base);
 		expect(colors.label).toBe(text.feedback.info.base);
+		// No decrease() on this fixture, so headlines share the label hue.
+		expect(colors.headline).toBe(text.feedback.info.base);
 		expect(colors.ok).toBe(text.feedback.success.base);
 		expect(colors.warn).toBe(text.feedback.warning.base);
 		expect(colors.crit).toBe(text.feedback.error.base);
@@ -44,6 +46,13 @@ describe("panel colours", () => {
 		expect(withHues).toEqual(hostColors(theme));
 	});
 
+	test("headline labels take a neighbouring shade when the host offers one", () => {
+		const brighter = c(0.99);
+		const colors = hostColors({ ...theme, decrease: () => brighter });
+		expect(colors.headline).toBe(brighter);
+		expect(colors.headline).not.toBe(colors.label);
+	});
+
 	test("legacy hosts keep their text pair and get literal semantic colours", () => {
 		const colors: PanelColors = legacyColors({
 			text: c(0.1),
@@ -53,6 +62,7 @@ describe("panel colours", () => {
 		expect(colors.muted.r).toBeCloseTo(0.2);
 		for (const tone of ["ok", "warn", "crit", "strong"] as const) {
 			expect(colors.label).toBeInstanceOf(RGBA);
+			expect(colors.headline).toBeInstanceOf(RGBA);
 			expect(colors[tone]).toBeInstanceOf(RGBA);
 		}
 		expect(colors.ok.r).not.toBe(colors.crit.r);

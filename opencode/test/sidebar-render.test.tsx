@@ -28,15 +28,17 @@ const theme = {
 			info: { base: RGBA.fromValues(0.34, 0.71, 0.76, 1) },
 		},
 	},
+	// v2 supplies this; the brighter shade is what headline labels use.
+	decrease: () => RGBA.fromValues(0.41, 0.82, 0.87, 1),
 };
 const colors = hostColors(theme);
 
 const rows: SidebarRow[] = [
-	["Plan", "GOAT · $70/mo credits", "base"],
+	["Plan", "GOAT · $70/mo credits", "base", true],
 	["Monthly", "$57.40 / $70 (82%)", "warn"],
 	["", "99% elapsed · resets 3h 44m", "muted"],
 	separator(),
-	["Model", "DeepSeek V4.1 Flash", "strong"],
+	["Model", "DeepSeek V4.1 Flash", "strong", true],
 	["Tier", "open source", "data"],
 ];
 
@@ -55,6 +57,10 @@ describe("rendered panel", () => {
 		// The point of the whole exercise: no row may collapse to one colour,
 		// and labels wear their own hue rather than the value's.
 		expect(hex(find("Tier: ")?.fg as RGBA)).toBe(hex(colors.label));
+		// The two headline rows label apart: the plan and the active model.
+		expect(hex(find("Plan: ")?.fg as RGBA)).toBe(hex(colors.headline));
+		expect(hex(find("Model: ")?.fg as RGBA)).toBe(hex(colors.headline));
+		expect(hex(colors.headline)).not.toBe(hex(colors.label));
 		expect(hex(find("open source")?.fg as RGBA)).toBe(hex(colors.base));
 		expect(hex(find("$57.40 / $70 (82%)")?.fg as RGBA)).toBe(hex(colors.warn));
 		expect(hex(colors.label)).not.toBe(hex(colors.base));

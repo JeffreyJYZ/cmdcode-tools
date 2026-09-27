@@ -13,9 +13,10 @@ import { RGBA } from "@opentui/core";
 import { For, Show } from "solid-js";
 import { parts, type SidebarRow, type Tone } from "./rows";
 
-/** One colour per row tone, plus the label colour every labelled row shares. */
+/** One colour per row tone, plus the two label colours (plain rows, headlines). */
 export type PanelColors = Readonly<Record<Tone, RGBA>> & {
 	readonly label: RGBA;
+	readonly headline: RGBA;
 };
 
 /**
@@ -32,6 +33,8 @@ export interface HostTheme {
 			Record<"success" | "warning" | "error" | "info", { readonly base: RGBA }>
 		>;
 	};
+	/** Derives a neighbouring shade of a colour (v2 only). */
+	readonly decrease?: (color: RGBA, amount?: number) => RGBA;
 }
 
 /** v2 host theme -> panel colours. */
@@ -43,6 +46,11 @@ export function hostColors(theme: HostTheme): PanelColors {
 		// model name never borrows a chromatic token.
 		strong: theme.text.base,
 		label: theme.text.feedback.info.base,
+		// One step off the label hue, so the headline labels read apart from the
+		// rest without inventing a colour the theme does not have.
+		headline:
+			theme.decrease?.(theme.text.feedback.info.base, 1) ??
+			theme.text.feedback.info.base,
 		ok: theme.text.feedback.success.base,
 		warn: theme.text.feedback.warning.base,
 		crit: theme.text.feedback.error.base,
@@ -59,6 +67,7 @@ export function legacyColors(theme: {
 		muted: theme.textMuted,
 		strong: theme.text,
 		label: RGBA.fromValues(0.34, 0.71, 0.76, 1),
+		headline: RGBA.fromValues(0.41, 0.82, 0.87, 1),
 		ok: RGBA.fromValues(0.5, 0.85, 0.56, 1),
 		warn: RGBA.fromValues(0.96, 0.65, 0.26, 1),
 		crit: RGBA.fromValues(0.88, 0.42, 0.46, 1),
@@ -75,6 +84,10 @@ export function legacyColors(theme: {
 const spanStyle = (fg: RGBA): { style: { fg: RGBA } } =>
 	({ style: { fg } }) as unknown as { style: { fg: RGBA } };
 
+/** Headline rows (the plan, the active model) label in the brighter shade. */
+const labelColor = (colors: PanelColors, row: SidebarRow): RGBA =>
+	row[3] ? colors.headline : colors.label;
+
 /** One row: a bold label, then its value in the row's tone. */
 function Row(props: { row: SidebarRow; colors: PanelColors }) {
 	const [label, value] = parts(props.row);
@@ -84,7 +97,7 @@ function Row(props: { row: SidebarRow; colors: PanelColors }) {
 	}
 	return (
 		<text>
-			<span {...spanStyle(props.colors.label)}>
+			<span {...spanStyle(labelColor(props.colors, props.row))}>
 				<b>{label}</b>
 			</span>
 			<span {...spanStyle(props.colors[tone])}>
