@@ -5,9 +5,10 @@
 // place that knows how a tone becomes an RGBA, so both TUI hosts share it.
 //
 // Only text tokens are read (`text.base` / `text.muted` / `text.feedback.*`).
-// The theme's `hue` scales are widget colours derived from `primary`, which is
-// a dull peach in the default theme — using them for rows painted the panel
-// dark orange. `info` is the cyan mpc and cmduse use for figures.
+// The theme's `hue` scales are widget colours — `hue.interactive[400]` is a dull
+// orange-brown (#b67c56) in the default dark theme — so using them for rows
+// painted the panel dark orange. `info` is the cyan mpc and cmduse use for
+// figures.
 import { RGBA } from "@opentui/core";
 import { For, Show } from "solid-js";
 import { parts, type SidebarRow, type Tone } from "./rows";
@@ -62,6 +63,34 @@ export function legacyColors(theme: {
 	};
 }
 
+/**
+ * opentui types `span` props as `{}` — the runtime hands them to
+ * `TextNodeRenderable`, whose options bag does take `fg` — so the colour is
+ * cast through the shape the JSX checker expects. Verified against the
+ * installed opentui in test/sidebar-panel.test.ts.
+ */
+const spanFg = (fg: RGBA): { children?: string } =>
+	({ fg }) as unknown as { children?: string };
+
+/** One row: a bold label, then its value in the row's tone. */
+function Row(props: { row: SidebarRow; colors: PanelColors }) {
+	const [label, value] = parts(props.row);
+	const tone = props.row[2] ?? "base";
+	if (!value) {
+		return <text fg={props.colors.muted}>{label}</text>;
+	}
+	return (
+		<text>
+			<span {...spanFg(props.colors.base)}>
+				<b>{label}</b>
+			</span>
+			<span {...spanFg(props.colors[tone])}>
+				{tone === "strong" ? <b>{value}</b> : value}
+			</span>
+		</text>
+	);
+}
+
 /** Bold title, then one line per row. Renders nothing when there are no rows. */
 export function Panel(props: {
 	rows: () => SidebarRow[];
@@ -74,15 +103,7 @@ export function Panel(props: {
 					<b>Command Code</b>
 				</text>
 				<For each={props.rows()}>
-					{(row) => (
-						<text fg={props.colors()[row[2] ?? "base"]}>
-							{row[2] === "strong" ? (
-								<b>{parts(row).join("")}</b>
-							) : (
-								parts(row).join("")
-							)}
-						</text>
-					)}
+					{(row) => <Row row={row} colors={props.colors()} />}
 				</For>
 			</box>
 		</Show>

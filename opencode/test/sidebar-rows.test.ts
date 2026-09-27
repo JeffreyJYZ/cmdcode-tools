@@ -122,7 +122,7 @@ describe("modelRows", () => {
 			tps: 247,
 		});
 		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong"]);
-		expect(rows[1]).toEqual(["Tier", "open source", "base"]);
+		expect(rows[1]).toEqual(["Tier", "open source", "data"]);
 		expect(rows[2]).toEqual(["Allowance", "$60/mo", "data"]);
 		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out", "data"]);
 		expect(rows[4]).toEqual(["", "cache read $0.003", "muted"]);

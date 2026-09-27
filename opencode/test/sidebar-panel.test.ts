@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { RGBA } from "@opentui/core";
+import { RGBA, TextNodeRenderable } from "@opentui/core";
 import {
 	hostColors,
 	legacyColors,
@@ -55,5 +55,21 @@ describe("panel colours", () => {
 			expect(colors[tone]).toBeInstanceOf(RGBA);
 		}
 		expect(colors.ok.r).not.toBe(colors.crit.r);
+	});
+
+	test("per-segment colour is real: a row's text nodes keep their own fg", () => {
+		// The panel colours a row as two runs (bold label, toned value) through
+		// `span`, whose props opentui types as `{}`. This pins that the runtime
+		// honours `fg` per node, so the cast in panel.tsx is safe.
+		const label = TextNodeRenderable.fromString("Tier: ", { fg: c(0.5) });
+		label.add(TextNodeRenderable.fromString("open source", { fg: c(0.9) }));
+		const chunks = label.gatherWithInheritedStyle();
+		expect(chunks.map((chunk) => chunk.text)).toEqual([
+			"Tier: ",
+			"open source",
+		]);
+		const [head, tail] = chunks;
+		expect(head?.fg?.r).toBeCloseTo(0.5);
+		expect(tail?.fg?.r).toBeCloseTo(0.9);
 	});
 });

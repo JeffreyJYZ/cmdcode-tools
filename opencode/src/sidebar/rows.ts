@@ -259,7 +259,7 @@ export function modelRows(
 			"data",
 		]);
 	}
-	if (meta.tier) rows.push(["Tier", TIER_DISPLAY[meta.tier], "base"]);
+	if (meta.tier) rows.push(["Tier", TIER_DISPLAY[meta.tier], "data"]);
 	// Min plan is the fallback, not a second opinion: the docs' access rule
 	// (models.md's Min plan column) covers models the gating snapshot has no
 	// tier for, and showing both read as redundant once gating could refresh.
