@@ -324,6 +324,15 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   status in one line, and (given a local `npm pack` shasum) fails on a mismatch
   or a tarball that disagrees about its version. Keep it in the release loop
   rather than eyeballing the registry.
+- **The whole release check is that one command — do not hand-roll a registry
+  poller.** It already packs this checkout when `--expected` is omitted (so the
+  publish-time shasum needs no copy-paste), and polls up to `--tries N`
+  (default 40) at 20s intervals, exiting non-zero until the tarball is really
+  served. Wrapping it in another loop that re-fetches the packument duplicates
+  the checks it exists to own, and the duplicate is what then drifts. The pin
+  flip is the only extra step, and it must wait for this to pass:
+  `(cd opencode && bun scripts/verify-release.ts 0.3.8) && <edit the pin in
+  ~/.config/opencode/opencode.json>`.
 - **A successful publish is asynchronous, in two visible stages.** The CLI
   returns `PUT 202` ("Your package is being processed") and exit 0 immediately,
   but the registry updates the **packument** (so `dist-tags.latest` and
