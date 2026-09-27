@@ -170,10 +170,13 @@ Limits and rates come from `core/zen.json`, regenerated with `bun scripts/extrac
 OpenCode's own docs sources.
 
 The watch frame is `cmduse`'s: the same palette, severity-coloured gauges (green <70%,
-yellow 70–90%, red ≥90%) and in-place redraw, so resizing or a shrinking frame never scrolls.
-A spend-burst sparkline appears once the 5-hour window moves between refreshes (delta spend,
-not the cumulative figure — that only ever rises). `--plain`, `NO_COLOR` and a piped stdout
-all drop the colour and the gauges, and the one-shot output is unchanged for scripts.
+yellow 70–90%, red ≥90%), an over-cap window flagged `LIMIT EXCEEDED`, and in-place redraw,
+so resizing or a shrinking frame never scrolls. A spend-burst sparkline appears once the
+5-hour window moves between refreshes (delta spend, not the cumulative figure — that only
+ever rises). Every subcommand colours the same way — `daily`, `hourly`, `session`, `model`,
+`plans` and `statusline` included, with secondary text dimmed and figures in cyan. `--plain`,
+`NO_COLOR` and a piped stdout drop the colour and the gauges, so scripted output stays
+escape-free.
 
 ## MCP server
 

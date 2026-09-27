@@ -161,7 +161,7 @@ fn main() {
 
     // `plans` needs no database at all.
     if command == "plans" {
-        print!("{}", render::plans_text());
+        print!("{}", render::plans_text(colour));
         return;
     }
 
@@ -194,17 +194,17 @@ fn main() {
         "statusline" => {
             let mut report = build(&read(), &catalog, now, period_start);
             report.period_label = period_label;
-            println!("{}", render::status_line(&report));
+            println!("{}", render::status_line(&report, colour));
         }
         "daily" => print!(
             "{}",
-            render::bucket_text(&read(), now, days, 86_400_000, "day", tz_secs)
+            render::bucket_text(&read(), now, days, 86_400_000, "day", tz_secs, colour)
         ),
         "hourly" => print!(
             "{}",
-            render::bucket_text(&read(), now, days, 3_600_000, "hour", tz_secs)
+            render::bucket_text(&read(), now, days, 3_600_000, "hour", tz_secs, colour)
         ),
-        "session" => print!("{}", render::session_text(&read(), 20)),
+        "session" => print!("{}", render::session_text(&read(), 20, colour)),
         "mcp" => {
             // stdio JSON-RPC; stdout carries protocol only, so nothing else may print.
             cmd_usage::ocuse::mcp::run(&db_path, days, tz_secs, false, period_start);
@@ -219,7 +219,7 @@ fn main() {
             let mut report = build(&read(), &catalog, now, period_start);
             report.period_label = period_label;
             match wanted {
-                Some(id) => print!("{}", render::model_text(&report, &id)),
+                Some(id) => print!("{}", render::model_text(&report, &id, colour)),
                 None => print!(
                     "{}",
                     render::render_text(&report, &db_path, usize::MAX, colour)

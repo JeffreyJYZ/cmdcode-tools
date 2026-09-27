@@ -398,6 +398,13 @@ cli/src/main_tests.rs). **ocuse's watch shares that contract, not a copy of it:*
 `ocuse/render.rs`'s `watch_frame` adds the burst sparkline from 5-hour spend
 deltas (10s samples, 60 cap). Gauges/palette come from `cli/src/render.rs`
 (`bar`, `color_for`, the SGR consts) — never re-declare them in `ocuse/`.
+**Every `ocuse` renderer takes a `colour` flag, and that is the bug that shipped in
+0.7.3:** only `render_text` ever got one, so `ocuse daily|hourly|session|plans|model`
+and `statusline` printed plain on a tty. `every_renderer_respects_the_colour_flag`
+in `ocuse/render.rs` now asserts, per renderer, that `colour=false` leaks no escapes
+and `colour=true` colours something — add a case when you add a renderer. `Ink`
+helpers (`dim_on` / `cyan_on` / `bold_on`) are no-ops when colour is off, so plain
+output stays byte-identical by construction.
 MCP: hand-rolled stdio JSON-RPC (newline-delimited);
 notifications (no `id`) get NO response; tool errors are `isError: true`
 results, never JSON-RPC errors; stdout is protocol-only — anything printed by

@@ -59,6 +59,15 @@ impl Ink {
         format!("{}{text}{}", self.cyan, self.reset)
     }
 
+    /// Secondary information — cmduse's `DIM`.
+    fn dim_on(&self, text: String) -> String {
+        format!("{}{text}{}", self.dim, self.reset)
+    }
+
+    fn bold_on(&self, text: String) -> String {
+        format!("{}{text}{}", self.bold, self.reset)
+    }
+
     /// Severity for a used/limit percentage — cmduse's thresholds.
     fn for_pct(&self, pct_used: f64) -> &'static str {
         if !self.colour {
@@ -103,9 +112,15 @@ fn window_line(
     };
     match cap {
         Some(cap) if cap > 0.0 => {
+            // Same placement cmduse uses for the flag: on the window it belongs to.
+            let flag = if used.cost > cap {
+                format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
+            } else {
+                String::new()
+            };
             if ink.colour {
                 format!(
-                    " {}{label:<8}{} {} {}{} / {}{}{}\n",
+                    " {}{label:<8}{} {} {}{} / {}{}{}{}\n",
                     ink.bold,
                     ink.reset,
                     ink.bar(used.cost, cap),
@@ -113,19 +128,25 @@ fn window_line(
                     money(used.cost),
                     money(cap),
                     reset_text,
+                    flag,
                     ink.reset,
                 )
             } else {
                 // The plain frame is the script-facing one: keep the old text.
                 format!(
-                    "  {label:<8} {} / {} ({}){reset_text}\n",
+                    "  {label:<8} {} / {} ({}){reset_text}{flag}\n",
                     money(used.cost),
                     money(cap),
                     pct(used.cost, cap),
                 )
             }
         }
-        _ => format!("  {label:<8} {}{reset_text}\n", money(used.cost)),
+        // No cap to measure against (free models, Zen-only rows): secondary, so
+        // dim it the way cmduse dims its pay-as-you-go line.
+        _ => format!(
+            "  {label:<8} {}\n",
+            ink.dim_on(format!("{}{}", money(used.cost), reset_text))
+        ),
     }
 }
 
@@ -143,27 +164,53 @@ fn aggregate_cap(report: &Report, share: f64) -> Option<f64> {
 }
 
 fn model_row(ink: &Ink, model: &ModelUsage) -> String {
-    let limit = model.limit.map(money).unwrap_or_else(|| "—".into());
+    let limit = match model.limit {
+        Some(limit) => money(limit),
+        None => ink.dim_on("—".into()),
+    };
     let use_fraction = model.month_use();
     let use_text = use_fraction
         .map(|fraction| pct(fraction * 100.0, 100.0))
         .unwrap_or_else(|| "—".into());
-    let use_tone = use_fraction.map(|f| ink.for_pct(f * 100.0)).unwrap_or("");
     // Pad before colouring: SGR escapes would otherwise count as columns.
     let spent = ink.cyan_on(format!("{:>10}", money(model.month.cost)));
-    let use_cell = if use_tone.is_empty() {
-        format!("{use_text:>7}")
-    } else {
-        format!("{use_tone}{use_text:>7}{}", ink.reset)
+    let use_cell = match use_fraction {
+        Some(fraction) => {
+            let tone = ink.for_pct(fraction * 100.0);
+            if tone.is_empty() {
+                format!("{use_text:>7}")
+            } else {
+                format!("{tone}{use_text:>7}{}", ink.reset)
+            }
+        }
+        None => ink.dim_on(format!("{use_text:>7}")),
     };
     format!(
-        "{:<28} {:>7} {spent} {use_cell} {:>8} {:>8} {:>7}\n",
+        "{:<28} {:>7} {spent} {use_cell} {} {} {:>7}\n",
         model.id,
         limit,
-        money(model.five_hour.cost),
-        money(model.weekly.cost),
+        // Go windows are per model too: 5h = 20% of the limit, weekly = 50%.
+        window_cell(ink, model, model.five_hour.cost, 0.20),
+        window_cell(ink, model, model.weekly.cost, 0.50),
         compact(model.month.requests),
     )
+}
+
+/// One rolling-window column, coloured against that model's own share of the
+/// limit; models with no limit (free, or Zen-only) are dimmed instead.
+fn window_cell(ink: &Ink, model: &ModelUsage, cost: f64, share: f64) -> String {
+    let text = format!("{:>8}", money(cost));
+    match model.limit.filter(|limit| *limit > 0.0) {
+        Some(limit) => {
+            let tone = ink.for_pct(cost / (limit * share) * 100.0);
+            if tone.is_empty() {
+                text
+            } else {
+                format!("{tone}{text}{}", ink.reset)
+            }
+        }
+        None => ink.dim_on(text),
+    }
 }
 
 /// `limit` rows to show; `usize::MAX` for all.
@@ -192,8 +239,10 @@ pub fn render_text(report: &Report, db_path: &str, rows: usize, colour: bool) ->
         let five_reset = report.now_ms + crate::ocuse::window::FIVE_HOUR_SECS * 1000;
         let week_reset = report.now_ms + crate::ocuse::window::WEEKLY_SECS * 1000;
         out.push_str(&format!(
-            "\n{}GO{} (limits are per model: 5h = 20%, weekly = 50%, monthly = 100%)\n",
-            ink.bold, ink.reset
+            "\n{}GO{} {}\n",
+            ink.bold,
+            ink.reset,
+            ink.dim_on("(limits are per model: 5h = 20%, weekly = 50%, monthly = 100%)".into()),
         ));
         out.push_str(&window_line(
             &ink,
@@ -229,11 +278,18 @@ pub fn render_text(report: &Report, db_path: &str, rows: usize, colour: bool) ->
         out.push_str(&model_row(&ink, model));
     }
     if report.models.len() > rows {
-        out.push_str(&format!("… {} more\n", report.models.len() - rows));
+        out.push_str(&format!(
+            "{}\n",
+            ink.dim_on(format!("… {} more", report.models.len() - rows))
+        ));
     }
-    out.push_str(
-        "\nZEN is pay-as-you-go: the same rows carry its spend, but the docs give no limit.\n",
-    );
+    out.push_str(&format!(
+        "\n{}\n",
+        ink.dim_on(
+            "ZEN is pay-as-you-go: the same rows carry its spend, but the docs give no limit."
+                .into()
+        )
+    ));
     out
 }
 
@@ -264,19 +320,20 @@ pub fn watch_frame(
 }
 
 /// Compact single line for a status bar.
-pub fn status_line(report: &Report) -> String {
+pub fn status_line(report: &Report, colour: bool) -> String {
+    let ink = Ink::new(colour);
     match report.models.first() {
         Some(top) => format!(
             "oc {} month · {} 5h · top {} {}",
-            money(report.month.cost),
-            money(report.five_hour.cost),
+            ink.cyan_on(money(report.month.cost)),
+            ink.cyan_on(money(report.five_hour.cost)),
             top.id,
-            money(top.month.cost)
+            ink.cyan_on(money(top.month.cost)),
         ),
         None => format!(
             "oc {} month · {} 5h",
-            money(report.month.cost),
-            money(report.five_hour.cost)
+            ink.cyan_on(money(report.month.cost)),
+            ink.cyan_on(money(report.five_hour.cost)),
         ),
     }
 }
@@ -319,53 +376,97 @@ fn shorten(path: &str) -> String {
 // ---- catalogues and history tables (shared with the MCP server) -------------
 
 /// The catalogue: what each product costs and (for Go) what it allows.
-pub fn plans_text() -> String {
+pub fn plans_text(colour: bool) -> String {
+    let ink = Ink::new(colour);
     let catalog = crate::ocuse::zen::catalog();
     let mut out = format!(
-        "OpenCode plans (docs, extracted {})\n\nGO — ${:.2}/month · windows: 5h {:.0}% · weekly {:.0}% · monthly {:.0}%\n",
-        catalog.extracted_at,
-        catalog.go.price_usd,
-        catalog.go.window_share.five_hour * 100.0,
-        catalog.go.window_share.weekly * 100.0,
-        catalog.go.window_share.monthly * 100.0,
+        "{}OpenCode plans{} {}\n\n",
+        ink.bold,
+        ink.reset,
+        ink.dim_on(format!("(docs, extracted {})", catalog.extracted_at)),
     );
-    out.push_str("MODEL                            LIMIT    IN     OUT    CACHE\n");
+    out.push_str(&format!(
+        "{}GO{} — {}/month · windows: 5h {} · weekly {} · monthly {}\n",
+        ink.bold,
+        ink.reset,
+        ink.cyan_on(format!("${:.2}", catalog.go.price_usd)),
+        ink.cyan_on(format!("{:.0}%", catalog.go.window_share.five_hour * 100.0)),
+        ink.cyan_on(format!("{:.0}%", catalog.go.window_share.weekly * 100.0)),
+        ink.cyan_on(format!("{:.0}%", catalog.go.window_share.monthly * 100.0)),
+    ));
+    out.push_str(&format!(
+        "{}MODEL                            LIMIT    IN     OUT    CACHE{}\n",
+        ink.bold, ink.reset
+    ));
     for model in &catalog.go.models {
         let rate = model.variants.first();
+        let limit = model
+            .monthly_limit
+            .map(cmduse_core::money)
+            .unwrap_or_else(|| "—".into());
         out.push_str(&format!(
-            "{:<28} {:>7} {:>6} {:>6} {:>8}\n",
+            "{:<28} {} {} {} {}\n",
             model.id,
-            model
-                .monthly_limit
-                .map(cmduse_core::money)
-                .unwrap_or_else(|| "—".into()),
-            rate.map(|r| format!("${}", r.input)).unwrap_or_default(),
-            rate.map(|r| format!("${}", r.output)).unwrap_or_default(),
-            rate.map(|r| format!("${}", r.cache_read))
-                .unwrap_or_default(),
+            ink.cyan_on(format!("{limit:>7}")),
+            ink.cyan_on(format!(
+                "{:>6}",
+                rate.map(|r| format!("${}", r.input)).unwrap_or_default()
+            )),
+            ink.cyan_on(format!(
+                "{:>6}",
+                rate.map(|r| format!("${}", r.output)).unwrap_or_default()
+            )),
+            ink.cyan_on(format!(
+                "{:>8}",
+                rate.map(|r| format!("${}", r.cache_read))
+                    .unwrap_or_default()
+            )),
         ));
     }
     out.push_str(&format!(
-        "\nZEN — pay-as-you-go, {} models priced per 1M tokens\n",
-        catalog.zen.models.len()
+        "\n{}\n",
+        ink.dim_on(format!(
+            "ZEN — pay-as-you-go, {} models priced per 1M tokens",
+            catalog.zen.models.len()
+        ))
     ));
     out
 }
 
-pub fn model_text(report: &Report, id: &str) -> String {
-    match report.models.iter().find(|m| m.id == id) {
-        Some(model) => format!(
-            "{} ({})\n  limit     {}\n  month     {} · {} requests\n  5-hour    {}\n  weekly    {}\n",
-            model.id,
-            model.provider,
-            model.limit.map(cmduse_core::money).unwrap_or_else(|| "—".into()),
+pub fn model_text(report: &Report, id: &str, colour: bool) -> String {
+    let ink = Ink::new(colour);
+    let Some(model) = report.models.iter().find(|m| m.id == id) else {
+        return format!("{id}: no usage in the period\n");
+    };
+    let limit = model
+        .limit
+        .map(cmduse_core::money)
+        .unwrap_or_else(|| "—".into());
+    let row =
+        |label: &str, value: String| format!("  {}{value}\n", ink.dim_on(format!("{label:<10}")));
+    let mut out = format!(
+        "{} {}\n",
+        ink.bold_on(model.id.clone()),
+        ink.dim_on(format!("({})", model.provider)),
+    );
+    out.push_str(&row("limit", ink.cyan_on(limit)));
+    out.push_str(&row(
+        "month",
+        ink.cyan_on(format!(
+            "{} · {} requests",
             cmduse_core::money(model.month.cost),
-            model.month.requests,
-            cmduse_core::money(model.five_hour.cost),
-            cmduse_core::money(model.weekly.cost),
-        ),
-        None => format!("{id}: no usage in the period\n"),
-    }
+            model.month.requests
+        )),
+    ));
+    out.push_str(&row(
+        "5-hour",
+        ink.cyan_on(cmduse_core::money(model.five_hour.cost)),
+    ));
+    out.push_str(&row(
+        "weekly",
+        ink.cyan_on(cmduse_core::money(model.weekly.cost)),
+    ));
+    out
 }
 
 /// Spend per bucket (day or hour), oldest first — `cmduse daily`/`hourly`.
@@ -376,7 +477,9 @@ pub fn bucket_text(
     size_ms: i64,
     label: &str,
     tz_secs: i64,
+    colour: bool,
 ) -> String {
+    let ink = Ink::new(colour);
     // Buckets are cut in the display timezone: shift, bucket, then label.
     let shift = tz_secs * 1000;
     let mut buckets: std::collections::BTreeMap<i64, (f64, u64, u64)> = Default::default();
@@ -388,7 +491,10 @@ pub fn bucket_text(
         entry.2 += row.input + row.output + row.cache_read;
     }
     let start = (now_ms + shift - days * 86_400_000).div_euclid(size_ms);
-    let mut out = format!("{label:<12} spend     requests   tokens\n");
+    let mut out = format!(
+        "{}{label:<12} spend     requests   tokens{}\n",
+        ink.bold, ink.reset
+    );
     for (bucket, (cost, requests, tokens)) in buckets.range(start..) {
         let stamp = if size_ms >= 86_400_000 {
             date_of(*bucket)
@@ -400,20 +506,24 @@ pub fn bucket_text(
             )
         };
         out.push_str(&format!(
-            "{stamp:<12} {:>9} {:>12} {:>9}\n",
-            cmduse_core::money(*cost),
-            cmduse_core::compact(*requests),
-            cmduse_core::compact(*tokens),
+            "{stamp:<12} {} {} {}\n",
+            ink.cyan_on(format!("{:>9}", cmduse_core::money(*cost))),
+            ink.cyan_on(format!("{:>12}", cmduse_core::compact(*requests))),
+            ink.cyan_on(format!("{:>9}", cmduse_core::compact(*tokens))),
         ));
     }
     if out.lines().count() == 1 {
-        out.push_str("(no OpenCode usage in the window)\n");
+        out.push_str(&format!(
+            "{}\n",
+            ink.dim_on("(no OpenCode usage in the window)".into())
+        ));
     }
     out
 }
 
 /// Spend per session, newest first.
-pub fn session_text(rows: &[crate::ocuse::db::Row], limit: usize) -> String {
+pub fn session_text(rows: &[crate::ocuse::db::Row], limit: usize, colour: bool) -> String {
+    let ink = Ink::new(colour);
     let mut by_session: std::collections::BTreeMap<
         &str,
         (f64, u64, i64, std::collections::BTreeSet<&str>),
@@ -430,21 +540,26 @@ pub fn session_text(rows: &[crate::ocuse::db::Row], limit: usize) -> String {
     }
     let mut sessions: Vec<_> = by_session.into_iter().collect();
     sessions.sort_by_key(|(_, (_, _, last, _))| std::cmp::Reverse(*last));
-    let mut out =
-        String::from("session                          last        models   spend     req\n");
+    let mut out = format!(
+        "{}session                          last        models   spend     req{}\n",
+        ink.bold, ink.reset
+    );
     for (id, (cost, requests, last, models)) in sessions.into_iter().take(limit) {
         let short = id.rsplit('_').next().unwrap_or(id);
         out.push_str(&format!(
-            "{:<32} {:<11} {:>6} {:>9} {:>6}\n",
+            "{:<32} {:<11} {:>6} {} {:>6}\n",
             short,
-            date_of(last.div_euclid(86_400_000)),
+            ink.dim_on(format!("{:<11}", date_of(last.div_euclid(86_400_000)))),
             models.len(),
-            cmduse_core::money(cost),
+            ink.cyan_on(format!("{:>9}", cmduse_core::money(cost))),
             requests,
         ));
     }
     if out.lines().count() == 1 {
-        out.push_str("(no sessions in the window)\n");
+        out.push_str(&format!(
+            "{}\n",
+            ink.dim_on("(no sessions in the window)".into())
+        ));
     }
     out
 }
@@ -496,7 +611,71 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed["totals"]["month"]["cost"], 30.0);
         assert_eq!(parsed["models"][0]["id"], "glm-5.3-flash");
-        assert!(status_line(&report()).contains("glm-5.3-flash"));
+        assert!(status_line(&report(), false).contains("glm-5.3-flash"));
+    }
+
+    /// Every renderer, both ways round: piped/non-tty output must stay free of
+    /// SGR escapes, and every one of them must colour when colour is on. This is
+    /// the guard for the bug where only `render_text` ever got a colour flag, so
+    /// `daily` / `hourly` / `session` / `plans` / `model` / `statusline` printed
+    /// plain regardless of the terminal.
+    #[test]
+    fn every_renderer_respects_the_colour_flag() {
+        let report = report();
+        let rows = vec![Row {
+            at_ms: report.now_ms - 60_000,
+            session: "ses_fixture".into(),
+            provider: "opencode-go".into(),
+            model: "glm-5.3-flash".into(),
+            cost_usd: 30.0,
+            ..Default::default()
+        }];
+        let now = report.now_ms;
+
+        let cases: Vec<(&str, String, String)> = vec![
+            (
+                "render_text",
+                render_text(&report, "/tmp/oc.db", 10, false),
+                render_text(&report, "/tmp/oc.db", 10, true),
+            ),
+            (
+                "status_line",
+                status_line(&report, false),
+                status_line(&report, true),
+            ),
+            ("plans_text", plans_text(false), plans_text(true)),
+            (
+                "model_text",
+                model_text(&report, "glm-5.3-flash", false),
+                model_text(&report, "glm-5.3-flash", true),
+            ),
+            (
+                "bucket_text/day",
+                bucket_text(&rows, now, 7, 86_400_000, "day", 0, false),
+                bucket_text(&rows, now, 7, 86_400_000, "day", 0, true),
+            ),
+            (
+                "bucket_text/hour",
+                bucket_text(&rows, now, 1, 3_600_000, "hour", 0, false),
+                bucket_text(&rows, now, 1, 3_600_000, "hour", 0, true),
+            ),
+            (
+                "session_text",
+                session_text(&rows, 20, false),
+                session_text(&rows, 20, true),
+            ),
+        ];
+
+        for (name, plain, coloured) in cases {
+            assert!(
+                !plain.contains('\x1b'),
+                "{name} leaked escapes when off: {plain}"
+            );
+            assert!(
+                coloured.contains('\x1b'),
+                "{name} rendered nothing coloured when on: {coloured}"
+            );
+        }
     }
 
     #[test]
@@ -508,6 +687,19 @@ mod tests {
         );
         // The gauge is colour-only; the plain frame keeps the old percentage text.
         assert!(text.contains("50%"), "{text}");
+    }
+
+    #[test]
+    fn an_over_cap_window_is_flagged_in_both_modes() {
+        // 30 spent against a 5-hour cap of 20% of the $60 limit = $12.
+        let plain = render_text(&report(), "/tmp/opencode.db", 10, false);
+        assert!(plain.contains("LIMIT EXCEEDED"), "{plain}");
+        let coloured = render_text(&report(), "/tmp/opencode.db", 10, true);
+        assert!(coloured.contains("LIMIT EXCEEDED"), "{coloured}");
+        assert!(
+            coloured.contains(crate::render::RED),
+            "the flag and the gauge are red: {coloured}"
+        );
     }
 
     #[test]

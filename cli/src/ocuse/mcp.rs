@@ -95,7 +95,7 @@ fn tool_call(
                 colour,
             )
         }),
-        "plans" => Ok(render::plans_text()),
+        "plans" => Ok(render::plans_text(colour)),
         "daily" => rows().map(|rows| {
             render::bucket_text(
                 &rows,
@@ -104,6 +104,7 @@ fn tool_call(
                 86_400_000,
                 "day",
                 tz_secs,
+                colour,
             )
         }),
         "hourly" => rows().map(|rows| {
@@ -114,9 +115,12 @@ fn tool_call(
                 3_600_000,
                 "hour",
                 tz_secs,
+                colour,
             )
         }),
-        "session" => rows().map(|rows| render::session_text(&rows, number("limit", 20) as usize)),
+        "session" => {
+            rows().map(|rows| render::session_text(&rows, number("limit", 20) as usize, colour))
+        }
         "model" => {
             let wanted = args
                 .get("id")
@@ -125,7 +129,7 @@ fn tool_call(
                 .to_string();
             rows().map(|rows| {
                 let report = window::build(&rows, &zen::catalog(), window::now_ms(), period_start);
-                render::model_text(&report, &wanted)
+                render::model_text(&report, &wanted, colour)
             })
         }
         _ => {
