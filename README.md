@@ -99,8 +99,8 @@ section (toggle with `ctrl+x b`):
 - plan, price and monthly credits used
 - 5-hour and weekly windows: used / cap, percent used and elapsed, reset countdown
 - this period's requests and spend
-- the active model: tier, monthly allowance, $/M rates (in/out, cache read), Intelligence, Tok/s
-  (new in 0.2.5)
+- the active model: tier, monthly allowance, $/M rates on one line (in/out plus cache read, and
+  cache write when the model has one), Intelligence, Tok/s (new in 0.2.5)
 - the cheapest plan that serves it (`Min plan`), from Command Code's own model table — the column
   their docs name as the access rule; shown only when the tier is unknown (new in 0.3.2, fallback-only
   since 0.3.6)

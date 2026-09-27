@@ -272,7 +272,8 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   fallback list swings in size with network luck, which defeated the id-diff and
   made every start look changed. 0.3.6 made the sidebar's Min plan row a
   fallback: the tier leads, and Min plan fills in only when gating has no
-  category for the model.
+  category for the model. The rates line merged too: in/out plus cache read, with
+  cache write appended only when the model has one.
 - **npm publish is interactive: it fails from the agent shell** (`EOTP`, prints
   an auth URL). Build first (`cd opencode && bun run build`) so `dist/` is
   current, then the user runs plain `npm publish` themselves — it opens a

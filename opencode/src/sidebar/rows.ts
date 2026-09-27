@@ -143,8 +143,17 @@ export function modelRows(meta: ModelMeta | undefined, usage?: ModelUsage): Side
 	else if (meta.minPlan) rows.push(["Min plan", meta.minPlan])
 	if (typeof meta.allowance === "number") rows.push(["Allowance", `${money(meta.allowance)}/mo`])
 	if (meta.rates) {
-		rows.push(["Rates", `${rate(meta.rates.input)}/${rate(meta.rates.output)} in/out`])
-		rows.push(["Cache read", rate(meta.rates.cacheRead)])
+		// One line: the in/out pair plus the cache rates. Cache write only when
+		// the model has one (Claude does; the DeepSeek/GLM lines do not), so a
+		// zero rate never masquerades as a price.
+		const parts = [
+			`${rate(meta.rates.input)}/${rate(meta.rates.output)} in/out`,
+			`cache read ${rate(meta.rates.cacheRead)}`,
+		]
+		if (typeof meta.rates.cacheWrite === "number" && meta.rates.cacheWrite > 0) {
+			parts.push(`cache write ${rate(meta.rates.cacheWrite)}`)
+		}
+		rows.push(["Rates", parts.join(" · ")])
 	}
 	if (typeof meta.intelligence === "number") rows.push(["Intelligence", String(meta.intelligence)])
 	if (typeof meta.tps === "number") rows.push(["Tok/s", String(meta.tps)])

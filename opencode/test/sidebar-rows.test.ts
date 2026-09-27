@@ -85,10 +85,17 @@ describe("modelRows", () => {
 		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash"])
 		expect(rows[1]).toEqual(["Tier", "open source"])
 		expect(rows[2]).toEqual(["Allowance", "$60/mo"])
-		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out"])
-		expect(rows[4]).toEqual(["Cache read", "$0.003"])
-		expect(rows[5]).toEqual(["Intelligence", "39.5"])
-		expect(rows[6]).toEqual(["Tok/s", "247"])
+		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out · cache read $0.003"])
+		expect(rows[4]).toEqual(["Intelligence", "39.5"])
+		expect(rows[5]).toEqual(["Tok/s", "247"])
+	})
+	test("adds cache write only when the model has one", () => {
+		const claude = modelRows({
+			key: "claudesonnet5",
+			name: "Claude Sonnet 5",
+			rates: { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
+		})
+		expect(claude[1]).toEqual(["Rates", "$2/$10 in/out · cache read $0.2 · cache write $2.5"])
 	})
 	test("puts period usage under the model name when known", () => {
 		const rows = modelRows(
