@@ -2,6 +2,9 @@ mod api;
 mod cli;
 mod config;
 mod mcp;
+// OpenCode Go/Zen half (the `ocuse` bin): local usage from opencode.db plus the
+// docs catalogue in core/zen.json. Independent of the CommandCode code paths.
+pub mod ocuse;
 mod paths;
 mod render;
 mod report_render;

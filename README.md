@@ -16,6 +16,7 @@ rendering to the `cmduse` CLI.
 | Component | Crate / dir | Install | Docs |
 |---|---|---|---|
 | `cmduse` CLI | `cli/` (crate `cmd-usage`, bin `cmduse`) | [crates.io](https://crates.io/crates/cmd-usage) · [brew](https://github.com/JeffreyJYZ/homebrew-tap) | **[cli/README.md](cli/README.md)** · [man page](cli/cmduse.1) |
+| `ocuse` (same crate) | `cli/` (bin `ocuse`) | same crate as `cmduse` | OpenCode Go/Zen usage from local data — see below |
 | Shared core | `core/` (crate `cmduse-core`) | [crates.io](https://crates.io/crates/cmduse-core) | [docs.rs/cmduse-core](https://docs.rs/cmduse-core) · versioned on its own `1.x` line, not as a pair with the CLI |
 | opencode plugin | `opencode/` (`@jeffreyjyz/opencode-command-code`) | [npm](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code) | [opencode/src/index.ts](opencode/src/index.ts) |
 
@@ -122,6 +123,39 @@ For the fastest startup, pin the plugin to an exact version in `opencode.json`:
 
 A bare name makes opencode re-resolve `@latest` (a registry round-trip) on every start; a pinned
 specifier is cached as-is, and the plugin's own provider is versioned with it.
+
+## OpenCode Go/Zen usage (`ocuse`)
+
+`ocuse` tracks what you actually ran on **OpenCode Go** (the $10/mo subscription) and
+**OpenCode Zen** (pay-as-you-go), using the same CLI shape as `cmduse`:
+
+```sh
+ocuse                 # watch: redraw every 10s
+ocuse -1              # one-shot dashboard
+ocuse --json
+ocuse daily|hourly|session
+ocuse model [id]
+ocuse plans           # the docs catalogue: limits and rates
+ocuse statusline
+```
+
+Two differences from `cmduse` are worth knowing up front, both from upstream:
+
+- **OpenCode publishes no usage API.** The console tracks usage; the one API route
+  (`/zen/go/v1/usage`) answers `EntitlementError` for keys without a Go subscription, and
+  Zen has no equivalent at all. So `ocuse` reports your **local** usage — opencode.db, which
+  records `cost`, tokens and the model for every request, for both providers.
+- **Go's allowance is per model**, not per account: each model has a monthly dollar limit,
+  with windows of 5h = 20%, weekly = 50%, monthly = 100%. The dashboard shows each model
+  against its own limit, and the header's window lines sum the caps of the models you used.
+
+The monthly *period* has no local record (renewals are in the console), so the default is the
+calendar month; `--period-start YYYY-MM-DD` pins the real one and `--window all|<n>d` reports
+other ranges (inference from your first Go request exists behind `--infer-anniversary`, but it
+guesses wrong on sparse history).
+
+Limits and rates come from `core/zen.json`, regenerated with `bun scripts/extract-zen.ts` from
+OpenCode's own docs sources.
 
 ## MCP server
 

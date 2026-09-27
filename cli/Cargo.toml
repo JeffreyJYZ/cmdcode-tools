@@ -22,9 +22,22 @@ path = "src/main.rs"
 name = "cmdusedev"
 path = "src/bin/cmdusedev.rs"
 
+# OpenCode Go/Zen twin: same CLI shape as cmduse, but its data is local
+# (opencode.db) plus the docs catalogue in core/zen.json — OpenCode publishes no
+# usage API (the one route, /zen/go/v1/usage, is entitlement-gated).
+[[bin]]
+name = "ocuse"
+path = "src/bin/ocuse.rs"
+
 [dependencies]
 cmduse-core = { path = "../core", version = "1" }
 ureq = { version = "2", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 lexopt = "0.3"
+# ocuse reads opencode's own SQLite store read-only; bundled so the crate needs
+# no system libsqlite.
+rusqlite = { version = "0.40", features = ["bundled"] }
+
+[dev-dependencies]
+tempfile = "3"
