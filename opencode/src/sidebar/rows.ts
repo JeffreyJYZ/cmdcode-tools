@@ -11,21 +11,13 @@ import {
 import { elapsedLabel, FIVE_HOUR_SECS, WEEKLY_SECS } from "./windows";
 
 /**
- * Colour role for a row, resolved against the host theme by the panel: `ok` /
- * `warn` / `crit` are headroom (green / amber / red), `data` is the theme's
- * info colour (figures: rates, ability, tok/s — the cyan mpc and cmduse use for
- * numbers), `strong` is plain text in bold (the model name, the way mpc bolds
- * its MODEL column), `muted` is for continuations and rules, `base` is plain
- * text.
+ * Colour role for a row's *value*, resolved against the host theme by the
+ * panel: `ok` / `warn` / `crit` are headroom (green / amber / red), `strong` is
+ * plain text in bold (the model name, the way mpc bolds its MODEL column),
+ * `muted` is for continuations and rules, `base` is plain text. Labels are
+ * coloured separately: the panel draws them in the theme's info hue.
  */
-export type Tone =
-	| "base"
-	| "muted"
-	| "strong"
-	| "data"
-	| "ok"
-	| "warn"
-	| "crit";
+export type Tone = "base" | "muted" | "strong" | "ok" | "warn" | "crit";
 
 export type SidebarRow = [label: string, value: string, tone?: Tone];
 
@@ -234,7 +226,7 @@ export function usageRows(
 		if (typeof usage.requests === "number")
 			parts.push(`${count(usage.requests)} requests`);
 		if (typeof usage.cost === "number") parts.push(money(usage.cost));
-		rows.push(["Period", parts.join(" · "), "data"]);
+		rows.push(["Period", parts.join(" · "), "base"]);
 	}
 	return rows;
 }
@@ -256,16 +248,16 @@ export function modelRows(
 		rows.push([
 			"Usage (this model)",
 			`${count(usage.requests)} req${spent}`,
-			"data",
+			"base",
 		]);
 	}
-	if (meta.tier) rows.push(["Tier", TIER_DISPLAY[meta.tier], "data"]);
+	if (meta.tier) rows.push(["Tier", TIER_DISPLAY[meta.tier], "base"]);
 	// Min plan is the fallback, not a second opinion: the docs' access rule
 	// (models.md's Min plan column) covers models the gating snapshot has no
 	// tier for, and showing both read as redundant once gating could refresh.
 	else if (meta.minPlan) rows.push(["Min plan", meta.minPlan, "base"]);
 	if (typeof meta.allowance === "number")
-		rows.push(["Allowance", `${money(meta.allowance)}/mo`, "data"]);
+		rows.push(["Allowance", `${money(meta.allowance)}/mo`, "base"]);
 	if (meta.rates) {
 		// In/out leads; the cache rates ride on an indented continuation, since
 		// all three on one line overflows the sidebar. Cache write appears only
@@ -281,14 +273,14 @@ export function modelRows(
 		rows.push([
 			"Rates",
 			`${rate(meta.rates.input)}/${rate(meta.rates.output)} in/out`,
-			"data",
+			"base",
 		]);
 		rows.push(["", cache.join(" · "), "muted"]);
 	}
 	if (typeof meta.intelligence === "number")
-		rows.push(["Intelligence", String(meta.intelligence), "data"]);
+		rows.push(["Intelligence", String(meta.intelligence), "base"]);
 	if (typeof meta.tps === "number")
-		rows.push(["Tok/s", String(meta.tps), "data"]);
+		rows.push(["Tok/s", String(meta.tps), "base"]);
 	return rows;
 }
 

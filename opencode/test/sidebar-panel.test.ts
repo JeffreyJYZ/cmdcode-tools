@@ -27,7 +27,7 @@ describe("panel colours", () => {
 		expect(colors.base).toBe(text.base);
 		expect(colors.muted).toBe(text.muted);
 		expect(colors.strong).toBe(text.base);
-		expect(colors.data).toBe(text.feedback.info.base);
+		expect(colors.label).toBe(text.feedback.info.base);
 		expect(colors.ok).toBe(text.feedback.success.base);
 		expect(colors.warn).toBe(text.feedback.warning.base);
 		expect(colors.crit).toBe(text.feedback.error.base);
@@ -51,7 +51,8 @@ describe("panel colours", () => {
 		});
 		expect(colors.base.r).toBeCloseTo(0.1);
 		expect(colors.muted.r).toBeCloseTo(0.2);
-		for (const tone of ["ok", "warn", "crit", "data", "strong"] as const) {
+		for (const tone of ["ok", "warn", "crit", "strong"] as const) {
+			expect(colors.label).toBeInstanceOf(RGBA);
 			expect(colors[tone]).toBeInstanceOf(RGBA);
 		}
 		expect(colors.ok.r).not.toBe(colors.crit.r);

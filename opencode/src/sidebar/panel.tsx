@@ -13,8 +13,10 @@ import { RGBA } from "@opentui/core";
 import { For, Show } from "solid-js";
 import { parts, type SidebarRow, type Tone } from "./rows";
 
-/** One colour per row tone. */
-export type PanelColors = Readonly<Record<Tone, RGBA>>;
+/** One colour per row tone, plus the label colour every labelled row shares. */
+export type PanelColors = Readonly<Record<Tone, RGBA>> & {
+	readonly label: RGBA;
+};
 
 /**
  * The slice of the v2 host theme the panel reads. `@opencode/theme` is not a
@@ -40,7 +42,7 @@ export function hostColors(theme: HostTheme): PanelColors {
 		// Bold is the emphasis; `strong` shares the plain text colour so the
 		// model name never borrows a chromatic token.
 		strong: theme.text.base,
-		data: theme.text.feedback.info.base,
+		label: theme.text.feedback.info.base,
 		ok: theme.text.feedback.success.base,
 		warn: theme.text.feedback.warning.base,
 		crit: theme.text.feedback.error.base,
@@ -56,7 +58,7 @@ export function legacyColors(theme: {
 		base: theme.text,
 		muted: theme.textMuted,
 		strong: theme.text,
-		data: RGBA.fromValues(0.34, 0.71, 0.76, 1),
+		label: RGBA.fromValues(0.34, 0.71, 0.76, 1),
 		ok: RGBA.fromValues(0.5, 0.85, 0.56, 1),
 		warn: RGBA.fromValues(0.96, 0.65, 0.26, 1),
 		crit: RGBA.fromValues(0.88, 0.42, 0.46, 1),
@@ -82,7 +84,7 @@ function Row(props: { row: SidebarRow; colors: PanelColors }) {
 	}
 	return (
 		<text>
-			<span {...spanStyle(props.colors.base)}>
+			<span {...spanStyle(props.colors.label)}>
 				<b>{label}</b>
 			</span>
 			<span {...spanStyle(props.colors[tone])}>

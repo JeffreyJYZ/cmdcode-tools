@@ -52,10 +52,12 @@ describe("rendered panel", () => {
 		const find = (text: string) =>
 			spans.find((span) => span.text.includes(text));
 
-		// The point of the whole exercise: no row may collapse to one colour.
-		expect(hex(find("Tier: ")?.fg as RGBA)).toBe(hex(colors.base));
-		expect(hex(find("open source")?.fg as RGBA)).toBe(hex(colors.data));
+		// The point of the whole exercise: no row may collapse to one colour,
+		// and labels wear their own hue rather than the value's.
+		expect(hex(find("Tier: ")?.fg as RGBA)).toBe(hex(colors.label));
+		expect(hex(find("open source")?.fg as RGBA)).toBe(hex(colors.base));
 		expect(hex(find("$57.40 / $70 (82%)")?.fg as RGBA)).toBe(hex(colors.warn));
+		expect(hex(colors.label)).not.toBe(hex(colors.base));
 
 		// Labels are bold (attributes set), values are not.
 		expect(find("Tier: ")?.attributes).not.toBe(0);
