@@ -64,13 +64,14 @@ export function legacyColors(theme: {
 }
 
 /**
- * opentui types `span` props as `{}` — the runtime hands them to
- * `TextNodeRenderable`, whose options bag does take `fg` — so the colour is
- * cast through the shape the JSX checker expects. Verified against the
- * installed opentui in test/sidebar-panel.test.ts.
+ * opentui styles a text-node span through `style` (`<span style={{ fg }}>`, as
+ * opencode's own v2 UI does), yet types the prop as an empty bag. Passing `fg`
+ * directly is silently ignored — the run then inherits no colour at all, which
+ * is how the panel briefly lost every colour. Verified against the installed
+ * opentui in test/sidebar-panel.test.ts.
  */
-const spanFg = (fg: RGBA): { children?: string } =>
-	({ fg }) as unknown as { children?: string };
+const spanStyle = (fg: RGBA): { style: { fg: RGBA } } =>
+	({ style: { fg } }) as unknown as { style: { fg: RGBA } };
 
 /** One row: a bold label, then its value in the row's tone. */
 function Row(props: { row: SidebarRow; colors: PanelColors }) {
@@ -81,10 +82,10 @@ function Row(props: { row: SidebarRow; colors: PanelColors }) {
 	}
 	return (
 		<text>
-			<span {...spanFg(props.colors.base)}>
+			<span {...spanStyle(props.colors.base)}>
 				<b>{label}</b>
 			</span>
-			<span {...spanFg(props.colors[tone])}>
+			<span {...spanStyle(props.colors[tone])}>
 				{tone === "strong" ? <b>{value}</b> : value}
 			</span>
 		</text>
