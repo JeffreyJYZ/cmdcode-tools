@@ -137,6 +137,7 @@ ocuse daily|hourly|session
 ocuse model [id]
 ocuse plans           # the docs catalogue: limits and rates
 ocuse statusline
+ocuse mcp             # MCP stdio server
 ```
 
 Two differences from `cmduse` are worth knowing up front, both from upstream:

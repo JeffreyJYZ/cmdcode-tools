@@ -6,6 +6,7 @@
 // subscription), so everything here is derived from opencode's own store plus
 // the docs catalogue in core/zen.json.
 pub mod db;
+pub mod mcp;
 pub mod render;
 pub mod window;
 pub mod zen;

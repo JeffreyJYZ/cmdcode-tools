@@ -97,6 +97,14 @@ fn civil(epoch_secs: i64) -> (i64, i64, i64) {
     (if m <= 2 { y + 1 } else { y }, m, d)
 }
 
+/// Wall-clock now in epoch ms.
+pub fn now_ms() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
+}
+
 /// Start of the calendar month, 00:00 UTC — the predictable default, since
 /// nothing local records a subscription anniversary (the console holds it).
 pub fn calendar_month_start(now_ms: i64) -> i64 {

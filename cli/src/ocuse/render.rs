@@ -9,6 +9,31 @@ use crate::ocuse::window::{ModelUsage, Report, Totals};
 use crate::ocuse::zen;
 use cmduse_core::{compact, duration, money, pct};
 
+/// ANSI styles, the same palette cmduse uses; empty strings when colour is off.
+pub struct Ink {
+    pub bold: &'static str,
+    pub dim: &'static str,
+    pub reset: &'static str,
+}
+
+impl Ink {
+    pub fn new(colour: bool) -> Self {
+        if colour {
+            Self {
+                bold: "\x1b[1m",
+                dim: "\x1b[2m",
+                reset: "\x1b[0m",
+            }
+        } else {
+            Self {
+                bold: "",
+                dim: "",
+                reset: "",
+            }
+        }
+    }
+}
+
 fn window_line(
     label: &str,
     used: &Totals,
@@ -68,7 +93,8 @@ fn model_row(model: &ModelUsage) -> String {
 }
 
 /// `limit` rows to show; `usize::MAX` for all.
-pub fn render_text(report: &Report, db_path: &str, rows: usize) -> String {
+pub fn render_text(report: &Report, db_path: &str, rows: usize, colour: bool) -> String {
+    let ink = Ink::new(colour);
     let shares = &zen::catalog().go.window_share;
     let mut out = String::new();
     out.push_str(&format!(
@@ -86,7 +112,10 @@ pub fn render_text(report: &Report, db_path: &str, rows: usize) -> String {
     if report.month.requests > 0 {
         let five_reset = report.now_ms + crate::ocuse::window::FIVE_HOUR_SECS * 1000;
         let week_reset = report.now_ms + crate::ocuse::window::WEEKLY_SECS * 1000;
-        out.push_str("\nGO (limits are per model: 5h = 20%, weekly = 50%, monthly = 100%)\n");
+        out.push_str(&format!(
+            "\n{}GO{} (limits are per model: 5h = 20%, weekly = 50%, monthly = 100%)\n",
+            ink.bold, ink.reset
+        ));
         out.push_str(&window_line(
             "5-hour",
             &report.five_hour,
@@ -110,9 +139,10 @@ pub fn render_text(report: &Report, db_path: &str, rows: usize) -> String {
         ));
     }
 
-    out.push_str(
-        "\nMODEL                            LIMIT      SPENT     USE       5H       WK     REQ\n",
-    );
+    out.push_str(&format!(
+        "\n{}MODEL                            LIMIT      SPENT     USE       5H       WK     REQ{}\n",
+        ink.bold, ink.reset
+    ));
     for model in report.models.iter().take(rows) {
         out.push_str(&model_row(model));
     }
@@ -178,6 +208,155 @@ fn shorten(path: &str) -> String {
     }
 }
 
+// ---- catalogues and history tables (shared with the MCP server) -------------
+
+/// The catalogue: what each product costs and (for Go) what it allows.
+pub fn plans_text() -> String {
+    let catalog = crate::ocuse::zen::catalog();
+    let mut out = format!(
+        "OpenCode plans (docs, extracted {})\n\nGO — ${:.2}/month · windows: 5h {:.0}% · weekly {:.0}% · monthly {:.0}%\n",
+        catalog.extracted_at,
+        catalog.go.price_usd,
+        catalog.go.window_share.five_hour * 100.0,
+        catalog.go.window_share.weekly * 100.0,
+        catalog.go.window_share.monthly * 100.0,
+    );
+    out.push_str("MODEL                            LIMIT    IN     OUT    CACHE\n");
+    for model in &catalog.go.models {
+        let rate = model.variants.first();
+        out.push_str(&format!(
+            "{:<28} {:>7} {:>6} {:>6} {:>8}\n",
+            model.id,
+            model
+                .monthly_limit
+                .map(cmduse_core::money)
+                .unwrap_or_else(|| "—".into()),
+            rate.map(|r| format!("${}", r.input)).unwrap_or_default(),
+            rate.map(|r| format!("${}", r.output)).unwrap_or_default(),
+            rate.map(|r| format!("${}", r.cache_read))
+                .unwrap_or_default(),
+        ));
+    }
+    out.push_str(&format!(
+        "\nZEN — pay-as-you-go, {} models priced per 1M tokens\n",
+        catalog.zen.models.len()
+    ));
+    out
+}
+
+pub fn model_text(report: &Report, id: &str) -> String {
+    match report.models.iter().find(|m| m.id == id) {
+        Some(model) => format!(
+            "{} ({})\n  limit     {}\n  month     {} · {} requests\n  5-hour    {}\n  weekly    {}\n",
+            model.id,
+            model.provider,
+            model.limit.map(cmduse_core::money).unwrap_or_else(|| "—".into()),
+            cmduse_core::money(model.month.cost),
+            model.month.requests,
+            cmduse_core::money(model.five_hour.cost),
+            cmduse_core::money(model.weekly.cost),
+        ),
+        None => format!("{id}: no usage in the period\n"),
+    }
+}
+
+/// Spend per bucket (day or hour), oldest first — `cmduse daily`/`hourly`.
+pub fn bucket_text(
+    rows: &[crate::ocuse::db::Row],
+    now_ms: i64,
+    days: i64,
+    size_ms: i64,
+    label: &str,
+    tz_secs: i64,
+) -> String {
+    // Buckets are cut in the display timezone: shift, bucket, then label.
+    let shift = tz_secs * 1000;
+    let mut buckets: std::collections::BTreeMap<i64, (f64, u64, u64)> = Default::default();
+    for row in rows {
+        let bucket = (row.at_ms + shift).div_euclid(size_ms);
+        let entry = buckets.entry(bucket).or_insert((0.0, 0, 0));
+        entry.0 += row.cost_usd;
+        entry.1 += 1;
+        entry.2 += row.input + row.output + row.cache_read;
+    }
+    let start = (now_ms + shift - days * 86_400_000).div_euclid(size_ms);
+    let mut out = format!("{label:<12} spend     requests   tokens\n");
+    for (bucket, (cost, requests, tokens)) in buckets.range(start..) {
+        let stamp = if size_ms >= 86_400_000 {
+            date_of(*bucket)
+        } else {
+            format!(
+                "{} {:02}h",
+                date_of(bucket.div_euclid(24)),
+                bucket.rem_euclid(24)
+            )
+        };
+        out.push_str(&format!(
+            "{stamp:<12} {:>9} {:>12} {:>9}\n",
+            cmduse_core::money(*cost),
+            cmduse_core::compact(*requests),
+            cmduse_core::compact(*tokens),
+        ));
+    }
+    if out.lines().count() == 1 {
+        out.push_str("(no OpenCode usage in the window)\n");
+    }
+    out
+}
+
+/// Spend per session, newest first.
+pub fn session_text(rows: &[crate::ocuse::db::Row], limit: usize) -> String {
+    let mut by_session: std::collections::BTreeMap<
+        &str,
+        (f64, u64, i64, std::collections::BTreeSet<&str>),
+    > = Default::default();
+    for row in rows {
+        let entry =
+            by_session
+                .entry(row.session.as_str())
+                .or_insert((0.0, 0, 0, Default::default()));
+        entry.0 += row.cost_usd;
+        entry.1 += 1;
+        entry.2 = entry.2.max(row.at_ms);
+        entry.3.insert(row.model.as_str());
+    }
+    let mut sessions: Vec<_> = by_session.into_iter().collect();
+    sessions.sort_by_key(|(_, (_, _, last, _))| std::cmp::Reverse(*last));
+    let mut out =
+        String::from("session                          last        models   spend     req\n");
+    for (id, (cost, requests, last, models)) in sessions.into_iter().take(limit) {
+        let short = id.rsplit('_').next().unwrap_or(id);
+        out.push_str(&format!(
+            "{:<32} {:<11} {:>6} {:>9} {:>6}\n",
+            short,
+            date_of(last.div_euclid(86_400_000)),
+            models.len(),
+            cmduse_core::money(cost),
+            requests,
+        ));
+    }
+    if out.lines().count() == 1 {
+        out.push_str("(no sessions in the window)\n");
+    }
+    out
+}
+
+/// `YYYY-MM-DD` for a Unix day number (civil-from-days, same helper family as
+/// the window module's).
+pub fn date_of(day: i64) -> String {
+    let z = day + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = if m <= 2 { y + 1 } else { y };
+    format!("{year:04}-{m:02}-{d:02}")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -197,7 +376,7 @@ mod tests {
 
     #[test]
     fn text_shows_the_model_against_its_limit() {
-        let text = render_text(&report(), "/tmp/opencode.db", 10);
+        let text = render_text(&report(), "/tmp/opencode.db", 10, false);
         assert!(text.contains("glm-5.3-flash"), "{text}");
         assert!(text.contains("$60"), "the model's monthly limit: {text}");
         assert!(text.contains("50%"), "30 of 60 is half: {text}");
