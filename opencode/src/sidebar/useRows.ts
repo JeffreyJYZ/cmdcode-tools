@@ -37,7 +37,7 @@ export function useRows(
 			const id = activeModelId();
 			setModelUsage(
 				id
-					? (loadModelUsage(id, periodStart(snapshot.periodEnd)) ?? undefined)
+					? (loadModelUsage(id, periodStart(snapshot)) ?? undefined)
 					: undefined,
 			);
 		} catch {

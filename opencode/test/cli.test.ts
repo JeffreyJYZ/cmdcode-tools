@@ -1,9 +1,18 @@
 import { describe, expect, test } from "bun:test";
-import { buildCmduseArgs, runCmduse, splitCliArgs } from "../src/cli";
+import {
+	buildCmduseArgs,
+	cmduseCandidates,
+	runCmduse,
+	splitCliArgs,
+} from "../src/cli";
 
 describe("splitCliArgs", () => {
 	test("whitespace split", () => {
-		expect(splitCliArgs("--tz +05:30 daily")).toEqual(["--tz", "+05:30", "daily"]);
+		expect(splitCliArgs("--tz +05:30 daily")).toEqual([
+			"--tz",
+			"+05:30",
+			"daily",
+		]);
 	});
 	test("multiple spaces / tabs collapse", () => {
 		expect(splitCliArgs("  a\t b   c ")).toEqual(["a", "b", "c"]);
@@ -29,11 +38,19 @@ describe("buildCmduseArgs", () => {
 	});
 	test("subcommand passed through untouched", () => {
 		expect(buildCmduseArgs("plans")).toEqual(["plans"]);
-		expect(buildCmduseArgs("daily --days 14")).toEqual(["daily", "--days", "14"]);
+		expect(buildCmduseArgs("daily --days 14")).toEqual([
+			"daily",
+			"--days",
+			"14",
+		]);
 	});
 	test("bare flags prepend the one-shot dashboard", () => {
 		expect(buildCmduseArgs("--local")).toEqual(["-1", "--plain", "--local"]);
-		expect(buildCmduseArgs("--tz +05:30 hourly")).toEqual(["--tz", "+05:30", "hourly"]);
+		expect(buildCmduseArgs("--tz +05:30 hourly")).toEqual([
+			"--tz",
+			"+05:30",
+			"hourly",
+		]);
 	});
 });
 
@@ -42,7 +59,8 @@ describe("runCmduse", () => {
 	// Skip it there, run it on a machine with the CLI present.
 	const hasCmduse = (() => {
 		try {
-			const { execFileSync } = require("node:child_process") as typeof import("node:child_process");
+			const { execFileSync } =
+				require("node:child_process") as typeof import("node:child_process");
 			execFileSync("cmduse", ["-V"], { stdio: "ignore" });
 			return true;
 		} catch {
@@ -75,5 +93,19 @@ describe("runCmduse", () => {
 			const msg = e instanceof Error ? e.message : String(e);
 			expect(msg).not.toContain("cmduse binary not found");
 		}
+	});
+});
+
+describe("cmduseCandidates", () => {
+	test("CMDUSE_BIN leads, the homebrew paths remain as fallbacks", () => {
+		expect(cmduseCandidates({ CMDUSE_BIN: "/tmp/cmdusedev" })[0]).toBe(
+			"/tmp/cmdusedev",
+		);
+		expect(cmduseCandidates({})).toEqual([
+			"cmduse",
+			"/opt/homebrew/bin/cmduse",
+			"/usr/local/bin/cmduse",
+		]);
+		expect(cmduseCandidates({ CMDUSE_BIN: "" })).not.toContain("");
 	});
 });

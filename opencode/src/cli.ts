@@ -7,8 +7,21 @@
 import { spawn } from "node:child_process";
 
 /** Fallback lookup paths: the opencode background service's PATH often lacks
- * the homebrew prefix, so the bare name alone is not enough. */
-const CANDIDATES = ["cmduse", "/opt/homebrew/bin/cmduse", "/usr/local/bin/cmduse"];
+ * the homebrew prefix, so the bare name alone is not enough. `CMDUSE_BIN` wins
+ * when set — the dev-build hook the sibling cmduse consumers (mpc) honour too. */
+export function cmduseCandidates(
+	env: Record<string, string | undefined> = process.env,
+): string[] {
+	const candidates = [
+		env.CMDUSE_BIN,
+		"cmduse",
+		"/opt/homebrew/bin/cmduse",
+		"/usr/local/bin/cmduse",
+	];
+	return candidates.filter((bin): bin is string => Boolean(bin));
+}
+
+const CANDIDATES = cmduseCandidates();
 
 /** Default invocation: one-shot dashboard, no colors / no live redraw. */
 const DEFAULT_ARGS = ["-1", "--plain"];
@@ -90,7 +103,11 @@ function stderrTail(text: string): string {
 	return lines.slice(-3).join("\n").slice(-400);
 }
 
-function runOnce(bin: string, args: string[], opts: RunOptions): Promise<string> {
+function runOnce(
+	bin: string,
+	args: string[],
+	opts: RunOptions,
+): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const child = spawn(bin, args, {
 			env: { ...process.env, ...(opts.env ?? {}) },
@@ -116,7 +133,11 @@ function runOnce(bin: string, args: string[], opts: RunOptions): Promise<string>
 			} else {
 				const why = signal ? `killed by ${signal}` : `exit ${code}`;
 				const tail = stderrTail(Buffer.concat(err).toString("utf8"));
-				reject(new Error(`cmduse ${args.join(" ")}: ${why}${tail ? `\n${tail}` : ""}`));
+				reject(
+					new Error(
+						`cmduse ${args.join(" ")}: ${why}${tail ? `\n${tail}` : ""}`,
+					),
+				);
 			}
 		});
 	});
@@ -125,7 +146,10 @@ function runOnce(bin: string, args: string[], opts: RunOptions): Promise<string>
 /** Run cmduse and return its plain-text stdout. Tries PATH, then common
  * homebrew locations; every candidate failing with ENOENT yields a single
  * install-hint error. */
-export async function runCmduse(arg: string, opts: RunOptions = {}): Promise<string> {
+export async function runCmduse(
+	arg: string,
+	opts: RunOptions = {},
+): Promise<string> {
 	const args = buildCmduseArgs(arg);
 	const candidates = opts.candidates ?? CANDIDATES;
 	let last: unknown;

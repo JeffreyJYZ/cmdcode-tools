@@ -13,9 +13,18 @@ import { elapsedLabel, FIVE_HOUR_SECS, WEEKLY_SECS } from "./windows";
 /**
  * Colour role for a row, resolved against the host theme by the panel: `ok` /
  * `warn` / `crit` are headroom (green / amber / red), `accent` is the theme's
- * accent hue, `muted` is for continuations and rules, `base` is plain text.
+ * accent hue, `data` is its interactive hue (figures: rates, ability, tok/s —
+ * the cyan mpc and cmduse use for numbers), `muted` is for continuations and
+ * rules, `base` is plain text.
  */
-export type Tone = "base" | "muted" | "accent" | "ok" | "warn" | "crit";
+export type Tone =
+	| "base"
+	| "muted"
+	| "accent"
+	| "data"
+	| "ok"
+	| "warn"
+	| "crit";
 
 export type SidebarRow = [label: string, value: string, tone?: Tone];
 
@@ -94,6 +103,9 @@ export interface Usage {
 	plan?: string;
 	monthlyCap?: number;
 	monthlyCredits?: number;
+	/** Billing-period bounds in epoch ms (cmduse 0.7.2+); absent on older builds. */
+	periodStartAt?: number;
+	periodEndAt?: number;
 	fiveHour?: WindowUsage;
 	weekly?: WindowUsage;
 	periodEnd?: string;
@@ -160,6 +172,27 @@ function windowRows(
 	];
 }
 
+/**
+ * Monthly is a billing period, not one of the fixed rolling windows, so its
+ * length comes from the bounds cmduse publishes in epoch ms (0.7.2+) rather than
+ * from a name. Without both bounds there is no resets time and no elapsed share
+ * to show, and the row keeps to spend alone.
+ */
+function monthlyDetail(usage: Usage, now: number): string | undefined {
+	const { periodStartAt, periodEndAt } = usage;
+	if (typeof periodStartAt !== "number" || typeof periodEndAt !== "number")
+		return undefined;
+	const durSecs = Math.round((periodEndAt - periodStartAt) / 1000);
+	if (durSecs <= 0) return undefined;
+	const elapsed = elapsedLabel(periodEndAt, durSecs, Math.floor(now / 1000));
+	const reset = until(periodEndAt, now);
+	const parts = [
+		...(elapsed === undefined ? [] : [`${elapsed} elapsed`]),
+		...(reset ? [`resets ${reset}`] : []),
+	];
+	return parts.length ? parts.join(" · ") : undefined;
+}
+
 /** Plan + rolling windows + period totals, from a cmduse snapshot. */
 export function usageRows(
 	usage: Usage | undefined,
@@ -178,7 +211,11 @@ export function usageRows(
 		typeof usage.monthlyCap === "number" &&
 		typeof usage.monthlyCredits === "number"
 	) {
-		const used = usage.monthlyCap - usage.monthlyCredits;
+		// cmduse clamps used into [0, cap]: leftover credits can exceed the cap.
+		const used = Math.min(
+			usage.monthlyCap,
+			Math.max(0, usage.monthlyCap - usage.monthlyCredits),
+		);
 		const pct =
 			usage.monthlyCap > 0 ? Math.round((used / usage.monthlyCap) * 100) : 0;
 		rows.push([
@@ -186,6 +223,8 @@ export function usageRows(
 			`${money(used)} / ${money(usage.monthlyCap)} (${pct}%)`,
 			pctTone(pct),
 		]);
+		const detail = monthlyDetail(usage, now);
+		if (detail) rows.push(["", detail, "muted"]);
 	}
 	rows.push(...windowRows("5-hour", usage.fiveHour, now, FIVE_HOUR_SECS));
 	rows.push(...windowRows("Weekly", usage.weekly, now, WEEKLY_SECS));
@@ -194,7 +233,7 @@ export function usageRows(
 		if (typeof usage.requests === "number")
 			parts.push(`${count(usage.requests)} requests`);
 		if (typeof usage.cost === "number") parts.push(money(usage.cost));
-		rows.push(["Period", parts.join(" · "), "base"]);
+		rows.push(["Period", parts.join(" · "), "data"]);
 	}
 	return rows;
 }
@@ -216,7 +255,7 @@ export function modelRows(
 		rows.push([
 			"Usage (this model)",
 			`${count(usage.requests)} req${spent}`,
-			"base",
+			"data",
 		]);
 	}
 	if (meta.tier) rows.push(["Tier", TIER_DISPLAY[meta.tier], "base"]);
@@ -225,7 +264,7 @@ export function modelRows(
 	// tier for, and showing both read as redundant once gating could refresh.
 	else if (meta.minPlan) rows.push(["Min plan", meta.minPlan, "base"]);
 	if (typeof meta.allowance === "number")
-		rows.push(["Allowance", `${money(meta.allowance)}/mo`, "base"]);
+		rows.push(["Allowance", `${money(meta.allowance)}/mo`, "data"]);
 	if (meta.rates) {
 		// In/out leads; the cache rates ride on an indented continuation, since
 		// all three on one line overflows the sidebar. Cache write appears only
@@ -241,14 +280,14 @@ export function modelRows(
 		rows.push([
 			"Rates",
 			`${rate(meta.rates.input)}/${rate(meta.rates.output)} in/out`,
-			"base",
+			"data",
 		]);
 		rows.push(["", cache.join(" · "), "muted"]);
 	}
 	if (typeof meta.intelligence === "number")
-		rows.push(["Intelligence", String(meta.intelligence), "base"]);
+		rows.push(["Intelligence", String(meta.intelligence), "data"]);
 	if (typeof meta.tps === "number")
-		rows.push(["Tok/s", String(meta.tps), "base"]);
+		rows.push(["Tok/s", String(meta.tps), "data"]);
 	return rows;
 }
 

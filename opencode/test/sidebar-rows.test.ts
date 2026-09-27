@@ -60,7 +60,42 @@ describe("usageRows", () => {
 		expect(rows[3]?.[1]).toContain("resets 5m");
 		expect(rows[3]?.[2]).toBe("muted");
 		expect(rows[4]?.[0]).toBe("Weekly");
-		expect(rows[6]).toEqual(["Period", "6.3K requests · $46.31", "base"]);
+		expect(rows[6]).toEqual(["Period", "6.3K requests · $46.31", "data"]);
+	});
+	test("monthly is a billing period: resets and elapsed from its bounds", () => {
+		const startAt = Date.UTC(2026, 7, 27, 12, 23);
+		const endAt = Date.UTC(2026, 8, 27, 12, 23); // 31 days later
+		const now = endAt - (3 * 60 + 50) * 60_000; // 3h 50m left
+		const rows = usageRows(
+			{
+				plan: "GOAT",
+				monthlyCap: 70,
+				monthlyCredits: 12.68,
+				periodStartAt: startAt,
+				periodEndAt: endAt,
+			},
+			now,
+		);
+		expect(rows[1]).toEqual(["Monthly", "$57.32 / $70 (82%)", "warn"]);
+		expect(rows[2]).toEqual(["", "99% elapsed · resets 3h 50m", "muted"]);
+	});
+	test("monthly keeps to spend when cmduse has no period bounds", () => {
+		const rows = usageRows({
+			plan: "GOAT",
+			monthlyCap: 70,
+			monthlyCredits: 12.68,
+		});
+		expect(rows[1]?.[0]).toBe("Monthly");
+		// Plan + Monthly only: no continuation without the bounds.
+		expect(rows.length).toBe(2);
+	});
+	test("clamps used into the cap when credits exceed it", () => {
+		const rows = usageRows({
+			plan: "GOAT",
+			monthlyCap: 70,
+			monthlyCredits: 84.5,
+		});
+		expect(rows[1]).toEqual(["Monthly", "$0 / $70 (0%)", "ok"]);
 	});
 	test("omits elapsed when the window has not started", () => {
 		const notStarted = {
@@ -88,11 +123,11 @@ describe("modelRows", () => {
 		});
 		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "accent"]);
 		expect(rows[1]).toEqual(["Tier", "open source", "base"]);
-		expect(rows[2]).toEqual(["Allowance", "$60/mo", "base"]);
-		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out", "base"]);
+		expect(rows[2]).toEqual(["Allowance", "$60/mo", "data"]);
+		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out", "data"]);
 		expect(rows[4]).toEqual(["", "cache read $0.003", "muted"]);
-		expect(rows[5]).toEqual(["Intelligence", "39.5", "base"]);
-		expect(rows[6]).toEqual(["Tok/s", "247", "base"]);
+		expect(rows[5]).toEqual(["Intelligence", "39.5", "data"]);
+		expect(rows[6]).toEqual(["Tok/s", "247", "data"]);
 	});
 	test("adds cache write only when the model has one", () => {
 		const claude = modelRows({
@@ -100,7 +135,7 @@ describe("modelRows", () => {
 			name: "Claude Sonnet 5",
 			rates: { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
 		});
-		expect(claude[1]).toEqual(["Rates", "$2/$10 in/out", "base"]);
+		expect(claude[1]).toEqual(["Rates", "$2/$10 in/out", "data"]);
 		expect(claude[2]).toEqual(["", "cache read $0.2 · write $2.5", "muted"]);
 	});
 	test("puts period usage under the model name when known", () => {
@@ -109,14 +144,14 @@ describe("modelRows", () => {
 			{ requests: 1_234, cost: 8.4 },
 		);
 		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "accent"]);
-		expect(rows[1]).toEqual(["Usage (this model)", "1.2K req · $8.40", "base"]);
+		expect(rows[1]).toEqual(["Usage (this model)", "1.2K req · $8.40", "data"]);
 	});
 	test("omits spend when the harness priced it at zero (subscription)", () => {
 		const rows = modelRows(
 			{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },
 			{ requests: 3_110, cost: 0 },
 		);
-		expect(rows[1]).toEqual(["Usage (this model)", "3.1K req", "base"]);
+		expect(rows[1]).toEqual(["Usage (this model)", "3.1K req", "data"]);
 	});
 	test("missing meta yields no rows", () => {
 		expect(modelRows(undefined)).toEqual([]);

@@ -289,6 +289,16 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   (`text.feedback.{success,warning,error,info}.base`, `hue.accent[400]`); the
   vendored types in `opencode-cmd-provider` are stale. `span`'s props are typed
   `{}` in opentui 0.5, so colour is per row node, not per segment.
+- **`cmduse -1 --json` carries the billing-period bounds since 0.7.2**
+  (`periodStartAt` / `periodEndAt`, epoch ms — the same units as `resetAt`).
+  `periodEnd` stays the display date. Before that, the sidebar could not render
+  the monthly window's resets countdown or elapsed share: `periodEnd` is a date
+  with no start, and inventing one is exactly what cmduse's anniversary
+  inference is opt-in about. The plugin mirrors `monthly_window`
+  (`core/src/lib.rs`) for that row, and shows spend alone when the fields are
+  missing (older cmduse). The plugin honours `CMDUSE_BIN` first, like `mpc`, so a
+  dev build can be pointed at without touching the brew Cellar (its binaries are
+  read-only).
 - **npm publish is interactive: it fails from the agent shell** (`EOTP`, prints
   an auth URL). Build first (`cd opencode && bun run build`) so `dist/` is
   current, then the user runs plain `npm publish` themselves — it opens a

@@ -26,6 +26,7 @@ export interface HostTheme {
 	};
 	readonly hue?: {
 		readonly accent?: Readonly<Record<number, RGBA>>;
+		readonly interactive?: Readonly<Record<number, RGBA>>;
 	};
 }
 
@@ -35,6 +36,7 @@ export function hostColors(theme: HostTheme): PanelColors {
 		base: theme.text.base,
 		muted: theme.text.muted,
 		accent: theme.hue?.accent?.[400] ?? theme.text.base,
+		data: theme.hue?.interactive?.[400] ?? theme.text.feedback.info.base,
 		ok: theme.text.feedback.success.base,
 		warn: theme.text.feedback.warning.base,
 		crit: theme.text.feedback.error.base,
@@ -50,6 +52,7 @@ export function legacyColors(theme: {
 		base: theme.text,
 		muted: theme.textMuted,
 		accent: RGBA.fromValues(0.55, 0.7, 1, 1),
+		data: RGBA.fromValues(0.4, 0.8, 0.9, 1),
 		ok: RGBA.fromValues(0.4, 0.85, 0.5, 1),
 		warn: RGBA.fromValues(0.95, 0.75, 0.3, 1),
 		crit: RGBA.fromValues(0.95, 0.45, 0.45, 1),
