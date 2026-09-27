@@ -84,23 +84,32 @@ export function legacyColors(theme: {
 const spanStyle = (fg: RGBA): { style: { fg: RGBA } } =>
 	({ style: { fg } }) as unknown as { style: { fg: RGBA } };
 
-/** Headline rows (the plan, the active model) label in the brighter shade. */
-const labelColor = (colors: PanelColors, row: SidebarRow): RGBA =>
-	row[3] ? colors.headline : colors.label;
+/**
+ * A headline row (the plan, the active model) is drawn whole in one shade: its
+ * label and its value share the colour, rather than the label being tinted alone.
+ */
+const rowColors = (
+	colors: PanelColors,
+	row: SidebarRow,
+): { label: RGBA; value: RGBA } =>
+	row[3]
+		? { label: colors.headline, value: colors.headline }
+		: { label: colors.label, value: colors[row[2] ?? "base"] };
 
 /** One row: a bold label, then its value in the row's tone. */
 function Row(props: { row: SidebarRow; colors: PanelColors }) {
 	const [label, value] = parts(props.row);
 	const tone = props.row[2] ?? "base";
+	const fg = rowColors(props.colors, props.row);
 	if (!value) {
 		return <text fg={props.colors.muted}>{label}</text>;
 	}
 	return (
 		<text>
-			<span {...spanStyle(labelColor(props.colors, props.row))}>
+			<span {...spanStyle(fg.label)}>
 				<b>{label}</b>
 			</span>
-			<span {...spanStyle(props.colors[tone])}>
+			<span {...spanStyle(fg.value)}>
 				{tone === "strong" ? <b>{value}</b> : value}
 			</span>
 		</text>

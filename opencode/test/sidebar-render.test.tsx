@@ -57,9 +57,15 @@ describe("rendered panel", () => {
 		// The point of the whole exercise: no row may collapse to one colour,
 		// and labels wear their own hue rather than the value's.
 		expect(hex(find("Tier: ")?.fg as RGBA)).toBe(hex(colors.label));
-		// The two headline rows label apart: the plan and the active model.
+		// The two headline rows are whole-line: label and value share one shade.
 		expect(hex(find("Plan: ")?.fg as RGBA)).toBe(hex(colors.headline));
+		expect(hex(find("GOAT · $70/mo credits")?.fg as RGBA)).toBe(
+			hex(colors.headline),
+		);
 		expect(hex(find("Model: ")?.fg as RGBA)).toBe(hex(colors.headline));
+		expect(hex(find("DeepSeek V4.1 Flash")?.fg as RGBA)).toBe(
+			hex(colors.headline),
+		);
 		expect(hex(colors.headline)).not.toBe(hex(colors.label));
 		expect(hex(find("open source")?.fg as RGBA)).toBe(hex(colors.base));
 		expect(hex(find("$57.40 / $70 (82%)")?.fg as RGBA)).toBe(hex(colors.warn));
