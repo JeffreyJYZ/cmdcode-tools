@@ -206,10 +206,11 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   errors you won't see locally. If core did not change, publish the CLI alone.
 - **crates.io version slots are FOREVER.** 0.2.0–0.4.0 were published+yanked
   on old `cmd-usage` — you can never re-upload those numbers. Current 0.x
-  release line is 0.7.4 (0.7.0 added the ocuse bin; 0.7.1 refreshed gating.json to
+  release line is 0.7.5 (0.7.0 added the ocuse bin; 0.7.1 refreshed gating.json to
   CLI 1.66; 0.7.2 added the `-1 --json` billing-period bounds; 0.7.3 gave the
   ocuse dashboard cmduse's gauges, sparkline and live watch frame; 0.7.4 threaded
-  the colour flag through every ocuse renderer, reports included); 0.6.x was the
+  the colour flag through every ocuse renderer, reports included; 0.7.5 flagged an
+  over-cap model and added its share of period spend); 0.6.x was the
   last CommandCode-only line (first free slot past the dead 0.2–0.4 range). Skip
   taken numbers, never fight the 400.
 - Clean tree required (commit first, incl. Cargo.lock).
