@@ -6,7 +6,9 @@
 // window split; Zen is pay-as-you-go, so it has rates but no limits.
 use serde::Deserialize;
 
-const RAW: &str = include_str!("../../../core/zen.json");
+// Re-exported from `cmduse-core` so the path stays inside its own crate (a
+// `include_str!` reaching outside is fine locally and fatal at `cargo publish`).
+const RAW: &str = cmduse_core::ZEN_JSON;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct RateVariant {
