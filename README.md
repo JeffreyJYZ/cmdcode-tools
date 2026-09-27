@@ -102,7 +102,8 @@ section (toggle with `ctrl+x b`):
 - the active model: tier, monthly allowance, $/M rates (in/out, cache read), Intelligence, Tok/s
   (new in 0.2.5)
 - the cheapest plan that serves it (`Min plan`), from Command Code's own model table — the column
-  their docs name as the access rule (new in 0.3.2)
+  their docs name as the access rule; shown only when the tier is unknown (new in 0.3.2, fallback-only
+  since 0.3.6)
 - the active model's own period usage — requests, plus spend when the harness records it
   (new in 0.2.9; labelled `Usage (this model)`)
 

@@ -91,8 +91,10 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
   modality default, so a model accepts images unless it is in the bundle's `Rr`
   text-only denylist — the generator reads that set (explicit per-model records
   still win) and mirrors the CLI's own `supportsVision`; and the same models.md
-  carries the `Min plan` column, which `plans.md` names as the access rule and
-  which the sidebar reports as its `Min plan` row.
+  carries the `Min plan` column, which `plans.md` names as the access rule. The
+  sidebar reports it as `Min plan` **only when the gating snapshot has no tier**
+  for the model — with gating refreshing again (0.3.5) that is the exception, and
+  showing both rows read as redundant.
 - **The plugin halves are plain objects; `@opencode/*` is dev-only.** opencode
   decodes the default export against its own `Plugin` interface (both `define`
   helpers are the identity function), so `src/v2.ts` / `src/tui.tsx` export
@@ -268,7 +270,9 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   cached the live list to disk so a warm start never waits on the listing API;
   0.3.4 stopped the refresh from transforming after paint at all — the ungated
   fallback list swings in size with network luck, which defeated the id-diff and
-  made every start look changed.
+  made every start look changed. 0.3.6 made the sidebar's Min plan row a
+  fallback: the tier leads, and Min plan fills in only when gating has no
+  category for the model.
 - **npm publish is interactive: it fails from the agent shell** (`EOTP`, prints
   an auth URL). Build first (`cd opencode && bun run build`) so `dist/` is
   current, then the user runs plain `npm publish` themselves — it opens a

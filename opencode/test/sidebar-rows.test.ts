@@ -153,3 +153,15 @@ describe("min plan row", () => {
 		expect(rows.some(([label]) => label === "Min plan")).toBe(false)
 	})
 })
+
+describe("min plan is a fallback, not a second opinion", () => {
+	test("tier wins and min plan is omitted when both are known", () => {
+		const rows = modelRows({ key: "k", name: "DeepSeek V4.1 Flash", tier: "opensource", minPlan: "Go" })
+		expect(rows.map(([label]) => label)).not.toContain("Min plan")
+		expect(rows.map(([label]) => label)).toContain("Tier")
+	})
+	test("min plan fills in when the snapshot has no tier", () => {
+		const rows = modelRows({ key: "k", name: "New Model", minPlan: "Pro" })
+		expect(rows.map(([label, value]) => [label, value])).toContainEqual(["Min plan", "Pro"])
+	})
+})
