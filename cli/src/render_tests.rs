@@ -150,6 +150,24 @@ fn render_json_is_valid_and_complete() {
 }
 
 #[test]
+fn render_json_carries_the_period_bounds() {
+    use cmduse_core::dates::parse_iso_utc;
+    let s = snapshot_fixture();
+    let v: serde_json::Value = serde_json::from_str(&render_json(&s)).unwrap();
+    // The monthly window needs both ends: the date-only `periodEnd` cannot give
+    // a resets countdown or an elapsed share.
+    assert_eq!(
+        v["periodStartAt"].as_f64(),
+        parse_iso_utc("2026-08-27T12:23:00.000Z")
+    );
+    assert_eq!(
+        v["periodEndAt"].as_f64(),
+        parse_iso_utc("2026-09-27T12:23:00.000Z")
+    );
+    assert_eq!(v["periodEnd"], "2026-09-27");
+}
+
+#[test]
 fn plain_render_contains_sections() {
     let s = snapshot_fixture();
     let out = render_plain(&s);
