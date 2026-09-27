@@ -350,7 +350,7 @@ fn compact_dashboard(s: &crate::render::Snapshot, history: &[f64]) -> String {
 /// fails — redraw then skips clipping (safe: non-tty can't wrap).
 /// Deliberately UNcached: the watch loop re-queries every refresh so resizing
 /// mid-run switches between the full and compact dashboards live.
-fn term_size() -> Option<(usize, usize)> {
+pub fn term_size() -> Option<(usize, usize)> {
     let out = std::process::Command::new("sh")
         .arg("-c")
         .arg("stty size < /dev/tty")
@@ -432,7 +432,7 @@ pub fn clip_to_width(line: &str, cols: Option<usize>) -> String {
 /// In-place terminal redraw of one frame. Assumes the cursor parks on the
 /// previous frame's last line (no trailing newline). Returns the new frame's
 /// line count so the caller can pass it back as `prev_lines`.
-fn redraw_frame(
+pub fn redraw_frame(
     out: &mut impl Write,
     frame: &str,
     prev_lines: usize,

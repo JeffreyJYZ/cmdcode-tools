@@ -198,7 +198,7 @@ The same crate ships `ocuse`, which tracks **OpenCode Go** (the $10/mo subscript
 **OpenCode Zen** (pay-as-you-go) with the same CLI shape:
 
 ```sh
-ocuse                 # watch
+ocuse                 # watch: live frame (colour, gauges, spend-burst sparkline)
 ocuse -1 --json       # one-shot, machine-readable
 ocuse daily|hourly|session
 ocuse model [id]
@@ -218,9 +218,17 @@ The billing period has no local record, so the default is the calendar month:
 `--period-start YYYY-MM-DD` pins the real one, `--window all|<n>d` reports other ranges,
 and `--tz` shifts day/hour buckets.
 
+`ocuse` renders with `cmduse`'s own presentation: the same palette, the same
+severity-coloured gauges (green <70%, yellow 70–90%, red ≥90%), the same in-place watch
+redraw (`cmduse`'s `redraw_frame`, so a shrinking frame never scrolls), and the same
+spend-burst sparkline. Both watch loop and gauges reuse `cli/src/render.rs` rather than a
+second copy. `--plain`, `NO_COLOR` and a piped stdout drop colour and gauges; one-shot
+output stays script-friendly.
+
 ## Notes
 
 - Window bars: green <70%, yellow 70–90%, red ≥90%, plus `LIMIT EXCEEDED` flag.
 - Report tables show cache read and cache write separately; `daily` is bucketed in UTC unless `--tz`, and `--local` honors `--tz`; token totals in the model/session `Tokens` column include both cache columns.
 - Spend-burst sparkline appears in watch mode after 2 refreshes (bars = $ spent between refreshes, ~3 min of history at 5s interval, capped at 40 samples; tall = burst, flat = idle).
+- `ocuse`'s watch frame uses the same three pieces: `redraw_frame` parks the cursor on the frame's last line (its status/countdown line), the sparkline tracks 5-hour spend deltas at 10s samples (capped at 60), and `Ink` carries `cmduse`'s palette as empty strings when colour is off.
 - On Monthly caps: monthly pool is the plan total (e.g. $70 on GOAT). Docs describe per-model allowances, but the CLI and API meter one shared pool — verified empirically.

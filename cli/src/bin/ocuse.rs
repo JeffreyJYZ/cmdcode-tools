@@ -12,7 +12,7 @@ const HELP: &str = "\
 ocuse — OpenCode Go/Zen usage (local, from opencode.db)
 
 USAGE:
-  ocuse                 watch: redraw the dashboard every 10s
+  ocuse                 watch: live frame, redrawn every 10s (colour + bars)
   ocuse -1              one-shot dashboard
   ocuse --json          machine-readable projection
   ocuse model [id]      per-model detail (all models when no id)
@@ -226,15 +226,52 @@ fn main() {
                 ),
             }
         }
-        "watch" if !flag("-1") && !flag("--once") => loop {
-            let report = build(&read(), &catalog, now_ms(), period_start);
-            print!(
-                "\x1b[2J\x1b[H{}",
-                render::render_text(&report, &db_path, rows, colour)
-            );
-            let _ = std::io::stdout().flush();
-            std::thread::sleep(std::time::Duration::from_secs(10));
-        },
+        "watch" if !flag("-1") && !flag("--once") => {
+            // Live frame, cmduse's redraw contract: the frame's last line carries
+            // no newline, so the cursor parks there and the countdown can rewrite
+            // that one line each second instead of repainting the whole frame.
+            const INTERVAL: u64 = 10;
+            const BURST_SAMPLES: usize = 60;
+            let ink = render::Ink::new(colour);
+            let mut out = std::io::stdout();
+            let mut prev_lines = 0usize;
+            let mut history: Vec<f64> = Vec::new();
+            let mut last_five: Option<f64> = None;
+            loop {
+                let report = build(&read(), &catalog, now_ms(), period_start);
+                let (_, cols) = cmd_usage::term_size().unwrap_or((0, 0));
+                let cols = (cols > 0).then_some(cols);
+                // 5-hour spend only rises between refreshes, so the delta is the
+                // burst; a sparkline of the cumulative figure would just stay full.
+                let delta = last_five
+                    .map(|prev| (report.five_hour.cost - prev).max(0.0))
+                    .unwrap_or(0.0);
+                last_five = Some(report.five_hour.cost);
+                history.push(delta);
+                if history.len() > BURST_SAMPLES {
+                    history.remove(0);
+                }
+                let status = format!(
+                    "{}refreshing every {INTERVAL}s · ctrl-c to quit{}",
+                    ink.dim, ink.reset
+                );
+                let frame = format!(
+                    "{}\n{status}",
+                    render::watch_frame(&report, &db_path, rows, colour, &history, INTERVAL)
+                );
+                prev_lines = cmd_usage::redraw_frame(&mut out, &frame, prev_lines, cols);
+                let _ = out.flush();
+                for remaining in (1..INTERVAL).rev() {
+                    std::thread::sleep(std::time::Duration::from_secs(1));
+                    let msg = format!(
+                        "\r\x1b[2K{}refreshing every {INTERVAL}s · next refresh in {remaining}s · ctrl-c to quit{}",
+                        ink.dim, ink.reset
+                    );
+                    let _ = write!(out, "{}", cmd_usage::clip_to_width(&msg, cols));
+                    let _ = out.flush();
+                }
+            }
+        }
         _ => {
             let mut report = build(&read(), &catalog, now, period_start);
             report.period_label = period_label;

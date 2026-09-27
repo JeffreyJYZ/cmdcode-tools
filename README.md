@@ -131,7 +131,7 @@ specifier is cached as-is, and the plugin's own provider is versioned with it.
 **OpenCode Zen** (pay-as-you-go), using the same CLI shape as `cmduse`:
 
 ```sh
-ocuse                 # watch: redraw every 10s
+ocuse                 # watch: live frame (colour, gauges, spend-burst sparkline)
 ocuse -1              # one-shot dashboard
 ocuse --json
 ocuse daily|hourly|session
@@ -158,6 +158,12 @@ guesses wrong on sparse history).
 
 Limits and rates come from `core/zen.json`, regenerated with `bun scripts/extract-zen.ts` from
 OpenCode's own docs sources.
+
+The watch frame is `cmduse`'s: the same palette, severity-coloured gauges (green <70%,
+yellow 70–90%, red ≥90%) and in-place redraw, so resizing or a shrinking frame never scrolls.
+A spend-burst sparkline appears once the 5-hour window moves between refreshes (delta spend,
+not the cumulative figure — that only ever rises). `--plain`, `NO_COLOR` and a piped stdout
+all drop the colour and the gauges, and the one-shot output is unchanged for scripts.
 
 ## MCP server
 
