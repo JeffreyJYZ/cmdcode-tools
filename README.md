@@ -113,6 +113,16 @@ simply omits those rows. The model's own usage is read from opencode's message s
 (`~/.local/share/opencode/opencode.db`, read-only); CommandCode is subscription-billed, so its
 rows show requests only. Non-CommandCode models show nothing.
 
+The section is plain text unless you ask for colour. To turn it on, write
+`~/.config/opencode/command-code.json`:
+
+```json
+{ "colors": true }
+```
+
+`CMD_COLORS=1` (or `0`) overrides the file for a single run. The file is re-read every few seconds,
+so flipping it lands on the next poll without a restart.
+
 opencode is told each model's published $/1M rates, so its own cost display (and any accounting
 built on it) works for CommandCode models instead of showing $0.
 

@@ -284,6 +284,13 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   `accent` / `ok` / `warn` / `crit`, see `sidebar/rows.ts`), `sidebar/panel.tsx`
   maps tones onto the host theme, and headroom is severity-coded — 70% amber,
   90% red — so a nearly-spent window reads without arithmetic.
+- **Sidebar colour is opt-in; the default is plain text.** `sidebar/prefs.ts` reads
+  `~/.config/opencode/command-code.json` (`{"colors": true}`) with `CMD_COLORS=1|0` as a
+  per-run override, and caches the answer for a few seconds so a streaming session does not
+  stat the disk per render — that read happens inside `tui.tsx`'s colour getter, which is
+  why it must stay cheap. `mono()` collapses every tone to plain text (bold and dim carry
+  structure), and `test/sidebar-render.test.tsx` asserts the off frame is achromatic, so a
+  tone cannot leak colour back in.
 - **The v2 theme tokens are `text.base` / `text.muted`, not `text.default` /
   `text.subdued`.** The panel passed the latter for a while, so `fg` was
   `undefined` and the whole section rendered in the terminal's default colour.

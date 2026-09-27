@@ -84,6 +84,24 @@ export function legacyColors(theme: {
 }
 
 /**
+ * Colours off: every tone renders as plain text, so only bold and dim carry
+ * structure. Headlines lose their accent, status rows their green/amber/red —
+ * which is the point of the default.
+ */
+export function mono(colors: PanelColors): PanelColors {
+	return {
+		base: colors.base,
+		muted: colors.muted,
+		strong: colors.base,
+		label: colors.base,
+		headline: colors.base,
+		ok: colors.base,
+		warn: colors.base,
+		crit: colors.base,
+	};
+}
+
+/**
  * opentui styles a text-node span through `style` (`<span style={{ fg }}>`, as
  * opencode's own v2 UI does), yet types the prop as an empty bag. Passing `fg`
  * directly is silently ignored — the run then inherits no colour at all, which

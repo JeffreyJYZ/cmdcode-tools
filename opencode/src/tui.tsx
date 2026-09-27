@@ -14,7 +14,14 @@ import type { Plugin as TuiPluginNs } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
 import type { JSX } from "@opentui/solid";
 import { runCmduse } from "./cli";
-import { hostColors, legacyColors, Panel } from "./sidebar/panel";
+import {
+	hostColors,
+	legacyColors,
+	mono,
+	Panel,
+	type PanelColors,
+} from "./sidebar/panel";
+import { loadPrefs } from "./sidebar/prefs";
 import { useRows } from "./sidebar/useRows";
 
 // Plugin id is a stable contract (test/tui.test.ts pins it); the slot id is separate.
@@ -22,6 +29,10 @@ const ID = "command-code.tui";
 
 const isOurs = (providerID: string | undefined): boolean =>
 	Boolean(providerID?.startsWith("command-code"));
+
+/** Colour is opt-in (see sidebar/prefs.ts); off, every tone collapses to text. */
+const themed = (colors: PanelColors): PanelColors =>
+	loadPrefs().colors ? colors : mono(colors);
 
 // ---- v1 host ---------------------------------------------------------------
 
@@ -54,7 +65,10 @@ function PanelV1(props: { api: V1Api; sessionID: string }) {
 		() => isOurs(current()?.providerID),
 	);
 	return (
-		<Panel rows={rows} colors={() => legacyColors(props.api.theme.current)} />
+		<Panel
+			rows={rows}
+			colors={() => themed(legacyColors(props.api.theme.current))}
+		/>
 	);
 }
 
@@ -79,7 +93,7 @@ function PanelV2(props: { ctx: TuiPluginNs.Context; sessionID: string }) {
 		() => current()?.id,
 		() => isOurs(current()?.providerID),
 	);
-	return <Panel rows={rows} colors={() => hostColors(ctx.theme)} />;
+	return <Panel rows={rows} colors={() => themed(hostColors(ctx.theme))} />;
 }
 
 // Plain object, not `Plugin.define` — identity function there too.

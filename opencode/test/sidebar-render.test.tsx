@@ -5,7 +5,7 @@
 import { describe, expect, test } from "bun:test";
 import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
-import { hostColors, Panel } from "../src/sidebar/panel";
+import { hostColors, mono, Panel } from "../src/sidebar/panel";
 import { type SidebarRow, separator } from "../src/sidebar/rows";
 
 const hex = (c: RGBA) =>
@@ -78,5 +78,21 @@ describe("rendered panel", () => {
 		// Continuations and the rule stay dim.
 		expect(hex(find("99% elapsed")?.fg as RGBA)).toBe(hex(colors.muted));
 		expect(hex(find("───")?.fg as RGBA)).toBe(hex(colors.muted));
+	});
+
+	test("colours off: nothing chromatic reaches the frame", async () => {
+		// The default is off (see sidebar/prefs.ts), so this is the frame most
+		// users see: plain text and dim only, no cyan, no amber, no headline hue.
+		const setup = await testRender(
+			() => <Panel rows={() => rows} colors={() => mono(colors)} />,
+			{ width: 42, height: 12 },
+		);
+		await setup.renderOnce();
+		const spans = setup.captureSpans().lines.flatMap((line) => line.spans);
+		const achromatic = new Set([hex(colors.base), hex(colors.muted)]);
+		expect(spans.length).toBeGreaterThan(5);
+		for (const span of spans) {
+			expect(achromatic.has(hex(span.fg))).toBe(true);
+		}
 	});
 });
