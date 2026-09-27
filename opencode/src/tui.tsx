@@ -9,33 +9,46 @@
 //   v2  `setup(context)`       — `context.ui.slot({ append: "sidebar.content" })`
 // Data comes from two read-only spawns: cmduse for usage (polled) and mpc for
 // the per-model catalog (disk-cached; it scrapes docs).
-import type { RGBA } from "@opentui/core"
-import type { JSX } from "@opentui/solid"
-import type { Plugin as TuiPluginNs } from "@opencode/plugin/tui"
-import { For, Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js"
-import { runCmduse } from "./cli"
-import { loadMeta, loadUsage } from "./sidebar/data"
+
+import type { Plugin as TuiPluginNs } from "@opencode/plugin/tui";
+import type { RGBA } from "@opentui/core";
+import type { JSX } from "@opentui/solid";
+import {
+	createEffect,
+	createMemo,
+	createSignal,
+	For,
+	onCleanup,
+	Show,
+} from "solid-js";
+import { minPlan } from "./catalog";
+import { runCmduse } from "./cli";
+import { loadMeta, loadUsage } from "./sidebar/data";
 import {
 	type ModelMeta,
 	type ModelUsage,
-	type SidebarRow,
 	modelKey,
 	modelRows,
+	type SidebarRow,
+	separator,
 	tierFor,
 	usageRows,
-} from "./sidebar/rows"
-import { minPlan } from "./catalog"
-import { loadModelUsage, periodStart } from "./sidebar/usageDb"
+} from "./sidebar/rows";
+import { loadModelUsage, periodStart } from "./sidebar/usageDb";
 
 // Plugin id is a stable contract (test/tui.test.ts pins it); the slot id is separate.
-const ID = "command-code.tui"
+const ID = "command-code.tui";
 // Account totals (plan, credits, rolling windows) come from cmduse; a minute is
 // plenty — the numbers move on request boundaries, not continuously, and each
 // poll is a process spawn.
-const POLL_MS = 60_000
+const POLL_MS = 60_000;
 
 /** Shared panel: bold title, one line per row. Renders nothing when empty. */
-function Panel(props: { rows: () => SidebarRow[]; text: () => RGBA; muted: () => RGBA }) {
+function Panel(props: {
+	rows: () => SidebarRow[];
+	text: () => RGBA;
+	muted: () => RGBA;
+}) {
 	return (
 		<Show when={props.rows().length > 0}>
 			<box>
@@ -44,50 +57,61 @@ function Panel(props: { rows: () => SidebarRow[]; text: () => RGBA; muted: () =>
 				</text>
 				<For each={props.rows()}>
 					{(row) => (
-						<text fg={props.muted()}>{row[1] ? `${row[0]}: ${row[1]}` : row[0]}</text>
+						<text fg={props.muted()}>
+							{row[0] === ""
+								? `  ${row[1]}`
+								: row[1]
+									? `${row[0]}: ${row[1]}`
+									: row[0]}
+						</text>
 					)}
 				</For>
 			</box>
 		</Show>
-	)
+	);
 }
 
 /** Usage (polled) + model meta (cached), reduced to sidebar rows. */
-function useRows(activeModelId: () => string | undefined, active: () => boolean) {
-	const [usage, setUsage] = createSignal<ReturnType<typeof usageRows>>([])
-	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(new Map())
-	const [modelUsage, setModelUsage] = createSignal<ModelUsage | undefined>()
+function useRows(
+	activeModelId: () => string | undefined,
+	active: () => boolean,
+) {
+	const [usage, setUsage] = createSignal<ReturnType<typeof usageRows>>([]);
+	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(new Map());
+	const [modelUsage, setModelUsage] = createSignal<ModelUsage | undefined>();
 
 	void loadMeta()
 		.then(setMeta)
-		.catch(() => {})
+		.catch(() => {});
 	const refresh = async () => {
 		try {
-			const snapshot = await loadUsage()
-			setUsage(usageRows(snapshot))
+			const snapshot = await loadUsage();
+			setUsage(usageRows(snapshot));
 			// opencode's own store carries the per-model half cmduse lacks.
-			const id = activeModelId()
+			const id = activeModelId();
 			setModelUsage(
-				id ? (loadModelUsage(id, periodStart(snapshot.periodEnd)) ?? undefined) : undefined,
-			)
+				id
+					? (loadModelUsage(id, periodStart(snapshot.periodEnd)) ?? undefined)
+					: undefined,
+			);
 		} catch {
 			// cmduse missing/offline: keep the last snapshot
 		}
-	}
+	};
 	// Poll only while this session is on one of our models. The panel returns no
 	// rows otherwise, but an unconditional poll still spawned cmduse for every
 	// session on every provider — and cmduse's spinner writes to /dev/tty.
 	createEffect(() => {
-		if (!active()) return
-		void refresh()
-		const timer = setInterval(() => void refresh(), POLL_MS)
-		onCleanup(() => clearInterval(timer))
-	})
+		if (!active()) return;
+		void refresh();
+		const timer = setInterval(() => void refresh(), POLL_MS);
+		onCleanup(() => clearInterval(timer));
+	});
 
 	return createMemo(() => {
-		if (!active()) return []
-		const id = activeModelId()
-		const found = id ? (meta().get(modelKey(id)) ?? meta().get(id)) : undefined
+		if (!active()) return [];
+		const id = activeModelId();
+		const found = id ? (meta().get(modelKey(id)) ?? meta().get(id)) : undefined;
 		// gating keys are model ids, not display names, so tier comes from the
 		// session's id rather than the catalog row.
 		const model = found
@@ -96,49 +120,53 @@ function useRows(activeModelId: () => string | undefined, active: () => boolean)
 					tier: found.tier ?? (id ? tierFor(id) : undefined),
 					minPlan: id ? minPlan(id) : undefined,
 				}
-			: undefined
-		return [...usage(), ...modelRows(model, modelUsage())]
-	})
+			: undefined;
+		// Account block, a rule, then the model block: two different subjects, and
+		// without the divider the twelve rows read as one long list.
+		return [...usage(), separator(), ...modelRows(model, modelUsage())];
+	});
 }
 
 const isOurs = (providerID: string | undefined): boolean =>
-	Boolean(providerID?.startsWith("command-code"))
+	Boolean(providerID?.startsWith("command-code"));
 
 // ---- v1 host ---------------------------------------------------------------
 
 interface V1Api {
 	slots: {
 		register: (config: {
-			order?: number
+			order?: number;
 			slots: {
 				sidebar_content: (
 					ctx: unknown,
 					props: { session_id: string },
-				) => unknown
-			}
-		}) => void
-	}
+				) => unknown;
+			};
+		}) => void;
+	};
 	state: {
 		session: {
-			get: (id: string) => { model?: { providerID: string; id: string } } | undefined
-		}
-	}
-	theme: { current: { text: RGBA; textMuted: RGBA } }
+			get: (
+				id: string,
+			) => { model?: { providerID: string; id: string } } | undefined;
+		};
+	};
+	theme: { current: { text: RGBA; textMuted: RGBA } };
 }
 
 function PanelV1(props: { api: V1Api; sessionID: string }) {
-	const current = () => props.api.state.session.get(props.sessionID)?.model
+	const current = () => props.api.state.session.get(props.sessionID)?.model;
 	const rows = useRows(
 		() => current()?.id,
 		() => isOurs(current()?.providerID),
-	)
+	);
 	return (
 		<Panel
 			rows={rows}
 			text={() => props.api.theme.current.text}
 			muted={() => props.api.theme.current.textMuted}
 		/>
-	)
+	);
 }
 
 /** v1 half — snake_case slot map registered through `api.slots`. */
@@ -147,31 +175,28 @@ export const tui = async (api: V1Api): Promise<void> => {
 		order: 200,
 		slots: {
 			sidebar_content(_ctx, props) {
-				return <PanelV1 api={api} sessionID={props.session_id} />
+				return <PanelV1 api={api} sessionID={props.session_id} />;
 			},
 		},
-	})
-}
+	});
+};
 
 // ---- v2 host ---------------------------------------------------------------
 
-function PanelV2(props: {
-	ctx: TuiPluginNs.Context
-	sessionID: string
-}) {
-	const { ctx } = props
-	const current = () => ctx.data.session.get(props.sessionID)?.model
+function PanelV2(props: { ctx: TuiPluginNs.Context; sessionID: string }) {
+	const { ctx } = props;
+	const current = () => ctx.data.session.get(props.sessionID)?.model;
 	const rows = useRows(
 		() => current()?.id,
 		() => isOurs(current()?.providerID),
-	)
+	);
 	return (
 		<Panel
 			rows={rows}
 			text={() => ctx.theme.text.default}
 			muted={() => ctx.theme.text.subdued}
 		/>
-	)
+	);
 }
 
 // Plain object, not `Plugin.define` — identity function there too.
@@ -181,7 +206,7 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 		ctx.ui.slot({
 			append: "sidebar.content",
 			render: (input) => <PanelV2 ctx={ctx} sessionID={input.sessionID} />,
-		})
+		});
 		// /cmd-usage prints the full cmduse dashboard in a dialog. keymap.layer()
 		// must run inside a render, so mount a no-op and register from there.
 		// Return `void` like opencode's own /btw claim: a `null` render leaves an
@@ -201,29 +226,30 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 							enabled: () => true,
 							suggested: true,
 							run: async (input) => {
-								let text: string
+								let text: string;
 								try {
-									text = await runCmduse(input ?? "")
+									text = await runCmduse(input ?? "");
 								} catch (error) {
 									ctx.ui.toast.show({
 										title: "cmd-usage failed",
-										message: error instanceof Error ? error.message : String(error),
+										message:
+											error instanceof Error ? error.message : String(error),
 										variant: "error",
-									})
-									return
+									});
+									return;
 								}
 								await ctx.ui.dialog.alert({
 									title: "Command Code usage",
 									message: text.trimEnd(),
-								})
+								});
 							},
 						},
 					],
 					bindings: ["command-code.cmd-usage"],
-				}))
+				}));
 			}) as unknown as () => JSX.Element,
-		})
+		});
 	},
-}
+};
 
-export default { ...commandCodeTui, tui }
+export default { ...commandCodeTui, tui };
