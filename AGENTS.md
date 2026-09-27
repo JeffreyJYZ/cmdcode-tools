@@ -67,9 +67,15 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
 - **Plan data lives in `core/plans.json`, gating data in `core/gating.json`,
   never in code.** `core/build.rs` bakes both into Rust consts; `opencode`
   imports the same files. Edit the JSON, not the generated consts or the TS.
-  repo-root `scripts/extract-gating.ts` regenerates `gating.json` from the
-  installed Command Code CLI bundle (`bun run extract`); the hand-probed
-  `hardBlocked` entries live in that script. The file carries `extractedAt`
+  repo-root `scripts/extract-gating.ts` regenerates `gating.json` (`bun run
+  extract`) from the published CLI package — the registry **tarball** first, CDNs
+  only as fallback: unpkg 500s on some versions and jsdelivr once served a
+  *truncated* cli.mjs that still passed a naive sanity check, which is what made a
+  refresh fail on anchors upstream has. Bundled releases rename every minified
+  helper (1.66 moved Fr/Ur/Sr/wr to qr/Yr/Cr/Er and the record factories
+  $r/_r to zr/Kr), so the script carries a small GENERATIONS table and picks the
+  first that matches, failing loud when nothing does. A local CLI install is the
+  offline fallback. The hand-probed `hardBlocked` entries live in that script. The file carries `extractedAt`
   + `cliVersion`; cli and opencode warn when the snapshot is >30d old, and
   both warn when the API returns a plan id no `plans.json` rule matches
   (the dashboard would otherwise silently show "Free" with no cap).
@@ -198,7 +204,8 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   errors you won't see locally. If core did not change, publish the CLI alone.
 - **crates.io version slots are FOREVER.** 0.2.0–0.4.0 were published+yanked
   on old `cmd-usage` — you can never re-upload those numbers. Current 0.x
-  release line is 0.7.0, which adds the ocuse bin; 0.6.x was the last CommandCode-only line (first free slot past the dead 0.2–0.4 range). Skip
+  release line is 0.7.1 (0.7.0 added the ocuse bin; 0.7.1 refreshed gating.json to
+  CLI 1.66); 0.6.x was the last CommandCode-only line (first free slot past the dead 0.2–0.4 range). Skip
   taken numbers, never fight the 400.
 - Clean tree required (commit first, incl. Cargo.lock).
 - Homebrew after every cmd-usage release: `JeffreyJYZ/homebrew-tap`,

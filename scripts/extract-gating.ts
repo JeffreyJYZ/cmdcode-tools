@@ -6,8 +6,8 @@
 // ponytail: regex-scrapes a minified bundle — breaks if Command Code renames the
 // Fr/Ur/Sr/wr minified vars; upgrade path is pinning a documented endpoint when
 // one ships, or re-locating the literals by their stable string anchors below.
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
 /** Version of the Command Code CLI the tables were scraped from. */
@@ -70,14 +70,52 @@ async function loadCliMjs(): Promise<{ src: string; version: string }> {
 }
 
 /**
- * CDNs in preference order. unpkg 500s on some versions (1.65.2 did, while
- * jsdelivr served the same file), so one is not enough to keep the snapshot
- * refreshing unattended.
+ * Sources for the published bundle, in preference order:
+ *
+ *  1. the registry tarball — the exact bytes `npm install` gets, and the only
+ *     source that has never lied (CDNs have: unpkg 500'd on 1.65.2, and
+ *     jsdelivr served a *truncated* cli.mjs that still passed the cheap
+ *     sanity check, so the scrape failed on anchors that upstream has);
+ *  2. unpkg, then jsdelivr, for when the registry is unreachable.
  */
 const CDNS = [
 	(version: string) => `https://unpkg.com/command-code@${version}/dist/cli.mjs`,
 	(version: string) => `https://cdn.jsdelivr.net/npm/command-code@${version}/dist/cli.mjs`,
 ];
+
+/** One member of the published package, from the tarball first then the CDNs. */
+async function publishedMember(version: string, member: string, cdn?: (base: string, v: string) => string): Promise<string> {
+	try {
+		const dir = mkdtempSync(join(tmpdir(), "cc-pkg-"));
+		const file = join(dir, "p.tgz");
+		const response = await fetch(`https://registry.npmjs.org/command-code/-/command-code-${version}.tgz`);
+		if (!response.ok) throw new Error(`tarball ${response.status}`);
+		writeFileSync(file, Buffer.from(await response.arrayBuffer()));
+		const tar = Bun.spawnSync(["tar", "-xzOf", file, `package/${member}`]);
+		if (tar.exitCode === 0) {
+			const body = tar.stdout.toString();
+			if (body.length > 0) {
+				console.log(`[extract] ${member} from the registry tarball (${body.length} bytes)`);
+				return body;
+			}
+		}
+		throw new Error(`tar failed for ${member}`);
+	} catch (error) {
+		console.warn(`[extract] tarball unavailable (${(error as Error).message}); trying CDNs`);
+	}
+	let last = "";
+	for (const cdnBase of CDNS) {
+		const url = cdn ? cdn(cdnBase, version) : `${cdnBase}/command-code@${version}/${member}`;
+		const response = await fetch(url).catch((error) => ({ ok: false, status: 0, text: async () => String(error) }));
+		const body = response.ok ? await response.text() : "";
+		if (body.length > 0) {
+			console.warn(`[extract] ${member} from ${new URL(url).host} (${body.length} bytes)`);
+			return body;
+		}
+		last = `${new URL(url).host} -> ${response.status}`;
+	}
+	throw new Error(`no source served ${member} (${last})`);
+}
 
 async function fetchPublished(): Promise<{ src: string; version: string }> {
 	const meta = (await (await fetch("https://registry.npmjs.org/command-code/latest")).json()) as {
@@ -85,28 +123,39 @@ async function fetchPublished(): Promise<{ src: string; version: string }> {
 	};
 	const version = meta.version;
 	if (!version) throw new Error("no command-code version at registry.npmjs.org");
-	let last = ""
-	for (const cdn of CDNS) {
-		const url = cdn(version);
-		const response = await fetch(url).catch((error) => ({ ok: false, status: 0, detail: String(error) }));
-		const src = response.ok ? await response.text() : "";
-		if (src.includes("inputModalities") || src.includes("MODEL_CATEGORIES")) {
-			console.log(`[extract-gating] fetched published command-code@${version} from ${new URL(url).host}`);
-			return { src, version };
-		}
-		last = `${new URL(url).host} -> ${response.status}`;
-	}
-	throw new Error(`no CDN served command-code@${version} (${last})`);
+	const src = await publishedMember(version, "dist/cli.mjs");
+	return { src, version };
 }
 
 const { src, version: cliVersionUsed } = await loadCliMjs();
 
-function grab(start: string, end: string): string {
-	const i = src.indexOf(start);
-	if (i < 0) throw new Error(`anchor not found: ${start}`);
-	const j = src.indexOf(end, i);
-	if (j < 0) throw new Error(`end anchor not found: ${end}`);
-	return src.slice(i + start.length, j);
+/** The `{...}` literal that follows `anchor`, brace-matched so nested objects
+ * (and braces inside strings) can't cut it short. */
+function objectLiteralAfter(anchor: string): string {
+	const at = src.indexOf(anchor);
+	if (at < 0) throw new Error(`anchor not found: ${anchor}`);
+	const open = at + anchor.length - 1;
+	let depth = 0;
+	for (let i = open; i < src.length; i++) {
+		const ch = src[i];
+		if (ch === '"' || ch === "'") {
+			const quote = ch;
+			for (i++; i < src.length && src[i] !== quote; i++) if (src[i] === "\\") i++;
+			continue;
+		}
+		if (ch === "{") depth++;
+		else if (ch === "}" && --depth === 0) return src.slice(open, i + 1);
+	}
+	throw new Error(`unterminated literal after ${anchor}`);
+}
+
+/** A `new Set(["...", ...])` literal, given its prefix and terminator. */
+function setLiteralAfter(prefix: string, suffix: string): string {
+	const at = src.indexOf(prefix);
+	if (at < 0) throw new Error(`anchor not found: ${prefix}`);
+	const end = src.indexOf(suffix, at);
+	if (end < 0) throw new Error(`end anchor not found: ${suffix}`);
+	return src.slice(at + prefix.length, end);
 }
 
 // --- resolve minified identifier values (aliases can shift between releases) ---
@@ -117,14 +166,46 @@ for (const m of src.matchAll(varRe)) vars.set(m[1]!, m[2]!);
 
 const lit = (id: string | undefined, fallback: string): string => (id && vars.get(id)) || fallback;
 
+/**
+ * Bundled releases rename their minified helpers (1.66 moved every anchor the
+ * old scrape used: Fr/Ur/Sr/wr -> qr/Yr/Cr/Er and the record factories
+ * $r/_r -> zr/Kr). Each generation lists its own anchors; the first that
+ * matches wins, so a refresh keeps working across a rename instead of silently
+ * writing a stale file. A bundle matching neither fails loud.
+ */
+const GENERATIONS = [
+	{
+		label: "1.66+",
+		categories: "qr={",
+		plans: "Yr={",
+		known: ['Cr=new Set(["', "])"] as const,
+		aliases: "Er={",
+		premium: /\bzr\(([A-Za-z_$][\w$]*)\)/g,
+		oss: /\bKr\(\)/g,
+	},
+	{
+		label: "<=1.65",
+		categories: "Fr={",
+		plans: "Ur={",
+		known: ['Sr=new Set(["', "])"] as const,
+		aliases: "wr={",
+		premium: /\$r\(([A-Za-z_$][\w$]*)\)/g,
+		oss: /_r\(\)/g,
+	},
+];
+const generation = GENERATIONS.find((g) => src.includes(g.categories));
+if (!generation) throw new Error("unrecognized bundle generation — the scrape needs re-anchoring");
+console.log(`[extract-gating] bundle generation: ${generation.label}`);
+
 function expand(expr: string): string {
-	// $r(X) always = {provider:X, category:"premium"} (single definition in bundle)
+	// The record factories always mean the same two shapes; only their minified
+	// names move between releases.
 	return expr
 		.replace(
-			/\$r\(([A-Za-z_$][\w$]*)\)/g,
-			(_, id) => `{provider:"${lit(id, "anthropic")}",category:"premium"}`,
+			generation.premium,
+			(_, id: string) => `{provider:"${lit(id, "anthropic")}",category:"premium"}`,
 		)
-		.replace(/_r\(\)/g, `{provider:"cai",category:"opensource"}`)
+		.replace(generation.oss, `{provider:"cai",category:"opensource"}`)
 		.replace(/category:([A-Za-z_$][\w$]*)/g, (_, id) => `category:"${lit(id, "opensource")}"`)
 		.replace(/provider:([A-Za-z_$][\w$]*)/g, (_, id) => `provider:"${lit(id, "openai")}"`)
 		.replace(
@@ -134,19 +215,19 @@ function expand(expr: string): string {
 		);
 }
 
-// --- category table: Fr = { "<model id>": {provider, category} } ---
-// getModelCategory looks up Fr DIRECTLY (no canonicalization), so table keys are raw ids
-const frRaw = grab("Fr={", "},Ur={");
+// --- category table ---
+// getModelCategory looks the table up DIRECTLY (no canonicalization), so keys
+// are raw model ids.
 const categories: Record<string, string> = {};
-for (const m of expand(frRaw).matchAll(/"([^"]+)":\{provider:"[^"]*",category:"([^"]+)"\}/g)) {
+for (const m of expand(objectLiteralAfter(generation.categories)).matchAll(
+	/"([^"]+)":\{provider:"[^"]*",category:"([^"]+)"\}/g,
+)) {
 	categories[m[1]!] = m[2]!;
 }
 
-// --- plan table: Ur = { "<planId>": {allowedCategories, blockedModels?} } ---
-// plan ids and category values stay as minified var refs (Nr/Dr) until expand below
-const urRaw = grab('Ur={"', "},jr=");
+// --- plan table: { "<planId>": {allowedCategories, blockedModels?} } ---
 const plans: Record<string, { allowedCategories: string[]; blockedModels: string[] }> = {};
-for (const m of expand(`{"${urRaw}}`).matchAll(
+for (const m of expand(objectLiteralAfter(generation.plans)).matchAll(
 	/"(individual-[a-z0-9-]+|teams-[a-z0-9-]+)":\{allowedCategories:\[([^\]]*)\](,blockedModels:\[([^\]]*)\])?\}/g,
 )) {
 	const cats = [...m[2]!.matchAll(/"([a-z]+)"/g)].map((c) => c[1]!);
@@ -154,21 +235,19 @@ for (const m of expand(`{"${urRaw}}`).matchAll(
 	plans[m[1]!] = { allowedCategories: cats, blockedModels: blocked };
 }
 
-// --- known model ids: Sr = new Set([...]) ---
-const srRaw = grab('Sr=new Set(["', "])");
-const knownFromSet = [...srRaw.matchAll(/"([a-z][^"]*)"/g)]
+// --- known model ids: the Set literal, unioned with the category table keys ---
+// ponytail: the Set alone misses models whose spec entries come from spread
+// arrays; the union is cheap and order-independent.
+const knownFromSet = [...setLiteralAfter(...generation.known).matchAll(/"([a-z][^"]*)"/g)]
 	.filter((m) => m[1]!.length > 2)
 	.map((m) => m[1]!);
-// ponytail: KNOWN_MODELS = Set literal ∪ category-table keys; the Set literal
-// alone misses models whose spec entries come from spread arrays in the bundle.
-// upgrade: alert on extract if regenerated KNOWN_MODELS ⊆ categories (Set-only)
-// ever becomes sufficient — the spread-source no longer exists, drop the union.
 const known = [...new Set([...knownFromSet, ...Object.keys(categories)])];
 
-// --- deprecated aliases: wr = { old: new } ---
-const wrRaw = grab("wr={", "},vr={");
+// --- deprecated aliases: { old: new } ---
 const aliases: Record<string, string> = {};
-for (const m of wrRaw.matchAll(/"([^"]+)":"([^"]+)"/g)) aliases[m[1]!] = m[2]!;
+for (const m of objectLiteralAfter(generation.aliases).matchAll(/"([^"]+)":"([^"]+)"/g)) {
+	aliases[m[1]!] = m[2]!;
+}
 
 // Models the API hard-blocks (403 MODEL_NOT_IN_PLAN) per plan, beyond the
 // category rules. NOT in the bundle (the CLI tracks category via serving lane,
