@@ -27,9 +27,6 @@ import { useRows } from "./sidebar/useRows";
 // Plugin id is a stable contract (test/tui.test.ts pins it); the slot id is separate.
 const ID = "command-code.tui";
 
-const isOurs = (providerID: string | undefined): boolean =>
-	Boolean(providerID?.startsWith("command-code"));
-
 /** Colour is opt-in (see sidebar/prefs.ts); off, every tone collapses to text. */
 const themed = (colors: PanelColors): PanelColors =>
 	loadPrefs().colors ? colors : mono(colors);
@@ -62,7 +59,7 @@ function PanelV1(props: { api: V1Api; sessionID: string }) {
 	const current = () => props.api.state.session.get(props.sessionID)?.model;
 	const rows = useRows(
 		() => current()?.id,
-		() => isOurs(current()?.providerID),
+		() => current()?.providerID,
 	);
 	return (
 		<Panel
@@ -91,7 +88,7 @@ function PanelV2(props: { ctx: TuiPluginNs.Context; sessionID: string }) {
 	const current = () => ctx.data.session.get(props.sessionID)?.model;
 	const rows = useRows(
 		() => current()?.id,
-		() => isOurs(current()?.providerID),
+		() => current()?.providerID,
 	);
 	return <Panel rows={rows} colors={() => themed(hostColors(ctx.theme))} />;
 }

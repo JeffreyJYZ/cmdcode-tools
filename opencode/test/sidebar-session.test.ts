@@ -1,0 +1,38 @@
+import { describe, expect, test } from "bun:test";
+import {
+	rememberSnapshot,
+	seededRows,
+	sessionKind,
+} from "../src/sidebar/useRows";
+
+describe("session kind", () => {
+	test("an unresolved provider is unknown, not someone else's", () => {
+		// The host leaves the provider undefined for a frame when the tab bar
+		// switches sessions; treating that as "other" is what blanked the panel.
+		expect(sessionKind(undefined)).toBe("unknown");
+		expect(sessionKind("")).toBe("unknown");
+	});
+
+	test("our providers are ours, the rest are other", () => {
+		expect(sessionKind("command-code")).toBe("ours");
+		expect(sessionKind("command-code-openai")).toBe("ours");
+		expect(sessionKind("opencode-go")).toBe("other");
+		expect(sessionKind("anthropic")).toBe("other");
+	});
+});
+
+describe("account snapshot cache", () => {
+	test("seeds nothing before the first snapshot, then the account rows", () => {
+		const before = seededRows();
+		rememberSnapshot({
+			plan: "GOAT",
+			monthlyCap: 70,
+			monthlyCredits: 12.68,
+		});
+		const after = seededRows();
+		// Whatever ran first, the cached snapshot must yield the plan row now.
+		expect(after[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base", true]);
+		expect(after.map((row) => row[0])).toContain("Monthly");
+		expect(before.length).toBeLessThanOrEqual(after.length);
+	});
+});

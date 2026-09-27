@@ -285,6 +285,14 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   `accent` / `ok` / `warn` / `crit`, see `sidebar/rows.ts`), `sidebar/panel.tsx`
   maps tones onto the host theme, and headroom is severity-coded — 70% amber,
   90% red — so a nearly-spent window reads without arithmetic.
+- **A session switch must not blank the panel.** The host leaves a session's model
+  (and so its provider) undefined for a frame while the tab bar switches, so
+  `sessionKind()` separates `unknown` from `other` — only a provider we know is
+  someone else's hides the section, and once a session has been on one of our models
+  an unresolved switch keeps it up. The account block also paints from an in-process
+  snapshot (`rememberSnapshot`/`seededRows`) because it is account-wide: without it
+  the panel re-armed by waiting a full cmduse spawn, which is the visible "disappears
+  then reloads".
 - **Sidebar colour is opt-in; the default is plain text.** `sidebar/prefs.ts` reads
   `~/.config/opencode/command-code.json` (`{"colors": true}`) with `CMD_COLORS=1|0` as a
   per-run override, and caches the answer for a few seconds so a streaming session does not
