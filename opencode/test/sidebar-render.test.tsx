@@ -28,8 +28,8 @@ const theme = {
 			info: { base: RGBA.fromValues(0.34, 0.71, 0.76, 1) },
 		},
 	},
-	// v2 supplies this; the brighter shade is what headline labels use.
-	decrease: () => RGBA.fromValues(0.41, 0.82, 0.87, 1),
+	// The accent hue headlines take in dark mode (purple in the default theme).
+	hue: { accent: { 200: RGBA.fromValues(0.62, 0.49, 0.85, 1) } },
 };
 const colors = hostColors(theme);
 

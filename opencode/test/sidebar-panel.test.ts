@@ -28,29 +28,36 @@ describe("panel colours", () => {
 		expect(colors.muted).toBe(text.muted);
 		expect(colors.strong).toBe(text.base);
 		expect(colors.label).toBe(text.feedback.info.base);
-		// No decrease() on this fixture, so headlines share the label hue.
+		// No accent hue in this fixture, so headlines share the label hue.
 		expect(colors.headline).toBe(text.feedback.info.base);
 		expect(colors.ok).toBe(text.feedback.success.base);
 		expect(colors.warn).toBe(text.feedback.warning.base);
 		expect(colors.crit).toBe(text.feedback.error.base);
 	});
 
-	test("takes no colour from the theme's hue scales", () => {
-		// The widget hues derive from `primary`, a dull peach in the default
-		// theme, which is what painted rows dark orange. Passing a theme with
-		// hues must not change a single tone.
-		const withHues = hostColors({
-			...theme,
-			hue: { accent: { 400: c(0.99) }, interactive: { 400: c(0.98) } },
-		} as Parameters<typeof hostColors>[0]);
-		expect(withHues).toEqual(hostColors(theme));
-	});
-
-	test("headline labels take a neighbouring shade when the host offers one", () => {
-		const brighter = c(0.99);
-		const colors = hostColors({ ...theme, decrease: () => brighter });
-		expect(colors.headline).toBe(brighter);
-		expect(colors.headline).not.toBe(colors.label);
+	test("the accent hue is read for headlines only, and only in dark mode", () => {
+		const purple = c(0.62);
+		const accented = { ...theme, hue: { accent: { 200: purple } } };
+		const dark = hostColors(accented);
+		expect(dark.headline).toBe(purple);
+		// Every other tone comes from the text palette, so the peach `primary` /
+		// `interactive` scales (the earlier dark orange) cannot reach a row.
+		const plain = hostColors(theme);
+		for (const tone of [
+			"base",
+			"muted",
+			"strong",
+			"ok",
+			"warn",
+			"crit",
+		] as const) {
+			expect(dark[tone]).toBe(plain[tone]);
+		}
+		// Light themes put a peach in the accent slot, so headlines keep the
+		// label hue there instead of turning orange.
+		expect(hostColors(accented, "light").headline).toBe(
+			hostColors(accented, "light").label,
+		);
 	});
 
 	test("legacy hosts keep their text pair and get literal semantic colours", () => {

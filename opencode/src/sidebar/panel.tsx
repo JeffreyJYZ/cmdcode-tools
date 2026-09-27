@@ -33,12 +33,22 @@ export interface HostTheme {
 			Record<"success" | "warning" | "error" | "info", { readonly base: RGBA }>
 		>;
 	};
-	/** Derives a neighbouring shade of a colour (v2 only). */
-	readonly decrease?: (color: RGBA, amount?: number) => RGBA;
+	readonly hue?: {
+		readonly accent?: Readonly<Record<number, RGBA>>;
+	};
 }
 
-/** v2 host theme -> panel colours. */
-export function hostColors(theme: HostTheme): PanelColors {
+/**
+ * v2 host theme -> panel colours. `mode` matters for one thing: the accent hue
+ * is a usable purple in dark themes (#9d7cd8) but a peach in light ones, so the
+ * headline shade is only taken from it in dark mode. A lighter cyan was tried
+ * first and failed: terminals fold one-step-apart cyans onto the same ANSI
+ * colour, so the headline rows read identical to the rest.
+ */
+export function hostColors(
+	theme: HostTheme,
+	mode: "dark" | "light" = "dark",
+): PanelColors {
 	return {
 		base: theme.text.base,
 		muted: theme.text.muted,
@@ -46,11 +56,10 @@ export function hostColors(theme: HostTheme): PanelColors {
 		// model name never borrows a chromatic token.
 		strong: theme.text.base,
 		label: theme.text.feedback.info.base,
-		// One step off the label hue, so the headline labels read apart from the
-		// rest without inventing a colour the theme does not have.
 		headline:
-			theme.decrease?.(theme.text.feedback.info.base, 1) ??
-			theme.text.feedback.info.base,
+			mode === "dark"
+				? (theme.hue?.accent?.[200] ?? theme.text.feedback.info.base)
+				: theme.text.feedback.info.base,
 		ok: theme.text.feedback.success.base,
 		warn: theme.text.feedback.warning.base,
 		crit: theme.text.feedback.error.base,
@@ -67,7 +76,7 @@ export function legacyColors(theme: {
 		muted: theme.textMuted,
 		strong: theme.text,
 		label: RGBA.fromValues(0.34, 0.71, 0.76, 1),
-		headline: RGBA.fromValues(0.41, 0.82, 0.87, 1),
+		headline: RGBA.fromValues(0.62, 0.49, 0.85, 1),
 		ok: RGBA.fromValues(0.5, 0.85, 0.56, 1),
 		warn: RGBA.fromValues(0.96, 0.65, 0.26, 1),
 		crit: RGBA.fromValues(0.88, 0.42, 0.46, 1),

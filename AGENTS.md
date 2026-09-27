@@ -286,9 +286,24 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   `text.subdued`.** The panel passed the latter for a while, so `fg` was
   `undefined` and the whole section rendered in the terminal's default colour.
   The authoritative shape ships in `@opencode/theme@<cli version>`
-  (`text.feedback.{success,warning,error,info}.base`, `hue.accent[400]`); the
-  vendored types in `opencode-cmd-provider` are stale. `span`'s props are typed
-  `{}` in opentui 0.5, so colour is per row node, not per segment.
+  (`text.feedback.{success,warning,error,info}.base`, `hue.accent[200]`); the
+  vendored types in `opencode-cmd-provider` are stale.
+- **Row colours come from the text palette; the hue scales are widget colours
+  and are only read for the two headline rows, in dark mode.** `hue.interactive[400]`
+  is a brown-orange (`#b67c56`) in the default dark theme, which painted the
+  figures — that is where the "dark orange" came from. `hue.accent[200]` is a
+  purple (`#9d7cd8`) and is what `Plan:` / `Model:` take, whole-line, so the two
+  rows the panel is about read apart; light themes put a peach in that slot, so
+  `hostColors(theme, "light")` falls back to the label hue instead.
+- **`<span fg={…}>` is silently ignored; spans need `<span style={{ fg }}>`.**
+  opentui types span props as `{}`, so a cast makes the wrong form compile and
+  the run then inherits no colour — the whole panel goes plain white. Colours
+  are per segment (bold label, toned value), and `test/sidebar-render.test.tsx`
+  renders the panel through `@opentui/solid`'s `testRender` and asserts the
+  captured frame's spans, which is the guard that catches both mistakes.
+- **A lighter shade of the same hue is not a distinction.** `#68d0dd` against
+  `#56b6c2` reads as identical in practice; headline/emphasis colours need a
+  different hue, not a neighbouring step.
 - **`cmduse -1 --json` carries the billing-period bounds since 0.7.2**
   (`periodStartAt` / `periodEndAt`, epoch ms — the same units as `resetAt`).
   `periodEnd` stays the display date. Before that, the sidebar could not render
@@ -359,7 +374,13 @@ TUI hosts rewrite the entry's imports to their own module instances.
 API endpoints, cumulative-diff reports, TLS retry, watch-mode redraw rules
 (frame's last line has NO trailing newline; frame-shrink = `\x1b[1B` +
 `\x1b[2K\x1b[1B` + `\x1b[2K` + `\x1b[{prev-n}F`; test redraw bytes via
-cli/src/main_tests.rs). MCP: hand-rolled stdio JSON-RPC (newline-delimited);
+cli/src/main_tests.rs). **ocuse's watch shares that contract, not a copy of it:**
+`cli/src/bin/ocuse.rs` calls the same `redraw_frame` / `clip_to_width` / `term_size`
+(`pub` in lib.rs), its frame ends on its own status/countdown line, and
+`ocuse/render.rs`'s `watch_frame` adds the burst sparkline from 5-hour spend
+deltas (10s samples, 60 cap). Gauges/palette come from `cli/src/render.rs`
+(`bar`, `color_for`, the SGR consts) — never re-declare them in `ocuse/`.
+MCP: hand-rolled stdio JSON-RPC (newline-delimited);
 notifications (no `id`) get NO response; tool errors are `isError: true`
 results, never JSON-RPC errors; stdout is protocol-only — anything printed by
 a tool body would corrupt the stream, so tool text goes through the result
