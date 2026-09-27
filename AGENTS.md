@@ -273,7 +273,9 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   made every start look changed. 0.3.6 made the sidebar's Min plan row a
   fallback: the tier leads, and Min plan fills in only when gating has no
   category for the model. The rates line merged too: in/out plus cache read, with
-  cache write appended only when the model has one.
+  cache write appended only when the model has one. 0.3.7 slowed the account poll
+  from 30s to 60s (POLL_MS): the totals move on request boundaries, and each poll
+  is a cmduse spawn.
 - **npm publish is interactive: it fails from the agent shell** (`EOTP`, prints
   an auth URL). Build first (`cd opencode && bun run build`) so `dist/` is
   current, then the user runs plain `npm publish` themselves — it opens a

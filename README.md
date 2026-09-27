@@ -107,7 +107,7 @@ section (toggle with `ctrl+x b`):
 - the active model's own period usage — requests, plus spend when the harness records it
   (new in 0.2.9; labelled `Usage (this model)`)
 
-Usage comes from the `cmduse` CLI (polled every 30s); the model catalog comes from `mpc --json`,
+Usage comes from the `cmduse` CLI (polled every minute); the model catalog comes from `mpc --json`,
 cached for 6h — install it with `bun link` in the sibling `oc-cmd-compare` checkout, or the section
 simply omits those rows. The model's own usage is read from opencode's message store
 (`~/.local/share/opencode/opencode.db`, read-only); CommandCode is subscription-billed, so its

@@ -29,7 +29,10 @@ import { loadModelUsage, periodStart } from "./sidebar/usageDb"
 
 // Plugin id is a stable contract (test/tui.test.ts pins it); the slot id is separate.
 const ID = "command-code.tui"
-const POLL_MS = 30_000
+// Account totals (plan, credits, rolling windows) come from cmduse; a minute is
+// plenty — the numbers move on request boundaries, not continuously, and each
+// poll is a process spawn.
+const POLL_MS = 60_000
 
 /** Shared panel: bold title, one line per row. Renders nothing when empty. */
 function Panel(props: { rows: () => SidebarRow[]; text: () => RGBA; muted: () => RGBA }) {
