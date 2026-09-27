@@ -36,6 +36,9 @@ export function hostColors(theme: HostTheme): PanelColors {
 		base: theme.text.base,
 		muted: theme.text.muted,
 		accent: theme.hue?.accent?.[400] ?? theme.text.base,
+		// Bold is the emphasis; `strong` shares the plain text colour so the
+		// model name never borrows the accent hue (orange in the default theme).
+		strong: theme.text.base,
 		data: theme.hue?.interactive?.[400] ?? theme.text.feedback.info.base,
 		ok: theme.text.feedback.success.base,
 		warn: theme.text.feedback.warning.base,
@@ -51,6 +54,7 @@ export function legacyColors(theme: {
 	return {
 		base: theme.text,
 		muted: theme.textMuted,
+		strong: theme.text,
 		accent: RGBA.fromValues(0.55, 0.7, 1, 1),
 		data: RGBA.fromValues(0.4, 0.8, 0.9, 1),
 		ok: RGBA.fromValues(0.4, 0.85, 0.5, 1),
@@ -73,7 +77,11 @@ export function Panel(props: {
 				<For each={props.rows()}>
 					{(row) => (
 						<text fg={props.colors()[row[2] ?? "base"]}>
-							{parts(row).join("")}
+							{row[2] === "strong" ? (
+								<b>{parts(row).join("")}</b>
+							) : (
+								parts(row).join("")
+							)}
 						</text>
 					)}
 				</For>

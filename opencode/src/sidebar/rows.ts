@@ -13,14 +13,16 @@ import { elapsedLabel, FIVE_HOUR_SECS, WEEKLY_SECS } from "./windows";
 /**
  * Colour role for a row, resolved against the host theme by the panel: `ok` /
  * `warn` / `crit` are headroom (green / amber / red), `accent` is the theme's
- * accent hue, `data` is its interactive hue (figures: rates, ability, tok/s —
- * the cyan mpc and cmduse use for numbers), `muted` is for continuations and
- * rules, `base` is plain text.
+ * accent hue (the panel title), `data` is its interactive hue (figures: rates,
+ * ability, tok/s — the cyan mpc and cmduse use for numbers), `strong` is plain
+ * text in bold (the model name, the way mpc bolds its MODEL column), `muted` is
+ * for continuations and rules, `base` is plain text.
  */
 export type Tone =
 	| "base"
 	| "muted"
 	| "accent"
+	| "strong"
 	| "data"
 	| "ok"
 	| "warn"
@@ -246,7 +248,7 @@ export function modelRows(
 ): SidebarRow[] {
 	if (!meta) return [];
 	const rows: SidebarRow[] = [
-		["Model", clip(meta.name, valueWidth("Model")), "accent"],
+		["Model", clip(meta.name, valueWidth("Model")), "strong"],
 	];
 	if (usage) {
 		// CommandCode is subscription-billed, so opencode records cost 0 for

@@ -121,7 +121,7 @@ describe("modelRows", () => {
 			intelligence: 39.5,
 			tps: 247,
 		});
-		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "accent"]);
+		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong"]);
 		expect(rows[1]).toEqual(["Tier", "open source", "base"]);
 		expect(rows[2]).toEqual(["Allowance", "$60/mo", "data"]);
 		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out", "data"]);
@@ -143,7 +143,7 @@ describe("modelRows", () => {
 			{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },
 			{ requests: 1_234, cost: 8.4 },
 		);
-		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "accent"]);
+		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong"]);
 		expect(rows[1]).toEqual(["Usage (this model)", "1.2K req · $8.40", "data"]);
 	});
 	test("omits spend when the harness priced it at zero (subscription)", () => {
