@@ -224,8 +224,9 @@ redraw (`cmduse`'s `redraw_frame`, so a shrinking frame never scrolls), and the 
 spend-burst sparkline. Both watch loop and gauges reuse `cli/src/render.rs` rather than a
 second copy. Every subcommand takes the colour flag — `daily`, `hourly`, `session`, `model`,
 `plans` and `statusline` included (bold headings, dim secondary text, cyan figures, an
-over-cap window flagged `LIMIT EXCEEDED`). `--plain`, `NO_COLOR` and a piped stdout drop
-colour and gauges; scripted output stays escape-free.
+over-cap window *or* model flagged `LIMIT EXCEEDED`, and a per-model share of period spend).
+`--plain`, `NO_COLOR` and a piped stdout drop colour and gauges; scripted output stays
+escape-free.
 
 ## Notes
 

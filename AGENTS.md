@@ -413,7 +413,11 @@ and `statusline` printed plain on a tty. `every_renderer_respects_the_colour_fla
 in `ocuse/render.rs` now asserts, per renderer, that `colour=false` leaks no escapes
 and `colour=true` colours something — add a case when you add a renderer. `Ink`
 helpers (`dim_on` / `cyan_on` / `bold_on`) are no-ops when colour is off, so plain
-output stays byte-identical by construction.
+output stays byte-identical by construction. Two row-level additions follow cmduse's
+"actionable before informational" ordering (`render.rs`'s own comment): a model over
+any of its windows carries `LIMIT EXCEEDED` beside its name (early, survives
+clipping), and its share of period spend rides at the end (clipped first). Go meters
+per model *and* per window, so the 5-hour cap counts the same as the month.
 MCP: hand-rolled stdio JSON-RPC (newline-delimited);
 notifications (no `id`) get NO response; tool errors are `isError: true`
 results, never JSON-RPC errors; stdout is protocol-only — anything printed by

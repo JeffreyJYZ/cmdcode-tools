@@ -171,12 +171,14 @@ OpenCode's own docs sources.
 
 The watch frame is `cmduse`'s: the same palette, severity-coloured gauges (green <70%,
 yellow 70–90%, red ≥90%), an over-cap window flagged `LIMIT EXCEEDED`, and in-place redraw,
-so resizing or a shrinking frame never scrolls. A spend-burst sparkline appears once the
-5-hour window moves between refreshes (delta spend, not the cumulative figure — that only
-ever rises). Every subcommand colours the same way — `daily`, `hourly`, `session`, `model`,
-`plans` and `statusline` included, with secondary text dimmed and figures in cyan. `--plain`,
-`NO_COLOR` and a piped stdout drop the colour and the gauges, so scripted output stays
-escape-free.
+so resizing or a shrinking frame never scrolls. A model over any of its own windows carries
+the same flag beside its name — Go meters per model *and* per window, so being over the
+5-hour cap counts like being over the month — and every row ends with that model's share of
+the period's spend. A spend-burst sparkline appears once the 5-hour window moves between
+refreshes (delta spend, not the cumulative figure — that only ever rises). Every subcommand
+colours the same way — `daily`, `hourly`, `session`, `model`, `plans` and `statusline`
+included, with secondary text dimmed and figures in cyan. `--plain`, `NO_COLOR` and a piped
+stdout drop the colour and the gauges, so scripted output stays escape-free.
 
 ## MCP server
 

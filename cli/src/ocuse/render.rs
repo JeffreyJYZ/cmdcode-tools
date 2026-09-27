@@ -163,7 +163,19 @@ fn aggregate_cap(report: &Report, share: f64) -> Option<f64> {
     (total > 0.0).then_some(total)
 }
 
-fn model_row(ink: &Ink, model: &ModelUsage) -> String {
+/// Is any of this model's windows over its share of the limit? Go meters per
+/// model *and* per window, so being over the 5-hour cap counts like being over
+/// the month.
+fn exceeded(model: &ModelUsage) -> bool {
+    let Some(limit) = model.limit.filter(|limit| *limit > 0.0) else {
+        return false;
+    };
+    model.month.cost > limit
+        || model.five_hour.cost > limit * 0.20
+        || model.weekly.cost > limit * 0.50
+}
+
+fn model_row(ink: &Ink, model: &ModelUsage, total_cost: f64) -> String {
     let limit = match model.limit {
         Some(limit) => money(limit),
         None => ink.dim_on("—".into()),
@@ -185,8 +197,20 @@ fn model_row(ink: &Ink, model: &ModelUsage) -> String {
         }
         None => ink.dim_on(format!("{use_text:>7}")),
     };
+    // Actionable before informational (cmduse's ordering): the flag sits beside
+    // the model so a clipped frame keeps it; the share is the first thing to go.
+    let flag = if exceeded(model) {
+        format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
+    } else {
+        String::new()
+    };
+    let share = if total_cost > 0.0 {
+        ink.dim_on(format!(" {:>5.1}%", model.month.cost / total_cost * 100.0))
+    } else {
+        String::new()
+    };
     format!(
-        "{:<28} {:>7} {spent} {use_cell} {} {} {:>7}\n",
+        "{:<28}{flag} {:>7} {spent} {use_cell} {} {} {:>7}{share}\n",
         model.id,
         limit,
         // Go windows are per model too: 5h = 20% of the limit, weekly = 50%.
@@ -274,8 +298,9 @@ pub fn render_text(report: &Report, db_path: &str, rows: usize, colour: bool) ->
         "\n{}MODEL                            LIMIT      SPENT     USE       5H       WK     REQ{}\n",
         ink.bold, ink.reset
     ));
+    let total_cost = report.month.cost;
     for model in report.models.iter().take(rows) {
-        out.push_str(&model_row(&ink, model));
+        out.push_str(&model_row(&ink, model, total_cost));
     }
     if report.models.len() > rows {
         out.push_str(&format!(
@@ -466,6 +491,17 @@ pub fn model_text(report: &Report, id: &str, colour: bool) -> String {
         "weekly",
         ink.cyan_on(cmduse_core::money(model.weekly.cost)),
     ));
+    // The dashboard's share column needs the period total; here it is the same
+    // fact spelled out. Absent when the period has no spend to divide by.
+    if report.month.cost > 0.0 {
+        out.push_str(&row(
+            "share",
+            ink.dim_on(format!(
+                "{:.1}% of period spend",
+                model.month.cost / report.month.cost * 100.0
+            )),
+        ));
+    }
     out
 }
 
@@ -700,6 +736,47 @@ mod tests {
             coloured.contains(crate::render::RED),
             "the flag and the gauge are red: {coloured}"
         );
+    }
+
+    #[test]
+    fn a_model_over_any_of_its_own_windows_is_flagged() {
+        // The fixture is at 50% of the month but over the 5-hour share, and Go
+        // meters per model per window: the row must say so, not just glow red.
+        let plain = render_text(&report(), "/tmp/opencode.db", 10, false);
+        let row = plain
+            .lines()
+            .find(|line| line.starts_with("glm-5.3-flash"))
+            .expect("the model row");
+        assert!(row.contains("LIMIT EXCEEDED"), "{row}");
+        // Share last, flag early: the informational column is clipped first.
+        assert!(row.trim_end().ends_with('%'), "share ends the row: {row}");
+    }
+
+    #[test]
+    fn a_model_within_its_limits_is_not_flagged() {
+        let now = 1_800_000_000_000;
+        // $5 against a $60 limit: every window is comfortably inside its share.
+        let rows = vec![Row {
+            at_ms: now - 60_000,
+            provider: "opencode-go".into(),
+            model: "glm-5.3-flash".into(),
+            cost_usd: 5.0,
+            ..Default::default()
+        }];
+        let report = crate::ocuse::window::build(&rows, &zen::catalog(), now, None);
+        for colour in [false, true] {
+            let text = render_text(&report, "/tmp/opencode.db", 10, colour);
+            assert!(!text.contains("LIMIT EXCEEDED"), "colour={colour}: {text}");
+        }
+    }
+
+    #[test]
+    fn the_model_detail_spells_out_the_share() {
+        let detail = model_text(&report(), "glm-5.3-flash", false);
+        assert!(detail.contains("100.0% of period spend"), "{detail}");
+        // A period with nothing to divide by omits the row rather than printing NaN.
+        let empty = crate::ocuse::window::build(&[], &zen::catalog(), 1_800_000_000_000, None);
+        assert!(!model_text(&empty, "glm-5.3-flash", false).contains("share"));
     }
 
     #[test]
