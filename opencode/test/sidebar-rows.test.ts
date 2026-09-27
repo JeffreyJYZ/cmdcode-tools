@@ -167,7 +167,7 @@ describe("tones", () => {
 		expect(pctTone(90)).toBe("crit");
 		expect(pctTone(140)).toBe("crit");
 	});
-	test("the rule and continuations are muted, the model name is accented", () => {
+	test("the rule and continuations are muted, the model name is bold", () => {
 		expect(separator()[2]).toBe("muted");
 		const rows = usageRows(
 			{

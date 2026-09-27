@@ -3,6 +3,11 @@
 //
 // Rows stay pure data (see rows.ts) and carry a `tone`; this module is the only
 // place that knows how a tone becomes an RGBA, so both TUI hosts share it.
+//
+// Only text tokens are read (`text.base` / `text.muted` / `text.feedback.*`).
+// The theme's `hue` scales are widget colours derived from `primary`, which is
+// a dull peach in the default theme — using them for rows painted the panel
+// dark orange. `info` is the cyan mpc and cmduse use for figures.
 import { RGBA } from "@opentui/core";
 import { For, Show } from "solid-js";
 import { parts, type SidebarRow, type Tone } from "./rows";
@@ -24,22 +29,17 @@ export interface HostTheme {
 			Record<"success" | "warning" | "error" | "info", { readonly base: RGBA }>
 		>;
 	};
-	readonly hue?: {
-		readonly accent?: Readonly<Record<number, RGBA>>;
-		readonly interactive?: Readonly<Record<number, RGBA>>;
-	};
 }
 
-/** v2 host theme -> panel colours. 400 is the accent step for on-background UI. */
+/** v2 host theme -> panel colours. */
 export function hostColors(theme: HostTheme): PanelColors {
 	return {
 		base: theme.text.base,
 		muted: theme.text.muted,
-		accent: theme.hue?.accent?.[400] ?? theme.text.base,
 		// Bold is the emphasis; `strong` shares the plain text colour so the
-		// model name never borrows the accent hue (orange in the default theme).
+		// model name never borrows a chromatic token.
 		strong: theme.text.base,
-		data: theme.hue?.interactive?.[400] ?? theme.text.feedback.info.base,
+		data: theme.text.feedback.info.base,
 		ok: theme.text.feedback.success.base,
 		warn: theme.text.feedback.warning.base,
 		crit: theme.text.feedback.error.base,
@@ -55,11 +55,10 @@ export function legacyColors(theme: {
 		base: theme.text,
 		muted: theme.textMuted,
 		strong: theme.text,
-		accent: RGBA.fromValues(0.55, 0.7, 1, 1),
-		data: RGBA.fromValues(0.4, 0.8, 0.9, 1),
-		ok: RGBA.fromValues(0.4, 0.85, 0.5, 1),
-		warn: RGBA.fromValues(0.95, 0.75, 0.3, 1),
-		crit: RGBA.fromValues(0.95, 0.45, 0.45, 1),
+		data: RGBA.fromValues(0.34, 0.71, 0.76, 1),
+		ok: RGBA.fromValues(0.5, 0.85, 0.56, 1),
+		warn: RGBA.fromValues(0.96, 0.65, 0.26, 1),
+		crit: RGBA.fromValues(0.88, 0.42, 0.46, 1),
 	};
 }
 
@@ -71,7 +70,7 @@ export function Panel(props: {
 	return (
 		<Show when={props.rows().length > 0}>
 			<box>
-				<text fg={props.colors().accent}>
+				<text fg={props.colors().base}>
 					<b>Command Code</b>
 				</text>
 				<For each={props.rows()}>
