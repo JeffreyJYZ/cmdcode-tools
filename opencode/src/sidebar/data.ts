@@ -7,9 +7,13 @@ import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { cmduseCandidates } from "../cli";
 import { type ModelMeta, modelKey, type Usage } from "./rows";
 
-const CMDUSE = ["cmduse", "/opt/homebrew/bin/cmduse", "/usr/local/bin/cmduse"];
+// One list, shared with the /cmd-usage dialog: `cli.ts` owns which cmduse we
+// run, so CMDUSE_BIN reaches the sidebar too (the brew Cellar is read-only, so
+// there is no other way to point the panel at a dev build).
+const CMDUSE = cmduseCandidates();
 const MPC = ["mpc", join(homedir(), ".bun/bin/mpc"), "/opt/homebrew/bin/mpc"];
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
