@@ -333,6 +333,21 @@ describe("v2 store (session_message + session_v2)", () => {
 		).toBe(3);
 		expect(loadModelUsage("kimi-k2.7", day, v2Db())?.requests).toBe(1);
 	});
+
+	test("scoped to a session, the window is that conversation", () => {
+		// What the panel shows beside the session's own row: this model's share of
+		// this conversation, so the two figures are comparable. A session scope
+		// ignores the period, including the 40-day-old turn.
+		const path = v2Db();
+		expect(loadModelUsage("deepseek-v4.1-flash", 0, path, "ses_a")).toEqual({
+			requests: 3,
+			cost: 0,
+		});
+		expect(loadModelUsage("kimi-k2.7", 0, path, "ses_a")?.requests).toBe(1);
+		expect(
+			loadModelUsage("deepseek-v4.1-flash", 0, path, "ses_b")?.requests,
+		).toBe(1);
+	});
 });
 
 describe("periodStart", () => {

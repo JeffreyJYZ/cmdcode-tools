@@ -69,11 +69,18 @@ function hasV2(db: Database): boolean {
  * missing or unreadable, so callers can fall back to omitting the row.
  * Matching is on the canonical key: the session id and the stored modelID can
  * differ by vendor prefix/punctuation.
+ *
+ * Given a `sessionID`, the scan is scoped to that conversation and `sinceMs` is
+ * ignored — the panel shows "this model in this session" beside the session's
+ * own total, and two figures measuring different windows than each other read
+ * as a bug (the billing period had just rolled over, so the model row said 129
+ * while the session said 2.7K).
  */
 export function loadModelUsage(
 	modelID: string,
 	sinceMs: number,
 	path = usageDbPath(),
+	sessionID?: string,
 ): ModelUsage | null {
 	let db: Database;
 	try {
@@ -89,10 +96,14 @@ export function loadModelUsage(
 				.query(
 					`SELECT json_extract(data, '$.model.id') AS model, count(*) AS c
 					 FROM session_message
-					 WHERE type = 'assistant' AND time_created >= ?
+					 WHERE type = 'assistant'
+					   ${sessionID ? "AND session_id = ?" : "AND time_created >= ?"}
 					 GROUP BY model`,
 				)
-				.all(sinceMs) as Array<{ model: string | null; c: number }>;
+				.all(sessionID ?? sinceMs) as Array<{
+				model: string | null;
+				c: number;
+			}>;
 			const key = modelKey(modelID);
 			let requests = 0;
 			for (const row of rows) {
@@ -103,9 +114,13 @@ export function loadModelUsage(
 		const rows = db
 			.query(
 				`SELECT data, time_created FROM message
-				 WHERE data LIKE '%"tokens"%' AND time_created >= ?`,
+				 WHERE data LIKE '%"tokens"%'
+				   ${sessionID ? "AND session_id = ?" : "AND time_created >= ?"}`,
 			)
-			.all(sinceMs) as Array<{ data: string; time_created: number }>;
+			.all(sessionID ?? sinceMs) as Array<{
+			data: string;
+			time_created: number;
+		}>;
 		const key = modelKey(modelID);
 		const seen = new Set<string>();
 		let requests = 0;

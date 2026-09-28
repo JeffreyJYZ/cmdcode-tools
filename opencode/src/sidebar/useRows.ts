@@ -16,7 +16,7 @@ import {
 	type Usage,
 	usageRows,
 } from "./rows";
-import { loadModelUsage, loadSessionUsage, periodStart } from "./usageDb";
+import { loadModelUsage, loadSessionUsage, usageDbPath } from "./usageDb";
 import { type ZenUsage, zenRows } from "./zen";
 
 // A minute is plenty: the numbers move on request boundaries, not continuously,
@@ -118,10 +118,10 @@ export function useRows(
 	void loadMeta()
 		.then(setMeta)
 		.catch(() => {});
-	/** Scan the store for one model, remember what it says, and publish it. */
-	const refreshModelUsage = (id: string | undefined, sinceMs: number) => {
+	/** Scan the store for one model in this conversation, and publish it. */
+	const refreshModelUsage = (id: string | undefined) => {
 		if (!id) return;
-		const fresh = loadModelUsage(id, sinceMs);
+		const fresh = loadModelUsage(id, 0, usageDbPath(), sessionID());
 		if (fresh) rememberModelUsage(id, fresh);
 		setModelUsage(lastModelUsage);
 	};
@@ -136,7 +136,7 @@ export function useRows(
 				const snapshot = await loadUsage();
 				rememberSnapshot(snapshot);
 				setUsage(usageRows(snapshot));
-				refreshModelUsage(activeModelId(), periodStart(snapshot));
+				refreshModelUsage(activeModelId());
 			} else if (kind === "go" || kind === "zen") {
 				setZen(await loadZen());
 			}
@@ -157,12 +157,15 @@ export function useRows(
 	});
 	// `refresh` above is keyed on the provider, so a switch between two of our
 	// models waited for the next minute poll — and showed the previous model's
-	// figure until it landed. Track the id itself: the scan is sqlite (no process
-	// spawn), and the seed keeps the row up while it runs.
+	// figure until it landed. Track the model *and* the session, because the
+	// figure counts this conversation's turns: a tab change keeps the provider,
+	// so the poll alone would only notice a minute later. The scan is sqlite (no
+	// process spawn) and the seed keeps the row up while it runs.
 	createEffect(() => {
 		const id = activeModelId();
-		if (sessionKind(providerID()) !== "ours" || !id) return;
-		refreshModelUsage(id, periodStart(lastSnapshot ?? {}));
+		const session = sessionID();
+		if (sessionKind(providerID()) !== "ours" || !id || !session) return;
+		refreshModelUsage(id);
 	});
 
 	/** Only a figure belonging to the current model counts; else the seed. */
