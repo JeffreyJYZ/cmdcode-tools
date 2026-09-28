@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import conformance from "../../core/conformance.json";
 import { canonicalizeModelId, evaluateModelAccess } from "../src/access";
 import { bareModel } from "../src/gating";
-import { elapsedPct } from "../src/sidebar/windows";
+import { elapsedPct, paceEtaSecs } from "../src/sidebar/windows";
 
 // Vectors shared verbatim with cmduse-core (conformance.json). Since 0.2.0 the
 // plugin delegates usage rendering to the cmduse CLI, so the TS port only
@@ -25,8 +25,40 @@ describe("conformance vectors (shared with cmduse-core)", () => {
 			expect([c.in, canonicalizeModelId(c.in)]).toEqual([c.in, c.out]);
 		}
 	});
+	test("paceEta", () => {
+		// The sidebar projects the cap-hitting ETA itself now, so the core's
+		// vectors pin it the same way elapsedPct is pinned.
+		type PaceCase = {
+			resetAtMs: number | null;
+			durSecs: number;
+			used: number;
+			cap: number;
+			now: number;
+			outSecs: number | null;
+		};
+		for (const c of conformance.paceEta as PaceCase[]) {
+			const got = paceEtaSecs(
+				c.resetAtMs ?? undefined,
+				c.durSecs,
+				c.used,
+				c.cap,
+				c.now,
+			);
+			expect([c.resetAtMs, c.now, got ?? null]).toEqual([
+				c.resetAtMs,
+				c.now,
+				c.outSecs,
+			]);
+		}
+	});
+
 	test("gating", () => {
-		type GateCase = { model: string; plan: string; unlocked: boolean; allowed: boolean };
+		type GateCase = {
+			model: string;
+			plan: string;
+			unlocked: boolean;
+			allowed: boolean;
+		};
 		for (const c of conformance.gating as GateCase[]) {
 			const got = evaluateModelAccess(c.model, {
 				planId: c.plan,
@@ -42,16 +74,21 @@ describe("conformance vectors (shared with cmduse-core)", () => {
 		}
 	});
 	test("elapsedPct", () => {
-		type Case = { resetAtMs: number | null; durSecs: number; now: number; out: number | null };
+		type Case = {
+			resetAtMs: number | null;
+			durSecs: number;
+			now: number;
+			out: number | null;
+		};
 		for (const c of conformance.elapsedPct as Case[]) {
 			const resetAt = c.resetAtMs === null ? undefined : c.resetAtMs;
 			const expected = c.out === null ? undefined : c.out;
-			expect([c.resetAtMs, c.durSecs, c.now, elapsedPct(resetAt, c.durSecs, c.now)]).toEqual([
+			expect([
 				c.resetAtMs,
 				c.durSecs,
 				c.now,
-				expected,
-			]);
+				elapsedPct(resetAt, c.durSecs, c.now),
+			]).toEqual([c.resetAtMs, c.durSecs, c.now, expected]);
 		}
 	});
 });

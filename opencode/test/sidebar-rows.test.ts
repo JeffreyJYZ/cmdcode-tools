@@ -97,6 +97,65 @@ describe("usageRows", () => {
 		});
 		expect(rows[1]).toEqual(["Monthly", "$0 / $70 (0%)", "ok"]);
 	});
+	test("an over-cap window is flagged and coloured, not just high", () => {
+		const now = 1_000_000_000_000;
+		const rows = usageRows(
+			{
+				plan: "GOAT",
+				monthlyCap: 70,
+				monthlyCredits: 12.68,
+				fiveHour: {
+					cap: 14,
+					used: 14.2,
+					resetAt: now + 5_000_000,
+					exceeded: true,
+				},
+			},
+			now,
+		);
+		const five = rows.findIndex((row) => row[0] === "5-hour");
+		expect(rows[five]).toEqual(["5-hour", "$14.20/$14 (101%)", "crit"]);
+		// The flag leads the continuation: it is the one thing worth reading.
+		expect(rows[five + 1]?.[1]).toStartWith("LIMIT EXCEEDED · resets");
+	});
+
+	test("a window burning toward its cap shows the ETA instead of elapsed", () => {
+		const now = 1_000_000_000_000;
+		// Half the 5-hour window gone (2h 30m left), $10 of $14 spent: the same
+		// rate reaches $14 in an hour, well before the reset. Mirrors cmduse's
+		// pace warning, shortened to fit the sidebar.
+		const rows = usageRows(
+			{
+				plan: "GOAT",
+				monthlyCap: 70,
+				monthlyCredits: 12.68,
+				fiveHour: {
+					cap: 14,
+					used: 10,
+					resetAt: now + 9_000_000,
+				},
+			},
+			now,
+		);
+		const five = rows.findIndex((row) => row[0] === "5-hour");
+		expect(rows[five + 1]?.[1]).toBe("cap in 1h · resets 2h 30m");
+	});
+
+	test("a comfortable window keeps the elapsed share", () => {
+		const now = 1_000_000_000_000;
+		const rows = usageRows(
+			{
+				plan: "GOAT",
+				monthlyCap: 70,
+				monthlyCredits: 12.68,
+				fiveHour: { cap: 14, used: 1, resetAt: now + 9_000_000 },
+			},
+			now,
+		);
+		const five = rows.findIndex((row) => row[0] === "5-hour");
+		expect(rows[five + 1]?.[1]).toBe("50% elapsed · resets 2h 30m");
+	});
+
 	test("omits elapsed when the window has not started", () => {
 		const notStarted = {
 			...usage,

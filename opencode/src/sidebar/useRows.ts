@@ -1,9 +1,10 @@
-// Sidebar data hook: cmduse polled once a minute for account totals, mpc's
-// catalog read from disk, and opencode's own store for the active model's
-// period usage (the account API has no per-model dimension).
+// Sidebar data hook: cmduse polled once a minute for CommandCode account totals,
+// ocuse the same way for OpenCode Go / Zen, mpc's catalog read from disk, and
+// opencode's own store for the active model's period usage and this session's
+// totals (the account APIs have no per-model, per-session dimension).
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { minPlan } from "../catalog";
-import { loadMeta, loadUsage } from "./data";
+import { loadMeta, loadUsage, loadZen } from "./data";
 import {
 	type ModelMeta,
 	type ModelUsage,
@@ -15,23 +16,40 @@ import {
 	type Usage,
 	usageRows,
 } from "./rows";
-import { loadModelUsage, periodStart } from "./usageDb";
+import { loadModelUsage, loadSessionUsage, periodStart } from "./usageDb";
+import { type ZenUsage, zenRows } from "./zen";
 
 // A minute is plenty: the numbers move on request boundaries, not continuously,
 // and each poll is a process spawn.
 const POLL_MS = 60_000;
 
-/** Which provider a session is on, as far as this panel is concerned. */
-export type SessionKind = "ours" | "other" | "unknown";
-
 /**
- * `unknown` is the frame during a session switch, before the host has resolved
- * the new session's model. It must not be read as "another provider", or the
- * panel blanks and refetches on every tab change.
+ * Which family a session's provider belongs to, as far as this panel is
+ * concerned. `unknown` is the frame during a session switch, before the host has
+ * resolved the new session's model; it must not be read as someone else's, or
+ * the panel blanks and refetches on every tab change.
  */
+export type SessionKind = "ours" | "go" | "zen" | "other" | "unknown";
+
 export function sessionKind(providerID: string | undefined): SessionKind {
 	if (!providerID) return "unknown";
-	return providerID.startsWith("command-code") ? "ours" : "other";
+	if (providerID.startsWith("command-code")) return "ours";
+	if (providerID.startsWith("opencode-go")) return "go";
+	if (providerID === "opencode" || providerID.startsWith("opencode-zen"))
+		return "zen";
+	return "other";
+}
+
+/** Whether the panel has anything to say about this session at all. */
+function shows(kind: SessionKind): boolean {
+	return kind === "ours" || kind === "go" || kind === "zen";
+}
+
+/** The section's title, per family. */
+export function panelTitle(kind: SessionKind): string {
+	if (kind === "ours") return "Command Code";
+	if (kind === "zen") return "OpenCode Zen";
+	return "OpenCode Go";
 }
 
 // Account totals are account-wide, so the last snapshot is worth keeping: the
@@ -81,12 +99,17 @@ export function seededModelUsage(
 export function useRows(
 	activeModelId: () => string | undefined,
 	providerID: () => string | undefined,
+	sessionID: () => string | undefined,
 ) {
 	const [usage, setUsage] = createSignal<SidebarRow[]>(seededRows());
+	const [zen, setZen] = createSignal<ZenUsage | undefined>();
 	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(new Map());
 	const [modelUsage, setModelUsage] = createSignal<
 		{ key: string; usage: ModelUsage } | undefined
 	>(lastModelUsage);
+	const [sessionUsage, setSessionUsage] = createSignal<
+		ModelUsage | undefined
+	>();
 	// Once a session on one of our models has been seen, an unresolved switch
 	// keeps the section up rather than hiding it; a cold start on someone else's
 	// model still shows nothing.
@@ -104,21 +127,29 @@ export function useRows(
 	};
 
 	const refresh = async () => {
+		const kind = sessionKind(providerID());
+		const session = sessionID();
+		// Session totals are provider-agnostic and cheap (one indexed read).
+		if (session) setSessionUsage(loadSessionUsage(session) ?? undefined);
 		try {
-			const snapshot = await loadUsage();
-			rememberSnapshot(snapshot);
-			setUsage(usageRows(snapshot));
-			refreshModelUsage(activeModelId(), periodStart(snapshot));
+			if (kind === "ours") {
+				const snapshot = await loadUsage();
+				rememberSnapshot(snapshot);
+				setUsage(usageRows(snapshot));
+				refreshModelUsage(activeModelId(), periodStart(snapshot));
+			} else if (kind === "go" || kind === "zen") {
+				setZen(await loadZen());
+			}
 		} catch {
-			// cmduse missing/offline: keep the last snapshot
+			// the CLI is missing or offline: keep the last snapshot
 		}
 	};
-	// Poll only while this session is on one of our models. The panel returns no
-	// rows otherwise, but an unconditional poll still spawned cmduse for every
-	// session on every provider — and cmduse's spinner writes to /dev/tty.
+	// Poll only while this session is one we cover. The panel returns no rows
+	// otherwise, but an unconditional poll still spawned a CLI for every session
+	// on every provider — and cmduse's spinner writes to /dev/tty.
 	createEffect(() => {
 		const kind = sessionKind(providerID());
-		if (kind !== "ours") return;
+		if (!shows(kind)) return;
 		setWasOurs(true);
 		void refresh();
 		const timer = setInterval(() => void refresh(), POLL_MS);
@@ -145,10 +176,12 @@ export function useRows(
 
 	return createMemo(() => {
 		const kind = sessionKind(providerID());
-		if (kind === "other") return [];
-		if (kind === "unknown" && !wasOurs()) return [];
+		if (!shows(kind) && (kind === "other" || !wasOurs())) return [];
 		const id = activeModelId();
 		const found = id ? (meta().get(modelKey(id)) ?? meta().get(id)) : undefined;
+		if (kind === "go" || kind === "zen") {
+			return zenRows(zen(), found, sessionUsage());
+		}
 		// gating keys are model ids, not display names, so tier comes from the
 		// session's id rather than the catalog row.
 		const model = found
@@ -163,7 +196,7 @@ export function useRows(
 		return [
 			...usage(),
 			separator(),
-			...modelRows(model, usageFor(id)),
+			...modelRows(model, usageFor(id), sessionUsage()),
 		];
 	});
 }

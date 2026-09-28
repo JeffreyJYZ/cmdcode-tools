@@ -93,11 +93,13 @@ Vision models (Claude, Gemini, GPT, Qwen, the DeepSeek `-vision-` ones) accept i
 text-only models do not. The per-model list is generated from Command Code's own CLI table — the
 listing API publishes no capabilities.
 
-While a session uses a `command-code*` model, the session sidebar grows a **Command Code**
-section (toggle with `ctrl+x b`):
+While a session uses a `command-code*` model — or an OpenCode Go/Zen one — the session sidebar
+grows a section (toggle with `ctrl+x b`):
 
 - plan, price and monthly credits used
-- 5-hour and weekly windows: used / cap, percent used and elapsed, reset countdown
+- 5-hour and weekly windows: used / cap, percent used and elapsed, reset countdown; when the current
+  burn rate would reach the cap before the reset it says `cap in …` instead of the elapsed share, and
+  an over-cap window is flagged `LIMIT EXCEEDED` (both new in 0.3.12)
 - this period's requests and spend
 - the active model: tier, monthly allowance, $/M rates on one line (in/out plus cache read, and
   cache write when the model has one), Intelligence, Tok/s (new in 0.2.5)
@@ -106,6 +108,13 @@ section (toggle with `ctrl+x b`):
   since 0.3.6)
 - the active model's own period usage — requests, plus spend when the harness records it
   (new in 0.2.9; labelled `Usage (this model)`)
+- this session's own totals (`Session`), so mid-conversation you see what the conversation has cost
+  rather than only the period-to-date figure (new in 0.3.12)
+- on OpenCode Go/Zen sessions: the same shape from `ocuse`, the only local source for those
+  providers — spend against each window's share of the model's per-model allowance (5h 20%,
+  weekly 50%, monthly 100%), plus rates and benchmarks from mpc's OpenCode side (new in 0.3.12).
+  Deliberately no reset countdowns there: Go has no usage API, so the only local figure is an
+  approximation.
 
 Usage comes from the `cmduse` CLI (polled every minute); the model catalog comes from `mpc --json`,
 cached for 6h — install it with `bun link` in the sibling `oc-cmd-compare` checkout, or the section

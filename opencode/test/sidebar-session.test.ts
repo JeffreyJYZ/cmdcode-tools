@@ -18,7 +18,9 @@ describe("session kind", () => {
 	test("our providers are ours, the rest are other", () => {
 		expect(sessionKind("command-code")).toBe("ours");
 		expect(sessionKind("command-code-openai")).toBe("ours");
-		expect(sessionKind("opencode-go")).toBe("other");
+		expect(sessionKind("opencode-go")).toBe("go");
+		expect(sessionKind("opencode")).toBe("zen");
+		expect(sessionKind("opencode-zen")).toBe("zen");
 		expect(sessionKind("anthropic")).toBe("other");
 	});
 });

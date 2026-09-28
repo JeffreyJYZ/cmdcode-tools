@@ -286,6 +286,27 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   `accent` / `ok` / `warn` / `crit`, see `sidebar/rows.ts`), `sidebar/panel.tsx`
   maps tones onto the host theme, and headroom is severity-coded — 70% amber,
   90% red — so a nearly-spent window reads without arithmetic.
+- **The panel serves three provider families** (0.3.12): `command-code*` (cmduse), `opencode-go`
+  and `opencode`/`opencode-zen` (ocuse plus mpc's `oc` side). `sessionKind()` is the one place
+  that decides, `panelTitle()` names the section, and `sidebar/zen.ts` builds that block:
+  per-model allowances (5h 20%, weekly 50%, monthly 100%) against ocuse's per-model window
+  totals, rates and benchmarks from the same mpc row's `oc` object. No reset countdowns there on
+  purpose — Go has no usage API, and ocuse approximates a reset as "now + window", which is worse
+  than nothing in a usage panel. `OCUSE_BIN` overrides the binary exactly like `CMDUSE_BIN`.
+- **A window row leads with its most actionable fact**: `LIMIT EXCEEDED` (the account API's own
+  `exceeded`) beats the pace ETA, which beats the informational elapsed share — the 37-column
+  budget fits exactly one of them beside the reset countdown. `paceEtaSecs` mirrors
+  `cmduse_core::pace_eta` and is pinned by the shared `paceEta` vectors in
+  `core/conformance.json`; the TS port grows a mirrored function only when it needs one.
+- **A session's own spend is one indexed read** (`loadSessionUsage`, keyed by message id so an
+  in-place rewrite is not counted twice), shown as the `Session` row beside the model's
+  period figure.
+- **`verify-crate.ts` is the crate/tap release check** (0.3.12), the counterpart to
+  `verify-release.ts`: `cargo package` is byte-reproducible, so it compares the served `.crate`'s
+  sha256 against a local pack and then against the tap formula's pin — the two links
+  (`registry <- crate`, `formula <- registry`) that a hand-run release gets wrong. Checking an
+  older release needs `--no-pack`: this checkout can only reproduce the crate its manifest is at,
+  and a stale local pack is exactly the mismatch it exists to report.
 - **A session switch must not blank the panel.** The host leaves a session's model
   (and so its provider) undefined for a frame while the tab bar switches, so
   `sessionKind()` separates `unknown` from `other` — only a provider we know is

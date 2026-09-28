@@ -8,7 +8,12 @@ import {
 	canonicalizeModelId,
 	MODEL_CATEGORIES,
 } from "../gating";
-import { elapsedLabel, FIVE_HOUR_SECS, WEEKLY_SECS } from "./windows";
+import {
+	elapsedLabel,
+	FIVE_HOUR_SECS,
+	paceEtaSecs,
+	WEEKLY_SECS,
+} from "./windows";
 
 /**
  * Colour role for a row's *value*, resolved against the host theme by the
@@ -87,12 +92,31 @@ export interface ModelMeta {
 	};
 	intelligence?: number;
 	tps?: number;
+	/**
+	 * The OpenCode Go / Zen side of the same mpc row (0.4.0): the CommandCode
+	 * fields above are the default, this is what a Go/Zen session reads.
+	 */
+	oc?: {
+		provider?: string;
+		plan?: string;
+		allowance?: number;
+		rates?: {
+			input: number;
+			output: number;
+			cacheRead: number;
+			cacheWrite?: number | null;
+		};
+		ability?: number;
+		tps?: number;
+	};
 }
 
 export interface WindowUsage {
 	cap?: number;
 	used?: number;
 	resetAt?: number;
+	/** The account API's own over-cap flag (cmduse passes it through). */
+	exceeded?: boolean;
 }
 
 /** One model's usage for the account's current billing period. */
@@ -151,7 +175,10 @@ export function until(epoch: number | undefined, now = Date.now()): string {
 	return hours % 24 ? `${days}d ${hours % 24}h` : `${days}d`;
 }
 
-/** A rolling window as two rows: the use line, then elapsed + reset. */
+/** A rolling window as two rows: the use line, then resets plus whatever needs
+ * flagging. The lead segment follows cmduse's importance order — over-cap flag,
+ * then the cap ETA, then the informational elapsed share — because the
+ * 37-column budget fits exactly one of them beside the reset countdown. */
 function windowRows(
 	label: string,
 	w: WindowUsage | undefined,
@@ -161,15 +188,27 @@ function windowRows(
 	if (!w || typeof w.cap !== "number" || w.cap <= 0) return [];
 	const used = typeof w.used === "number" ? w.used : 0;
 	const pct = Math.round((used / w.cap) * 100);
-	const elapsed = elapsedLabel(w.resetAt, durSecs, Math.floor(now / 1000));
+	const nowSecs = Math.floor(now / 1000);
+	const elapsed = elapsedLabel(w.resetAt, durSecs, nowSecs);
+	const eta = paceEtaSecs(w.resetAt, durSecs, used, w.cap, nowSecs);
 	const reset = until(w.resetAt, now);
-	const detail = [
-		...(elapsed === undefined ? [] : [`${elapsed} elapsed`]),
-		...(reset ? [`resets ${reset}`] : []),
-	].join(" · ");
+	const lead = w.exceeded
+		? "LIMIT EXCEEDED"
+		: eta === undefined
+			? elapsed === undefined
+				? ""
+				: `${elapsed} elapsed`
+			: `cap in ${until(now + eta * 1000, now)}`;
+	const detail = [lead, reset ? `resets ${reset}` : ""]
+		.filter(Boolean)
+		.join(" · ");
 	// Compact on the use line (`$0.55/$14`, no spaces) so larger numbers still fit.
 	return [
-		[label, `${money(used)}/${money(w.cap)} (${pct}%)`, pctTone(pct)],
+		[
+			label,
+			`${money(used)}/${money(w.cap)} (${pct}%)`,
+			w.exceeded ? "crit" : pctTone(pct),
+		],
 		...(detail ? [["", detail, "muted"] as SidebarRow] : []),
 	];
 }
@@ -241,10 +280,12 @@ export function usageRows(
 }
 
 /** Active model's allowance, rates and benchmarks, from mpc's catalog; its
- * period usage (when the store has it) rides directly under the model name. */
+ * period usage (when the store has it) rides directly under the model name, and
+ * this session's own totals under that (0.4.0). */
 export function modelRows(
 	meta: ModelMeta | undefined,
 	usage?: ModelUsage,
+	session?: ModelUsage,
 ): SidebarRow[] {
 	if (!meta) return [];
 	const rows: SidebarRow[] = [
@@ -259,6 +300,10 @@ export function modelRows(
 			`${count(usage.requests)} req${spent}`,
 			"base",
 		]);
+	}
+	if (session) {
+		const spent = session.cost > 0 ? ` · ${money(session.cost)}` : "";
+		rows.push(["Session", `${count(session.requests)} req${spent}`, "base"]);
 	}
 	if (meta.tier) rows.push(["Tier", TIER_DISPLAY[meta.tier], "base"]);
 	// Min plan is the fallback, not a second opinion: the docs' access rule

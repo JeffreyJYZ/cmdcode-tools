@@ -22,7 +22,7 @@ import {
 	type PanelColors,
 } from "./sidebar/panel";
 import { loadPrefs } from "./sidebar/prefs";
-import { useRows } from "./sidebar/useRows";
+import { panelTitle, sessionKind, useRows } from "./sidebar/useRows";
 
 // Plugin id is a stable contract (test/tui.test.ts pins it); the slot id is separate.
 const ID = "command-code.tui";
@@ -60,9 +60,11 @@ function PanelV1(props: { api: V1Api; sessionID: string }) {
 	const rows = useRows(
 		() => current()?.id,
 		() => current()?.providerID,
+		() => props.sessionID,
 	);
 	return (
 		<Panel
+			title={() => panelTitle(sessionKind(current()?.providerID))}
 			rows={rows}
 			colors={() => themed(legacyColors(props.api.theme.current))}
 		/>
@@ -89,8 +91,15 @@ function PanelV2(props: { ctx: TuiPluginNs.Context; sessionID: string }) {
 	const rows = useRows(
 		() => current()?.id,
 		() => current()?.providerID,
+		() => props.sessionID,
 	);
-	return <Panel rows={rows} colors={() => themed(hostColors(ctx.theme))} />;
+	return (
+		<Panel
+			title={() => panelTitle(sessionKind(current()?.providerID))}
+			rows={rows}
+			colors={() => themed(hostColors(ctx.theme))}
+		/>
+	);
 }
 
 // Plain object, not `Plugin.define` — identity function there too.

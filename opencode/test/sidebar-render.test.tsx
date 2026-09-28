@@ -45,7 +45,13 @@ const rows: SidebarRow[] = [
 describe("rendered panel", () => {
 	test("labels and values carry different colours", async () => {
 		const setup = await testRender(
-			() => <Panel rows={() => rows} colors={() => colors} />,
+			() => (
+				<Panel
+					title={() => "Command Code"}
+					rows={() => rows}
+					colors={() => colors}
+				/>
+			),
 			{ width: 42, height: 12 },
 		);
 		await setup.renderOnce();
@@ -84,7 +90,13 @@ describe("rendered panel", () => {
 		// The default is off (see sidebar/prefs.ts), so this is the frame most
 		// users see: plain text and dim only, no cyan, no amber, no headline hue.
 		const setup = await testRender(
-			() => <Panel rows={() => rows} colors={() => mono(colors)} />,
+			() => (
+				<Panel
+					title={() => "Command Code"}
+					rows={() => rows}
+					colors={() => mono(colors)}
+				/>
+			),
 			{ width: 42, height: 12 },
 		);
 		await setup.renderOnce();

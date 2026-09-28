@@ -8,7 +8,11 @@ import {
 	parseUsageJson,
 	SPAWN_OPTIONS,
 } from "../src/sidebar/data";
-import { loadModelUsage, periodStart } from "../src/sidebar/usageDb";
+import {
+	loadModelUsage,
+	loadSessionUsage,
+	periodStart,
+} from "../src/sidebar/usageDb";
 
 const USAGE = JSON.stringify({
 	error: null,
@@ -63,28 +67,57 @@ const MPC = JSON.stringify({
 				ability: 39.5,
 				tps: 237,
 			},
+			oc: {
+				provider: "oc-go",
+				plan: "Go",
+				allowance: 60,
+				pricing: { input: 0.1, output: 0.2, cacheRead: 0.002 },
+				ability: 48,
+				tps: 120,
+			},
 		},
-		{ key: "opencodeonly", name: "Some OC Model" },
+		{
+			key: "opencodeonly",
+			name: "Some OC Model",
+			oc: {
+				provider: "oc-go",
+				plan: "Go",
+				allowance: 60,
+				pricing: { input: 0.1, output: 0.2, cacheRead: 0.002 },
+				ability: 48,
+				tps: 120,
+			},
+		},
+		{ key: "neitherside", name: "Neither Side" },
 	],
 });
 
 describe("parseMpcJson", () => {
-	test("keeps CommandCode rows and maps the fields", () => {
+	test("maps the CommandCode side and the OpenCode side of the same row", () => {
 		const meta = parseMpcJson(MPC);
-		// indexed under mpc's key and ours; identical here, so one entry
-		expect(meta.size).toBe(1);
 		const entry = meta.get("deepseekv41flash");
 		expect(entry?.allowance).toBe(60);
 		expect(entry?.intelligence).toBe(39.5);
 		expect(entry?.tps).toBe(237);
 		expect(entry?.rates?.cacheRead).toBe(0.003);
 		expect(entry?.tier).toBeUndefined(); // tier is resolved from the model id at render
+		// The Go/Zen panel reads the other side of the same catalog row.
+		expect(entry?.oc).toEqual({
+			provider: "oc-go",
+			plan: "Go",
+			allowance: 60,
+			rates: { input: 0.1, output: 0.2, cacheRead: 0.002 },
+			ability: 48,
+			tps: 120,
+		});
 	});
-	test("drops rows with no CommandCode side", () => {
+	test("keeps a row with only an OpenCode side, drops one with neither", () => {
 		const meta = parseMpcJson(MPC);
-		expect([...meta.values()].some((m) => m.name === "Some OC Model")).toBe(
-			false,
-		);
+		const names = [...meta.values()].map((m) => m.name);
+		expect(names).toContain("Some OC Model");
+		expect(meta.get("someocmodel")?.oc?.allowance).toBe(60);
+		expect(meta.get("someocmodel")?.allowance).toBeUndefined();
+		expect(names).not.toContain("Neither Side");
 	});
 });
 
@@ -167,6 +200,62 @@ describe("loadModelUsage", () => {
 		expect(
 			loadModelUsage("deepseek/deepseek-v4.1-flash", 0, "/nope/missing.db"),
 		).toBeNull();
+	});
+});
+
+describe("loadSessionUsage", () => {
+	test("counts one session, once per message id", () => {
+		const dir = mkdtempSync(join(tmpdir(), "cc-session-"));
+		const path = join(dir, "opencode.db");
+		const db = new Database(path);
+		db.run(
+			"CREATE TABLE message (id TEXT, session_id TEXT, data TEXT, time_created INTEGER)",
+		);
+		const row = (id: string, session: string, data: object) =>
+			db.run("INSERT INTO message VALUES (?, ?, ?, ?)", [
+				id,
+				session,
+				JSON.stringify(data),
+				Date.now(),
+			]);
+		row("m1", "ses_a", {
+			role: "assistant",
+			modelID: "x/y",
+			tokens: { input: 1 },
+			cost: 0.5,
+		});
+		row("m2", "ses_a", {
+			role: "assistant",
+			modelID: "x/y",
+			tokens: { input: 1 },
+			cost: 1.25,
+		});
+		// Same id again: opencode rewrites message rows in place, and a rewrite
+		// must not count twice.
+		row("m2", "ses_a", {
+			role: "assistant",
+			modelID: "x/y",
+			tokens: { input: 1 },
+			cost: 1.25,
+		});
+		row("m3", "ses_b", {
+			role: "assistant",
+			modelID: "x/y",
+			tokens: { input: 1 },
+			cost: 9,
+		});
+		row("m4", "ses_a", { role: "user", tokens: { input: 1 }, cost: 3 });
+		db.close();
+
+		expect(loadSessionUsage("ses_a", path)).toEqual({
+			requests: 2,
+			cost: 1.75,
+		});
+		expect(loadSessionUsage("ses_b", path)).toEqual({ requests: 1, cost: 9 });
+	});
+
+	test("returns null without a store", () => {
+		expect(loadSessionUsage("ses_a", "/nope/missing.db")).toBeNull();
 	});
 });
 

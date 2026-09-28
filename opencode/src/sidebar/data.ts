@@ -9,12 +9,21 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { cmduseCandidates } from "../cli";
 import { type ModelMeta, modelKey, type Usage } from "./rows";
+import { parseZenJson, type ZenUsage } from "./zen";
 
 // One list, shared with the /cmd-usage dialog: `cli.ts` owns which cmduse we
 // run, so CMDUSE_BIN reaches the sidebar too (the brew Cellar is read-only, so
 // there is no other way to point the panel at a dev build).
 const CMDUSE = cmduseCandidates();
 const MPC = ["mpc", join(homedir(), ".bun/bin/mpc"), "/opt/homebrew/bin/mpc"];
+// ocuse ships in the same crate as cmduse (cmd-usage), so the same override
+// applies to it: a dev build can be pointed at without touching the Cellar.
+const OCUSE = [
+	process.env.OCUSE_BIN,
+	"ocuse",
+	"/opt/homebrew/bin/ocuse",
+	"/usr/local/bin/ocuse",
+].filter((bin): bin is string => Boolean(bin));
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 /** `detached` is load-bearing, not tidiness: it starts the child in its own
@@ -70,6 +79,7 @@ export function parseUsageJson(text: string): Usage {
 			cap: typeof w.cap === "number" ? w.cap : undefined,
 			used: typeof w.used === "number" ? w.used : undefined,
 			resetAt: typeof w.resetAt === "number" ? w.resetAt : undefined,
+			exceeded: typeof w.exceeded === "boolean" ? w.exceeded : undefined,
 		};
 	};
 	const summary = (raw.summary ?? {}) as Record<string, unknown>;
@@ -107,22 +117,51 @@ interface MpcRow {
 		ability?: number | null;
 		tps?: number | null;
 	};
+	oc?: {
+		provider?: string;
+		plan?: string;
+		allowance?: number;
+		pricing?: {
+			input: number;
+			output: number;
+			cacheRead: number;
+			cacheWrite?: number | null;
+		};
+		ability?: number | null;
+		tps?: number | null;
+		free?: boolean;
+	};
 }
 
-/** Parse `mpc --json` into per-model meta, CommandCode side only. */
+/**
+ * Parse `mpc --json` into per-model meta: the CommandCode fields at the top
+ * level and the OpenCode Go / Zen side under `oc`, so one lookup serves either
+ * kind of session. Rows that carry only one side are kept.
+ */
 export function parseMpcJson(text: string): Map<string, ModelMeta> {
 	const body = JSON.parse(text) as { rows?: MpcRow[] };
 	const meta = new Map<string, ModelMeta>();
 	for (const row of body.rows ?? []) {
+		if (!row.name || (!row.cc && !row.oc)) continue;
 		const cc = row.cc;
-		if (!cc || !row.name) continue;
+		const oc = row.oc;
 		const entry: ModelMeta = {
 			key: row.key ?? modelKey(row.name),
 			name: row.name,
-			allowance: cc.allowance,
-			rates: cc.pricing,
-			intelligence: cc.ability ?? undefined,
-			tps: cc.tps ?? undefined,
+			allowance: cc?.allowance,
+			rates: cc?.pricing,
+			intelligence: cc?.ability ?? undefined,
+			tps: cc?.tps ?? undefined,
+			oc: oc
+				? {
+						provider: oc.provider,
+						plan: oc.plan,
+						allowance: oc.allowance,
+						rates: oc.pricing,
+						ability: oc.ability ?? undefined,
+						tps: oc.tps ?? undefined,
+					}
+				: undefined,
 		};
 		// Index by both mpc's key and our own, so lookup does not depend on the
 		// two normalizers agreeing on aliases.
@@ -167,4 +206,13 @@ export async function loadMeta(): Promise<Map<string, ModelMeta>> {
 /** One usage snapshot from cmduse. Throws when cmduse is missing or fails. */
 export async function loadUsage(): Promise<Usage> {
 	return parseUsageJson(await runFirst(CMDUSE, ["-1", "--json", "--plain"]));
+}
+
+/**
+ * One OpenCode Go / Zen snapshot from ocuse, which reads opencode's own store
+ * (those providers have no usage API). Throws when ocuse is missing or fails,
+ * and the caller then omits the panel.
+ */
+export async function loadZen(): Promise<ZenUsage> {
+	return parseZenJson(await runFirst(OCUSE, ["-1", "--json"]));
 }

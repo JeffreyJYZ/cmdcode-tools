@@ -145,6 +145,7 @@ function Row(props: { row: SidebarRow; colors: PanelColors }) {
 
 /** Bold title, then one line per row. Renders nothing when there are no rows. */
 export function Panel(props: {
+	title: () => string;
 	rows: () => SidebarRow[];
 	colors: () => PanelColors;
 }) {
@@ -152,7 +153,7 @@ export function Panel(props: {
 		<Show when={props.rows().length > 0}>
 			<box>
 				<text fg={props.colors().base}>
-					<b>Command Code</b>
+					<b>{props.title()}</b>
 				</text>
 				<For each={props.rows()}>
 					{(row) => <Row row={row} colors={props.colors()} />}

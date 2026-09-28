@@ -98,3 +98,50 @@ export function loadModelUsage(
 		db.close();
 	}
 }
+
+/**
+ * Requests and cost for one session, so the panel can show what this
+ * conversation has spent rather than only the period-to-date figure. Null when
+ * the store is missing or unreadable, and callers then omit the row. Rows are
+ * keyed by their primary key: message rows get rewritten in place.
+ */
+export function loadSessionUsage(
+	sessionID: string,
+	path = usageDbPath(),
+): ModelUsage | null {
+	let db: Database;
+	try {
+		db = new Database(path, { readonly: true });
+	} catch {
+		return null;
+	}
+	try {
+		const rows = db
+			.query(
+				`SELECT id, data FROM message
+				 WHERE session_id = ? AND data LIKE '%"tokens"%'`,
+			)
+			.all(sessionID) as Array<{ id: string; data: string }>;
+		const seen = new Set<string>();
+		let requests = 0;
+		let cost = 0;
+		for (const row of rows) {
+			if (seen.has(row.id)) continue;
+			seen.add(row.id);
+			let data: AssistantData;
+			try {
+				data = JSON.parse(row.data) as AssistantData;
+			} catch {
+				continue;
+			}
+			if (data.role !== "assistant" || !data.tokens) continue;
+			requests += 1;
+			cost += usage(data.cost);
+		}
+		return { requests, cost };
+	} catch {
+		return null;
+	} finally {
+		db.close();
+	}
+}
