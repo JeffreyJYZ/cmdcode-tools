@@ -49,6 +49,22 @@ function usage(value: unknown): number {
 }
 
 /**
+ * Does this store have v2's tables? opencode v2 writes messages to
+ * `session_message` (with per-session totals in `session_v2`) and stopped
+ * appending to the legacy `message` table at the migration, so reading the old
+ * one reports zero for every recent session — which is exactly what the sidebar
+ * did until 0.3.13.
+ */
+function hasV2(db: Database): boolean {
+	const row = db
+		.query(
+			"SELECT 1 AS found FROM sqlite_master WHERE type = 'table' AND name = 'session_message'",
+		)
+		.get();
+	return Boolean(row);
+}
+
+/**
  * Requests and cost for one model since `sinceMs`. Null when the store is
  * missing or unreadable, so callers can fall back to omitting the row.
  * Matching is on the canonical key: the session id and the stored modelID can
@@ -66,6 +82,24 @@ export function loadModelUsage(
 		return null;
 	}
 	try {
+		if (hasV2(db)) {
+			// v2 keeps a model ref per assistant message but no per-message cost,
+			// so requests are exact and spend is not attributed per model at all.
+			const rows = db
+				.query(
+					`SELECT json_extract(data, '$.model.id') AS model, count(*) AS c
+					 FROM session_message
+					 WHERE type = 'assistant' AND time_created >= ?
+					 GROUP BY model`,
+				)
+				.all(sinceMs) as Array<{ model: string | null; c: number }>;
+			const key = modelKey(modelID);
+			let requests = 0;
+			for (const row of rows) {
+				if (row.model && modelKey(row.model) === key) requests += row.c;
+			}
+			return { requests, cost: 0 };
+		}
 		const rows = db
 			.query(
 				`SELECT data, time_created FROM message
@@ -116,6 +150,22 @@ export function loadSessionUsage(
 		return null;
 	}
 	try {
+		if (hasV2(db)) {
+			// v2 keeps the session's own totals as columns: one indexed read for
+			// spend, plus a count of assistant turns.
+			const totals = db
+				.query("SELECT cost FROM session_v2 WHERE id = ?")
+				.get(sessionID) as { cost?: number } | null;
+			const counted = db
+				.query(
+					"SELECT count(*) AS c FROM session_message WHERE session_id = ? AND type = 'assistant'",
+				)
+				.get(sessionID) as { c: number };
+			return {
+				requests: counted.c,
+				cost: typeof totals?.cost === "number" ? totals.cost : 0,
+			};
+		}
 		const rows = db
 			.query(
 				`SELECT id, data FROM message

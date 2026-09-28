@@ -259,6 +259,82 @@ describe("loadSessionUsage", () => {
 	});
 });
 
+/**
+ * opencode v2's store: messages in `session_message` (with a model ref per
+ * assistant turn) and per-session totals as columns in `session_v2`.
+ */
+function v2Db(): string {
+	const dir = mkdtempSync(join(tmpdir(), "cc-v2-"));
+	const path = join(dir, "opencode.db");
+	const db = new Database(path);
+	db.run("CREATE TABLE session_v2 (id TEXT, cost REAL)");
+	db.run(
+		"CREATE TABLE session_message (id TEXT, session_id TEXT, type TEXT, time_created INTEGER, data TEXT)",
+	);
+	db.run("INSERT INTO session_v2 VALUES (?, ?)", ["ses_a", 3.5]);
+	const insert = (
+		id: string,
+		session: string,
+		type: string,
+		at: number,
+		data: object,
+	) =>
+		db.run("INSERT INTO session_message VALUES (?, ?, ?, ?, ?)", [
+			id,
+			session,
+			type,
+			at,
+			JSON.stringify(data),
+		]);
+	const now = Date.now();
+	insert("u1", "ses_a", "user", now, { text: "hi" });
+	insert("m1", "ses_a", "assistant", now - 1_000, {
+		model: { id: "deepseek/deepseek-v4.1-flash" },
+	});
+	// The same model under its bare spelling: canonical keys must agree.
+	insert("m2", "ses_a", "assistant", now - 2_000, {
+		model: { id: "deepseek-v4.1-flash" },
+	});
+	insert("m3", "ses_a", "assistant", now - 1_000, {
+		model: { id: "kimi-k2.7" },
+	});
+	// Another session on the same model: the period figure is account-wide.
+	insert("m4", "ses_b", "assistant", now - 1_000, {
+		model: { id: "deepseek/deepseek-v4.1-flash" },
+	});
+	insert("old", "ses_a", "assistant", now - 40 * 86_400_000, {
+		model: { id: "deepseek/deepseek-v4.1-flash" },
+	});
+	db.close();
+	return path;
+}
+
+describe("v2 store (session_message + session_v2)", () => {
+	test("session totals come from session_v2, requests from assistant turns", () => {
+		// Every assistant turn of the conversation counts, however old: the row
+		// describes the session, not the billing period.
+		expect(loadSessionUsage("ses_a", v2Db())).toEqual({
+			requests: 4,
+			cost: 3.5,
+		});
+		expect(loadSessionUsage("ses_b", v2Db())).toEqual({ requests: 1, cost: 0 });
+	});
+
+	test("per-model requests match on the canonical key, period-wide", () => {
+		const day = Date.now() - 86_400_000;
+		// m1 + m4 (same model, two sessions) + m2 through its bare spelling.
+		expect(loadModelUsage("deepseek-v4.1-flash", day, v2Db())).toEqual({
+			requests: 3,
+			cost: 0,
+		});
+		// The 40-day-old turn is outside the window.
+		expect(
+			loadModelUsage("deepseek/deepseek-v4.1-flash", day, v2Db())?.requests,
+		).toBe(3);
+		expect(loadModelUsage("kimi-k2.7", day, v2Db())?.requests).toBe(1);
+	});
+});
+
 describe("periodStart", () => {
 	const now = Date.UTC(2026, 8, 24);
 	test("uses the published period start when cmduse sends one", () => {

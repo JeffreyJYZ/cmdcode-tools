@@ -307,6 +307,13 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   (`registry <- crate`, `formula <- registry`) that a hand-run release gets wrong. Checking an
   older release needs `--no-pack`: this checkout can only reproduce the crate its manifest is at,
   and a stale local pack is exactly the mismatch it exists to report.
+- **opencode v2 stores messages in `session_message`, not `message`** (0.3.13). The legacy table
+  stopped at the migration, so reading it reports zero for every recent session — the sidebar
+  showed `Usage (this model): 0 req` and `Session: 0 req` while cmduse's account rows looked fine,
+  which is the tell: only the DB-derived rows were wrong. v2 also has no per-message cost (the
+  model ref is per turn; spend exists only as a `session_v2` column), so the per-model figure is
+  requests-only and the Session row reads `session_v2.cost` plus a count of assistant turns.
+  `usageDb.ts` detects the table and keeps the v1 queries as the fallback.
 - **A session switch must not blank the panel.** The host leaves a session's model
   (and so its provider) undefined for a frame while the tab bar switches, so
   `sessionKind()` separates `unknown` from `other` — only a provider we know is
