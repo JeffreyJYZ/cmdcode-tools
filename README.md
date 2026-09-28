@@ -116,7 +116,7 @@ grows a section (toggle with `ctrl+x b`):
   Deliberately no reset countdowns there: Go has no usage API, so the only local figure is an
   approximation.
 
-Usage comes from the `cmduse` CLI (polled every minute); the model catalog comes from `mpc --json`,
+Usage comes from the `cmduse` CLI (polled every 20s); the model catalog comes from `mpc --json`,
 cached for 6h — install it with `bun link` in the sibling `oc-cmd-compare` checkout, or the section
 simply omits those rows. The model's own usage is read from opencode's message store
 (`~/.local/share/opencode/opencode.db`, read-only); CommandCode is subscription-billed, so its

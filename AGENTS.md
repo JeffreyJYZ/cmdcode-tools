@@ -279,7 +279,10 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   category for the model. The rates line merged too: in/out plus cache read, with
   cache write appended only when the model has one. 0.3.7 slowed the account poll
   from 30s to 60s (POLL_MS): the totals move on request boundaries, and each poll
-  is a cmduse spawn. 0.3.8 made the panel fit its 42-column sidebar: every row is
+  is a cmduse spawn. 0.3.13 put it back to 20s: with the panel also carrying
+  this-session totals and a per-model figure, staleness was the complaint, and a
+  poll is one spawn plus one indexed sqlite read. 0.3.8 made the panel fit its
+  42-column sidebar: every row is
   budgeted (ROW_WIDTH = 37) and the long ones split onto an indented continuation
   instead of wrapping, plus a rule between the account block and the model block.
   That release also coloured the panel: rows carry a `tone` (`base` / `muted` /
