@@ -163,7 +163,7 @@ from this plugin. Stable contracts, not incidental output:
 | `cmduse plans --json` — plan name/price/credits/windows | mpc plan table |
 | `cmduse -1 --json` — `summary.requests`/`summary.cost`, `periodEnd` | mpc coverage line + billing window |
 | `cmduse model --json [--since ISO]` — `{source, since, models:{id: totals}}` | mpc `--usage` |
-| `mpc --json` — `{rows:[{key, name, cc:{allowance, pricing, ability, tps}}]}` | the sidebar's model rows (allowance, rates, Intelligence, Tok/s) |
+| `mpc --json` — `{plans, rows:[{key, name, oc?, cc?}]}`, each side `{pricing{input,output,cacheRead,cacheWrite}, allowance, requestsPerMonth, requestsPerFiveHour, requestsPerWeek, ability, tps, deal?, free}`; a side is `null`/absent when unpriced, and `requestsPerMonth: null` means **unbounded** (free model), never "missing" | the sidebar's model rows (allowance, rates, Intelligence, Tok/s, Deal) |
 
 Changing any of those shapes means updating mpc in the same effort; `CMDUSE_BIN` lets mpc test a
 `cmdusedev` build. Local commits only — never publish or push without explicit go.
@@ -355,7 +355,12 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   `cc.deal { badge, ends }` off the docs badge; `rows.ts` compacts the expiry to `Sep 30` so
   the line fits the 37-column budget, and tones it `ok`. There is nothing to compute or expire:
   CommandCode drops the badge and reverts the price itself when a deal lapses, so the row
-  simply disappears.
+  simply disappears. The disk cache is `~/.cache/command-code/cc-catalog.json`, and its
+  `rows` is an array of `[key, value]` **pairs**, not an object — with the CommandCode side
+  **flattened** into the value (`{allowance, intelligence, rates, name, oc, deal?}`), not
+  nested under `cc`. So a `jq '.rows[].cc.deal'` (or `.rows[][1].cc.deal`) reads nothing and
+  looks like "no deals are running", which is how 7 live deals read as zero; the working form
+  is `.rows[][1] | select(.deal)`.
 - **A session switch must not blank the panel.** The host leaves a session's model
   (and so its provider) undefined for a frame while the tab bar switches, so
   `sessionKind()` separates `unknown` from `other` — only a provider we know is
