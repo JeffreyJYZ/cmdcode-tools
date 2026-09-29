@@ -2,7 +2,7 @@
 
 Workspace: cmduse-core + cmd-usage CLI (+ built-in MCP server) + opencode
 plugin, single source of shared logic. Two independent version lines:
-cmd-usage 0.6.x and cmduse-core 1.x (0.2–0.4 slots are yanked-forever on
+cmd-usage 0.7.x and cmduse-core 2.x (0.2–0.4 slots are yanked-forever on
 crates.io from the old cmd-usage crate).
 
 ## Layout
@@ -189,12 +189,13 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
 
 ## Publishing (NEVER without explicit user go)
 
-- **Versions are independent: `cmduse-core` is on its own `1.x` line; the CLI
-  is 0.6.x.** They are NOT a pair — do not try to read one from the other, and
+- **Versions are independent: `cmduse-core` is on its own major line; the CLI
+  is 0.7.x.** They are NOT a pair — do not try to read one from the other, and
   never "sync" them. Core bumps only when its own API changes (breaking → major,
   additive → minor, fix → patch); the CLI bumps per release as usual.
-  `cli/Cargo.toml` depends on `{ path = "../core", version = "1" }`, so a new
-  core minor/patch needs no CLI edit.
+  `cli/Cargo.toml` depends on `{ path = "../core", version = "2" }`, so a new
+  core minor/patch needs no CLI edit. Core 2.0.0 is `elapsed_pct` returning f64
+  (one-decimal percentages) after 1.1.1's u8.
 - **Core's major always leads the CLI's.** When the CLI enters a major band
   (e.g. CLI 1.0.0), publish `cmduse-core` at the next major (2.0.0) as a
   line-separation release — no API change, note it in the description. This
