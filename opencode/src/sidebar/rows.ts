@@ -296,14 +296,17 @@ export function modelRows(
 		["Model", clip(meta.name, valueWidth("Model")), "strong", true],
 	];
 	if (usage) {
-		// CommandCode is subscription-billed, so opencode records cost 0 for
-		// its models: show spend only when the harness actually priced it.
-		const spent = usage.cost > 0 ? ` · ${money(usage.cost)}` : "";
-		rows.push([
-			"Usage (this model)",
-			`${count(usage.requests)} req${spent}`,
-			"base",
-		]);
+		// CommandCode is subscription-billed, so the harness only prices a model
+		// when it knows the rates; the share of the session goes beside the spend,
+		// because a figure without its denominator says little.
+		rows.push(["Usage (this model)", `${count(usage.requests)} req`, "base"]);
+		const spend = usage.cost > 0 ? money(usage.cost) : "";
+		const share =
+			usage.cost > 0 && session && session.cost > 0
+				? `${Math.round((usage.cost / session.cost) * 100)}% of session`
+				: "";
+		const detail = [spend, share].filter(Boolean).join(" · ");
+		if (detail) rows.push(["", detail, "muted"]);
 	}
 	if (session) {
 		const spent = session.cost > 0 ? ` · ${money(session.cost)}` : "";

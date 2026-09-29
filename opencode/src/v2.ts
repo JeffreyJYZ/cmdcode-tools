@@ -78,9 +78,7 @@ export const TOOL_DESCRIPTION =
 	"Fetch live Command Code plan/usage: plan name, monthly credits, 5-hour & weekly windows, billing-period summary. Pass arg='plans' for the plan comparison table only, or extra cmduse flags (e.g. '--tz +05:30 daily').";
 
 /** opencode cost entry: $/1M rates, or [] when the catalog has none. */
-function costEntry(
-	id: string,
-): Array<{
+function costEntry(id: string): Array<{
 	input: number;
 	output: number;
 	cache: { read: number; write: number };

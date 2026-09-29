@@ -227,20 +227,34 @@ describe("modelRows", () => {
 		).toBe(false);
 	});
 
-	test("puts period usage under the model name when known", () => {
+	test("puts this model's usage under the model name, with its share", () => {
 		const rows = modelRows(
 			{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },
 			{ requests: 1_234, cost: 8.4 },
+			{ requests: 2_000, cost: 12 },
 		);
 		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong", true]);
-		expect(rows[1]).toEqual(["Usage (this model)", "1.2K req · $8.40", "base"]);
+		expect(rows[1]).toEqual(["Usage (this model)", "1.2K req", "base"]);
+		// Spend and its denominator: 8.40 of the session's 12.00 is 70%.
+		expect(rows[2]).toEqual(["", "$8.40 · 70% of session", "muted"]);
 	});
+
+	test("spend without a session total shows the figure alone", () => {
+		const rows = modelRows(
+			{ key: "kimi", name: "Kimi K3" },
+			{ requests: 10, cost: 0.5 },
+		);
+		expect(rows.find((row) => row[0] === "")?.[1]).toBe("$0.50");
+	});
+
 	test("omits spend when the harness priced it at zero (subscription)", () => {
 		const rows = modelRows(
 			{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },
 			{ requests: 3_110, cost: 0 },
 		);
 		expect(rows[1]).toEqual(["Usage (this model)", "3.1K req", "base"]);
+		// Priced at zero: no spend line at all, not a "$0".
+		expect(rows.some((row) => row[0] === "")).toBe(false);
 	});
 	test("missing meta yields no rows", () => {
 		expect(modelRows(undefined)).toEqual([]);

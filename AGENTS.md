@@ -341,6 +341,11 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   model ref is per turn; spend exists only as a `session_v2` column), so the per-model figure is
   requests-only and the Session row reads `session_v2.cost` plus a count of assistant turns.
   `usageDb.ts` detects the table and keeps the v1 queries as the fallback.
+- **The panel polls every 5s** (0.3.15). The sqlite reads behind `Session` and
+  `Usage (this model)` are free, so the cadence is set by the cmduse/ocuse spawn:
+  one process and one account API call per poll, ~12 a minute. If that proves hot,
+  cache the CLI snapshot in-process for ~30s and keep the local rows at 5s — the
+  account figures move on request boundaries, not continuously.
 - **A promotion on the model shows as a `Deal` row** (0.3.14). mpc reports
   `cc.deal { badge, ends }` off the docs badge; `rows.ts` compacts the expiry to `Sep 30` so
   the line fits the 37-column budget, and tones it `ok`. There is nothing to compute or expire:

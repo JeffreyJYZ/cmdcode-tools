@@ -90,11 +90,14 @@ export function loadModelUsage(
 	}
 	try {
 		if (hasV2(db)) {
-			// v2 keeps a model ref per assistant message but no per-message cost,
-			// so requests are exact and spend is not attributed per model at all.
+			// v2 keeps a model ref per assistant message, and a *completed* turn
+			// carries its own cost (an in-flight one does not), so per-model spend
+			// is exact rather than an estimate.
 			const rows = db
 				.query(
-					`SELECT json_extract(data, '$.model.id') AS model, count(*) AS c
+					`SELECT json_extract(data, '$.model.id') AS model,
+					        count(*) AS c,
+					        coalesce(sum(json_extract(data, '$.cost')), 0) AS cost
 					 FROM session_message
 					 WHERE type = 'assistant'
 					   ${sessionID ? "AND session_id = ?" : "AND time_created >= ?"}
@@ -103,13 +106,18 @@ export function loadModelUsage(
 				.all(sessionID ?? sinceMs) as Array<{
 				model: string | null;
 				c: number;
+				cost: number;
 			}>;
 			const key = modelKey(modelID);
 			let requests = 0;
+			let cost = 0;
 			for (const row of rows) {
-				if (row.model && modelKey(row.model) === key) requests += row.c;
+				if (row.model && modelKey(row.model) === key) {
+					requests += row.c;
+					cost += row.cost;
+				}
 			}
-			return { requests, cost: 0 };
+			return { requests, cost };
 		}
 		const rows = db
 			.query(

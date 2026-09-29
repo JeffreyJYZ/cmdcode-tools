@@ -1,4 +1,4 @@
-// Sidebar data hook: cmduse polled every 20s for CommandCode account totals,
+// Sidebar data hook: cmduse polled every 5s for CommandCode account totals,
 // ocuse the same way for OpenCode Go / Zen, mpc's catalog read from disk, and
 // opencode's own store for the active model's period usage and this session's
 // totals (the account APIs have no per-model, per-session dimension).
@@ -19,11 +19,11 @@ import {
 import { loadModelUsage, loadSessionUsage, usageDbPath } from "./usageDb";
 import { type ZenUsage, zenRows } from "./zen";
 
-// Refresh cadence. Each poll is a process spawn (cmduse or ocuse) plus one
-// indexed sqlite read, so this is a responsiveness/cost tradeoff rather than a
-// correctness one: 20s keeps the panel within a request or two of live without
-// hammering the account API.
-const POLL_MS = 20_000;
+// Refresh cadence. The sqlite reads (this session, this model) are free; the
+// cmduse/ocuse spawn behind them is not — it costs a process and an account API
+// call each time, so 5s is deliberately hot: it is the cadence of a panel you
+// are watching, not of one left open.
+const POLL_MS = 5_000;
 
 /**
  * Which family a session's provider belongs to, as far as this panel is
