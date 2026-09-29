@@ -84,7 +84,7 @@ jobs:
               --numeric-owner -C "stage/${stage}" -czf "out/${stage}.tar.gz" .
             rm -rf stage
           done
-          (cd out && sha256sum ./*.tar.gz > SHA256SUMS)
+          (cd out && sha256sum ./*.tar.gz | sed 's|\./||' > SHA256SUMS)
           cat out/SHA256SUMS
       - name: Publish release
         env:
@@ -102,7 +102,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release download "${GITHUB_REF_NAME}" -D dl
+          # No checkout in this job: -R tells gh which repo, instead of it
+          # trying to infer one from a git worktree that isn't here.
+          gh release download "${GITHUB_REF_NAME}" -R "${GITHUB_REPOSITORY}" -D dl
           cd dl
           sha256sum -c SHA256SUMS
           ls -l ./*.tar.gz
