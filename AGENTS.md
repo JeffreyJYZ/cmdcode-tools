@@ -206,17 +206,35 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   errors you won't see locally. If core did not change, publish the CLI alone.
 - **crates.io version slots are FOREVER.** 0.2.0–0.4.0 were published+yanked
   on old `cmd-usage` — you can never re-upload those numbers. Current 0.x
-  release line is 0.7.5 (0.7.0 added the ocuse bin; 0.7.1 refreshed gating.json to
+  release line is 0.7.6 (0.7.0 added the ocuse bin; 0.7.1 refreshed gating.json to
   CLI 1.66; 0.7.2 added the `-1 --json` billing-period bounds; 0.7.3 gave the
   ocuse dashboard cmduse's gauges, sparkline and live watch frame; 0.7.4 threaded
   the colour flag through every ocuse renderer, reports included; 0.7.5 flagged an
-  over-cap model and added its share of period spend); 0.6.x was the
+  over-cap model and added its share of period spend; 0.7.6 gave every
+  used/elapsed percentage one decimal and started shipping prebuilt binaries with
+  the release workflow); 0.6.x was the
   last CommandCode-only line (first free slot past the dead 0.2–0.4 range). Skip
   taken numbers, never fight the 400.
 - Clean tree required (commit first, incl. Cargo.lock).
+- **Releases carry prebuilt binaries (tag `cmduse-vX.Y.Z`).** `.github/workflows/release.yml`
+  builds six targets (macOS arm64/x86_64, Linux {aarch64,x86_64} × {musl,gnu}) and
+  publishes `cmduse-<version>-<target>.tar.gz` (binaries at the archive root plus
+  `cmduse.1` + `LICENSE-MIT`) with a `SHA256SUMS`, then a verify job re-downloads
+  and checks every asset. Asset names are a public contract: the Homebrew formula
+  urls and `cli/Cargo.toml`'s `[package.metadata.binstall]` both template them, so
+  changing the pattern breaks `brew` and `cargo binstall`. musl targets cross-link
+  through `cargo-zigbuild` (homebrew `cargo-zigbuild` + `zig` locally); the gnu and
+  darwin builds are native on their runners. The tag is created by hand after the
+  crate publish — CI takes it from there; `workflow_dispatch` dry-runs the build
+  matrix without creating a release.
 - Homebrew after every cmd-usage release: `JeffreyJYZ/homebrew-tap`,
-  `Formula/cmduse.rb` — bump version, url, sha256
-  (`curl -sL https://static.crates.io/crates/cmd-usage/cmd-usage-<v>.crate | shasum -a 256`).
+  `Formula/cmduse.rb` — **download the release, don't compile**: per-OS/arch url +
+  sha256 from the release's `SHA256SUMS` (Linux uses the musl asset; `bin.install
+  "cmduse", "ocuse", "cmdusedev"` + `man1.install "cmduse.1"`), no `depends_on
+  "rust"`. Fallback for uncovered platforms is `cargo install cmd-usage` /
+  `cargo binstall`.
+- `cargo binstall cmd-usage` works off the same assets (metadata in
+  `cli/Cargo.toml`, `bin-dir` at the archive root).
 - README/AGENTS updated in the same commit.
 - The opencode npm package (`opencode/package.json`) is versioned
   **independently** of the Rust workspace (0.2.x vs 0.6.x) — intentional, not

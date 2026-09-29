@@ -23,8 +23,9 @@ rendering to the `cmduse` CLI.
 ## Install the CLI
 
 ```sh
-brew install JeffreyJYZ/tap/cmduse     # macOS (Homebrew)
-cargo install cmd-usage                # any platform with Rust
+brew install JeffreyJYZ/tap/cmduse     # macOS + Linux, prebuilt binary (no cargo)
+cargo binstall cmd-usage               # any platform, prebuilt from the release
+cargo install cmd-usage                # build from source (any platform)
 ```
 
 Then run `cmduse` for the live dashboard, or `cmduse plans` / `cmduse models`.
