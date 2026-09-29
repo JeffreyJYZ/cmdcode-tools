@@ -71,9 +71,9 @@ describe("zenRows", () => {
 		const find = (label: string) => rows.find((row) => row[0] === label);
 		expect(find("Plan")).toEqual(["Plan", "Go · limits per model", "base"]);
 		// 5h = 20% of $60 = $12; 50% of the odd half-cent is traced back exactly.
-		expect(find("5-hour")).toEqual(["5-hour", "$0.50/$12 (4%)", "ok"]);
-		expect(find("Weekly")).toEqual(["Weekly", "$1/$30 (3%)", "ok"]);
-		expect(find("Month")).toEqual(["Month", "$12/$60 (20%)", "ok"]);
+		expect(find("5-hour")).toEqual(["5-hour", "$0.50/$12 (4.2%)", "ok"]);
+		expect(find("Weekly")).toEqual(["Weekly", "$1/$30 (3.3%)", "ok"]);
+		expect(find("Month")).toEqual(["Month", "$12/$60 (20.0%)", "ok"]);
 		expect(find("Period")).toEqual(["Period", "58 requests · $17", "base"]);
 		expect(find("Model")).toEqual(["Model", "GLM 5.3 Flash", "strong", true]);
 		expect(find("Session")).toEqual(["Session", "5 req · $0.25", "base"]);

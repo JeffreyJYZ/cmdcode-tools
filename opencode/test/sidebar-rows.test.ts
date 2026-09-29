@@ -53,8 +53,8 @@ describe("usageRows", () => {
 	test("renders plan, monthly, windows and period", () => {
 		const rows = usageRows(usage, 1_000_000_000_000 - 5 * 60_000);
 		expect(rows[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base", true]);
-		expect(rows[1]).toEqual(["Monthly", "$50.56 / $70 (72%)", "warn"]);
-		expect(rows[2]).toEqual(["5-hour", "$1.17/$14 (8%)", "ok"]);
+		expect(rows[1]).toEqual(["Monthly", "$50.56 / $70 (72.2%)", "warn"]);
+		expect(rows[2]).toEqual(["5-hour", "$1.17/$14 (8.4%)", "ok"]);
 		expect(rows[3]?.[0]).toBe("");
 		expect(rows[3]?.[1]).toContain("elapsed");
 		expect(rows[3]?.[1]).toContain("resets 5m");
@@ -76,8 +76,8 @@ describe("usageRows", () => {
 			},
 			now,
 		);
-		expect(rows[1]).toEqual(["Monthly", "$57.32 / $70 (82%)", "warn"]);
-		expect(rows[2]).toEqual(["", "99% elapsed · resets 3h 50m", "muted"]);
+		expect(rows[1]).toEqual(["Monthly", "$57.32 / $70 (81.9%)", "warn"]);
+		expect(rows[2]).toEqual(["", "99.5% elapsed · resets 3h 50m", "muted"]);
 	});
 	test("monthly keeps to spend when cmduse has no period bounds", () => {
 		const rows = usageRows({
@@ -95,7 +95,7 @@ describe("usageRows", () => {
 			monthlyCap: 70,
 			monthlyCredits: 84.5,
 		});
-		expect(rows[1]).toEqual(["Monthly", "$0 / $70 (0%)", "ok"]);
+		expect(rows[1]).toEqual(["Monthly", "$0 / $70 (0.0%)", "ok"]);
 	});
 	test("an over-cap window is flagged and coloured, not just high", () => {
 		const now = 1_000_000_000_000;
@@ -114,7 +114,7 @@ describe("usageRows", () => {
 			now,
 		);
 		const five = rows.findIndex((row) => row[0] === "5-hour");
-		expect(rows[five]).toEqual(["5-hour", "$14.20/$14 (101%)", "crit"]);
+		expect(rows[five]).toEqual(["5-hour", "$14.20/$14 (101.4%)", "crit"]);
 		// The flag leads the continuation: it is the one thing worth reading.
 		expect(rows[five + 1]?.[1]).toStartWith("LIMIT EXCEEDED · resets");
 	});
@@ -153,7 +153,7 @@ describe("usageRows", () => {
 			now,
 		);
 		const five = rows.findIndex((row) => row[0] === "5-hour");
-		expect(rows[five + 1]?.[1]).toBe("50% elapsed · resets 2h 30m");
+		expect(rows[five + 1]?.[1]).toBe("50.0% elapsed · resets 2h 30m");
 	});
 
 	test("omits elapsed when the window has not started", () => {
@@ -275,13 +275,13 @@ describe("elapsedLabel", () => {
 	test("a window minutes into a long period reads <1%, not 0%", () => {
 		// 40 minutes into a 7-day window
 		const resetAt = 1_000_000 + 7 * 86_400 - 2400;
-		expect(elapsedLabel(resetAt * 1000, 7 * 86_400, 1_000_000)).toBe("<1%");
+		expect(elapsedLabel(resetAt * 1000, 7 * 86_400, 1_000_000)).toBe("0.4%");
 	});
 	test("exactly at the start stays 0%, and real percents round", () => {
 		const resetAt = 1_000_000 + fiveHour;
-		expect(elapsedLabel(resetAt * 1000, fiveHour, 1_000_000)).toBe("0%");
+		expect(elapsedLabel(resetAt * 1000, fiveHour, 1_000_000)).toBe("0.0%");
 		expect(elapsedLabel(resetAt * 1000, fiveHour, 1_000_000 + 13 * 60)).toBe(
-			"4%",
+			"4.3%",
 		);
 	});
 	test("no reset time means no label", () => {

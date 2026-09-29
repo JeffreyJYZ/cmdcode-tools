@@ -149,8 +149,9 @@ pub fn render_json(s: &Snapshot) -> String {
     .to_string()
 }
 
-/// Elapsed % of a rolling window: window length = dur_secs, ends at reset_at.
-pub fn elapsed_pct(reset_at: Option<f64>, dur_secs: u64, now: u64) -> Option<u8> {
+/// Elapsed % of a rolling window (one decimal): window length = dur_secs,
+/// ends at reset_at.
+pub fn elapsed_pct(reset_at: Option<f64>, dur_secs: u64, now: u64) -> Option<f64> {
     cmduse_core::elapsed_pct(reset_at, dur_secs, Some(now))
 }
 
@@ -171,7 +172,7 @@ pub fn window_line(
     // pace warning) must sit before the informational elapsed share.
     let thru = dur_secs
         .and_then(|d| elapsed_pct(w.reset_at, d, now))
-        .map(|p| format!(" · {DIM}window {p}% elapsed{RESET}"))
+        .map(|p| format!(" · {DIM}window {p:.1}% elapsed{RESET}"))
         .unwrap_or_default();
     // burn-rate projection: spend rate over window elapsed time → when cap hits.
     // ponytail: assumes flat spend rate; bursty sessions shift the ETA.
@@ -395,13 +396,13 @@ pub(crate) fn plain_window_line(
     dur_secs: Option<u64>,
 ) -> String {
     let pct = if w.cap > 0.0 {
-        w.used / w.cap * 100.0
+        (w.used / w.cap * 1000.0).round() / 10.0
     } else {
         0.0
     };
     let elapsed = dur_secs
         .and_then(|d| elapsed_pct(w.reset_at, d, now))
-        .map(|p| format!(" · window {p}% elapsed"))
+        .map(|p| format!(" · window {p:.1}% elapsed"))
         .unwrap_or_default();
     // burn-rate projection, same as the colored dashboard: flat-spend estimate
     // of when the cap is hit at the current rate.
@@ -416,7 +417,7 @@ pub(crate) fn plain_window_line(
     // Same importance order as the colored renderer: clipped watch frames must
     // keep the flag and the pace warning before the elapsed share.
     format!(
-        "{label}: {pct:.0}% ({} / {}) · resets in {}{flag}{pace}{elapsed}\n",
+        "{label}: {pct:.1}% ({} / {}) · resets in {}{flag}{pace}{elapsed}\n",
         money(w.used),
         money(w.cap),
         rel_time(w.reset_at, now),

@@ -106,12 +106,13 @@ pub fn compact(n: u64) -> String {
     }
 }
 
-/// Percent string of used/cap: "34%" or "—" when cap unknown. Rounds
-/// half-away-from-zero (`.round()`), matching JS `Math.round` in the opencode
-/// port; `format!("{:.0}")` alone is half-to-even and drifts at exact .5.
+/// Percent string of used/cap at one decimal: "34.2%" or "—" when cap unknown.
+/// Multiply-rounds to one decimal (`(x*10).round()/10`) before formatting,
+/// matching JS `toFixed(1)`/`Math.round` in the opencode port; `format!("{:.1}")`
+/// alone is half-to-even and drifts at exact .x5 ties.
 pub fn pct(used: f64, cap: f64) -> String {
     if cap > 0.0 {
-        format!("{:.0}%", ((used / cap) * 100.0).round())
+        format!("{:.1}%", (used / cap * 1000.0).round() / 10.0)
     } else {
         "—".into()
     }
@@ -152,8 +153,9 @@ pub fn rel_time(reset_at: Option<f64>, now: Option<u64>) -> String {
     duration(reset_s - now_s)
 }
 
-/// Elapsed % of a rolling window: window length = dur_secs, ends at reset_at.
-pub fn elapsed_pct(reset_at: Option<f64>, dur_secs: u64, now: Option<u64>) -> Option<u8> {
+/// Elapsed % of a rolling window, one decimal: window length = dur_secs, ends
+/// at reset_at. Multiplied-rounded like `pct` so both ports agree at .x5.
+pub fn elapsed_pct(reset_at: Option<f64>, dur_secs: u64, now: Option<u64>) -> Option<f64> {
     let reset_ms = reset_at?;
     let now_s = now?;
     let reset_s = reset_ms as u64 / 1000;
@@ -163,7 +165,7 @@ pub fn elapsed_pct(reset_at: Option<f64>, dur_secs: u64, now: Option<u64>) -> Op
     }
     let elapsed = now_s - start;
     let pct = (elapsed as f64 / dur_secs as f64 * 100.0).clamp(0.0, 100.0);
-    Some(pct.round() as u8)
+    Some((pct * 10.0).round() / 10.0)
 }
 
 /// Seconds until spend hits cap at the current rate, if that lands before the
@@ -380,7 +382,7 @@ mod tests {
     fn elapsed_pct_windows() {
         let now = 1_000_000u64;
         let reset = (now as f64 + 2.5 * 3600.0) * 1000.0;
-        assert_eq!(elapsed_pct(Some(reset), 5 * 3600, Some(now)), Some(50));
+        assert_eq!(elapsed_pct(Some(reset), 5 * 3600, Some(now)), Some(50.0));
         assert_eq!(elapsed_pct(Some(1.0), 3600, Some(now)), None);
         assert_eq!(elapsed_pct(None, 3600, Some(now)), None);
     }
@@ -472,7 +474,7 @@ mod tests {
             let want = if c["out"].is_null() {
                 None
             } else {
-                Some(c["out"].as_u64().unwrap() as u8)
+                Some(c["out"].as_f64().unwrap())
             };
             assert_eq!(got, want, "elapsedPct {}", c["durSecs"]);
         }

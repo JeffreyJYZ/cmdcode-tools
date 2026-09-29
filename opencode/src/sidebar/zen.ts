@@ -113,9 +113,9 @@ function windowRows(
 		];
 	}
 	const cap = limit * share;
-	const pct = cap > 0 ? Math.round((spent.cost / cap) * 100) : 0;
+	const pct = cap > 0 ? (spent.cost / cap) * 100 : 0;
 	const rows: SidebarRow[] = [
-		[label, `${money(spent.cost)}/${money(cap)} (${pct}%)`, pctTone(pct)],
+		[label, `${money(spent.cost)}/${money(cap)} (${pct.toFixed(1)}%)`, pctTone(pct)],
 	];
 	if (spent.requests > 0)
 		rows.push(["", `${count(spent.requests)} req`, "muted"]);

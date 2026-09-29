@@ -415,9 +415,9 @@ pub fn plans_text(colour: bool) -> String {
         ink.bold,
         ink.reset,
         ink.cyan_on(format!("${:.2}", catalog.go.price_usd)),
-        ink.cyan_on(format!("{:.0}%", catalog.go.window_share.five_hour * 100.0)),
-        ink.cyan_on(format!("{:.0}%", catalog.go.window_share.weekly * 100.0)),
-        ink.cyan_on(format!("{:.0}%", catalog.go.window_share.monthly * 100.0)),
+        ink.cyan_on(format!("{:.1}%", catalog.go.window_share.five_hour * 100.0)),
+        ink.cyan_on(format!("{:.1}%", catalog.go.window_share.weekly * 100.0)),
+        ink.cyan_on(format!("{:.1}%", catalog.go.window_share.monthly * 100.0)),
     ));
     out.push_str(&format!(
         "{}MODEL                            LIMIT    IN     OUT    CACHE{}\n",

@@ -29,13 +29,15 @@ export function elapsedPct(
 	const start = resetSecs - durSecs;
 	if (nowSecs < start) return undefined; // window hasn't started
 	const pct = ((nowSecs - start) / durSecs) * 100;
-	return Math.round(Math.min(100, Math.max(0, pct)));
+	// one decimal, multiply-rounded so it matches cmduse-core's elapsed_pct
+	return Math.round(Math.min(100, Math.max(0, pct)) * 10) / 10;
 }
 
 /**
- * `elapsedPct` as text: a seven-day window forty minutes in is 0.4%, and "0%"
- * reads as "not started". Non-zero fractions below a percent render "<1%".
- * Exact zero stays "0%".
+ * `elapsedPct` as text, one decimal: a seven-day window forty minutes in is
+ * "0.4%". Only a fraction too small to show at one decimal (<0.05%) reads
+ * "<0.1%", so a just-started window is not mistaken for an unstarted one.
+ * Exact zero stays "0.0%".
  */
 export function elapsedLabel(
 	resetAtMs: number | undefined,
@@ -45,8 +47,8 @@ export function elapsedLabel(
 	const pct = elapsedPct(resetAtMs, durSecs, nowSecs);
 	if (pct === undefined) return undefined;
 	if (pct === 0 && nowSecs > Math.floor((resetAtMs as number) / 1000) - durSecs)
-		return "<1%";
-	return `${pct}%`;
+		return "<0.1%";
+	return `${pct.toFixed(1)}%`;
 }
 
 /**

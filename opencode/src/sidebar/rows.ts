@@ -187,7 +187,7 @@ function windowRows(
 ): SidebarRow[] {
 	if (!w || typeof w.cap !== "number" || w.cap <= 0) return [];
 	const used = typeof w.used === "number" ? w.used : 0;
-	const pct = Math.round((used / w.cap) * 100);
+	const pct = (used / w.cap) * 100;
 	const nowSecs = Math.floor(now / 1000);
 	const elapsed = elapsedLabel(w.resetAt, durSecs, nowSecs);
 	const eta = paceEtaSecs(w.resetAt, durSecs, used, w.cap, nowSecs);
@@ -206,7 +206,7 @@ function windowRows(
 	return [
 		[
 			label,
-			`${money(used)}/${money(w.cap)} (${pct}%)`,
+			`${money(used)}/${money(w.cap)} (${pct.toFixed(1)}%)`,
 			w.exceeded ? "crit" : pctTone(pct),
 		],
 		...(detail ? [["", detail, "muted"] as SidebarRow] : []),
@@ -258,10 +258,10 @@ export function usageRows(
 			Math.max(0, usage.monthlyCap - usage.monthlyCredits),
 		);
 		const pct =
-			usage.monthlyCap > 0 ? Math.round((used / usage.monthlyCap) * 100) : 0;
+			usage.monthlyCap > 0 ? (used / usage.monthlyCap) * 100 : 0;
 		rows.push([
 			"Monthly",
-			`${money(used)} / ${money(usage.monthlyCap)} (${pct}%)`,
+			`${money(used)} / ${money(usage.monthlyCap)} (${pct.toFixed(1)}%)`,
 			pctTone(pct),
 		]);
 		const detail = monthlyDetail(usage, now);

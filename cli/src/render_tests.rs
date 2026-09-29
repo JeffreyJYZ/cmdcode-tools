@@ -40,7 +40,7 @@ fn window_line_includes_elapsed_and_flag() {
         reset_at: Some((now as f64 + 2.5 * 3600.0) * 1000.0),
     };
     let line = window_line("5-hour", &w, now, 20, Some(5 * 3600));
-    assert!(line.contains("50%"));
+    assert!(line.contains("50.0%"));
     assert!(line.contains("$5.00 / $10.00"));
     assert!(line.contains("resets in"));
 
@@ -94,7 +94,7 @@ fn pace_warns_only_after_10pct_elapsed() {
     // importance order: pace before elapsed, so width-clipped watch frames
     // keep the warning and drop the informational elapsed share
     assert!(
-        line.find("on pace").unwrap() < line.find("window 10%").unwrap(),
+        line.find("on pace").unwrap() < line.find("window 10.0%").unwrap(),
         "pace must precede elapsed: {line}"
     );
 }
@@ -227,12 +227,12 @@ fn plain_window_line_has_elapsed_and_pace() {
         reset_at: Some(1_016_200_000.0),
     };
     let line = crate::render::plain_window_line("5-hour", &w, now, Some(18_000));
-    assert!(line.contains("window 10% elapsed"), "{line}");
+    assert!(line.contains("window 10.0% elapsed"), "{line}");
     assert!(line.contains("on pace to hit cap in"), "{line}");
     // importance order: pace (actionable) before elapsed (informational), so a
     // width-clipped watch frame drops elapsed first
     assert!(
-        line.find("on pace").unwrap() < line.find("window 10%").unwrap(),
+        line.find("on pace").unwrap() < line.find("window 10.0%").unwrap(),
         "{line}"
     );
     assert!(
@@ -335,7 +335,7 @@ fn statusline_templates() {
 
     // pct placeholders
     let out = render_statusline("{5h_pct}|{wk_pct}", &d0);
-    assert_eq!(out, "20%|10%");
+    assert_eq!(out, "19.9%|10.3%");
 
     // used/cap
     let out = render_statusline("{5h_used} of {5h_cap}", &d0);

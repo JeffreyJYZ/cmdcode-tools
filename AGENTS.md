@@ -263,7 +263,7 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   (`mergeModels`: add + update, never remove, so a gated or partial response
   cannot make a model vanish), and one always-on line reports where a slow start
   went: `[command-code] setup: key=…ms register=…ms connection=…ms refresh=…ms
-  models=…`. Also: `<1%` instead of `0%` for windows just started, an unpkg
+  models=…`. Also: `<0.1%` instead of `0.0%` for windows just started, an unpkg
   fallback in `scripts/extract-gating.ts` (a local CLI still wins — this machine
   has 1.38.2 installed while 1.65.0 is published, so a real refresh must use the
   published bundle or a newer CLI), and a README tip to pin the plugin specifier
@@ -438,6 +438,15 @@ The sidebar's TUI bundle must be compiled with `@opentui/solid`'s solid transfor
 element-creation time, so the panel freezes at mount and never repaints when the session model
 changes. `@opentui/*` and `solid-js` stay external and the slice stays one bundle because both
 TUI hosts rewrite the entry's imports to their own module instances.
+
+**Percentages carry one decimal, everywhere.** `used/cap` and window elapsed are
+multiply-rounded (`(x*10).round()/10`) in `core::pct` / `core::elapsed_pct` and
+in the TS ports (`windows.ts`, `rows.ts`, `zen.ts`) so both languages agree at
+`.x5` — `format!("{:.1}")` alone is half-to-even and drifts. The shared
+`pct` / `elapsedPct` vectors in `core/conformance.json` pin the format ("12.5%",
+50.0) and must be updated with any change here. Only two percent-ish readings
+stay whole: the success rate on the dashboard, and the sidebar's sub-0.1%
+elapsed label ("<0.1%", not "0.0%", so a just-started window is distinguishable).
 
 API endpoints, cumulative-diff reports, TLS retry, watch-mode redraw rules
 (frame's last line has NO trailing newline; frame-shrink = `\x1b[1B` +

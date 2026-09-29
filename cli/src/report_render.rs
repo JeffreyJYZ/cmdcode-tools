@@ -128,12 +128,12 @@ fn placeholder(key: &str, d: &StatusData) -> String {
             bar(pct)
         }
         "5h_bar" => bar(pct_of(d.five_hour)),
-        "5h_pct" => format!("{:.0}%", pct_of(d.five_hour)),
+        "5h_pct" => format!("{:.1}%", pct_of(d.five_hour)),
         "5h_used" => money(d.five_hour.map(|(u, _)| u).unwrap_or(0.0)),
         "5h_cap" => money(d.five_hour.map(|(_, c)| c).unwrap_or(0.0)),
         "5h_eta" => d.five_hour_eta.clone().unwrap_or_default(),
         "wk_bar" => bar(pct_of(d.weekly)),
-        "wk_pct" => format!("{:.0}%", pct_of(d.weekly)),
+        "wk_pct" => format!("{:.1}%", pct_of(d.weekly)),
         "wk_used" => money(d.weekly.map(|(u, _)| u).unwrap_or(0.0)),
         "wk_cap" => money(d.weekly.map(|(_, c)| c).unwrap_or(0.0)),
         "wk_eta" => d.weekly_eta.clone().unwrap_or_default(),
