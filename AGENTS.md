@@ -494,6 +494,19 @@ git: fatal: not a git repository`), and `sha256sum ./*.tar.gz` records
 strip the prefix when generating `SHA256SUMS`. A verify job runs in a context
 unlike the workstation that wrote the workflow, which is exactly why it exists.
 
+A third (the annotations that drown the release log): the workflow's action pins
+drift behind their node24 majors — `checkout@v7`, `upload-artifact@v7`,
+`download-artifact@v8` are current while the workflow shipped v5s, and each
+deprecation line repeats once per job. Look the majors up
+(`gh api repos/<owner>/<repo>/releases/latest -q .tag_name`) rather than guessing;
+`goto-bus-stop/setup-zig` has no newer major (v2.2.1 is current), so its node20
+warning is expected and stays. Two of those annotations are noise, not faults:
+`Failed to save/restore: Cache service responded with 400` on the musl jobs is
+GitHub-side (rust-cache; the job still passes) and the macOS arm64 capacity line
+is a runner queue note. Exercise both workflows after such a bump — CI fires on
+the push and `workflow_dispatch` on release.yml dry-runs the matrix (done for the
+v7/v8 bump: both green, no release created).
+
 API endpoints, cumulative-diff reports, TLS retry, watch-mode redraw rules
 (frame's last line has NO trailing newline; frame-shrink = `\x1b[1B` +
 `\x1b[2K\x1b[1B` + `\x1b[2K` + `\x1b[{prev-n}F`; test redraw bytes via
