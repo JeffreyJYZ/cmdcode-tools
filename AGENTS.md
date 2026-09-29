@@ -472,6 +472,13 @@ in the TS ports (`windows.ts`, `rows.ts`, `zen.ts`) so both languages agree at
 stay whole: the success rate on the dashboard, and the sidebar's sub-0.1%
 elapsed label ("<0.1%", not "0.0%", so a just-started window is distinguishable).
 
+Release-workflow traps, both learned on the first tag: the verify job has **no
+checkout**, so `gh` needs `-R "$GITHUB_REPOSITORY"` (otherwise: `failed to run
+git: fatal: not a git repository`), and `sha256sum ./*.tar.gz` records
+`./`-prefixed names, which `sha256sum -c` cannot resolve after a plain download —
+strip the prefix when generating `SHA256SUMS`. A verify job runs in a context
+unlike the workstation that wrote the workflow, which is exactly why it exists.
+
 API endpoints, cumulative-diff reports, TLS retry, watch-mode redraw rules
 (frame's last line has NO trailing newline; frame-shrink = `\x1b[1B` +
 `\x1b[2K\x1b[1B` + `\x1b[2K` + `\x1b[{prev-n}F`; test redraw bytes via
