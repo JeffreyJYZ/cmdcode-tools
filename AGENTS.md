@@ -191,11 +191,16 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
 
 - **Versions are independent: `cmduse-core` is on its own major line; the CLI
   is 0.7.x.** They are NOT a pair — do not try to read one from the other, and
-  never "sync" them. Core bumps only when its own API changes (breaking → major,
-  additive → minor, fix → patch); the CLI bumps per release as usual.
-  `cli/Cargo.toml` depends on `{ path = "../core", version = "2" }`, so a new
-  core minor/patch needs no CLI edit. Core 2.0.0 is `elapsed_pct` returning f64
-  (one-decimal percentages) after 1.1.1's u8.
+  never "sync" them. `cli/Cargo.toml` depends on `{ path = "../core", version = "2" }`,
+  so a new core minor/patch needs no CLI edit.
+- **Core's semver is loose on purpose: while it has no external consumers, a
+  breaking API change rides a MINOR bump** (so `elapsed_pct`'s u8 → f64 went
+  1.1.1 → 2.0.0 only because the strict rule was still in force; 2.0.0 is
+  published and stands). Reserve majors for the day something outside this repo
+  depends on the crate — otherwise every internal refactor costs a major and the
+  number stops meaning anything. Note breaking changes in the commit message.
+- Windows into the history: 1.1.1 was the last release before the
+  one-decimal-percentages change; 2.0.0 is `elapsed_pct` returning f64.
 - **Core's major always leads the CLI's.** When the CLI enters a major band
   (e.g. CLI 1.0.0), publish `cmduse-core` at the next major (2.0.0) as a
   line-separation release — no API change, note it in the description. This
