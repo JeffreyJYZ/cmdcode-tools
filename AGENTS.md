@@ -325,6 +325,11 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   budget fits exactly one of them beside the reset countdown. `paceEtaSecs` mirrors
   `cmduse_core::pace_eta` and is pinned by the shared `paceEta` vectors in
   `core/conformance.json`; the TS port grows a mirrored function only when it needs one.
+- **Monthly alone carries a pro-rata figure** (`cap × elapsed%`, rendered `$X by now` after the
+  elapsed share, in both the colored and plain cmduse renderers): the monthly pool is a budget, so
+  "what an even burn would have spent by now" is a fair comparison against `used`. The 5-hour and
+  weekly caps are throttles, where that number would read as a spend target — hence the
+  `pro_rata` flag rather than a blanket rule.
 - **A session's own spend is one indexed read** (`loadSessionUsage`, keyed by message id so an
   in-place rewrite is not counted twice), shown as the `Session` row beside the model's
   period figure.

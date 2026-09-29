@@ -39,7 +39,7 @@ fn window_line_includes_elapsed_and_flag() {
         exceeded: false,
         reset_at: Some((now as f64 + 2.5 * 3600.0) * 1000.0),
     };
-    let line = window_line("5-hour", &w, now, 20, Some(5 * 3600));
+    let line = window_line("5-hour", &w, now, 20, Some(5 * 3600), false);
     assert!(line.contains("50.0%"));
     assert!(line.contains("$5.00 / $10.00"));
     assert!(line.contains("resets in"));
@@ -50,11 +50,11 @@ fn window_line_includes_elapsed_and_flag() {
         exceeded: true,
         reset_at: None,
     };
-    let line = window_line("Weekly", &w_exceeded, now, 20, Some(7 * 86400));
+    let line = window_line("Weekly", &w_exceeded, now, 20, Some(7 * 86400), false);
     assert!(line.contains("LIMIT EXCEEDED"));
 
     // no duration → no elapsed suffix
-    let line = window_line("Monthly", &w, now, 20, None);
+    let line = window_line("Monthly", &w, now, 20, None, false);
     assert!(!line.contains("elapsed"));
 }
 
@@ -72,7 +72,7 @@ fn pace_warns_only_after_10pct_elapsed() {
         exceeded: false,
         reset_at: Some((start5 + d) as f64 * 1000.0),
     };
-    let line = window_line("5-hour", &w_early, now, 20, Some(d));
+    let line = window_line("5-hour", &w_early, now, 20, Some(d), false);
     assert!(
         !line.contains("on pace"),
         "must not warn at 5% elapsed: {line}"
@@ -86,7 +86,7 @@ fn pace_warns_only_after_10pct_elapsed() {
         exceeded: false,
         reset_at: Some((start10 + d) as f64 * 1000.0),
     };
-    let line = window_line("5-hour", &w_at, now, 20, Some(d));
+    let line = window_line("5-hour", &w_at, now, 20, Some(d), false);
     assert!(
         line.contains("on pace to hit cap in 30m"),
         "ETA must render the duration, not an absolute reset: {line}"
@@ -226,7 +226,7 @@ fn plain_window_line_has_elapsed_and_pace() {
         exceeded: false,
         reset_at: Some(1_016_200_000.0),
     };
-    let line = crate::render::plain_window_line("5-hour", &w, now, Some(18_000));
+    let line = crate::render::plain_window_line("5-hour", &w, now, Some(18_000), false);
     assert!(line.contains("window 10.0% elapsed"), "{line}");
     assert!(line.contains("on pace to hit cap in"), "{line}");
     // importance order: pace (actionable) before elapsed (informational), so a
@@ -250,12 +250,36 @@ fn plain_window_line_flags_exceeded() {
         exceeded: true,
         reset_at: Some(1_016_200_000.0),
     };
-    let line = crate::render::plain_window_line("Weekly", &w, now, None);
+    let line = crate::render::plain_window_line("Weekly", &w, now, None, false);
     assert!(line.contains("LIMIT EXCEEDED"), "{line}");
     assert!(
         !line.contains("elapsed"),
         "no duration → no elapsed: {line}"
     );
+}
+
+#[test]
+fn monthly_pro_rata_shows_by_now_and_others_do_not() {
+    // 50% elapsed, cap $10 → $5 consumed by now. Monthly carries it; the
+    // rolling windows' caps are throttles, so a pro-rata figure there would
+    // read as a spend target.
+    let now = 1_000_000u64;
+    let w = crate::api::Window {
+        used: 2.0,
+        cap: 10.0,
+        exceeded: false,
+        reset_at: Some(1_016_200_000.0), // 10% elapsed
+    };
+    let monthly = window_line("Monthly", &w, now, 20, Some(18_000), true);
+    assert!(monthly.contains("$1.00 by now"), "{monthly}");
+    let five_hour = window_line("5-hour", &w, now, 20, Some(18_000), false);
+    assert!(!five_hour.contains("by now"), "{five_hour}");
+    // no duration → no elapsed, so nothing to pro-rate
+    let no_dur = window_line("Monthly", &w, now, 20, None, true);
+    assert!(!no_dur.contains("by now"), "{no_dur}");
+    let plain = crate::render::plain_window_line("Monthly", &w, now, Some(18_000), true);
+    assert!(plain.contains("$1.00 by now"), "{plain}");
+    assert!(!plain.contains('\x1b'), "{plain}");
 }
 
 fn snapshot_fixture() -> Snapshot {

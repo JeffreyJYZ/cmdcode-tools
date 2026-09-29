@@ -1,6 +1,6 @@
 [package]
 name = "cmd-usage"
-version = "0.7.6"
+version = "0.7.7"
 edition = "2021"
 # Two bins (`cmduse` + the `cmdusedev` twin), so `cargo run -p cmd-usage` needs
 # an explicit default: CI's `-V` smoke test, and humans typing it.

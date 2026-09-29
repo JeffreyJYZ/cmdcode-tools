@@ -11,7 +11,7 @@ Period ends 2026-09-27
 Credits $59.12 / $70.00 monthly · $0.00 purchased · $0.00 free
 
 Usage windows
- Monthly   15.1% ━━╱╱╱╱╱╱╱╱  $10.56 / $70.00 · resets in 22d 9h · window 28% elapsed
+ Monthly   15.1% ━━╱╱╱╱╱╱╱╱  $10.56 / $70.00 · resets in 22d 9h · window 28% elapsed · $19.60 by now
  5-hour     1.5% ╱╱╱╱╱╱╱╱╱╱  $0.21 / $14.00 · resets in 4h 58m · window 0% elapsed
  Weekly    15.8% ━╱╱╱╱╱╱╱╱╱  $5.54 / $35.00 · resets in 6d 5h · window 11% elapsed · on pace to hit cap in 4d 3h
 
@@ -34,7 +34,7 @@ cmduse -1                    # one-shot fetch, print, exit
 cmduse -V                    # print version
 cmduse -p -1                 # plain output, no ANSI (for scripts/pipes)
                              # same fields as the colored dashboard: period end,
-                             # monthly quota, Monthly row, window % elapsed
+                             # monthly quota, Monthly row (+ $X by now), window % elapsed
                              # (also what the MCP `usage` tool and the opencode
                              # /cmd-usage dialog render)
 cmduse -i 30                 # refresh every 30s

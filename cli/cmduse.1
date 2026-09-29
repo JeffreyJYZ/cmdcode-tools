@@ -190,8 +190,8 @@ In watch mode it keeps the plain text render but still redraws in place.
 Colors are also dropped automatically on a non\-terminal stdout or when
 \fBNO_COLOR\fR is set.
 The plain render carries the same fields as the colored dashboard: period end,
-monthly quota (remaining / cap), a Monthly allowance row,
-"window N% elapsed" on every window row, and the
+monthly quota (remaining / cap), a Monthly allowance row with its
+"$X by now" pro\-rata figure, "window N% elapsed" on every window row, and the
 "on pace to hit cap in ..." burn\-rate warning when the current rate reaches
 the cap before the window resets.
 .TP
@@ -279,7 +279,7 @@ Period ends 2026-09-27
 Credits $44.15 / $70.00 monthly . $0.00 purchased . $0.00 free
 
 Usage windows
- Monthly   36.9% <bar> $25.85 / $70.00 . resets in 18d 0h . window 42% elapsed
+ Monthly   36.9% <bar> $25.85 / $70.00 . resets in 18d 0h . window 42% elapsed . $29.40 by now
  5-hour    11.1% <bar> $1.55  / $14.00 . resets in 2h 22m . window 59% elapsed
  Weekly    55.7% <bar> $19.61 / $35.00 . resets in 1d 18h . window 75% elapsed
 
@@ -307,6 +307,11 @@ Usage windows
 Three rows.  Bar fill is used/cap; the percentage is used/cap; "used / cap"
 is in dollars; "resets in" is wall time until the window rolls;
 "window N% elapsed" is time since the window start divided by its length.
+Monthly also carries "$X by now": the monthly cap pro\-rated to that elapsed
+share (cap x elapsed%), i.e. what an even burn would have consumed by this
+point \- compare it against the actual used figure.  It is Monthly\-only: the
+5\-hour and weekly caps are throttles rather than budgets, so a pro\-rata
+figure there would read as a spend target.
 Monthly's used is derived: monthly cap minus remaining credits.  Its cap and
 period come from the plan table and the subscription period.  5\-hour and
 weekly data (used, cap, resetAt) come verbatim from the API

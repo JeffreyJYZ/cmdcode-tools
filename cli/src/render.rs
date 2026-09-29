@@ -155,12 +155,17 @@ pub fn elapsed_pct(reset_at: Option<f64>, dur_secs: u64, now: u64) -> Option<f64
     cmduse_core::elapsed_pct(reset_at, dur_secs, Some(now))
 }
 
+/// `pro_rata`: also print the allowance consumed by this point in the window
+/// (`cap × elapsed%`) as a "$X by now" segment. Monthly only — the rolling
+/// windows' caps are throttles rather than budgets, so a pro-rata figure there
+/// would read as a spend target.
 pub fn window_line(
     label: &str,
     w: &crate::api::Window,
     now: u64,
     bar_width: usize,
     dur_secs: Option<u64>,
+    pro_rata: bool,
 ) -> String {
     let flag = if w.exceeded {
         format!(" {RED}{BOLD}LIMIT EXCEEDED{RESET}")
@@ -170,10 +175,14 @@ pub fn window_line(
     // Field order is importance order: watch frames get clipped to the
     // terminal width from the right, so the actionable parts (limit flag,
     // pace warning) must sit before the informational elapsed share.
-    let thru = dur_secs
-        .and_then(|d| elapsed_pct(w.reset_at, d, now))
+    let elapsed = dur_secs.and_then(|d| elapsed_pct(w.reset_at, d, now));
+    let thru = elapsed
         .map(|p| format!(" · {DIM}window {p:.1}% elapsed{RESET}"))
         .unwrap_or_default();
+    let by_now = match (pro_rata, elapsed) {
+        (true, Some(p)) => format!(" · {DIM}{} by now{RESET}", money(w.cap * p / 100.0)),
+        _ => String::new(),
+    };
     // burn-rate projection: spend rate over window elapsed time → when cap hits.
     // ponytail: assumes flat spend rate; bursty sessions shift the ETA.
     // upgrade: revisit if ETA misfires in practice (no server rate history yet).
@@ -185,7 +194,7 @@ pub fn window_line(
         .map(|eta| format!(" · {YELLOW}on pace to hit cap in {eta}{RESET}"))
         .unwrap_or_default();
     format!(
-        " {BOLD}{label:<8}{RESET} {} {DIM}{} / {} · resets in {}{flag}{pace}{thru}{RESET}",
+        " {BOLD}{label:<8}{RESET} {} {DIM}{} / {} · resets in {}{flag}{pace}{thru}{by_now}{RESET}",
         bar(w.used, w.cap, bar_width),
         money(w.used),
         money(w.cap),
@@ -255,7 +264,7 @@ pub fn render(s: &Snapshot, bar_width: usize) -> String {
             s.sub.current_period_start.as_deref(),
             s.sub.current_period_end.as_deref(),
         );
-        o.push_str(&window_line("Monthly", &w, s.now, bar_width, dur));
+        o.push_str(&window_line("Monthly", &w, s.now, bar_width, dur, true));
         o.push('\n');
     }
     match (
@@ -269,6 +278,7 @@ pub fn render(s: &Snapshot, bar_width: usize) -> String {
                 s.now,
                 bar_width,
                 Some(cmduse_core::FIVE_HOUR_SECS),
+                false,
             ));
             o.push('\n');
             o.push_str(&window_line(
@@ -277,6 +287,7 @@ pub fn render(s: &Snapshot, bar_width: usize) -> String {
                 s.now,
                 bar_width,
                 Some(cmduse_core::WEEKLY_SECS),
+                false,
             ));
             o.push('\n');
         }
@@ -291,6 +302,7 @@ pub fn render(s: &Snapshot, bar_width: usize) -> String {
                     s.now,
                     bar_width,
                     Some(cmduse_core::FIVE_HOUR_SECS),
+                    false,
                 ));
                 o.push('\n');
             }
@@ -301,6 +313,7 @@ pub fn render(s: &Snapshot, bar_width: usize) -> String {
                     s.now,
                     bar_width,
                     Some(cmduse_core::WEEKLY_SECS),
+                    false,
                 ));
                 o.push('\n');
             }
@@ -359,7 +372,7 @@ pub fn render_plain(s: &Snapshot) -> String {
             s.sub.current_period_start.as_deref(),
             s.sub.current_period_end.as_deref(),
         );
-        o.push_str(&plain_window_line("Monthly", &w, s.now, dur));
+        o.push_str(&plain_window_line("Monthly", &w, s.now, dur, true));
     }
     if let Some(w) = &s.credits.window_limits.five_hour {
         o.push_str(&plain_window_line(
@@ -367,6 +380,7 @@ pub fn render_plain(s: &Snapshot) -> String {
             w,
             s.now,
             Some(cmduse_core::FIVE_HOUR_SECS),
+            false,
         ));
     }
     if let Some(w) = &s.credits.window_limits.weekly {
@@ -375,6 +389,7 @@ pub fn render_plain(s: &Snapshot) -> String {
             w,
             s.now,
             Some(cmduse_core::WEEKLY_SECS),
+            false,
         ));
     }
     o.push_str(&format!(
@@ -388,22 +403,28 @@ pub fn render_plain(s: &Snapshot) -> String {
 }
 
 /// One plain (no-SGR) window line: usage %, dollars, reset countdown, elapsed
-/// share, and the burn-rate pace warning. Mirrors `window_line` minus colors.
+/// share, the burn-rate pace warning, and (when `pro_rata`) the "$X by now"
+/// allowance consumed at this point in the window. Mirrors `window_line`.
 pub(crate) fn plain_window_line(
     label: &str,
     w: &crate::api::Window,
     now: u64,
     dur_secs: Option<u64>,
+    pro_rata: bool,
 ) -> String {
     let pct = if w.cap > 0.0 {
         (w.used / w.cap * 1000.0).round() / 10.0
     } else {
         0.0
     };
-    let elapsed = dur_secs
-        .and_then(|d| elapsed_pct(w.reset_at, d, now))
+    let elapsed_pct_value = dur_secs.and_then(|d| elapsed_pct(w.reset_at, d, now));
+    let elapsed = elapsed_pct_value
         .map(|p| format!(" · window {p:.1}% elapsed"))
         .unwrap_or_default();
+    let by_now = match (pro_rata, elapsed_pct_value) {
+        (true, Some(p)) => format!(" · {} by now", money(w.cap * p / 100.0)),
+        _ => String::new(),
+    };
     // burn-rate projection, same as the colored dashboard: flat-spend estimate
     // of when the cap is hit at the current rate.
     let pace = dur_secs
@@ -417,7 +438,7 @@ pub(crate) fn plain_window_line(
     // Same importance order as the colored renderer: clipped watch frames must
     // keep the flag and the pace warning before the elapsed share.
     format!(
-        "{label}: {pct:.1}% ({} / {}) · resets in {}{flag}{pace}{elapsed}\n",
+        "{label}: {pct:.1}% ({} / {}) · resets in {}{flag}{pace}{elapsed}{by_now}\n",
         money(w.used),
         money(w.cap),
         rel_time(w.reset_at, now),
