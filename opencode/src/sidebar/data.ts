@@ -24,7 +24,10 @@ const OCUSE = [
 	"/opt/homebrew/bin/ocuse",
 	"/usr/local/bin/ocuse",
 ].filter((bin): bin is string => Boolean(bin));
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+// An hour, not six: mpc's catalog picks up new models, promotions and the
+// AA key, and a panel that loaded its map at mount used to keep stale data
+// until the client was restarted. One spawn an hour is cheap.
+const CACHE_TTL_MS = 60 * 60 * 1000;
 
 /** `detached` is load-bearing, not tidiness: it starts the child in its own
  * session, so it has no controlling terminal. cmduse's snapshot() paints a

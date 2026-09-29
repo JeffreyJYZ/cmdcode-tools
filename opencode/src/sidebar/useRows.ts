@@ -117,9 +117,18 @@ export function useRows(
 	// model still shows nothing.
 	const [wasOurs, setWasOurs] = createSignal(false);
 
-	void loadMeta()
-		.then(setMeta)
-		.catch(() => {});
+	/**
+	 * Re-read the catalog. A file read unless its TTL lapsed, so calling it on
+	 * every poll costs nothing and means a catalog change — a new model, a
+	 * promotion, a configured AA key — reaches a *running* panel instead of
+	 * waiting for the client to be restarted.
+	 */
+	const refreshMeta = (): void => {
+		void loadMeta()
+			.then(setMeta)
+			.catch(() => {});
+	};
+	refreshMeta();
 	/** Scan the store for one model in this conversation, and publish it. */
 	const refreshModelUsage = (id: string | undefined) => {
 		if (!id) return;
@@ -131,6 +140,7 @@ export function useRows(
 	const refresh = async () => {
 		const kind = sessionKind(providerID());
 		const session = sessionID();
+		refreshMeta();
 		// Session totals are provider-agnostic and cheap (one indexed read).
 		if (session) setSessionUsage(loadSessionUsage(session) ?? undefined);
 		try {
