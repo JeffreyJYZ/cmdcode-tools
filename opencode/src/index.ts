@@ -6,13 +6,13 @@
 // (Rust cmduse-core) rather than reimplemented in TS.
 import type { Plugin as PluginV1 } from "@opencode-ai/plugin";
 import { z } from "zod";
+import pkg from "../package.json";
 import { API_BASE, whoami } from "./api";
+import { modelCost, supportsImage } from "./catalog";
 import { runCmduse } from "./cli";
 import { resolveKey } from "./key";
-import { modelCost, supportsImage } from "./catalog";
 import { loadModels } from "./models";
-import { TOOL_DESCRIPTION, commandCodeV2, PROVIDER_BASE } from "./v2";
-import pkg from "../package.json";
+import { commandCodeV2, PROVIDER_BASE, TOOL_DESCRIPTION } from "./v2";
 
 /**
  * The runtime provider specifier opencode installs for our models: our own
@@ -49,8 +49,20 @@ type SdkModel = {
 		reasoning: boolean;
 		attachment: boolean;
 		toolcall: boolean;
-		input: { text: boolean; audio: boolean; image: boolean; video: boolean; pdf: boolean };
-		output: { text: boolean; audio: boolean; image: boolean; video: boolean; pdf: boolean };
+		input: {
+			text: boolean;
+			audio: boolean;
+			image: boolean;
+			video: boolean;
+			pdf: boolean;
+		};
+		output: {
+			text: boolean;
+			audio: boolean;
+			image: boolean;
+			video: boolean;
+			pdf: boolean;
+		};
 		/** A `{field}` object names the wire field reasoning must round-trip
 		 * through (openai-compatible: "reasoning_content"). Without it,
 		 * DeepSeek/GLM/Kimi reject the next request once an assistant turn
@@ -58,7 +70,11 @@ type SdkModel = {
 		 * "reasoning_content must be passed back". */
 		interleaved: boolean | { field: string };
 	};
-	cost: { input: number; output: number; cache: { read: number; write: number } };
+	cost: {
+		input: number;
+		output: number;
+		cache: { read: number; write: number };
+	};
 	limit: { context: number; output: number };
 	status: "alpha" | "beta" | "deprecated" | "active";
 	options: Record<string, unknown>;
@@ -80,13 +96,17 @@ const MODEL_CAPABILITIES: Omit<SdkModel["capabilities"], "interleaved"> = {
 };
 
 /** Published $/1M rates, so opencode prices a subscription provider correctly. */
-function costFor(id: string): { input: number; output: number; cache: { read: number; write: number } } {
-	const cost = modelCost(id)
+function costFor(id: string): {
+	input: number;
+	output: number;
+	cache: { read: number; write: number };
+} {
+	const cost = modelCost(id);
 	return {
 		input: cost?.input ?? 0,
 		output: cost?.output ?? 0,
 		cache: { read: cost?.cacheRead ?? 0, write: cost?.cacheWrite ?? 0 },
-	}
+	};
 }
 
 /** Full ModelV2 shapes — the provider.models hook must return complete records. */
@@ -110,7 +130,10 @@ function toModelDefs(
 					...MODEL_CAPABILITIES,
 					interleaved,
 					...(supportsImage(m.id)
-						? { attachment: true, input: { ...MODEL_CAPABILITIES.input, image: true } }
+						? {
+								attachment: true,
+								input: { ...MODEL_CAPABILITIES.input, image: true },
+							}
 						: {}),
 				},
 				cost: costFor(m.id),
@@ -150,7 +173,8 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 						{
 							type: "text",
 							key: "apiKey",
-							message: "Command Code API key (create at commandcode.ai/settings/keys)",
+							message:
+								"Command Code API key (create at commandcode.ai/settings/keys)",
 						},
 					],
 					async authorize(inputs) {
@@ -159,7 +183,11 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 						try {
 							const me = await whoami(key);
 							if (!me.success) return { type: "failed" };
-							return { type: "success", key, provider: "command-code-anthropic" };
+							return {
+								type: "success",
+								key,
+								provider: "command-code-anthropic",
+							};
 						} catch {
 							return { type: "failed" };
 						}
@@ -174,7 +202,9 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 		config: async (cfg) => {
 			cfg.provider ??= {};
 
-			type ProviderModels = NonNullable<NonNullable<(typeof cfg)["provider"]>[string]["models"]>;
+			type ProviderModels = NonNullable<
+				NonNullable<(typeof cfg)["provider"]>[string]["models"]
+			>;
 			const existing = (
 				id: string,
 			): {
@@ -220,12 +250,9 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 				? toModelDefs(split.claude, "command-code-anthropic", PROVIDER_NPM)
 				: {};
 			const openDefs = split
-				? toModelDefs(
-						split.open,
-						"command-code-openai",
-						PROVIDER_NPM,
-						{ field: "reasoning_content" },
-					)
+				? toModelDefs(split.open, "command-code-openai", PROVIDER_NPM, {
+						field: "reasoning_content",
+					})
 				: {};
 
 			const userAnthropic = existing("command-code-anthropic");
@@ -274,7 +301,11 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 					return a?.type === "api" && a.key ? { key: a.key } : undefined;
 				});
 				const split = await loadModels(key);
-				return toModelDefs(split.claude, "command-code-anthropic", PROVIDER_NPM);
+				return toModelDefs(
+					split.claude,
+					"command-code-anthropic",
+					PROVIDER_NPM,
+				);
 			},
 		},
 
@@ -285,7 +316,9 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 					arg: z
 						.string()
 						.optional()
-						.describe("Optional: 'plans' for the plan table only, or extra cmduse flags"),
+						.describe(
+							"Optional: 'plans' for the plan table only, or extra cmduse flags",
+						),
 				},
 				// Rendering lives in the cmduse binary (Rust core); this is a thin
 				// spawn wrapper. Piped stdout is plain text (colors auto-off).

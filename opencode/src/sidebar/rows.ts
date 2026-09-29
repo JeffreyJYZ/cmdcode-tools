@@ -93,6 +93,11 @@ export interface ModelMeta {
 	intelligence?: number;
 	tps?: number;
 	/**
+	 * Promotion CommandCode is running on this model (0.3.13): the badge from
+	 * the docs row, with its expiry line when the page publishes one.
+	 */
+	deal?: { badge: string; ends?: string };
+	/**
 	 * The OpenCode Go / Zen side of the same mpc row (0.4.0): the CommandCode
 	 * fields above are the default, this is what a Go/Zen session reads.
 	 */
@@ -257,8 +262,7 @@ export function usageRows(
 			usage.monthlyCap,
 			Math.max(0, usage.monthlyCap - usage.monthlyCredits),
 		);
-		const pct =
-			usage.monthlyCap > 0 ? (used / usage.monthlyCap) * 100 : 0;
+		const pct = usage.monthlyCap > 0 ? (used / usage.monthlyCap) * 100 : 0;
 		rows.push([
 			"Monthly",
 			`${money(used)} / ${money(usage.monthlyCap)} (${pct.toFixed(1)}%)`,
@@ -312,6 +316,18 @@ export function modelRows(
 	else if (meta.minPlan) rows.push(["Min plan", meta.minPlan, "base"]);
 	if (typeof meta.allowance === "number")
 		rows.push(["Allowance", `${money(meta.allowance)}/mo`, "base"]);
+	if (meta.deal) {
+		// The badge is the news; the expiry is compacted to fit ("Sep 30" rather
+		// than "Ends September 30, 2026"), because the sidebar has 37 columns.
+		const ends = meta.deal.ends?.match(/([A-Z][a-z]{2})[a-z]*\s+(\d{1,2})/);
+		rows.push([
+			"Deal",
+			ends
+				? `${meta.deal.badge} · ends ${ends[1]} ${ends[2]}`
+				: meta.deal.badge,
+			"ok",
+		]);
+	}
 	if (meta.rates) {
 		// In/out leads; the cache rates ride on an indented continuation, since
 		// all three on one line overflows the sidebar. Cache write appears only

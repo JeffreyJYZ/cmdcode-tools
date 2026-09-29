@@ -341,6 +341,11 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   model ref is per turn; spend exists only as a `session_v2` column), so the per-model figure is
   requests-only and the Session row reads `session_v2.cost` plus a count of assistant turns.
   `usageDb.ts` detects the table and keeps the v1 queries as the fallback.
+- **A promotion on the model shows as a `Deal` row** (0.3.14). mpc reports
+  `cc.deal { badge, ends }` off the docs badge; `rows.ts` compacts the expiry to `Sep 30` so
+  the line fits the 37-column budget, and tones it `ok`. There is nothing to compute or expire:
+  CommandCode drops the badge and reverts the price itself when a deal lapses, so the row
+  simply disappears.
 - **A session switch must not blank the panel.** The host leaves a session's model
   (and so its provider) undefined for a frame while the tab bar switches, so
   `sessionKind()` separates `unknown` from `other` — only a provider we know is

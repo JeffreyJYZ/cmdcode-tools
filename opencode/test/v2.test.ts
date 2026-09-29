@@ -4,8 +4,19 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { KNOWN_MODELS } from "../src/gating";
 import { isClaude } from "../src/models";
-import { credentialKey, INTEGRATION_ID, mergeModels, staticSeedModels, toV2Model, type Lane } from "../src/v2";
-import { setupTimingLine, startupLogPath, writeStartupLine } from "../src/startupLog";
+import {
+	setupTimingLine,
+	startupLogPath,
+	writeStartupLine,
+} from "../src/startupLog";
+import {
+	credentialKey,
+	INTEGRATION_ID,
+	type Lane,
+	mergeModels,
+	staticSeedModels,
+	toV2Model,
+} from "../src/v2";
 
 const claudeLane: Lane = {
 	id: "command-code-anthropic",
@@ -21,10 +32,10 @@ const openLane: Lane = {
 
 describe("toV2Model", () => {
 	test("maps id/name/limits; context 0 falls back to 128k", () => {
-		const m = toV2Model({ id: "gpt-5.5", name: "GPT", contextLength: 400_000 }, openLane) as Record<
-			string,
-			unknown
-		>;
+		const m = toV2Model(
+			{ id: "gpt-5.5", name: "GPT", contextLength: 400_000 },
+			openLane,
+		) as Record<string, unknown>;
 		expect(m.id).toBe("gpt-5.5");
 		expect(m.modelID).toBe("gpt-5.5");
 		expect(m.providerID).toBe("command-code-openai");
@@ -34,22 +45,29 @@ describe("toV2Model", () => {
 		expect(m.enabled).toBe(true);
 	});
 	test("open lane sets compatibility.reasoningField", () => {
-		const m = toV2Model({ id: "deepseek/deepseek-v4-flash", name: "DS", contextLength: 1 }, openLane) as Record<
-			string,
-			unknown
-		>;
+		const m = toV2Model(
+			{ id: "deepseek/deepseek-v4-flash", name: "DS", contextLength: 1 },
+			openLane,
+		) as Record<string, unknown>;
 		expect(m.compatibility).toEqual({ reasoningField: "reasoning_content" });
 	});
 	test("claude lane has no compatibility block", () => {
-		const m = toV2Model({ id: "claude-sonnet-5", name: "Sonnet", contextLength: 1 }, claudeLane) as Record<
-			string,
-			unknown
-		>;
+		const m = toV2Model(
+			{ id: "claude-sonnet-5", name: "Sonnet", contextLength: 1 },
+			claudeLane,
+		) as Record<string, unknown>;
 		expect(m.compatibility).toBeUndefined();
 	});
 	test("capabilities are text-only tools", () => {
-		const m = toV2Model({ id: "x", name: "x", contextLength: 1 }, claudeLane) as Record<string, unknown>;
-		expect(m.capabilities).toEqual({ tools: true, input: ["text"], output: ["text"] });
+		const m = toV2Model(
+			{ id: "x", name: "x", contextLength: 1 },
+			claudeLane,
+		) as Record<string, unknown>;
+		expect(m.capabilities).toEqual({
+			tools: true,
+			input: ["text"],
+			output: ["text"],
+		});
 	});
 });
 
@@ -69,14 +87,22 @@ describe("credentialKey", () => {
 
 	test("stored key wins over the local fallback", async () => {
 		process.env.CMD_API_KEY = "local-key";
-		const key = await credentialKey(ctxWith({ type: "credential", id: "c1" }, { type: "key", key: "host-key" }));
+		const key = await credentialKey(
+			ctxWith(
+				{ type: "credential", id: "c1" },
+				{ type: "key", key: "host-key" },
+			),
+		);
 		expect(key).toBe("host-key");
 		delete process.env.CMD_API_KEY;
 	});
 	test("oauth connections expose the access token", async () => {
 		process.env.CMD_API_KEY = "local-key";
 		const key = await credentialKey(
-			ctxWith({ type: "credential", id: "c1" }, { type: "oauth", access: "tok" }),
+			ctxWith(
+				{ type: "credential", id: "c1" },
+				{ type: "oauth", access: "tok" },
+			),
 		);
 		expect(key).toBe("tok");
 		delete process.env.CMD_API_KEY;
@@ -91,43 +117,74 @@ describe("credentialKey", () => {
 describe("staticSeedModels", () => {
 	test("splits known models by lane, no context length yet", () => {
 		const seed = staticSeedModels();
-		const claude = seed["command-code-anthropic"] as Array<Record<string, unknown>>;
+		const claude = seed["command-code-anthropic"] as Array<
+			Record<string, unknown>
+		>;
 		const open = seed["command-code-openai"] as Array<Record<string, unknown>>;
 		expect(claude.length + open.length).toBe(KNOWN_MODELS.length);
 		for (const m of claude) expect(isClaude(m.id as string)).toBe(true);
 		for (const m of open) expect(isClaude(m.id as string)).toBe(false);
-		for (const m of [...claude, ...open]) expect((m.limit as { context: number }).context).toBe(128_000);
+		for (const m of [...claude, ...open])
+			expect((m.limit as { context: number }).context).toBe(128_000);
 	});
 });
 
 describe("mergeModels", () => {
-	const m = (id: string, extra: Record<string, unknown> = {}) => ({ id, ...extra })
+	const m = (id: string, extra: Record<string, unknown> = {}) => ({
+		id,
+		...extra,
+	});
 	test("keeps snapshot ids a gated live response omits", () => {
-		const merged = mergeModels([m("a"), m("b")], [m("a", { cost: 1 })])
-		expect(merged.map((x) => (x as { id: string }).id)).toEqual(["a", "b"])
-	})
+		const merged = mergeModels([m("a"), m("b")], [m("a", { cost: 1 })]);
+		expect(merged.map((x) => (x as { id: string }).id)).toEqual(["a", "b"]);
+	});
 	test("live fields win for shared ids, snapshot order is preserved", () => {
-		const merged = mergeModels([m("a", { name: "old" }), m("b")], [m("a", { name: "new" })])
-		expect(merged[0]).toEqual({ id: "a", name: "new" })
-		expect((merged[1] as { id: string }).id).toBe("b")
-	})
+		const merged = mergeModels(
+			[m("a", { name: "old" }), m("b")],
+			[m("a", { name: "new" })],
+		);
+		expect(merged[0]).toEqual({ id: "a", name: "new" });
+		expect((merged[1] as { id: string }).id).toBe("b");
+	});
 	test("live-only models append in live order", () => {
-		const merged = mergeModels([m("a")], [m("c"), m("b")])
-		expect(merged.map((x) => (x as { id: string }).id)).toEqual(["a", "c", "b"])
-	})
-})
+		const merged = mergeModels([m("a")], [m("c"), m("b")]);
+		expect(merged.map((x) => (x as { id: string }).id)).toEqual([
+			"a",
+			"c",
+			"b",
+		]);
+	});
+});
 
 describe("setup timing line", () => {
 	test("formats every phase and is stable for tooling", () => {
-		expect(setupTimingLine({ key: 3, register: 11, connection: 612, refresh: 2410, models: 61 })).toBe(
+		expect(
+			setupTimingLine({
+				key: 3,
+				register: 11,
+				connection: 612,
+				refresh: 2410,
+				models: 61,
+			}),
+		).toBe(
 			"setup: key=3ms register=11ms connection=612ms refresh=2410ms models=61",
-		)
-	})
+		);
+	});
 	test("writes to the cache file without throwing", async () => {
-		process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), "cc-startup-"))
-		await writeStartupLine(setupTimingLine({ key: 1, register: 2, connection: 3, refresh: 4, models: 5 }))
-		const text = readFileSync(startupLogPath(), "utf8")
-		expect(text).toContain("setup: key=1ms register=2ms connection=3ms refresh=4ms models=5")
-		delete process.env.XDG_CACHE_HOME
-	})
-})
+		process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), "cc-startup-"));
+		await writeStartupLine(
+			setupTimingLine({
+				key: 1,
+				register: 2,
+				connection: 3,
+				refresh: 4,
+				models: 5,
+			}),
+		);
+		const text = readFileSync(startupLogPath(), "utf8");
+		expect(text).toContain(
+			"setup: key=1ms register=2ms connection=3ms refresh=4ms models=5",
+		);
+		delete process.env.XDG_CACHE_HOME;
+	});
+});

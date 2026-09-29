@@ -66,6 +66,7 @@ const MPC = JSON.stringify({
 				},
 				ability: 39.5,
 				tps: 237,
+				deal: { badge: "-98%", ends: "Ends September 30, 2026" },
 			},
 			oc: {
 				provider: "oc-go",
@@ -102,6 +103,10 @@ describe("parseMpcJson", () => {
 		expect(entry?.rates?.cacheRead).toBe(0.003);
 		expect(entry?.tier).toBeUndefined(); // tier is resolved from the model id at render
 		// The Go/Zen panel reads the other side of the same catalog row.
+		expect(entry?.deal).toEqual({
+			badge: "-98%",
+			ends: "Ends September 30, 2026",
+		});
 		expect(entry?.oc).toEqual({
 			provider: "oc-go",
 			plan: "Go",

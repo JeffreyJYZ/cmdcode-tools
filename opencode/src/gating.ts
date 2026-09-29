@@ -22,6 +22,7 @@ export const HARD_BLOCKED = data.hardBlocked as Record<string, string[]>;
 
 /** canonical known model ids (lowercase compare) */
 const KNOWN_MODELS = data.knownModels as string[];
+
 export { KNOWN_MODELS };
 
 /** deprecated/aliased model id -> canonical id */
@@ -38,7 +39,9 @@ let staleWarned = false;
 /** Warn once per process when gating.json is older than 30 days. */
 export function warnIfGatingStale(): void {
 	if (staleWarned || !GATE_EXTRACTED_AT) return;
-	const days = Math.floor((Date.now() - Date.parse(GATE_EXTRACTED_AT)) / 86_400_000);
+	const days = Math.floor(
+		(Date.now() - Date.parse(GATE_EXTRACTED_AT)) / 86_400_000,
+	);
 	if (days > GATE_STALE_DAYS) {
 		staleWarned = true;
 		console.warn(

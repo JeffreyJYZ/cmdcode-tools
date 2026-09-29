@@ -197,6 +197,36 @@ describe("modelRows", () => {
 		expect(claude[1]).toEqual(["Rates", "$2/$10 in/out", "base"]);
 		expect(claude[2]).toEqual(["", "cache read $0.2 · write $2.5", "muted"]);
 	});
+	test("a promotion from mpc rides along, expiry compacted", () => {
+		const rows = modelRows({
+			key: "mimov25",
+			name: "MiMo V2.5",
+			allowance: 30,
+			deal: { badge: "-98%", ends: "Ends September 30, 2026" },
+		});
+		const deal = rows.find((row) => row[0] === "Deal");
+		expect(deal).toEqual(["Deal", "-98% · ends Sep 30", "ok"]);
+	});
+
+	test("a badge without an expiry reads as itself", () => {
+		const rows = modelRows({
+			key: "pixelcanary",
+			name: "Pixel Canary",
+			deal: { badge: "Free" },
+		});
+		expect(rows.find((row) => row[0] === "Deal")).toEqual([
+			"Deal",
+			"Free",
+			"ok",
+		]);
+		// No promotion, no row.
+		expect(
+			modelRows({ key: "kimi", name: "Kimi K3" }).some(
+				(row) => row[0] === "Deal",
+			),
+		).toBe(false);
+	});
+
 	test("puts period usage under the model name when known", () => {
 		const rows = modelRows(
 			{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },

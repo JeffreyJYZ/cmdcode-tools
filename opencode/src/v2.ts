@@ -16,14 +16,19 @@
 // cmd_usage tool both spawn the cmduse CLI (Rust cmduse-core), which owns all
 // window math and formatting (see ./cli.ts).
 import type { Plugin as PluginNs } from "@opencode/plugin";
+import {
+	inputModalities,
+	isReasoningModel,
+	modelCost,
+	reasoningVariants,
+} from "./catalog";
 import { runCmduse } from "./cli";
 import { KNOWN_MODELS } from "./gating";
-import { inputModalities, isReasoningModel, modelCost, reasoningVariants } from "./catalog";
-import { createCommandCode } from "./provider";
-import { idsDiffer, readModelsCache, writeModelsCache } from "./modelsCache";
-import { setupTimingLine, writeStartupLine } from "./startupLog";
 import { resolveKey } from "./key";
-import { isClaude, loadModels, type CmdModel } from "./models";
+import { type CmdModel, isClaude, loadModels } from "./models";
+import { idsDiffer, readModelsCache, writeModelsCache } from "./modelsCache";
+import { createCommandCode } from "./provider";
+import { setupTimingLine, writeStartupLine } from "./startupLog";
 
 export const PLUGIN_ID = "command-code";
 export const PROVIDER_BASE = "https://api.commandcode.ai/provider/v1";
@@ -36,8 +41,12 @@ export const INTEGRATION_NAME = "Command Code";
 // editor types are derived from the context itself. Keeps the file free of
 // deep `@opencode/plugin/promise/*` imports (not a public subpath).
 type V2Context = PluginNs.Context;
-type ProviderEditor = Parameters<Parameters<V2Context["provider"]["transform"]>[0]>[0];
-type IntegrationEditor = Parameters<Parameters<V2Context["integration"]["transform"]>[0]>[0];
+type ProviderEditor = Parameters<
+	Parameters<V2Context["provider"]["transform"]>[0]
+>[0];
+type IntegrationEditor = Parameters<
+	Parameters<V2Context["integration"]["transform"]>[0]
+>[0];
 
 type Lane = {
 	id: "command-code-anthropic" | "command-code-openai";
@@ -48,10 +57,15 @@ type Lane = {
 	 * lane; v2 spells the old `interleaved: {field}` as `compatibility`. */
 	reasoningField?: string;
 };
+
 export type { Lane };
 
 const LANES: Lane[] = [
-	{ id: "command-code-anthropic", name: "Command Code (Anthropic)", pkg: "@opencode/ai/providers/anthropic" },
+	{
+		id: "command-code-anthropic",
+		name: "Command Code (Anthropic)",
+		pkg: "@opencode/ai/providers/anthropic",
+	},
 	{
 		id: "command-code-openai",
 		name: "Command Code (OpenAI)",
@@ -64,9 +78,23 @@ export const TOOL_DESCRIPTION =
 	"Fetch live Command Code plan/usage: plan name, monthly credits, 5-hour & weekly windows, billing-period summary. Pass arg='plans' for the plan comparison table only, or extra cmduse flags (e.g. '--tz +05:30 daily').";
 
 /** opencode cost entry: $/1M rates, or [] when the catalog has none. */
-function costEntry(id: string): Array<{ input: number; output: number; cache: { read: number; write: number } }> {
-	const cost = modelCost(id)
-	return cost ? [{ input: cost.input, output: cost.output, cache: { read: cost.cacheRead, write: cost.cacheWrite } }] : []
+function costEntry(
+	id: string,
+): Array<{
+	input: number;
+	output: number;
+	cache: { read: number; write: number };
+}> {
+	const cost = modelCost(id);
+	return cost
+		? [
+				{
+					input: cost.input,
+					output: cost.output,
+					cache: { read: cost.cacheRead, write: cost.cacheWrite },
+				},
+			]
+		: [];
 }
 
 /** API/known model → v2 Model.Info. Capabilities, variants and $/1M cost all
@@ -88,14 +116,20 @@ export function toV2Model(m: CmdModel, lane: Lane): unknown {
 		name: m.name,
 		// Modalities come from the generated table (the API has no capabilities);
 		// unknown models fall back to text-only.
-		capabilities: { tools: true, input: [...inputModalities(m.id)], output: ["text"] },
+		capabilities: {
+			tools: true,
+			input: [...inputModalities(m.id)],
+			output: ["text"],
+		},
 		variants,
 		time: { released: 0 },
 		cost: costEntry(m.id),
 		status: "active",
 		enabled: true,
 		limit: { context: m.contextLength || 128_000, output: 32_000 },
-		...(lane.reasoningField ? { compatibility: { reasoningField: lane.reasoningField } } : {}),
+		...(lane.reasoningField
+			? { compatibility: { reasoningField: lane.reasoningField } }
+			: {}),
 	};
 	return info;
 }
@@ -108,9 +142,9 @@ export function staticSeedModels(): Record<Lane["id"], unknown[]> {
 		"command-code-openai": [],
 	};
 	for (const lane of LANES) {
-		const models = KNOWN_MODELS.filter((id) => isClaude(id) === (lane.reasoningField === undefined)).map(
-			(id) => toV2Model({ id, name: id, contextLength: 0 }, lane),
-		);
+		const models = KNOWN_MODELS.filter(
+			(id) => isClaude(id) === (lane.reasoningField === undefined),
+		).map((id) => toV2Model({ id, name: id, contextLength: 0 }, lane));
 		seed[lane.id] = models;
 	}
 	return seed;
@@ -122,15 +156,18 @@ export function staticSeedModels(): Record<Lane["id"], unknown[]> {
  * entries win field-by-field so context, rates, variants and modalities stay
  * fresh. Snapshot order is preserved; live-only models append in live order.
  */
-export function mergeModels(snapshot: readonly unknown[], live: readonly unknown[]): unknown[] {
-	const byId = new Map<string, unknown>()
+export function mergeModels(
+	snapshot: readonly unknown[],
+	live: readonly unknown[],
+): unknown[] {
+	const byId = new Map<string, unknown>();
 	const add = (model: unknown) => {
-		const id = (model as { id?: unknown })?.id
-		if (typeof id === "string") byId.set(id, model)
-	}
-	for (const model of snapshot) add(model)
-	for (const model of live) add(model)
-	return [...byId.values()]
+		const id = (model as { id?: unknown })?.id;
+		if (typeof id === "string") byId.set(id, model);
+	};
+	for (const model of snapshot) add(model);
+	for (const model of live) add(model);
+	return [...byId.values()];
 }
 
 /** The slice of the plugin context the credential resolver needs. */
@@ -147,11 +184,15 @@ type CredentialContext = {
  * only in opencode's credential store, so ask the connection before falling
  * back to CMD_API_KEY / ~/.commandcode/auth.json. Resolved per call — a
  * /connect mid-session must be picked up. */
-export async function credentialKey(ctx: CredentialContext): Promise<string | undefined> {
+export async function credentialKey(
+	ctx: CredentialContext,
+): Promise<string | undefined> {
 	try {
 		const connection = await ctx.integration.connection.active(INTEGRATION_ID);
 		if (connection) {
-			const credential = (await ctx.integration.connection.resolve(connection)) as
+			const credential = (await ctx.integration.connection.resolve(
+				connection,
+			)) as
 				| { type: "key"; key: string }
 				| { type: "oauth"; access: string }
 				| undefined;
@@ -212,7 +253,8 @@ export const commandCodeV2: PluginNs.Plugin = {
 		// parts and error surfacing are ours instead of opencode's internal
 		// `@opencode/ai/providers/*`. The hook fires per model with the merged
 		// settings (apiKey, baseURL) the host resolved for the connection.
-		const images = (modelId: string) => inputModalities(modelId).includes("image");
+		const images = (modelId: string) =>
+			inputModalities(modelId).includes("image");
 		for (const lane of LANES) {
 			await ctx.aisdk.hook(
 				"sdk",
@@ -220,8 +262,12 @@ export const commandCodeV2: PluginNs.Plugin = {
 					const options = event.options ?? {};
 					event.sdk = createCommandCode(
 						{
-							apiKey: typeof options.apiKey === "string" ? options.apiKey : undefined,
-							baseURL: typeof options.baseURL === "string" ? options.baseURL : PROVIDER_BASE,
+							apiKey:
+								typeof options.apiKey === "string" ? options.apiKey : undefined,
+							baseURL:
+								typeof options.baseURL === "string"
+									? options.baseURL
+									: PROVIDER_BASE,
 							headers: options.headers as Record<string, string> | undefined,
 						},
 						images,
@@ -255,7 +301,8 @@ export const commandCodeV2: PluginNs.Plugin = {
 				editor.update(lane.id, (provider) => {
 					// `id` is a branded string; cast so the seed-value check compares
 					// plain strings.
-					if (provider.name === (provider.id as unknown as string)) provider.name = lane.name;
+					if (provider.name === (provider.id as unknown as string))
+						provider.name = lane.name;
 					if (provider.package === "") provider.package = lane.pkg;
 					// A local key is enough to enable now; an integration connection
 					// (looked up below) upgrades the same field when it lands.
@@ -298,7 +345,9 @@ export const commandCodeV2: PluginNs.Plugin = {
 							: "";
 					const key = await credentialKey(ctx);
 					return {
-						content: await runCmduse(arg, { env: key ? { CMD_API_KEY: key } : undefined }),
+						content: await runCmduse(arg, {
+							env: key ? { CMD_API_KEY: key } : undefined,
+						}),
 					};
 				},
 			} as never);
@@ -311,7 +360,8 @@ export const commandCodeV2: PluginNs.Plugin = {
 		let connectionMs = 0;
 		try {
 			const connectionStart = Date.now();
-			hasConnection = (await ctx.integration.connection.active(INTEGRATION_ID)) !== undefined;
+			hasConnection =
+				(await ctx.integration.connection.active(INTEGRATION_ID)) !== undefined;
 			connectionMs = Date.now() - connectionStart;
 		} catch {}
 		if (hasConnection) {
@@ -369,23 +419,37 @@ export const commandCodeV2: PluginNs.Plugin = {
 					logTimings(Date.now() - refreshStart, modelCount);
 					return;
 				}
-				void writeModelsCache({ fetchedAt: Date.now(), claude: split.claude, open: split.open });
+				void writeModelsCache({
+					fetchedAt: Date.now(),
+					claude: split.claude,
+					open: split.open,
+				});
 				// Never transform on the first (deferred) pass: it is there to warm the
 				// cache, and a transform landing right after start makes the host
 				// re-publish provider/model state while the TUI paints. Later ticks may
 				// update the registry, and only when the ids actually change.
-				if (!canTransform || (!idsDiffer(split.claude, appliedClaude) && !idsDiffer(split.open, appliedOpen))) {
+				if (
+					!canTransform ||
+					(!idsDiffer(split.claude, appliedClaude) &&
+						!idsDiffer(split.open, appliedOpen))
+				) {
 					logTimings(Date.now() - refreshStart, modelCount);
 					return;
 				}
 				await ctx.provider.transform((editor: ProviderEditor) => {
 					editor.models.set(
 						"command-code-anthropic",
-						mergeModels(seed["command-code-anthropic"], split.claude.map((m) => toV2Model(m, LANES[0]!))) as never,
+						mergeModels(
+							seed["command-code-anthropic"],
+							split.claude.map((m) => toV2Model(m, LANES[0]!)),
+						) as never,
 					);
 					editor.models.set(
 						"command-code-openai",
-						mergeModels(seed["command-code-openai"], split.open.map((m) => toV2Model(m, LANES[1]!))) as never,
+						mergeModels(
+							seed["command-code-openai"],
+							split.open.map((m) => toV2Model(m, LANES[1]!)),
+						) as never,
 					);
 				});
 				appliedClaude = split.claude;
@@ -394,7 +458,10 @@ export const commandCodeV2: PluginNs.Plugin = {
 				// file, so the timings go to our own cache file instead.
 				logTimings(Date.now() - refreshStart, modelCount);
 			} catch (e) {
-				console.warn("[command-code] live model list unavailable, keeping the snapshot:", e);
+				console.warn(
+					"[command-code] live model list unavailable, keeping the snapshot:",
+					e,
+				);
 			} finally {
 				refreshing = false;
 				// After the first pass, later ticks (30 min) may update the registry.

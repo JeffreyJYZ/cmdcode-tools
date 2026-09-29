@@ -39,7 +39,8 @@ export async function loadModels(key: string): Promise<ModelSplit> {
 	// Cache is keyed by API key: CMD_API_KEY lets one process serve multiple
 	// accounts, and account A's model list must not leak into account B.
 	let models: CmdModel[];
-	const fresh = cache && cache.key === key && Date.now() - cache.at < CACHE_TTL_MS;
+	const fresh =
+		cache && cache.key === key && Date.now() - cache.at < CACHE_TTL_MS;
 	if (fresh) {
 		models = cache!.models;
 	} else {

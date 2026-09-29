@@ -116,6 +116,8 @@ interface MpcRow {
 		};
 		ability?: number | null;
 		tps?: number | null;
+		/** CommandCode promotion on the row: badge text plus its expiry line. */
+		deal?: { badge?: string; ends?: string };
 	};
 	oc?: {
 		provider?: string;
@@ -152,6 +154,10 @@ export function parseMpcJson(text: string): Map<string, ModelMeta> {
 			rates: cc?.pricing,
 			intelligence: cc?.ability ?? undefined,
 			tps: cc?.tps ?? undefined,
+			deal:
+				cc?.deal?.badge !== undefined
+					? { badge: cc.deal.badge, ends: cc.deal.ends }
+					: undefined,
 			oc: oc
 				? {
 						provider: oc.provider,

@@ -4,7 +4,11 @@ export function authHeaders(key: string): Record<string, string> {
 	return { Authorization: `Bearer ${key}`, Accept: "application/json" };
 }
 
-export async function getJson(path: string, key: string, timeoutMs = 10_000): Promise<unknown> {
+export async function getJson(
+	path: string,
+	key: string,
+	timeoutMs = 10_000,
+): Promise<unknown> {
 	const resp = await fetch(`${API_BASE}${path}`, {
 		headers: authHeaders(key),
 		signal: AbortSignal.timeout(timeoutMs),
@@ -103,5 +107,9 @@ export async function usageSummary(key: string): Promise<Summary> {
 }
 
 export async function providerModels(key: string): Promise<ProviderModelsResp> {
-	return getJson("/provider/v1/models", key, 15_000) as Promise<ProviderModelsResp>;
+	return getJson(
+		"/provider/v1/models",
+		key,
+		15_000,
+	) as Promise<ProviderModelsResp>;
 }

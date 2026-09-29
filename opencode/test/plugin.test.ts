@@ -17,14 +17,20 @@ describe("canonicalizeModelId", () => {
 		expect(canonicalizeModelId("claude-sonnet-5")).toBe("claude-sonnet-5");
 	});
 	test("case-insensitive", () => {
-		expect(canonicalizeModelId("minimaxai/minimax-m2.5")).toBe("MiniMaxAI/MiniMax-M2.5");
+		expect(canonicalizeModelId("minimaxai/minimax-m2.5")).toBe(
+			"MiniMaxAI/MiniMax-M2.5",
+		);
 	});
 	test("deprecated alias", () => {
 		expect(canonicalizeModelId("claude-opus-4-6")).toBe("claude-opus-4-7");
-		expect(canonicalizeModelId("claude-haiku-4-5")).toBe("claude-haiku-4-5-20251001");
+		expect(canonicalizeModelId("claude-haiku-4-5")).toBe(
+			"claude-haiku-4-5-20251001",
+		);
 	});
 	test("date suffix stripped", () => {
-		expect(canonicalizeModelId("claude-opus-4-7-20251101")).toBe("claude-opus-4-7");
+		expect(canonicalizeModelId("claude-opus-4-7-20251101")).toBe(
+			"claude-opus-4-7",
+		);
 	});
 	test("unknown passes through", () => {
 		expect(canonicalizeModelId("totally-new-model")).toBe("totally-new-model");
@@ -35,7 +41,9 @@ describe("gating tables match CLI", () => {
 	test("go plan blocks muse-spark-1.2 + grok-4.6", () => {
 		const rules = PLAN_RULES["individual-go"];
 		expect(rules?.allowedCategories).toEqual(["opensource"]);
-		expect(rules?.blockedModels).toContain("vercel-ai-gateway:meta/muse-spark-1.2");
+		expect(rules?.blockedModels).toContain(
+			"vercel-ai-gateway:meta/muse-spark-1.2",
+		);
 		expect(rules?.blockedModels).toContain("vercel-ai-gateway:xai/grok-4.6");
 	});
 	test("pro blocks opus + fable, allows sonnet", () => {
@@ -57,14 +65,21 @@ describe("evaluateModelAccess (edges beyond conformance vectors)", () => {
 		expect(evaluateModelAccess("claude-sonnet-6", goat).allowed).toBe(true);
 	});
 	test("unprefixed unknown model on gated plan defaults opensource", () => {
-		expect(evaluateModelAccess("newvendor/new-open-model", goat).allowed).toBe(true);
+		expect(evaluateModelAccess("newvendor/new-open-model", goat).allowed).toBe(
+			true,
+		);
 	});
 	test("empirically hard-blocked model on GOAT (API 403 MODEL_NOT_IN_PLAN)", () => {
-		expect(evaluateModelAccess("meta/muse-spark-1.1", goat).allowed).toBe(false);
+		expect(evaluateModelAccess("meta/muse-spark-1.1", goat).allowed).toBe(
+			false,
+		);
 	});
 	test("purchased credits override hard block", () => {
 		expect(
-			evaluateModelAccess("meta/muse-spark-1.1", { ...goat, purchasedCredits: 5 }).allowed,
+			evaluateModelAccess("meta/muse-spark-1.1", {
+				...goat,
+				purchasedCredits: 5,
+			}).allowed,
 		).toBe(true);
 	});
 });

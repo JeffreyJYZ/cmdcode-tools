@@ -1,4 +1,11 @@
-import { bareModel, type Category, canonicalizeModelId, HARD_BLOCKED, MODEL_CATEGORIES, PLAN_RULES } from "./gating";
+import {
+	bareModel,
+	type Category,
+	canonicalizeModelId,
+	HARD_BLOCKED,
+	MODEL_CATEGORIES,
+	PLAN_RULES,
+} from "./gating";
 
 export { canonicalizeModelId, PLAN_RULES };
 
@@ -12,11 +19,19 @@ export type PlanLike = {
 	freeCredits: number;
 };
 
-export function evaluateModelAccess(model: string, plan: PlanLike): { allowed: boolean } {
-	if (plan.purchasedCredits > 0 || plan.freeCredits > 0) return { allowed: true };
+export function evaluateModelAccess(
+	model: string,
+	plan: PlanLike,
+): { allowed: boolean } {
+	if (plan.purchasedCredits > 0 || plan.freeCredits > 0)
+		return { allowed: true };
 	if (!plan.planId) return { allowed: true };
 	const canonical = canonicalizeModelId(bareModel(model));
-	if ((HARD_BLOCKED[plan.planId] ?? []).some((m) => m.toLowerCase() === canonical.toLowerCase())) {
+	if (
+		(HARD_BLOCKED[plan.planId] ?? []).some(
+			(m) => m.toLowerCase() === canonical.toLowerCase(),
+		)
+	) {
 		return { allowed: false };
 	}
 	const rules = PLAN_RULES[plan.planId];
