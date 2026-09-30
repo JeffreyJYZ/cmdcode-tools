@@ -155,7 +155,7 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
 
 ## Consumers (sibling repo, same owner)
 
-`mpc` (`~/dev/clis/oc-cmd-compare`) reads this workspace: it shells out to `cmduse`, and takes the
+`mpc` (`~/dev/cmdcode-tools/oc-cmd-compare`) reads this workspace: it shells out to `cmduse`, and takes the
 per-model mix from opencode's own message store (`~/.local/share/opencode/opencode.db`) rather than
 from this plugin. Stable contracts, not incidental output:
 
