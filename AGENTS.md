@@ -308,7 +308,10 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   is a cmduse spawn. 0.3.13 put it back to 20s: with the panel also carrying
   this-session totals and a per-model figure, staleness was the complaint, and a
   poll is one spawn plus one indexed sqlite read. 0.3.15 dropped it to 5s (below).
-  0.3.16 stopped a network outage from blanking or flickering the panel (below).
+  0.3.17 stopped a network outage from blanking or flickering the panel (below);
+  0.3.16 is burned — npm answered its publish with a 202 and then wedged the
+  version in a registry "staged" state that `npm stage list` does not show and
+  `npm stage reject` cannot clear (npm/cli#9889), so it was skipped like 0.2.4.
   0.3.8 made the panel fit its
   42-column sidebar: every row is
   budgeted (ROW_WIDTH = 37) and the long ones split onto an indented continuation
@@ -355,14 +358,14 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   `Usage (this model)` are free, so the cadence is set by the cmduse/ocuse spawn:
   one process and one account API call per poll, ~12 a minute. If that proves hot,
   cache the CLI snapshot in-process for ~30s and keep the local rows at 5s — the
-  account figures move on request boundaries, not continuously. Since 0.3.16 a
+  account figures move on request boundaries, not continuously. Since 0.3.17 a
   poll is skipped while one is in flight: an outage parks a single cmduse
   invocation in its retry ladder (5 retries, 15s timeout each), and the old
   unchecked interval stacked a spawn per tick whose results landed out of order and
   repainted the flapping snapshot. `data.ts` also kills any spawn at 30s so a
   black-hole fetch cannot pin the flag forever.
 - **A network outage must neither blank the model block nor flicker the account
-  block** (0.3.16). Two independent causes, both fixed the same release:
+  block** (0.3.17). Two independent causes, both fixed the same release:
   - `cmduse -1 --json` still **exits 0** when the account API is unreachable: it
     prints the defaults (`plan: "Free"`, no caps, `fiveHour`/`weekly` null) beside an
     `error` string. The human renderer refuses to show that fake frame; the JSON

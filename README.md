@@ -133,7 +133,7 @@ shows that model's own row (or nothing yet) rather than the previous model's num
 outage is handled the same way: `cmduse -1 --json` exits 0 even with the account API unreachable,
 carrying an `error` and the defaults ("Free", no windows) — the panel detects that and keeps the
 last good reading instead of flickering, and the model block keeps its last catalog so the model
-part does not vanish while `mpc` is unreachable (new in 0.3.16).
+part does not vanish while `mpc` is unreachable (new in 0.3.17).
 
 The section is plain text unless you ask for colour. To turn it on, write
 `~/.config/opencode/command-code.json`:
@@ -151,7 +151,7 @@ built on it) works for CommandCode models instead of showing $0.
 For the fastest startup, pin the plugin to an exact version in `opencode.json`:
 
 ```json
-{ "plugins": ["@jeffreyjyz/opencode-command-code@0.3.16"] }
+{ "plugins": ["@jeffreyjyz/opencode-command-code@0.3.17"] }
 ```
 
 A bare name makes opencode re-resolve `@latest` (a registry round-trip) on every start; a pinned
