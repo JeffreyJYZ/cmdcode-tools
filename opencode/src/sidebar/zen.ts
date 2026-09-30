@@ -126,11 +126,15 @@ function windowRows(
 	return rows;
 }
 
-/** The OpenCode Go / Zen panel: period windows, a rule, then the active model. */
+/** The OpenCode Go / Zen panel: period windows, a rule, then the active model.
+ * Like `modelRows`, `fallbackName` (the session's own id) keeps the model block
+ * — and the local `Session` figure — on screen when mpc's catalog is
+ * unreachable; only the catalog-derived rows then drop out. */
 export function zenRows(
 	usage: ZenUsage | undefined,
 	meta: ModelMeta | undefined,
 	session?: ModelUsage,
+	fallbackName?: string,
 ): SidebarRow[] {
 	if (!usage) return [];
 	const oc = meta?.oc;
@@ -171,12 +175,14 @@ export function zenRows(
 		"base",
 	]);
 	rows.push(separator());
-	if (!meta) return rows;
-	rows.push(["Model", clip(meta.name, valueWidth("Model")), "strong", true]);
+	const name = meta?.name ?? fallbackName;
+	if (!name) return rows;
+	rows.push(["Model", clip(name, valueWidth("Model")), "strong", true]);
 	if (session) {
 		const spent = session.cost > 0 ? ` · ${money(session.cost)}` : "";
 		rows.push(["Session", `${count(session.requests)} req${spent}`, "base"]);
 	}
+	if (!meta) return rows;
 	if (typeof limit === "number") {
 		rows.push(["Allowance", `${money(limit)}/mo`, "base"]);
 	}

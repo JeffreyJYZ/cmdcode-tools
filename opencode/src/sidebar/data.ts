@@ -39,22 +39,48 @@ export const SPAWN_OPTIONS: Parameters<typeof spawn>[2] = {
 	detached: true,
 };
 
+/** How long one CLI spawn may run before it is killed. An outage can leave a
+ * fetch hanging through cmduse's retry ladder (up to ~2 minutes across three
+ * endpoints); the 5s poll would then stack spawns on top of each other. Bounding
+ * it means each poll resolves quickly, so the panel keeps the last snapshot and
+ * recovers as soon as the network does. */
+const CHILD_TIMEOUT_MS = 30_000;
+
 function run(bin: string, args: string[]): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const child = spawn(bin, args, SPAWN_OPTIONS);
 		const out: Buffer[] = [];
 		const err: Buffer[] = [];
+		let settled = false;
+		const timer = setTimeout(() => {
+			if (settled) return;
+			settled = true;
+			child.kill();
+			reject(
+				new Error(
+					`${bin} ${args.join(" ")}: timed out after ${CHILD_TIMEOUT_MS}ms`,
+				),
+			);
+		}, CHILD_TIMEOUT_MS);
+		const done = (fn: () => void) => {
+			if (settled) return;
+			settled = true;
+			clearTimeout(timer);
+			fn();
+		};
 		child.stdout?.on("data", (d: Buffer) => out.push(d));
 		child.stderr?.on("data", (d: Buffer) => err.push(d));
-		child.on("error", reject);
+		child.on("error", (e) => done(() => reject(e)));
 		child.on("close", (code) =>
-			code === 0
-				? resolve(Buffer.concat(out).toString("utf8"))
-				: reject(
-						new Error(
-							`${bin} ${args.join(" ")}: exit ${code} ${Buffer.concat(err).toString("utf8").slice(-200)}`,
+			done(() =>
+				code === 0
+					? resolve(Buffer.concat(out).toString("utf8"))
+					: reject(
+							new Error(
+								`${bin} ${args.join(" ")}: exit ${code} ${Buffer.concat(err).toString("utf8").slice(-200)}`,
+							),
 						),
-					),
+			),
 		);
 	});
 }
@@ -103,7 +129,20 @@ export function parseUsageJson(text: string): Usage {
 		requests:
 			typeof summary.requests === "number" ? summary.requests : undefined,
 		cost: typeof summary.cost === "number" ? summary.cost : undefined,
+		error: typeof raw.error === "string" && raw.error ? raw.error : undefined,
 	};
+}
+
+/**
+ * A snapshot is only usable when cmduse actually reached the account API.
+ * `-1 --json` exits 0 on failure and then carries the defaults (plan "Free", no
+ * windows) beside an `error`; painting that over a good snapshot is what made
+ * the Monthly row flash during an outage. Throw so the caller keeps the last
+ * snapshot, exactly as it does when the CLI is missing.
+ */
+export function requireSnapshot(usage: Usage): Usage {
+	if (usage.error) throw new Error(usage.error);
+	return usage;
 }
 
 interface MpcRow {
@@ -212,9 +251,13 @@ export async function loadMeta(): Promise<Map<string, ModelMeta>> {
 	return meta;
 }
 
-/** One usage snapshot from cmduse. Throws when cmduse is missing or fails. */
+/** One usage snapshot from cmduse. Throws when cmduse is missing, fails, or
+ * returns the errored defaults its JSON carries when the account API is
+ * unreachable (see `requireSnapshot`). */
 export async function loadUsage(): Promise<Usage> {
-	return parseUsageJson(await runFirst(CMDUSE, ["-1", "--json", "--plain"]));
+	return requireSnapshot(
+		parseUsageJson(await runFirst(CMDUSE, ["-1", "--json", "--plain"])),
+	);
 }
 
 /**

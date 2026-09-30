@@ -308,6 +308,7 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   is a cmduse spawn. 0.3.13 put it back to 20s: with the panel also carrying
   this-session totals and a per-model figure, staleness was the complaint, and a
   poll is one spawn plus one indexed sqlite read. 0.3.15 dropped it to 5s (below).
+  0.3.16 stopped a network outage from blanking or flickering the panel (below).
   0.3.8 made the panel fit its
   42-column sidebar: every row is
   budgeted (ROW_WIDTH = 37) and the long ones split onto an indented continuation
@@ -354,7 +355,30 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   `Usage (this model)` are free, so the cadence is set by the cmduse/ocuse spawn:
   one process and one account API call per poll, ~12 a minute. If that proves hot,
   cache the CLI snapshot in-process for ~30s and keep the local rows at 5s — the
-  account figures move on request boundaries, not continuously.
+  account figures move on request boundaries, not continuously. Since 0.3.16 a
+  poll is skipped while one is in flight: an outage parks a single cmduse
+  invocation in its retry ladder (5 retries, 15s timeout each), and the old
+  unchecked interval stacked a spawn per tick whose results landed out of order and
+  repainted the flapping snapshot. `data.ts` also kills any spawn at 30s so a
+  black-hole fetch cannot pin the flag forever.
+- **A network outage must neither blank the model block nor flicker the account
+  block** (0.3.16). Two independent causes, both fixed the same release:
+  - `cmduse -1 --json` still **exits 0** when the account API is unreachable: it
+    prints the defaults (`plan: "Free"`, no caps, `fiveHour`/`weekly` null) beside an
+    `error` string. The human renderer refuses to show that fake frame; the JSON
+    consumer must too. `parseUsageJson` now lifts `error`, and `loadUsage` runs the
+    snapshot through `requireSnapshot`, which throws so `refresh`'s `catch` keeps the
+    last good snapshot. Without it the account block collapsed from ~7 rows to
+    `Plan: Free` and back — the "Monthly row flashes" report.
+  - The account block (`lastSnapshot`) and the per-model figure (`lastModelUsage`)
+    both survive a remount, but the mpc catalog had no such memory: `meta` started
+    empty and only filled after a successful spawn, so a remount during the outage
+    blanked the whole model block (name, tier, rates, and even the local
+    `Usage (this model)` rows — they live inside `modelRows`). `lastMeta` /
+    `rememberMeta` / `seededMeta` mirror the other two, an empty catalog is never
+    remembered, and `modelRows`/`zenRows` now take a `fallbackName` (the session
+    id's tail) so the name plus the store-backed rows still render when mpc is
+    unreachable. The mpc catalog needs the network; the local figures do not.
 - **A promotion on the model shows as a `Deal` row** (0.3.14). mpc reports
   `cc.deal { badge, ends }` off the docs badge; `rows.ts` compacts the expiry to `Sep 30` so
   the line fits the 37-column budget, and tones it `ok`. There is nothing to compute or expire:

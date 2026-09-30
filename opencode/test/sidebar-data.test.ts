@@ -6,6 +6,7 @@ import { join } from "node:path";
 import {
 	parseMpcJson,
 	parseUsageJson,
+	requireSnapshot,
 	SPAWN_OPTIONS,
 } from "../src/sidebar/data";
 import {
@@ -46,7 +47,29 @@ describe("parseUsageJson", () => {
 			periodEnd: undefined,
 			requests: undefined,
 			cost: undefined,
+			error: undefined,
 		});
+	});
+});
+
+describe("requireSnapshot", () => {
+	// cmduse -1 --json exits 0 when the account API is unreachable and publishes
+	// the defaults (plan "Free", no windows) beside `error`. Painting that over a
+	// good snapshot is what made the Monthly row flash during an outage.
+	test("rejects the errored defaults so the panel keeps its last snapshot", () => {
+		const usage = parseUsageJson(
+			JSON.stringify({ error: "credits: transport error", plan: "Free" }),
+		);
+		expect(usage.error).toBe("credits: transport error");
+		expect(() => requireSnapshot(usage)).toThrow("transport error");
+	});
+
+	test("passes a healthy snapshot through", () => {
+		expect(requireSnapshot(parseUsageJson(USAGE)).plan).toBe("GOAT");
+	});
+
+	test("a null error is not an error", () => {
+		expect(requireSnapshot(parseUsageJson(USAGE)).error).toBeUndefined();
 	});
 });
 

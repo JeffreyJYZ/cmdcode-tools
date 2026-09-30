@@ -142,6 +142,14 @@ export interface Usage {
 	periodEnd?: string;
 	requests?: number;
 	cost?: number;
+	/**
+	 * cmduse's own fetch error. `cmduse -1 --json` still exits 0 when the account
+	 * API is unreachable, and then publishes the *defaults* (plan "Free", no
+	 * windows) beside this string — the human renderer hides that fake frame, and
+	 * a consumer must too, or it paints "Free" with no Monthly row over a good
+	 * snapshot. See `loadUsage`.
+	 */
+	error?: string;
 }
 
 const TIER_DISPLAY: Readonly<Record<Category, string>> = {
@@ -285,15 +293,23 @@ export function usageRows(
 
 /** Active model's allowance, rates and benchmarks, from mpc's catalog; its
  * period usage (when the store has it) rides directly under the model name, and
- * this session's own totals under that (0.4.0). */
+ * this session's own totals under that (0.4.0).
+ *
+ * `fallbackName` keeps the block on screen when the catalog is unavailable: the
+ * `Usage (this model)`/`Session` rows come from the local store and need no
+ * network, so an outage must not hide them behind a failed mpc spawn. The name
+ * is the only thing borrowed, and it is the session's own id when no catalog
+ * row names the model. */
 export function modelRows(
 	meta: ModelMeta | undefined,
 	usage?: ModelUsage,
 	session?: ModelUsage,
+	fallbackName?: string,
 ): SidebarRow[] {
-	if (!meta) return [];
+	const name = meta?.name ?? fallbackName;
+	if (!name) return [];
 	const rows: SidebarRow[] = [
-		["Model", clip(meta.name, valueWidth("Model")), "strong", true],
+		["Model", clip(name, valueWidth("Model")), "strong", true],
 	];
 	if (usage) {
 		// CommandCode is subscription-billed, so the harness only prices a model
@@ -312,6 +328,9 @@ export function modelRows(
 		const spent = session.cost > 0 ? ` · ${money(session.cost)}` : "";
 		rows.push(["Session", `${count(session.requests)} req${spent}`, "base"]);
 	}
+	// Everything below is catalog data; without it the block is just the model
+	// and its local figures.
+	if (!meta) return rows;
 	if (meta.tier) rows.push(["Tier", TIER_DISPLAY[meta.tier], "base"]);
 	// Min plan is the fallback, not a second opinion: the docs' access rule
 	// (models.md's Min plan column) covers models the gating snapshot has no

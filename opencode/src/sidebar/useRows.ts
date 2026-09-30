@@ -98,6 +98,29 @@ export function seededModelUsage(
 	return lastModelUsage.key === modelKey(id) ? lastModelUsage.usage : undefined;
 }
 
+/**
+ * The last mpc catalog this process loaded. The account block (`lastSnapshot`)
+ * and the per-model figure (`lastModelUsage`) both survive a remount, but the
+ * catalog had no such memory: `meta` started as an empty Map and only filled
+ * after a successful mpc spawn, so a remount during a network outage blanked the
+ * whole model block — name, tier, rates and the local `Usage (this model)` row —
+ * while the account rows stayed up. mpc needs the network, so the remount could
+ * sit empty for as long as the outage lasted.
+ */
+let lastMeta: Map<string, ModelMeta> | undefined;
+
+/** Keep a catalog for the next panel that needs it. An empty map is never
+ * remembered: it cannot be distinguished from "mpc returned nothing" and would
+ * wipe a good catalog. */
+export function rememberMeta(meta: Map<string, ModelMeta>): void {
+	if (meta.size > 0) lastMeta = meta;
+}
+
+/** Rows to paint before mpc's catalog is read again. */
+export function seededMeta(): Map<string, ModelMeta> {
+	return lastMeta ?? new Map();
+}
+
 export function useRows(
 	activeModelId: () => string | undefined,
 	providerID: () => string | undefined,
@@ -105,7 +128,7 @@ export function useRows(
 ) {
 	const [usage, setUsage] = createSignal<SidebarRow[]>(seededRows());
 	const [zen, setZen] = createSignal<ZenUsage | undefined>();
-	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(new Map());
+	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(seededMeta());
 	const [modelUsage, setModelUsage] = createSignal<
 		{ key: string; usage: ModelUsage } | undefined
 	>(lastModelUsage);
@@ -125,7 +148,10 @@ export function useRows(
 	 */
 	const refreshMeta = (): void => {
 		void loadMeta()
-			.then(setMeta)
+			.then((next) => {
+				rememberMeta(next);
+				if (next.size > 0) setMeta(next);
+			})
 			.catch(() => {});
 	};
 	refreshMeta();
@@ -137,13 +163,21 @@ export function useRows(
 		setModelUsage(lastModelUsage);
 	};
 
+	// One poll in flight at a time. During an outage a single cmduse invocation
+	// can sit in its retry ladder for a while, and the 5s interval would stack a
+	// new spawn on every tick; when the network returned those landed out of
+	// order, repainting the flapping snapshot the user saw. `data.ts` bounds each
+	// spawn too, so a black-hole fetch cannot pin this flag forever.
+	let inFlight = false;
 	const refresh = async () => {
-		const kind = sessionKind(providerID());
-		const session = sessionID();
-		refreshMeta();
-		// Session totals are provider-agnostic and cheap (one indexed read).
-		if (session) setSessionUsage(loadSessionUsage(session) ?? undefined);
+		if (inFlight) return;
+		inFlight = true;
 		try {
+			const kind = sessionKind(providerID());
+			const session = sessionID();
+			refreshMeta();
+			// Session totals are provider-agnostic and cheap (one indexed read).
+			if (session) setSessionUsage(loadSessionUsage(session) ?? undefined);
 			if (kind === "ours") {
 				const snapshot = await loadUsage();
 				rememberSnapshot(snapshot);
@@ -153,7 +187,10 @@ export function useRows(
 				setZen(await loadZen());
 			}
 		} catch {
-			// the CLI is missing or offline: keep the last snapshot
+			// the CLI is missing, offline, or returned its errored defaults: keep
+			// the last snapshot rather than painting "Free" with no windows.
+		} finally {
+			inFlight = false;
 		}
 	};
 	// Poll only while this session is one we cover. The panel returns no rows
@@ -194,8 +231,11 @@ export function useRows(
 		if (!shows(kind) && (kind === "other" || !wasOurs())) return [];
 		const id = activeModelId();
 		const found = id ? (meta().get(modelKey(id)) ?? meta().get(id)) : undefined;
+		// The session id is the only name available when the catalog is missing;
+		// its vendor prefix is noise, so keep the tail.
+		const fallbackName = id ? (id.split("/").pop() ?? id) : undefined;
 		if (kind === "go" || kind === "zen") {
-			return zenRows(zen(), found, sessionUsage());
+			return zenRows(zen(), found, sessionUsage(), fallbackName);
 		}
 		// gating keys are model ids, not display names, so tier comes from the
 		// session's id rather than the catalog row.
@@ -211,7 +251,7 @@ export function useRows(
 		return [
 			...usage(),
 			separator(),
-			...modelRows(model, usageFor(id), sessionUsage()),
+			...modelRows(model, usageFor(id), sessionUsage(), fallbackName),
 		];
 	});
 }

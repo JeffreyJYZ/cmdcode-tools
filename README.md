@@ -120,15 +120,20 @@ grows a section (toggle with `ctrl+x b`):
 
 Usage comes from the `cmduse` CLI (polled every 5s); the model catalog comes from `mpc --json`,
 cached for 1h and re-read on every poll, so a new model or promotion reaches a running panel —
-install it with `bun link` in the sibling `oc-cmd-compare` checkout, or the section simply omits
-those rows. The model's own usage is read from opencode's message store
+install it with `bun link` in the sibling `oc-cmd-compare` checkout, or the section keeps the
+model name and the store-backed rows and simply omits the catalog rows (tier, rates, allowance).
+The model's own usage is read from opencode's message store
 (`~/.local/share/opencode/opencode.db`, read-only); CommandCode is subscription-billed, so spend
 appears only when the harness priced the turns (a free or unpriced model keeps requests only).
 Non-CommandCode models show nothing.
 
 Both blocks remember their last reading, so a remount or a session switch repaints instead of
 blanking while the next poll runs. The per-model figure is keyed by model, so switching models
-shows that model's own row (or nothing yet) rather than the previous model's numbers.
+shows that model's own row (or nothing yet) rather than the previous model's numbers. A network
+outage is handled the same way: `cmduse -1 --json` exits 0 even with the account API unreachable,
+carrying an `error` and the defaults ("Free", no windows) — the panel detects that and keeps the
+last good reading instead of flickering, and the model block keeps its last catalog so the model
+part does not vanish while `mpc` is unreachable (new in 0.3.16).
 
 The section is plain text unless you ask for colour. To turn it on, write
 `~/.config/opencode/command-code.json`:
@@ -146,7 +151,7 @@ built on it) works for CommandCode models instead of showing $0.
 For the fastest startup, pin the plugin to an exact version in `opencode.json`:
 
 ```json
-{ "plugins": ["@jeffreyjyz/opencode-command-code@0.3.15"] }
+{ "plugins": ["@jeffreyjyz/opencode-command-code@0.3.16"] }
 ```
 
 A bare name makes opencode re-resolve `@latest` (a registry round-trip) on every start; a pinned

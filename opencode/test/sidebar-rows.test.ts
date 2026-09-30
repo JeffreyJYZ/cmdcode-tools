@@ -259,6 +259,24 @@ describe("modelRows", () => {
 	test("missing meta yields no rows", () => {
 		expect(modelRows(undefined)).toEqual([]);
 	});
+
+	test("without a catalog the model block keeps its local figures", () => {
+		// mpc's catalog needs the network; the model name and the store-backed
+		// rows must survive its absence instead of hiding the whole block, which
+		// is what made the model part vanish across an outage.
+		const rows = modelRows(
+			undefined,
+			{ requests: 12, cost: 0.5 },
+			{ requests: 30, cost: 2 },
+			"deepseek-v4.1-flash",
+		);
+		expect(rows[0]).toEqual(["Model", "deepseek-v4.1-flash", "strong", true]);
+		expect(rows.some((row) => row[0] === "Usage (this model)")).toBe(true);
+		expect(rows.some((row) => row[0] === "Session")).toBe(true);
+		// No catalog means no tier/rates/allowance rows.
+		expect(rows.some((row) => row[0] === "Allowance")).toBe(false);
+		expect(rows.some((row) => row[0] === "Rates")).toBe(false);
+	});
 });
 
 describe("tones", () => {

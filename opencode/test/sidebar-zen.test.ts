@@ -122,4 +122,21 @@ describe("zenRows", () => {
 	test("no snapshot yields no rows at all", () => {
 		expect(zenRows(undefined, meta)).toEqual([]);
 	});
+
+	test("without a catalog the model block keeps the name and session", () => {
+		// mpc's catalog needs the network; the name and the local Session figure
+		// must survive so the model part does not vanish across an outage.
+		const rows = zenRows(
+			parseZenJson(sample),
+			undefined,
+			{ requests: 5, cost: 0.25 },
+			"glm-5.3-flash",
+		);
+		const find = (label: string) => rows.find((row) => row[0] === label);
+		expect(find("Period")).toBeDefined();
+		expect(find("Model")).toEqual(["Model", "glm-5.3-flash", "strong", true]);
+		expect(find("Session")).toEqual(["Session", "5 req · $0.25", "base"]);
+		expect(find("Allowance")).toBeUndefined();
+		expect(find("Rates")).toBeUndefined();
+	});
 });

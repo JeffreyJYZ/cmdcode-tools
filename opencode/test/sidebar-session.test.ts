@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import {
+	rememberMeta,
 	rememberModelUsage,
 	rememberSnapshot,
+	seededMeta,
 	seededModelUsage,
 	seededRows,
 	sessionKind,
@@ -69,5 +71,32 @@ describe("model usage cache", () => {
 		expect(seededModelUsage("kimi-k2.7")).toBeUndefined();
 		// An unresolved id (mid-switch) keeps the row up instead of blanking it.
 		expect(seededModelUsage(undefined)).toEqual({ requests: 12, cost: 1.5 });
+	});
+});
+
+describe("catalog cache", () => {
+	// The account block and the per-model figure both survive a remount; the mpc
+	// catalog used to start empty, so a remount during an outage blanked the whole
+	// model block while the account rows stayed up.
+	test("remembers the last catalog so a remount keeps the model block", () => {
+		rememberMeta(new Map());
+		// An empty map cannot be told apart from "mpc returned nothing"; it must
+		// never replace a good catalog.
+		expect(seededMeta().size).toBe(0);
+
+		rememberMeta(
+			new Map([
+				[
+					"deepseekv41flash",
+					{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },
+				],
+			]),
+		);
+		expect(seededMeta().get("deepseekv41flash")?.name).toBe(
+			"DeepSeek V4.1 Flash",
+		);
+
+		rememberMeta(new Map());
+		expect(seededMeta().size).toBe(1);
 	});
 });
