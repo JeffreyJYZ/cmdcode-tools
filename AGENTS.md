@@ -454,11 +454,24 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   missing (older cmduse). The plugin honours `CMDUSE_BIN` first, like `mpc`, so a
   dev build can be pointed at without touching the brew Cellar (its binaries are
   read-only).
-- **npm publish is interactive: it fails from the agent shell** (`EOTP`, prints
-  an auth URL). Build first (`cd opencode && bun run build`) so `dist/` is
-  current, then the user runs plain `npm publish` themselves — it opens a
-  browser to authenticate, no `--otp` needed. Never treat an `EOTP` failure as
-  published — verify with `npm view @jeffreyjyz/opencode-command-code version`.
+- **Publish the npm package with `npm stage publish` + `npm stage approve`, never
+  a bare `npm publish`.** Bare `npm publish` is broken for this package on npm's
+  current account policy: it answers `202`/exit 0 and then leaves a ghost version
+  slot — absent from the packument (`npm view time` stops at the last good
+  version) and from `npm stage list`, and impossible to clear (a retry dies on
+  `E409 Cannot publish over previously staged version`, and staging it says
+  "Cannot stage previously published version"). That is npm/cli#9889; it burned
+  0.3.16 and 0.3.17. The trigger is the bypass-2FA token migration (npm's own
+  notice: "npm tokens that bypass 2FA are being restricted for account changes
+  and direct publishing"). Stage instead: `bun run build`, then `npm stage
+  publish` (works from the agent shell, no 2FA), which prints a stage id, then the
+  user runs `npm stage approve <stage-id>` (opens the browser for 2FA). Only
+  `approve` commits the version, so **the version is not live until that step** —
+  verify afterward, never treat a stage or a `202` as published.
+- **Every npm publish/approve step that needs 2FA fails from the agent shell**
+  (`EOTP`, prints an auth URL). Build first (`cd opencode && bun run build`) so
+  `dist/` is current. Never treat an `EOTP` as published — verify with `npm view
+  @jeffreyjyz/opencode-command-code version`.
 - **Verify a release with `bun scripts/verify-release.ts <version> [--expected <sha1>]`.**
   It polls the packument and the tarball, reports `latest` / version / tarball
   status in one line, and (given a local `npm pack` shasum) fails on a mismatch
