@@ -53,7 +53,8 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
                    synthetic messages are not TUI-visible)
   src/sidebar/rows.ts   pure row builder for the sidebar (usage + model rows)
   src/sidebar/data.ts   spawns: cmduse for usage (polled), mpc --json for the
-                   per-model catalog (disk-cached 6h; mpc scrapes live docs)
+                   per-model catalog (disk-cached 1h, re-read on every poll so a catalog
+                   change reaches a running panel; mpc scrapes live docs)
   scripts/build-tui.ts  builds dist/tui.js with @opentui/solid's transform
 ```
 
@@ -212,13 +213,14 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   errors you won't see locally. If core did not change, publish the CLI alone.
 - **crates.io version slots are FOREVER.** 0.2.0–0.4.0 were published+yanked
   on old `cmd-usage` — you can never re-upload those numbers. Current 0.x
-  release line is 0.7.6 (0.7.0 added the ocuse bin; 0.7.1 refreshed gating.json to
+  release line is 0.7.7 (0.7.0 added the ocuse bin; 0.7.1 refreshed gating.json to
   CLI 1.66; 0.7.2 added the `-1 --json` billing-period bounds; 0.7.3 gave the
   ocuse dashboard cmduse's gauges, sparkline and live watch frame; 0.7.4 threaded
   the colour flag through every ocuse renderer, reports included; 0.7.5 flagged an
   over-cap model and added its share of period spend; 0.7.6 gave every
   used/elapsed percentage one decimal and started shipping prebuilt binaries with
-  the release workflow); 0.6.x was the
+  the release workflow; 0.7.7 added the monthly row's `$X by now` pro-rata
+  figure); 0.6.x was the
   last CommandCode-only line (first free slot past the dead 0.2–0.4 range). Skip
   taken numbers, never fight the 400.
 - Clean tree required (commit first, incl. Cargo.lock).
@@ -305,7 +307,8 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   from 30s to 60s (POLL_MS): the totals move on request boundaries, and each poll
   is a cmduse spawn. 0.3.13 put it back to 20s: with the panel also carrying
   this-session totals and a per-model figure, staleness was the complaint, and a
-  poll is one spawn plus one indexed sqlite read. 0.3.8 made the panel fit its
+  poll is one spawn plus one indexed sqlite read. 0.3.15 dropped it to 5s (below).
+  0.3.8 made the panel fit its
   42-column sidebar: every row is
   budgeted (ROW_WIDTH = 37) and the long ones split onto an indented continuation
   instead of wrapping, plus a rule between the account block and the model block.
@@ -342,9 +345,10 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
 - **opencode v2 stores messages in `session_message`, not `message`** (0.3.13). The legacy table
   stopped at the migration, so reading it reports zero for every recent session — the sidebar
   showed `Usage (this model): 0 req` and `Session: 0 req` while cmduse's account rows looked fine,
-  which is the tell: only the DB-derived rows were wrong. v2 also has no per-message cost (the
-  model ref is per turn; spend exists only as a `session_v2` column), so the per-model figure is
-  requests-only and the Session row reads `session_v2.cost` plus a count of assistant turns.
+  which is the tell: only the DB-derived rows were wrong. v2 has no per-*message* cost (the model
+  ref is per turn), so the per-model figure is summed from each completed assistant turn's `cost`
+  (0.3.15 — an in-flight turn carries none, which is why an early sample read as zero), and the
+  Session row reads `session_v2.cost` plus a count of assistant turns.
   `usageDb.ts` detects the table and keeps the v1 queries as the fallback.
 - **The panel polls every 5s** (0.3.15). The sqlite reads behind `Session` and
   `Usage (this model)` are free, so the cadence is set by the cmduse/ocuse spawn:

@@ -107,8 +107,9 @@ grows a section (toggle with `ctrl+x b`):
 - the cheapest plan that serves it (`Min plan`), from Command Code's own model table — the column
   their docs name as the access rule; shown only when the tier is unknown (new in 0.3.2, fallback-only
   since 0.3.6)
-- the active model's own period usage — requests, plus spend when the harness records it
-  (new in 0.2.9; labelled `Usage (this model)`)
+- the active model's own period usage — requests, plus spend and its share of the session when
+  the harness records them (new in 0.2.9, spend share in 0.3.15; labelled `Usage (this model)`)
+- a running promotion on the active model (`Deal`: badge plus expiry, new in 0.3.14)
 - this session's own totals (`Session`), so mid-conversation you see what the conversation has cost
   rather than only the period-to-date figure (new in 0.3.12)
 - on OpenCode Go/Zen sessions: the same shape from `ocuse`, the only local source for those
@@ -118,10 +119,12 @@ grows a section (toggle with `ctrl+x b`):
   approximation.
 
 Usage comes from the `cmduse` CLI (polled every 5s); the model catalog comes from `mpc --json`,
-cached for 6h — install it with `bun link` in the sibling `oc-cmd-compare` checkout, or the section
-simply omits those rows. The model's own usage is read from opencode's message store
-(`~/.local/share/opencode/opencode.db`, read-only); CommandCode is subscription-billed, so its
-rows show requests only. Non-CommandCode models show nothing.
+cached for 1h and re-read on every poll, so a new model or promotion reaches a running panel —
+install it with `bun link` in the sibling `oc-cmd-compare` checkout, or the section simply omits
+those rows. The model's own usage is read from opencode's message store
+(`~/.local/share/opencode/opencode.db`, read-only); CommandCode is subscription-billed, so spend
+appears only when the harness priced the turns (a free or unpriced model keeps requests only).
+Non-CommandCode models show nothing.
 
 Both blocks remember their last reading, so a remount or a session switch repaints instead of
 blanking while the next poll runs. The per-model figure is keyed by model, so switching models
@@ -143,7 +146,7 @@ built on it) works for CommandCode models instead of showing $0.
 For the fastest startup, pin the plugin to an exact version in `opencode.json`:
 
 ```json
-{ "plugins": ["@jeffreyjyz/opencode-command-code@0.3.4"] }
+{ "plugins": ["@jeffreyjyz/opencode-command-code@0.3.15"] }
 ```
 
 A bare name makes opencode re-resolve `@latest` (a registry round-trip) on every start; a pinned
