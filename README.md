@@ -1,6 +1,6 @@
 # Command Code tooling
 
-[![CI](https://github.com/JeffreyJYZ/command-code-zed/actions/workflows/ci.yml/badge.svg)](https://github.com/JeffreyJYZ/command-code-zed/actions/workflows/ci.yml)
+[![CI](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
 [![crates.io](https://img.shields.io/crates/v/cmd-usage.svg)](https://crates.io/crates/cmd-usage)
 [![npm](https://img.shields.io/npm/v/@jeffreyjyz/opencode-command-code.svg)](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](#license)

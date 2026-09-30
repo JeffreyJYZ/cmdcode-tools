@@ -1,5 +1,5 @@
 {
-	"name": "command-code-zed",
+	"name": "cmdcode-tools",
 	"private": true,
 	"scripts": {
 		"extract": "bun run scripts/extract-gating.ts"
