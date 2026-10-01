@@ -388,6 +388,18 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
     remembered, and `modelRows`/`zenRows` now take a `fallbackName` (the session
     id's tail) so the name plus the store-backed rows still render when mpc is
     unreachable. The mpc catalog needs the network; the local figures do not.
+  - **If the model block shows only the name and the local `Usage (this model)` /
+    `Session` rows, suspect `mpc`, not the network.** Every other model row
+    (allowance, rates, Intelligence, Tok/s, Deal) comes from `mpc --json`, while
+    the account block above is unaffected — that asymmetry is the tell. The usual
+    cause is a dangling `~/.bun/bin/mpc` after the global `bun link` was pruned
+    (see the sibling repo's AGENTS.md): all three candidates (`mpc`,
+    `~/.bun/bin/mpc`, `/opt/homebrew/bin/mpc`) resolve to the same dead path, so
+    `spawn` yields `ENOENT` and the catalog silently stays empty. A dangling
+    symlink prints nothing for `command -v mpc`, and `ls -l` on the bin still
+    shows the stale target — check the target exists instead. Restore with
+    `bun link` in `~/dev/cmdcode-tools/oc-cmd-compare`; the panel recovers on the
+    next 5s poll, no reload needed.
 - **A promotion on the model shows as a `Deal` row** (0.3.14). mpc reports
   `cc.deal { badge, ends }` off the docs badge; `rows.ts` compacts the expiry to `Sep 30` so
   the line fits the 37-column budget, and tones it `ok`. There is nothing to compute or expire:
