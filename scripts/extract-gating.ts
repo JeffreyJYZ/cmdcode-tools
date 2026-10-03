@@ -169,13 +169,23 @@ const lit = (id: string | undefined, fallback: string): string => (id && vars.ge
 /**
  * Bundled releases rename their minified helpers (1.66 moved every anchor the
  * old scrape used: Fr/Ur/Sr/wr -> qr/Yr/Cr/Er and the record factories
- * $r/_r -> zr/Kr). Each generation lists its own anchors; the first that
- * matches wins, so a refresh keeps working across a rename instead of silently
- * writing a stale file. A bundle matching neither fails loud.
+ * $r/_r -> zr/Kr; 1.74 moved them again: qr/Yr/Er/$r/_r -> vr/Cr/Yo/Sr/wr,
+ * while the known set moved to `qo`). Each generation lists its own anchors;
+ * the first that matches wins, so a refresh keeps working across a rename
+ * instead of silently writing a stale file. A bundle matching none fails loud.
  */
 const GENERATIONS = [
 	{
-		label: "1.66+",
+		label: "1.74+",
+		categories: "vr={",
+		plans: "Cr={",
+		known: ['qo=new Set(["', "])"] as const,
+		aliases: "Yo={",
+		premium: /\bSr\(([A-Za-z_$][\w$]*)\)/g,
+		oss: /\bwr\(\)/g,
+	},
+	{
+		label: "1.66-1.73",
 		categories: "qr={",
 		plans: "Yr={",
 		known: ['Cr=new Set(["', "])"] as const,
@@ -226,8 +236,22 @@ for (const m of expand(objectLiteralAfter(generation.categories)).matchAll(
 }
 
 // --- plan table: { "<planId>": {allowedCategories, blockedModels?} } ---
+// Newer bundles hoist a shared `blockedModels` array into a variable and
+// reference it (`blockedModels:kr=[...]` on one plan, `blockedModels:kr` on
+// another); inline both forms or those plans drop out of the match entirely.
+const arrayVars = new Map<string, string>();
+for (const m of src.matchAll(/([A-Za-z_$][\w$]*)=(\["[^[\]]*"\])/g)) {
+	arrayVars.set(m[1]!, m[2]!);
+}
+const plansLiteral = objectLiteralAfter(generation.plans)
+	.replace(/blockedModels:([A-Za-z_$][\w$]*)=\[/g, "blockedModels:[")
+	.replace(
+		/blockedModels:([A-Za-z_$][\w$]*)(?![\w$])/g,
+		(all, id: string) =>
+			arrayVars.has(id) ? `blockedModels:${arrayVars.get(id)}` : all,
+	);
 const plans: Record<string, { allowedCategories: string[]; blockedModels: string[] }> = {};
-for (const m of expand(objectLiteralAfter(generation.plans)).matchAll(
+for (const m of expand(plansLiteral).matchAll(
 	/"(individual-[a-z0-9-]+|teams-[a-z0-9-]+)":\{allowedCategories:\[([^\]]*)\](,blockedModels:\[([^\]]*)\])?\}/g,
 )) {
 	const cats = [...m[2]!.matchAll(/"([a-z]+)"/g)].map((c) => c[1]!);

@@ -74,9 +74,12 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
   *truncated* cli.mjs that still passed a naive sanity check, which is what made a
   refresh fail on anchors upstream has. Bundled releases rename every minified
   helper (1.66 moved Fr/Ur/Sr/wr to qr/Yr/Cr/Er and the record factories
-  $r/_r to zr/Kr), so the script carries a small GENERATIONS table and picks the
-  first that matches, failing loud when nothing does. A local CLI install is the
-  offline fallback. The hand-probed `hardBlocked` entries live in that script. The file carries `extractedAt`
+  $r/_r to zr/Kr; **1.74 moved them again** — qr/Yr/Er/$r/_r → vr/Cr/Yo/Sr/wr,
+  the known set to `qo`, and it hoists a shared `blockedModels` array into a
+  variable referenced as `blockedModels:kr=[...]` / `blockedModels:kr`), so the
+  script carries a GENERATIONS table and inlines those array vars; it picks the
+  first generation that matches and fails loud when nothing does. A local CLI
+  install is the offline fallback. The hand-probed `hardBlocked` entries live in that script. The file carries `extractedAt`
   + `cliVersion`; cli and opencode warn when the snapshot is >30d old, and
   both warn when the API returns a plan id no `plans.json` rule matches
   (the dashboard would otherwise silently show "Free" with no cap).
@@ -125,13 +128,15 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
   its log file, so `src/startupLog.ts` appends one line per start:
   `setup: key=…ms register=…ms connection=…ms refresh=…ms models=…`. `register`
   is the phase that gates the picker; if it grows, look at plugin load, not setup.
-- **`core/gating.json`'s category scrape is still on the 1.38.2 anchors.** The
-  1.65 bundle moved the `Vr`/`zr`/`Kr` declarations, so `scripts/extract-gating.ts`
-  now prefers the published bundle (unpkg, then jsdelivr — unpkg 500s on some
-  versions; a local install is the offline fallback) and fails loud on the old
-  anchors. Re-anchoring is its own task; until then plan gating falls back to
-  "allow" for the newest models (the API still enforces) and the tier row simply
-  omits those models — prefer `Min plan` when both are available.
+- **`core/gating.json` is refreshed from `command-code@1.74.1` (85 categories,
+  9 plans, 92 known).** The scrape was re-anchored for the 1.74 bundle, so it no
+  longer falls back to "allow" for the newest models. The signal to watch is
+  `cliVersion`, not `extractedAt`: the snapshot can be a day old and eight
+  releases behind (the 1.74 re-anchor moved 1.65.2 catalog / 1.66.0 gating to
+  1.74.1), so compare against the registry's `latest` when a model appears
+  ungated. `plans.json` is hand-maintained beside it — its `nameRules`/`caps`
+  must cover every plan id the API returns (`individual-ultra` was rendering as
+  Free with no cap until its rule landed).
 - **Behavior vectors live in `core/conformance.json`.** Rust (`core` test)
   asserts them all. Since plugin 0.2.0 the TS port (`opencode/test/
   conformance.test.ts`) covers only the still-ported model-gating layer

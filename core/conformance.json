@@ -111,6 +111,7 @@
 		{ "id": "individual-max-10x", "name": "Max 10x", "cap": 150.0, "matched": true },
 		{ "id": "individual-provider", "name": "Provider", "cap": null, "matched": true },
 		{ "id": "individual-pro", "name": "Pro", "cap": 80.0, "matched": true },
+		{ "id": "individual-ultra", "name": "Ultra", "cap": 300.0, "matched": true },
 		{ "id": "teams-pro", "name": "Team Pro", "cap": 40.0, "matched": true },
 		{ "id": "bogus", "name": "Free", "cap": null, "matched": false }
 	],
