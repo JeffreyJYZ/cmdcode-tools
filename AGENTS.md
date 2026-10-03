@@ -360,6 +360,16 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   (0.3.15 — an in-flight turn carries none, which is why an early sample read as zero), and the
   Session row reads `session_v2.cost` plus a count of assistant turns.
   `usageDb.ts` detects the table and keeps the v1 queries as the fallback.
+- **The plugin is loaded once per session attach, so several sessions are live at once.** One
+  opencode server run logs a `loading plugin` line for *each* attach (measured: 4 in a run with 4
+  sessions, and a 56-load long-lived run), all with the identical `entrypoint` URL — so bun's
+  module cache is shared and the sidebar's module-level caches (`lastSnapshot`, `lastMeta`,
+  `lastModelUsage`) are read by every session in that process at the same time. That is *why* they
+  are keyed (account-wide snapshot, catalog, per-model usage) rather than "the current panel's".
+  The in-flight guard is the exception: `inFlight` lives inside the hook closure, so it is **per
+  session** — N open sessions on our provider each spawn their own cmduse every 5s, and the account
+  API sees N calls a tick, not one. Nothing coordinates them; if that ever matters, the guard has to
+  move to module scope.
 - **The panel polls every 5s** (0.3.15). The sqlite reads behind `Session` and
   `Usage (this model)` are free, so the cadence is set by the cmduse/ocuse spawn:
   one process and one account API call per poll, ~12 a minute. If that proves hot,
