@@ -185,6 +185,13 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | cargo run -p cm
 cd opencode && bun test && bun run typecheck
 ```
 
+**After the repo move, `target/` can carry a build script baked with the old
+absolute `CARGO_MANIFEST_DIR`.** `core/build.rs` reads `plans.json` relative to
+that constant, so a stale `target/debug/build/cmduse-core-*/build-script-build`
+fails with "read plans.json: No such file or directory" pointing at the *old*
+path (`~/dev/plugins/command-code-zed/...`). Fix with `cargo clean -p
+cmduse-core` (a full clean is not needed) before concluding the build is broken.
+
 Tests must be hermetic: CI (Ubuntu) has no `cmduse` binary and no homebrew
 prefix, so anything that shells out to the real CLI needs a skip guard
 (`test.skipIf`) or an injected candidate list — a passing local run proves
