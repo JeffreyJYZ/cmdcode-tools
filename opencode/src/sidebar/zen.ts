@@ -145,11 +145,16 @@ export function zenRows(
 	// rather than the account totals: the caps belong to that model's allowance.
 	const mine = meta ? usage.models.get(modelKey(meta.name)) : undefined;
 	const limit = oc?.allowance ?? mine?.limit;
+	// A window cap is one *model's* share, so it may only be paired with that
+	// model's own spend. Without a per-model row ocuse's totals are account-wide,
+	// and dividing them by one model's allowance would report the whole account
+	// against a single cap; show the spend alone instead.
+	const cap = mine ? limit : undefined;
 	rows.push(
 		...windowRows(
 			"5-hour",
 			mine?.fiveHour ?? usage.totals.fiveHour,
-			limit,
+			cap,
 			GO_WINDOW_SHARE.fiveHour,
 		),
 	);
@@ -157,7 +162,7 @@ export function zenRows(
 		...windowRows(
 			"Weekly",
 			mine?.weekly ?? usage.totals.weekly,
-			limit,
+			cap,
 			GO_WINDOW_SHARE.weekly,
 		),
 	);
@@ -165,7 +170,7 @@ export function zenRows(
 		...windowRows(
 			"Month",
 			mine?.month ?? usage.totals.month,
-			limit,
+			cap,
 			GO_WINDOW_SHARE.month,
 		),
 	);

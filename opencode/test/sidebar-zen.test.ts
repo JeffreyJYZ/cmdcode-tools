@@ -119,6 +119,27 @@ describe("zenRows", () => {
 		expect(find("Rates")).toBeUndefined();
 	});
 
+	test("a per-model cap is not applied to account-wide totals", () => {
+		// mpc knows the active model's allowance, but ocuse has no row for it, so
+		// the windows fall back to account-wide totals. Dividing those by one
+		// model's cap would report the whole account against a single allowance.
+		const rows = zenRows(parseZenJson(sample), {
+			key: "other",
+			name: "Some Other Model",
+			oc: {
+				provider: "oc-go",
+				plan: "Go",
+				allowance: 60,
+				rates: { input: 0.1, output: 0.2, cacheRead: 0.002 },
+			},
+		});
+		const find = (label: string) => rows.find((row) => row[0] === label);
+		expect(find("5-hour")).toEqual(["5-hour", "$0.50 · 1 req", "base"]);
+		expect(find("Month")).toEqual(["Month", "$17 · 58 req", "base"]);
+		// The allowance itself is still shown from mpc's catalog.
+		expect(find("Allowance")).toEqual(["Allowance", "$60/mo", "base"]);
+	});
+
 	test("no snapshot yields no rows at all", () => {
 		expect(zenRows(undefined, meta)).toEqual([]);
 	});

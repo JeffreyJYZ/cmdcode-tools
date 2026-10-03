@@ -232,8 +232,15 @@ pub fn hourly_from_cumulative(
 }
 
 /// Day labels for the last `days` days (today included), oldest first.
+///
+/// The order is load-bearing: `daily_from_cumulative` pairs label `i` with
+/// `cums[i]` and takes `cums[i] - cums[i + 1]`, so the labels and the
+/// cumulative summaries must both ascend. Returning today first (the obvious
+/// `0..days` loop) made every difference negative, clamp to zero, and dropped
+/// as an empty bucket — leaving the window's whole total on the oldest label.
 pub fn recent_days(today: &str, days: usize) -> Vec<String> {
     (0..days.max(1))
+        .rev()
         .filter_map(|i| day_shift(today, -(i as i64)))
         .collect()
 }
@@ -302,6 +309,17 @@ mod tests {
             total_tokens_out: Some(tout),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn recent_days_ascends_oldest_first() {
+        assert_eq!(
+            recent_days("2026-10-03", 3),
+            vec!["2026-10-01", "2026-10-02", "2026-10-03"]
+        );
+        // A single day and a zero-day request both keep the ascending shape.
+        assert_eq!(recent_days("2026-10-03", 1), vec!["2026-10-03"]);
+        assert_eq!(recent_days("2026-10-03", 0), vec!["2026-10-03"]);
     }
 
     #[test]

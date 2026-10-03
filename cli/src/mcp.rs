@@ -101,11 +101,21 @@ fn tool_call(msg: &Value) -> Result<Value, (i64, String)> {
         "models" => crate::models_output(true),
         "daily" => {
             let tz = opt_tz("tz")?;
-            crate::daily_output(opt_usize("days"), tz, opt_bool("local"))
+            crate::daily_output(
+                opt_usize("days"),
+                tz,
+                opt_bool("local"),
+                crate::report_render::Fmt::Table,
+            )
         }
         "hourly" => {
             let tz = opt_tz("tz")?;
-            crate::hourly_output(opt_usize("hours"), tz, opt_bool("local"))
+            crate::hourly_output(
+                opt_usize("hours"),
+                tz,
+                opt_bool("local"),
+                crate::report_render::Fmt::Table,
+            )
         }
         _ => {
             return Ok(json!({

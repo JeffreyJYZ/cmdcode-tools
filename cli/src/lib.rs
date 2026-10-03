@@ -76,7 +76,7 @@ pub fn run() {
     // offline local reports — no API, no key needed
     match args.subcmd {
         Some(cli::SubCmd::Daily) => {
-            match daily_output(args.last, tz, args.local) {
+            match daily_output(args.last, tz, args.local, fmt) {
                 Ok(text) => print!("{text}"),
                 Err(e) => {
                     eprintln!("error: {e}");
@@ -86,7 +86,7 @@ pub fn run() {
             return;
         }
         Some(cli::SubCmd::Hours) => {
-            match hourly_output(args.hours, tz, args.local) {
+            match hourly_output(args.hours, tz, args.local, fmt) {
                 Ok(text) => print!("{text}"),
                 Err(e) => {
                     eprintln!("error: {e}");
@@ -645,8 +645,12 @@ pub(crate) fn models_output(gated: bool) -> Result<String, String> {
 }
 
 /// Account-wide daily report; local CLI-log fallback when no key/--local.
-pub(crate) fn daily_output(days: Option<usize>, tz: i64, local: bool) -> Result<String, String> {
-    let fmt = report_render::Fmt::Table;
+pub(crate) fn daily_output(
+    days: Option<usize>,
+    tz: i64,
+    local: bool,
+    fmt: report_render::Fmt,
+) -> Result<String, String> {
     let tz_suffix = |t: i64| cmduse_core::dates::tz_offset_suffix(t);
     // account-wide (all harnesses) via API when key available; local fallback
     let data_source = if local {
@@ -685,8 +689,12 @@ pub(crate) fn daily_output(days: Option<usize>, tz: i64, local: bool) -> Result<
 }
 
 /// Hourly report; local CLI sessions with --local, else all harnesses.
-pub(crate) fn hourly_output(hours: Option<usize>, tz: i64, local: bool) -> Result<String, String> {
-    let fmt = report_render::Fmt::Table;
+pub(crate) fn hourly_output(
+    hours: Option<usize>,
+    tz: i64,
+    local: bool,
+    fmt: report_render::Fmt,
+) -> Result<String, String> {
     let tz_suffix = |t: i64| cmduse_core::dates::tz_offset_suffix(t);
     let rows = if local {
         reports::load_local_hourly(hours.unwrap_or(24), tz)

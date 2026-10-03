@@ -85,6 +85,14 @@ fn now_ms() -> i64 {
         .unwrap_or(0)
 }
 
+/// The live watch loop is the default command, but `-1` / `--once` / `--json`
+/// all want a single frame printed and an exit. A bare `--json` used to fall
+/// into the loop and print no JSON at all: the JSON branch lives in the
+/// catch-all arm, and `watch` is what an absent command word resolves to.
+fn wants_live_watch(command: &str, one_shot: bool, once: bool, json: bool) -> bool {
+    command == "watch" && !one_shot && !once && !json
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.iter().any(|a| a == "-h" || a == "--help") {
@@ -226,7 +234,7 @@ fn main() {
                 ),
             }
         }
-        "watch" if !flag("-1") && !flag("--once") => {
+        "watch" if wants_live_watch(&command, flag("-1"), flag("--once"), flag("--json")) => {
             // Live frame, cmduse's redraw contract: the frame's last line carries
             // no newline, so the cursor parks there and the countdown can rewrite
             // that one line each second instead of repainting the whole frame.
@@ -281,5 +289,19 @@ fn main() {
                 print!("{}", render::render_text(&report, &db_path, rows, colour));
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wants_live_watch;
+
+    #[test]
+    fn json_and_one_shot_leave_the_watch_loop() {
+        assert!(wants_live_watch("watch", false, false, false));
+        assert!(!wants_live_watch("watch", true, false, false)); // -1
+        assert!(!wants_live_watch("watch", false, true, false)); // --once
+        assert!(!wants_live_watch("watch", false, false, true)); // --json
+        assert!(!wants_live_watch("usage", false, false, false));
     }
 }
