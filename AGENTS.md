@@ -457,7 +457,12 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   total: a model-keyed-only figure reused in a second session could read "over 100% of
   session" (the two numbers were from different conversations). `refreshModelUsage`
   also refuses an unscoped read — no session id means a period-wide scan across every
-  conversation, which must never be remembered as this session's figure.
+  conversation, which must never be remembered as this session's figure. **And the
+  share is clamped to 100%**, because the two figures are written by different
+  statements: the model's from summing `session_message` cost, the session's from
+  `session_v2.cost`. For the moment between a turn's row landing and the session total
+  catching up the numerator leads, which flashed "105% of session" then settled to 100%
+  — a part of a whole never reads over the whole.
 - **Sidebar colour is opt-in; the default is plain text.** `sidebar/prefs.ts` reads
   `~/.config/opencode/command-code.json` (`{"colors": true}`) with `CMD_COLORS=1|0` as a
   per-run override, and caches the answer for a few seconds so a streaming session does not

@@ -314,12 +314,17 @@ export function modelRows(
 	if (usage) {
 		// CommandCode is subscription-billed, so the harness only prices a model
 		// when it knows the rates; the share of the session goes beside the spend,
-		// because a figure without its denominator says little.
+		// because a figure without its denominator says little. The two figures
+		// come from different writes — the model's from summing `session_message`
+		// rows, the session's from `session_v2.cost` — so for the moment between a
+		// turn's row landing and the session total catching up the numerator can
+		// lead, which flashed "105% of session" then settled to 100%. A part of a
+		// whole never reads over the whole: clamp it.
 		rows.push(["Usage (this model)", `${count(usage.requests)} req`, "base"]);
 		const spend = usage.cost > 0 ? money(usage.cost) : "";
 		const share =
 			usage.cost > 0 && session && session.cost > 0
-				? `${Math.round((usage.cost / session.cost) * 100)}% of session`
+				? `${Math.min(100, Math.round((usage.cost / session.cost) * 100))}% of session`
 				: "";
 		const detail = [spend, share].filter(Boolean).join(" · ");
 		if (detail) rows.push(["", detail, "muted"]);

@@ -239,6 +239,18 @@ describe("modelRows", () => {
 		expect(rows[2]).toEqual(["", "$8.40 · 70% of session", "muted"]);
 	});
 
+	test("a session total that lags the model's spend never reads over 100%", () => {
+		// The model figure sums `session_message` while the session total is
+		// `session_v2.cost`; the two writes are not simultaneous, so for a moment
+		// the numerator led and the share flashed "105% of session".
+		const rows = modelRows(
+			{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },
+			{ requests: 1_234, cost: 10.5 },
+			{ requests: 2_000, cost: 10 },
+		);
+		expect(rows[2]).toEqual(["", "$10.50 · 100% of session", "muted"]);
+	});
+
 	test("spend without a session total shows the figure alone", () => {
 		const rows = modelRows(
 			{ key: "kimi", name: "Kimi K3" },
