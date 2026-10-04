@@ -9,53 +9,67 @@
 //
 // Never hand-edit the generated file: models, efforts, rates and vision all
 // move upstream; this keeps the snapshot honest (like gating.json).
-import { writeFile } from "node:fs/promises"
+import { writeFile } from "node:fs/promises";
 
-const REGISTRY = "https://registry.npmjs.org/command-code/latest"
+const REGISTRY = "https://registry.npmjs.org/command-code/latest";
 /**
  * CDNs in preference order. unpkg 500s on some versions (1.65.2 did while
  * jsdelivr served the same file), so one is not enough to keep the snapshot
  * refreshable unattended.
  */
-const CDNS = ["https://unpkg.com", "https://cdn.jsdelivr.net/npm"]
-const BUNDLE = (cdn: string, version: string) => `${cdn}/command-code@${version}/dist/cli.mjs`
+const CDNS = ["https://unpkg.com", "https://cdn.jsdelivr.net/npm"];
+const BUNDLE = (cdn: string, version: string) =>
+	`${cdn}/command-code@${version}/dist/cli.mjs`;
 const MODELS_MD = (cdn: string, version: string) =>
-	`${cdn}/command-code@${version}/dist/bundled/command-code-knowledge/reference/models.md`
+	`${cdn}/command-code@${version}/dist/bundled/command-code-knowledge/reference/models.md`;
 
 /** First CDN that serves a non-empty body, with the URL that worked. */
-async function fetchFirst(pathFor: (cdn: string, version: string) => string, version: string, label: string): Promise<[string, string]> {
-	let last = ""
+async function fetchFirst(
+	pathFor: (cdn: string, version: string) => string,
+	version: string,
+	label: string,
+): Promise<[string, string]> {
+	let last = "";
 	for (const cdn of CDNS) {
-		const url = pathFor(cdn, version)
-		const response = await fetch(url).catch((error) => ({ ok: false, status: 0, text: async () => String(error) }))
-		const body = response.ok ? await response.text() : ""
-		if (body.length > 0) return [body, url]
-		last = `${new URL(url).host} -> ${response.status}`
+		const url = pathFor(cdn, version);
+		const response = await fetch(url).catch((error) => ({
+			ok: false,
+			status: 0,
+			text: async () => String(error),
+		}));
+		const body = response.ok ? await response.text() : "";
+		if (body.length > 0) return [body, url];
+		last = `${new URL(url).host} -> ${response.status}`;
 	}
-	throw new Error(`no CDN served ${label} (last: ${last})`)
+	throw new Error(`no CDN served ${label} (last: ${last})`);
 }
-const OUT = new URL("../src/catalog.ts", import.meta.url).pathname
+const OUT = new URL("../src/catalog.ts", import.meta.url).pathname;
 
-export type InputModality = "text" | "image" | "audio" | "video" | "pdf"
+export type InputModality = "text" | "image" | "audio" | "video" | "pdf";
 
 /** $/1M rates as published, plus reasoning efforts when advertised. */
 export interface CatalogEntry {
-	name: string
-	context: number
-	efforts: string[] | null
-	cost: { input: number; output: number; cacheRead: number; cacheWrite: number }
-	modalities: InputModality[]
+	name: string;
+	context: number;
+	efforts: string[] | null;
+	cost: {
+		input: number;
+		output: number;
+		cacheRead: number;
+		cacheWrite: number;
+	};
+	modalities: InputModality[];
 	/** Cheapest plan that serves the model ("Go" | "GOAT" | "Pro" | "Max"), or
 	 * null when the docs do not say. `plans.md` names this column the access
 	 * rule, so it is the stable gating source. */
-	minPlan: string | null
+	minPlan: string | null;
 }
 
 /** `Go and above` → `Go`; `—`/blank → null. */
 export function normalizeMinPlan(raw: string | undefined): string | null {
-	const value = (raw ?? "").replace(/\s+and above\s*$/i, "").trim()
-	if (!value || value === "—" || value === "-") return null
-	return value
+	const value = (raw ?? "").replace(/\s+and above\s*$/i, "").trim();
+	if (!value || value === "—" || value === "-") return null;
+	return value;
 }
 
 /**
@@ -65,18 +79,20 @@ export function normalizeMinPlan(raw: string | undefined): string | null {
  * ≤1.65.0 shipped these inline; newer bundles dropped them for a denylist
  * (see `parseTextOnly`), and this returns {} there.
  */
-export function parseModalities(bundle: string): Record<string, InputModality[]> {
-	const out: Record<string, InputModality[]> = {}
-	const re = /id:"([^"]+)"[^{}]*?inputModalities:\[([^\]]*)\]/g
+export function parseModalities(
+	bundle: string,
+): Record<string, InputModality[]> {
+	const out: Record<string, InputModality[]> = {};
+	const re = /id:"([^"]+)"[^{}]*?inputModalities:\[([^\]]*)\]/g;
 	for (const match of bundle.matchAll(re)) {
-		const id = match[1]
-		if (!id) continue
+		const id = match[1];
+		if (!id) continue;
 		const modalities = [...(match[2] ?? "").matchAll(/"([a-z]+)"/g)]
 			.map((m) => m[1] as InputModality)
-			.filter(Boolean)
-		if (modalities.length) out[id] = modalities
+			.filter(Boolean);
+		if (modalities.length) out[id] = modalities;
 	}
-	return out
+	return out;
 }
 
 /**
@@ -86,9 +102,11 @@ export function parseModalities(bundle: string): Record<string, InputModality[]>
  * left. Canonicalised in the bundle; compared case-insensitively here.
  */
 export function parseTextOnly(bundle: string): string[] {
-	const match = bundle.match(/Rr=new Set\(\[([^\]]*)\]/)
-	if (!match) return []
-	return [...(match[1] ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1] as string).filter(Boolean)
+	const match = bundle.match(/Rr=new Set\(\[([^\]]*)\]/);
+	if (!match) return [];
+	return [...(match[1] ?? "").matchAll(/"([^"]+)"/g)]
+		.map((m) => m[1] as string)
+		.filter(Boolean);
 }
 
 /** Explicit record wins; otherwise the CLI's own default (vision unless denied).
@@ -98,36 +116,46 @@ export function modalitiesFor(
 	explicit: Record<string, InputModality[]>,
 	textOnly: ReadonlySet<string>,
 ): InputModality[] {
-	const known = explicit[id]
-	if (known) return known
-	return textOnly.has(id.toLowerCase()) ? ["text"] : ["text", "image"]
+	const known = explicit[id];
+	if (known) return known;
+	return textOnly.has(id.toLowerCase()) ? ["text"] : ["text", "image"];
 }
 
 /** `\`id\` | Name | Context | Efforts | $/1M in/out · cache read | ...` — parsed
  * cell-wise: splitting on pipes first tolerates the optional `(write $…)` tail
  * and any extra prose columns without a brittle whole-line regex. */
-const RATE_RE = /^\$([\d.]+)\/\$([\d.]+)\s*·\s*cache\s*\$([\d.]+)(?:\s*\(write\s*\$([\d.]+)\))?$/
+const RATE_RE =
+	/^\$([\d.]+)\/\$([\d.]+)\s*·\s*cache\s*\$([\d.]+)(?:\s*\(write\s*\$([\d.]+)\))?$/;
 
 function parseCount(raw: string): number {
-	const m = raw.trim().match(/^([\d.]+)\s*([MK])?$/i)
-	if (!m) return 0
-	const value = Number(m[1])
-	if (!Number.isFinite(value)) return 0
-	const unit = (m[2] ?? "").toUpperCase()
-	return Math.round(value * (unit === "M" ? 1_000_000 : unit === "K" ? 1000 : 1))
+	const m = raw.trim().match(/^([\d.]+)\s*([MK])?$/i);
+	if (!m) return 0;
+	const value = Number(m[1]);
+	if (!Number.isFinite(value)) return 0;
+	const unit = (m[2] ?? "").toUpperCase();
+	return Math.round(
+		value * (unit === "M" ? 1_000_000 : unit === "K" ? 1000 : 1),
+	);
 }
 
-export function parseModelsMd(md: string): Record<string, Omit<CatalogEntry, "modalities">> {
-	const out: Record<string, Omit<CatalogEntry, "modalities">> = {}
+export function parseModelsMd(
+	md: string,
+): Record<string, Omit<CatalogEntry, "modalities">> {
+	const out: Record<string, Omit<CatalogEntry, "modalities">> = {};
 	for (const line of md.split("\n")) {
-		const cells = line.split("|").map((c) => c.trim())
+		const cells = line.split("|").map((c) => c.trim());
 		// ["", "`id`", name, context, efforts, rate, minPlan, bestFor, ""]
-		if (cells.length < 8 || !cells[1]?.startsWith("`") || !cells[1]?.endsWith("`")) continue
-		const rate = cells[5]?.match(RATE_RE)
-		if (!rate) continue
-		const [, input, output, cacheRead, cacheWrite] = rate
-		const id = cells[1].slice(1, -1)
-		const effortsRaw = (cells[4] ?? "").trim()
+		if (
+			cells.length < 8 ||
+			!cells[1]?.startsWith("`") ||
+			!cells[1]?.endsWith("`")
+		)
+			continue;
+		const rate = cells[5]?.match(RATE_RE);
+		if (!rate) continue;
+		const [, input, output, cacheRead, cacheWrite] = rate;
+		const id = cells[1].slice(1, -1);
+		const effortsRaw = (cells[4] ?? "").trim();
 		out[id] = {
 			name: (cells[2] ?? "").trim(),
 			context: parseCount(cells[3] ?? ""),
@@ -145,9 +173,9 @@ export function parseModelsMd(md: string): Record<string, Omit<CatalogEntry, "mo
 				cacheWrite: cacheWrite === undefined ? 0 : Number(cacheWrite),
 			},
 			minPlan: normalizeMinPlan(cells[6]),
-		}
+		};
 	}
-	return out
+	return out;
 }
 
 export function mergeCatalog(
@@ -155,12 +183,12 @@ export function mergeCatalog(
 	modalities: Record<string, InputModality[]>,
 	textOnly: readonly string[] = [],
 ): Record<string, CatalogEntry> {
-	const denied = new Set(textOnly.map((id) => id.toLowerCase()))
-	const out: Record<string, CatalogEntry> = {}
+	const denied = new Set(textOnly.map((id) => id.toLowerCase()));
+	const out: Record<string, CatalogEntry> = {};
 	for (const [id, entry] of Object.entries(pricing)) {
-		out[id] = { ...entry, modalities: modalitiesFor(id, modalities, denied) }
+		out[id] = { ...entry, modalities: modalitiesFor(id, modalities, denied) };
 	}
-	return out
+	return out;
 }
 
 function render(version: string, models: Record<string, CatalogEntry>): string {
@@ -174,7 +202,7 @@ function render(version: string, models: Record<string, CatalogEntry>): string {
 				`modalities: [${e.modalities.map((m) => `"${m}"`).join(", ")}], ` +
 				`minPlan: ${e.minPlan === null ? "null" : JSON.stringify(e.minPlan)} },`,
 		)
-		.join("\n")
+		.join("\n");
 	return `// GENERATED by scripts/extract-catalog.ts — do not edit by hand.
 // Source: command-code@${version} (models.md + dist/cli.mjs). Regenerate with
 // \`bun scripts/extract-catalog.ts\` after a Command Code model release.
@@ -242,36 +270,45 @@ export function reasoningVariants(id: string): Record<string, { reasoningEffort:
 	if (!efforts || efforts.length === 0) return undefined
 	return Object.fromEntries(efforts.map((effort) => [effort, { reasoningEffort: effort }]))
 }
-`
+`;
 }
 
 async function fetchVersion(): Promise<string> {
-	const meta = (await (await fetch(REGISTRY)).json()) as { version?: string }
-	if (!meta.version) throw new Error(`no version at ${REGISTRY}`)
-	return meta.version
+	const meta = (await (await fetch(REGISTRY)).json()) as { version?: string };
+	if (!meta.version) throw new Error(`no version at ${REGISTRY}`);
+	return meta.version;
 }
 
 if (import.meta.main) {
-	const args = process.argv.slice(2)
-	const mdArg = args[args.indexOf("--models-md") + 1]
-	const bundleArg = args[args.indexOf("--cli-bundle") + 1]
-	const version = await fetchVersion()
+	const args = process.argv.slice(2);
+	const mdArg = args[args.indexOf("--models-md") + 1];
+	const bundleArg = args[args.indexOf("--cli-bundle") + 1];
+	const version = await fetchVersion();
 	const [md, bundle] = await Promise.all([
-		mdArg ? await Bun.file(mdArg).text() : (await fetchFirst(MODELS_MD, version, "models.md"))[0],
-		bundleArg ? await Bun.file(bundleArg).text() : (await fetchFirst(BUNDLE, version, "cli.mjs"))[0],
-	])
-	const pricing = parseModelsMd(md)
-	const modalities = parseModalities(bundle)
-	const textOnly = parseTextOnly(bundle)
-	const catalog = mergeCatalog(pricing, modalities, textOnly)
-	const ids = Object.keys(catalog)
-	if (ids.length === 0) throw new Error("parsed no models — upstream docs shape changed")
+		mdArg
+			? await Bun.file(mdArg).text()
+			: (await fetchFirst(MODELS_MD, version, "models.md"))[0],
+		bundleArg
+			? await Bun.file(bundleArg).text()
+			: (await fetchFirst(BUNDLE, version, "cli.mjs"))[0],
+	]);
+	const pricing = parseModelsMd(md);
+	const modalities = parseModalities(bundle);
+	const textOnly = parseTextOnly(bundle);
+	const catalog = mergeCatalog(pricing, modalities, textOnly);
+	const ids = Object.keys(catalog);
+	if (ids.length === 0)
+		throw new Error("parsed no models — upstream docs shape changed");
 	// The docs page can lag a CLI release; modalities-only ids (new models) get
 	// the priced-line treatment next refresh. Fail loud, not silently sparse.
-	const orphaned = Object.keys(modalities).filter((id) => !(id in pricing))
+	const orphaned = Object.keys(modalities).filter((id) => !(id in pricing));
 	if (orphaned.length > 0) {
-		console.warn(`warning: ${orphaned.length} modalities-only ids lack a pricing row: ${orphaned.slice(0, 8).join(", ")}`)
+		console.warn(
+			`warning: ${orphaned.length} modalities-only ids lack a pricing row: ${orphaned.slice(0, 8).join(", ")}`,
+		);
 	}
-	await writeFile(OUT, render(version, catalog))
-	console.log(`wrote src/catalog.ts: ${ids.length} models from command-code@${version}`)
+	await writeFile(OUT, render(version, catalog));
+	console.log(
+		`wrote src/catalog.ts: ${ids.length} models from command-code@${version}`,
+	);
 }

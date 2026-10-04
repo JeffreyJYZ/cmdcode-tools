@@ -10,7 +10,7 @@
 // Both TUI hosts rewrite `@opentui/*` / `solid-js` imports to their own module
 // instances at plugin load, so those stay external — and the slice must remain
 // a single bundle, because the rewrite only covers the entry's imports.
-import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
+import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin";
 
 const out = await Bun.build({
 	entrypoints: [new URL("../src/tui.tsx", import.meta.url).pathname],
@@ -28,9 +28,9 @@ const out = await Bun.build({
 		"@opencode/plugin/tui",
 	],
 	minify: false,
-})
+});
 
 if (!out.success) {
-	for (const log of out.logs) console.error(log)
-	process.exit(1)
+	for (const log of out.logs) console.error(log);
+	process.exit(1);
 }
