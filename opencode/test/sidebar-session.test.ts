@@ -72,6 +72,22 @@ describe("model usage cache", () => {
 		// An unresolved id (mid-switch) keeps the row up instead of blanking it.
 		expect(seededModelUsage(undefined)).toEqual({ requests: 12, cost: 1.5 });
 	});
+
+	test("never paints another conversation's figure", () => {
+		// The row is the model's spend in a conversation, divided by that
+		// session's total, so a figure carried into another session counted one
+		// conversation against another's total and could read over 100%.
+		rememberModelUsage(
+			"deepseek-v4.1-flash",
+			{ requests: 9, cost: 4 },
+			"ses_a",
+		);
+		expect(seededModelUsage("deepseek-v4.1-flash", "ses_a")).toEqual({
+			requests: 9,
+			cost: 4,
+		});
+		expect(seededModelUsage("deepseek-v4.1-flash", "ses_b")).toBeUndefined();
+	});
 });
 
 describe("catalog cache", () => {

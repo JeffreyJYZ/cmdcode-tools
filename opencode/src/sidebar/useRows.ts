@@ -75,25 +75,44 @@ export function seededRows(): SidebarRow[] {
  * memory, so that one row blanked on every remount and session switch while the
  * plan above it stayed up — which reads as the panel having lost the row.
  */
-let lastModelUsage: { key: string; usage: ModelUsage } | undefined;
+let lastModelUsage:
+	| { key: string; session?: string; usage: ModelUsage }
+	| undefined;
 
 /**
  * Keep the last figure for a model. Keyed canonically because the session's id
- * and the stored `modelID` differ by vendor prefix and punctuation.
+ * and the stored `modelID` differ by vendor prefix and punctuation, and by the
+ * session too: the figure is the model's spend *in a conversation*, which the
+ * panel divides by that session's own total, so reusing it in another session
+ * counted one conversation's spend against another's and read as "over 100% of
+ * session".
  */
-export function rememberModelUsage(id: string, usage: ModelUsage): void {
-	lastModelUsage = { key: modelKey(id), usage };
+export function rememberModelUsage(
+	id: string,
+	usage: ModelUsage,
+	session?: string,
+): void {
+	lastModelUsage = { key: modelKey(id), session, usage };
 }
 
 /**
- * The remembered figure for `id`, or undefined when that model is unseen. An
- * undefined id is the frame during a session switch: keeping the previous row up
- * beats blanking it, the same call `wasOurs` makes for the account block.
+ * The remembered figure for `id` in `session`, or undefined when that model is
+ * unseen or the figure belongs to a different conversation. An undefined id is
+ * the frame during a session switch: keeping the previous row up beats blanking
+ * it, the same call `wasOurs` makes for the account block.
  */
 export function seededModelUsage(
 	id: string | undefined,
+	session?: string,
 ): ModelUsage | undefined {
 	if (!lastModelUsage) return undefined;
+	if (
+		session !== undefined &&
+		lastModelUsage.session !== undefined &&
+		lastModelUsage.session !== session
+	) {
+		return undefined;
+	}
 	if (id === undefined) return lastModelUsage.usage;
 	return lastModelUsage.key === modelKey(id) ? lastModelUsage.usage : undefined;
 }
@@ -130,7 +149,7 @@ export function useRows(
 	const [zen, setZen] = createSignal<ZenUsage | undefined>();
 	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(seededMeta());
 	const [modelUsage, setModelUsage] = createSignal<
-		{ key: string; usage: ModelUsage } | undefined
+		{ key: string; session?: string; usage: ModelUsage } | undefined
 	>(lastModelUsage);
 	const [sessionUsage, setSessionUsage] = createSignal<
 		ModelUsage | undefined
@@ -158,8 +177,13 @@ export function useRows(
 	/** Scan the store for one model in this conversation, and publish it. */
 	const refreshModelUsage = (id: string | undefined) => {
 		if (!id) return;
-		const fresh = loadModelUsage(id, 0, usageDbPath(), sessionID());
-		if (fresh) rememberModelUsage(id, fresh);
+		const session = sessionID();
+		// Without a session the scan is period-wide across *every* conversation;
+		// remembering that figure would divide it by the current session's own
+		// total and could read over 100%. Wait for the host to resolve the session.
+		if (!session) return;
+		const fresh = loadModelUsage(id, 0, usageDbPath(), session);
+		if (fresh) rememberModelUsage(id, fresh, session);
 		setModelUsage(lastModelUsage);
 	};
 
@@ -217,13 +241,21 @@ export function useRows(
 		refreshModelUsage(id);
 	});
 
-	/** Only a figure belonging to the current model counts; else the seed. */
+	/** Only a figure measured for the current model *and* conversation counts;
+	 * else the seed (same check), else nothing. */
 	const usageFor = (id: string | undefined): ModelUsage | undefined => {
+		const session = sessionID();
 		const seen = modelUsage();
-		if (seen && (id === undefined || seen.key === modelKey(id))) {
+		if (
+			seen &&
+			(id === undefined || seen.key === modelKey(id)) &&
+			(seen.session === undefined ||
+				session === undefined ||
+				seen.session === session)
+		) {
 			return seen.usage;
 		}
-		return seededModelUsage(id);
+		return seededModelUsage(id, session);
 	};
 
 	return createMemo(() => {

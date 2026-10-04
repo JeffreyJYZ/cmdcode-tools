@@ -452,7 +452,12 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   memo accepts a figure only when its key matches the current model, an unresolved id
   keeps the last row up (the `wasOurs` call), and a separate effect tracks the id so a
   switch re-reads the store — a sqlite scan, no cmduse spawn — instead of waiting for
-  the poll.
+  the poll. **The memory is keyed by session as well as model**, because the figure is
+  the model's spend in a conversation and the panel divides it by that session's own
+  total: a model-keyed-only figure reused in a second session could read "over 100% of
+  session" (the two numbers were from different conversations). `refreshModelUsage`
+  also refuses an unscoped read — no session id means a period-wide scan across every
+  conversation, which must never be remembered as this session's figure.
 - **Sidebar colour is opt-in; the default is plain text.** `sidebar/prefs.ts` reads
   `~/.config/opencode/command-code.json` (`{"colors": true}`) with `CMD_COLORS=1|0` as a
   per-run override, and caches the answer for a few seconds so a streaming session does not
