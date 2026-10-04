@@ -321,6 +321,11 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   this-session totals and a per-model figure, staleness was the complaint, and a
   poll is one spawn plus one indexed sqlite read. 0.3.15 dropped it to 5s (below).
   0.3.18 stopped a network outage from blanking or flickering the panel (below).
+  0.3.19 scoped the per-model usage memory to its session and clamped the model's
+  share of the session to 100%: a figure from one conversation can no longer be
+  divided by another's total, and the live write race between the model's
+  `session_message` sum and the session's `session_v2.cost` no longer flashes
+  over 100%.
   0.3.16 and 0.3.17 are burned: npm answered each `npm publish` with a 202 and then
   left the version in a ghost "staged" state — absent from the packument (`npm
   view`/`npm view time` stop at 0.3.15) and from `npm stage list`, while a retry
