@@ -235,7 +235,12 @@ export async function loadMeta(): Promise<Map<string, ModelMeta>> {
 	} catch {
 		// no cache yet
 	}
-	const meta = parseMpcJson(await runFirst(MPC, ["--json"]));
+	// `--shape off`: the sidebar wants only mpc's catalog (allowance, rates,
+	// benchmarks), not a workload — mpc's default `--shape auto` would spawn
+	// reqshape on every cache miss otherwise.
+	const meta = parseMpcJson(
+		await runFirst(MPC, ["--json", "--shape", "off"]),
+	);
 	try {
 		const path = cachePath();
 		await mkdir(dirname(path), { recursive: true });

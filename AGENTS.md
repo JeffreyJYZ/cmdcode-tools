@@ -183,10 +183,15 @@ from this plugin. Stable contracts, not incidental output:
 | `cmduse plans --json` — plan name/price/credits/windows | mpc plan table |
 | `cmduse -1 --json` — `summary.requests`/`summary.cost`, `periodEnd` | mpc coverage line + billing window |
 | `cmduse model --json [--since ISO]` — `{source, since, models:{id: totals}}` | mpc `--usage` |
-| `mpc --json` — `{plans, rows:[{key, name, oc?, cc?}]}`, each side `{pricing{input,output,cacheRead,cacheWrite}, allowance, requestsPerMonth, requestsPerFiveHour, requestsPerWeek, ability, tps, deal?, free}`; a side is `null`/absent when unpriced, and `requestsPerMonth: null` means **unbounded** (free model), never "missing" | the sidebar's model rows (allowance, rates, Intelligence, Tok/s, Deal) |
+| `mpc --json --shape off` — `{plans, rows:[{key, name, oc?, cc?}]}`, each side `{pricing{input,output,cacheRead,cacheWrite}, allowance, requestsPerMonth, requestsPerFiveHour, requestsPerWeek, ability, tps, deal?, free}`; a side is `null`/absent when unpriced, and `requestsPerMonth: null` means **unbounded** (free model), never "missing" | the sidebar's model rows (allowance, rates, Intelligence, Tok/s, Deal) |
 
 Changing any of those shapes means updating mpc in the same effort; `CMDUSE_BIN` lets mpc test a
 `cmdusedev` build. Local commits only — never publish or push without explicit go.
+
+**The sidebar's `mpc` spawn must keep `--shape off`.** mpc's default `--shape auto` shells out to
+`reqshape`, which itself runs `mpc --json` — so a bare `mpc --json` recurses (mpc -> reqshape ->
+mpc -> ...). The sidebar only wants mpc's catalog, never a workload, so the flag is the cycle break,
+not an optimisation. (`reqshape`'s own `loadMpc` carries the same flag for the same reason.)
 
 ## Build & test
 
