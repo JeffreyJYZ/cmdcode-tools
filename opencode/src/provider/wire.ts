@@ -8,6 +8,7 @@ import type {
 	LanguageModelV3Prompt,
 	LanguageModelV3ToolResultPart,
 } from "@ai-sdk/provider";
+import { DEFAULT_MAX_TOKENS } from "../constants/models";
 
 export type WireLane = "anthropic" | "openai";
 
@@ -27,8 +28,6 @@ export interface WireOptions {
 	/** Whether the model advertises image input (catalog-derived). */
 	images: boolean;
 }
-
-const DEFAULT_MAX_TOKENS = 64_000;
 
 /** Cap the caller's value like upstream: never above the provider ceiling. */
 function capTokens(value: number | undefined): number {

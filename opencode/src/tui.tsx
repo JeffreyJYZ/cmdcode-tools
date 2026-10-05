@@ -14,6 +14,7 @@ import type { Plugin as TuiPluginNs } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
 import type { JSX } from "@opentui/solid";
 import { runCmduse } from "./cli";
+import { TUI_ID } from "./constants/providers";
 import {
 	hostColors,
 	legacyColors,
@@ -23,9 +24,6 @@ import {
 } from "./sidebar/panel";
 import { loadPrefs } from "./sidebar/prefs";
 import { panelTitle, sessionKind, useRows } from "./sidebar/useRows";
-
-// Plugin id is a stable contract (test/tui.test.ts pins it); the slot id is separate.
-const ID = "command-code.tui";
 
 /** Colour is opt-in (see sidebar/prefs.ts); off, every tone collapses to text. */
 const themed = (colors: PanelColors): PanelColors =>
@@ -104,7 +102,7 @@ function PanelV2(props: { ctx: TuiPluginNs.Context; sessionID: string }) {
 
 // Plain object, not `Plugin.define` — identity function there too.
 export const commandCodeTui: TuiPluginNs.Definition = {
-	id: ID,
+	id: TUI_ID,
 	setup(ctx) {
 		ctx.ui.slot({
 			append: "sidebar.content",

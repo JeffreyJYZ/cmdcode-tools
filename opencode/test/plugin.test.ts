@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { canonicalizeModelId, evaluateModelAccess } from "../src/access";
-import { MODEL_CATEGORIES, PLAN_RULES } from "../src/gating";
+import { MODEL_CATEGORIES, PLAN_RULES } from "../src/constants/gating";
 import { isClaude, splitModels } from "../src/models";
 
 // money/compact/relTime/parseIsoUtc and the plan name/cap table left the TS

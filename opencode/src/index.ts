@@ -7,12 +7,19 @@
 import type { Plugin as PluginV1 } from "@opencode-ai/plugin";
 import { z } from "zod";
 import pkg from "../package.json";
-import { API_BASE, whoami } from "./api";
+import { whoami } from "./api";
 import { modelCost, supportsImage } from "./catalog";
 import { runCmduse } from "./cli";
+import { PROVIDER_BASE } from "./constants/endpoints";
+import {
+	DEFAULT_CONTEXT_LENGTH,
+	DEFAULT_OUTPUT_TOKENS,
+	MODEL_CAPABILITIES,
+} from "./constants/models";
+import { TOOL_DESCRIPTION } from "./constants/providers";
 import { resolveKey } from "./key";
 import { loadModels } from "./models";
-import { commandCodeV2, PROVIDER_BASE, TOOL_DESCRIPTION } from "./v2";
+import { commandCodeV2 } from "./v2";
 
 /**
  * The runtime provider specifier opencode installs for our models: our own
@@ -85,22 +92,6 @@ type SdkModel = {
 	interleaved?: boolean | { field: string };
 };
 
-/** Every Command Code model shares these; hoisted so each record doesn't rebuild them. */
-const MODEL_CAPABILITIES: Omit<SdkModel["capabilities"], "interleaved"> = {
-	temperature: true,
-	reasoning: true,
-	attachment: false,
-	toolcall: true,
-	input: { text: true, audio: false, image: false, video: false, pdf: false },
-	output: {
-		text: true,
-		audio: false,
-		image: false,
-		video: false,
-		pdf: false,
-	},
-};
-
 /** Published $/1M rates, so opencode prices a subscription provider correctly. */
 function costFor(id: string): {
 	input: number;
@@ -146,7 +137,10 @@ function toModelDefs(
 						: {}),
 				},
 				cost: costFor(m.id),
-				limit: { context: m.contextLength || 128_000, output: 32_000 },
+				limit: {
+					context: m.contextLength || DEFAULT_CONTEXT_LENGTH,
+					output: DEFAULT_OUTPUT_TOKENS,
+				},
 				status: "active" as const,
 				options: {},
 				headers: {},

@@ -1,5 +1,6 @@
 import { evaluateModelAccess, type PlanLike } from "./access";
 import { credits, providerModels, subscriptions } from "./api";
+import { MODELS_CACHE_TTL_MS } from "./constants/timing";
 import { warnIfGatingStale } from "./gating";
 
 export type CmdModel = { id: string; name: string; contextLength: number };
@@ -13,7 +14,6 @@ export type ModelSplit = {
 	gated: boolean;
 };
 
-const CACHE_TTL_MS = 5 * 60 * 1000;
 let cache: { key: string; at: number; models: CmdModel[] } | null = null;
 
 // ponytail: process-lifetime cache only; restart refetches. Add disk cache if
@@ -40,7 +40,9 @@ export async function loadModels(key: string): Promise<ModelSplit> {
 	// accounts, and account A's model list must not leak into account B.
 	let models: CmdModel[];
 	const fresh =
-		cache && cache.key === key && Date.now() - cache.at < CACHE_TTL_MS;
+		cache &&
+		cache.key === key &&
+		Date.now() - cache.at < MODELS_CACHE_TTL_MS;
 	if (fresh) {
 		models = cache!.models;
 	} else {

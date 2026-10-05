@@ -7,6 +7,7 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { CACHE_DIR, STARTUP_LOG_FILE } from "./constants/paths";
 
 export interface SetupTimings {
 	/** Resolving the local key (env + ~/.commandcode/auth.json). */
@@ -29,7 +30,7 @@ export function setupTimingLine(t: SetupTimings): string {
 /** `$XDG_CACHE_HOME/command-code/startup.log`, alongside the sidebar's catalog cache. */
 export function startupLogPath(): string {
 	const base = process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache");
-	return join(base, "command-code", "startup.log");
+	return join(base, CACHE_DIR, STARTUP_LOG_FILE);
 }
 
 /** Append one line; never throws. */

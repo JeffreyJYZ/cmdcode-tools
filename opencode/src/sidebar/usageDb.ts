@@ -8,6 +8,7 @@
 import { Database } from "bun:sqlite";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { OPENCODE_DB_FILE, OPENCODE_DIR } from "../constants/paths";
 import { type ModelUsage, modelKey } from "./rows";
 
 /** opencode's message store: `OPENCODE_DB`, else the XDG data dir. */
@@ -15,7 +16,7 @@ export function usageDbPath(): string {
 	if (process.env.OPENCODE_DB) return process.env.OPENCODE_DB;
 	const base =
 		process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share");
-	return join(base, "opencode", "opencode.db");
+	return join(base, OPENCODE_DIR, OPENCODE_DB_FILE);
 }
 
 /**

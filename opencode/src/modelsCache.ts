@@ -9,6 +9,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { CACHE_DIR, MODELS_CACHE_FILE } from "./constants/paths";
 
 export interface CachedModel {
 	id: string;
@@ -24,7 +25,7 @@ export interface ModelsCache {
 
 function cachePath(): string {
 	const base = process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache");
-	return join(base, "command-code", "models.json");
+	return join(base, CACHE_DIR, MODELS_CACHE_FILE);
 }
 
 /** Never throws: a missing or corrupt cache is simply "no cache". */

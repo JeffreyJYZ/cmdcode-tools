@@ -9,6 +9,7 @@
 // Deliberately no reset countdowns: Go has no usage API, so ocuse approximates
 // a reset as "now + window" rather than reading one, and a made-up countdown in
 // a usage panel is worse than none. Spend and caps are real, so those are shown.
+import { GO_WINDOW_SHARE } from "../constants/sidebar";
 import {
 	clip,
 	count,
@@ -22,13 +23,6 @@ import {
 	separator,
 	valueWidth,
 } from "./rows";
-
-/** Go's documented per-model window shares of the monthly allowance. */
-export const GO_WINDOW_SHARE = {
-	fiveHour: 0.2,
-	weekly: 0.5,
-	month: 1,
-} as const;
 
 export interface ZenTotals {
 	requests: number;

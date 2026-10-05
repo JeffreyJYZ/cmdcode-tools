@@ -1,42 +1,20 @@
-// Gating DATA lives in ../../core/gating.json — single source shared with
-// cmduse-core's build.rs (Rust CLI uses the same tables). This file only adds
-// the TS types + canonicalization, and re-exports the data. Regen the JSON:
-// `bun run extract` from the repo root (needs the installed Command Code CLI).
-import data from "../../core/gating.json";
+// Gating LOGIC on top of the canonical DATA in ./constants/gating (sourced from
+// ../../core/gating.json, shared with cmduse-core's build.rs). Edit the JSON,
+// never the consts. Regen: `bun run extract` from the repo root (needs the
+// installed Command Code CLI).
+import {
+	GATE_CLI_VERSION,
+	GATE_EXTRACTED_AT,
+	GATE_STALE_DAYS,
+	KNOWN_MODELS,
+	MODEL_ALIASES,
+} from "./constants/gating";
 
 export type Category = "opensource" | "premium";
 
-/** model id -> category (models absent from this table have unknown category) */
-export const MODEL_CATEGORIES = data.categories as Record<string, Category>;
-
-/** planId -> access rules; plan ids absent from this table get everything */
-export const PLAN_RULES = data.plans as Record<
-	string,
-	{ allowedCategories: Category[]; blockedModels: string[] }
->;
-
-/** Models the API hard-blocks (403 MODEL_NOT_IN_PLAN) per plan, beyond the
- * category rules. Empirically probed — the CLI bundle misses these because it
- * tracks category via serving lane, not per-model plan entitlements. */
-export const HARD_BLOCKED = data.hardBlocked as Record<string, string[]>;
-
-/** canonical known model ids (lowercase compare) */
-const KNOWN_MODELS = data.knownModels as string[];
-
-export { KNOWN_MODELS };
-
-/** deprecated/aliased model id -> canonical id */
-const MODEL_ALIASES = data.aliases as Record<string, string>;
-
-/** ISO timestamp the snapshot was extracted (absent on pre-metadata files). */
-export const GATE_EXTRACTED_AT = (data as { extractedAt?: string }).extractedAt;
-/** Command Code CLI version the snapshot was scraped from. */
-export const GATE_CLI_VERSION = (data as { cliVersion?: string }).cliVersion;
-
-const GATE_STALE_DAYS = 30;
 let staleWarned = false;
 
-/** Warn once per process when gating.json is older than 30 days. */
+/** Warn once per process when gating.json is older than GATE_STALE_DAYS. */
 export function warnIfGatingStale(): void {
 	if (staleWarned || !GATE_EXTRACTED_AT) return;
 	const days = Math.floor(

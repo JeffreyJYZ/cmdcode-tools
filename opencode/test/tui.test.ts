@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { TUI_ID } from "../src/constants/providers";
 import tuiPlugin from "../src/tui";
 
 type Claim = { append?: string; render: (input: never) => unknown };
@@ -18,7 +19,7 @@ function captureSetup(): Claim[] {
 // means the CLI plugin silently fails to load and /usage never appears.
 describe("tui plugin definition", () => {
 	test("exports a V2 definition with id and setup", () => {
-		expect(tuiPlugin.id).toBe("command-code.tui");
+		expect(tuiPlugin.id).toBe(TUI_ID);
 		expect(typeof tuiPlugin.setup).toBe("function");
 	});
 

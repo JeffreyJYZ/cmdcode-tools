@@ -4,6 +4,13 @@
 // totals (the account APIs have no per-model, per-session dimension).
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { minPlan } from "../catalog";
+import {
+	GO_PROVIDER_ID,
+	PROVIDER_ID_PREFIX,
+	ZEN_PROVIDER_ID,
+	ZEN_PROVIDER_PREFIX,
+} from "../constants/providers";
+import { POLL_MS } from "../constants/timing";
 import { loadMeta, loadUsage, loadZen } from "./data";
 import {
 	type ModelMeta,
@@ -19,12 +26,6 @@ import {
 import { loadModelUsage, loadSessionUsage, usageDbPath } from "./usageDb";
 import { type ZenUsage, zenRows } from "./zen";
 
-// Refresh cadence. The sqlite reads (this session, this model) are free; the
-// cmduse/ocuse spawn behind them is not — it costs a process and an account API
-// call each time, so 5s is deliberately hot: it is the cadence of a panel you
-// are watching, not of one left open.
-const POLL_MS = 5_000;
-
 /**
  * Which family a session's provider belongs to, as far as this panel is
  * concerned. `unknown` is the frame during a session switch, before the host has
@@ -35,9 +36,12 @@ export type SessionKind = "ours" | "go" | "zen" | "other" | "unknown";
 
 export function sessionKind(providerID: string | undefined): SessionKind {
 	if (!providerID) return "unknown";
-	if (providerID.startsWith("command-code")) return "ours";
-	if (providerID.startsWith("opencode-go")) return "go";
-	if (providerID === "opencode" || providerID.startsWith("opencode-zen"))
+	if (providerID.startsWith(PROVIDER_ID_PREFIX)) return "ours";
+	if (providerID.startsWith(GO_PROVIDER_ID)) return "go";
+	if (
+		providerID === ZEN_PROVIDER_ID ||
+		providerID.startsWith(ZEN_PROVIDER_PREFIX)
+	)
 		return "zen";
 	return "other";
 }

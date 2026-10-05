@@ -1,14 +1,10 @@
-// Rolling-window lengths and elapsed fraction, mirroring cmduse-core
-// (`core/src/lib.rs`): the API serves only `resetAt` + `used`/`cap`, so the
-// window length is implied by the window's name. The sidebar draws the elapsed
-// fraction itself (cmduse's own render owns the dashboard), which means the TS
-// port re-implements `elapsed_pct` — kept honest by the shared conformance
-// vectors asserted in test/conformance.test.ts.
-
-/** 5-hour window length in seconds. Mirrors cmduse_core::FIVE_HOUR_SECS. */
-export const FIVE_HOUR_SECS = 5 * 3600;
-/** Weekly window length in seconds. Mirrors cmduse_core::WEEKLY_SECS. */
-export const WEEKLY_SECS = 7 * 86400;
+// Rolling-window lengths live in ../constants/sidebar; this module holds the
+// elapsed fraction, mirroring cmduse-core (`core/src/lib.rs`): the API serves
+// only `resetAt` + `used`/`cap`, so the window length is implied by the
+// window's name. The sidebar draws the elapsed fraction itself (cmduse's own
+// render owns the dashboard), which means the TS port re-implements
+// `elapsed_pct` — kept honest by the shared conformance vectors asserted in
+// test/conformance.test.ts.
 
 /**
  * Percentage of a rolling window that has elapsed, or undefined when the

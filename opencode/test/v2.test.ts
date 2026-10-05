@@ -2,7 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { KNOWN_MODELS } from "../src/gating";
+import { KNOWN_MODELS } from "../src/constants/gating";
+import {
+	DEFAULT_CONTEXT_LENGTH,
+	DEFAULT_OUTPUT_TOKENS,
+} from "../src/constants/models";
+import { INTEGRATION_ID, type Lane } from "../src/constants/providers";
 import { isClaude } from "../src/models";
 import {
 	setupTimingLine,
@@ -11,8 +16,6 @@ import {
 } from "../src/startupLog";
 import {
 	credentialKey,
-	INTEGRATION_ID,
-	type Lane,
 	mergeModels,
 	staticSeedModels,
 	toV2Model,
@@ -40,7 +43,10 @@ describe("toV2Model", () => {
 		expect(m.modelID).toBe("gpt-5.5");
 		expect(m.providerID).toBe("command-code-openai");
 		expect(m.name).toBe("GPT");
-		expect(m.limit).toEqual({ context: 400_000, output: 32_000 });
+		expect(m.limit).toEqual({
+			context: 400_000,
+			output: DEFAULT_OUTPUT_TOKENS,
+		});
 		expect(m.status).toBe("active");
 		expect(m.enabled).toBe(true);
 	});
@@ -129,7 +135,9 @@ describe("staticSeedModels", () => {
 		for (const m of claude) expect(isClaude(m.id as string)).toBe(true);
 		for (const m of open) expect(isClaude(m.id as string)).toBe(false);
 		for (const m of [...claude, ...open])
-			expect((m.limit as { context: number }).context).toBe(128_000);
+			expect((m.limit as { context: number }).context).toBe(
+				DEFAULT_CONTEXT_LENGTH,
+			);
 	});
 });
 

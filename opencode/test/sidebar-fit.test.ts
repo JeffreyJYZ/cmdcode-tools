@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { ROW_WIDTH } from "../src/constants/sidebar";
 import {
 	clip,
 	type ModelMeta,
 	modelRows,
 	parts,
-	ROW_WIDTH,
 	rowWidth,
 	separator,
 	usageRows,

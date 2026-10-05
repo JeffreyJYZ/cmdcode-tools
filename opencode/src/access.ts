@@ -1,11 +1,5 @@
-import {
-	bareModel,
-	type Category,
-	canonicalizeModelId,
-	HARD_BLOCKED,
-	MODEL_CATEGORIES,
-	PLAN_RULES,
-} from "./gating";
+import { HARD_BLOCKED, MODEL_CATEGORIES, PLAN_RULES } from "./constants/gating";
+import { bareModel, type Category, canonicalizeModelId } from "./gating";
 
 export { canonicalizeModelId, PLAN_RULES };
 

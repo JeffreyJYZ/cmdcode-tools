@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { OPENCODE_DIR, PREFS_FILE } from "../src/constants/paths";
 import { loadPrefs, parsePrefs, prefsPath } from "../src/sidebar/prefs";
 
 /** Distinct `now` values sidestep the loader's short re-read cache. */
@@ -19,7 +20,7 @@ const configDir = () => {
 describe("sidebar prefs", () => {
 	test("colour is off unless the file says otherwise", () => {
 		const { dir, env } = configDir();
-		expect(prefsPath(env)).toBe(join(dir, "opencode", "command-code.json"));
+		expect(prefsPath(env)).toBe(join(dir, OPENCODE_DIR, PREFS_FILE));
 		// Nothing on disk.
 		expect(loadPrefs(env, tick())).toEqual({ colors: false });
 	});

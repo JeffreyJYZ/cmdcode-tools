@@ -3,11 +3,11 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { SPAWN_OPTIONS } from "../src/constants/cli";
 import {
 	parseMpcJson,
 	parseUsageJson,
 	requireSnapshot,
-	SPAWN_OPTIONS,
 } from "../src/sidebar/data";
 import {
 	loadModelUsage,

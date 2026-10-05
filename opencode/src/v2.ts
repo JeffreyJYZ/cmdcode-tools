@@ -23,18 +23,25 @@ import {
 	reasoningVariants,
 } from "./catalog";
 import { runCmduse } from "./cli";
-import { KNOWN_MODELS } from "./gating";
+import { PROVIDER_BASE } from "./constants/endpoints";
+import { KNOWN_MODELS } from "./constants/gating";
+import {
+	DEFAULT_CONTEXT_LENGTH,
+	DEFAULT_OUTPUT_TOKENS,
+} from "./constants/models";
+import {
+	INTEGRATION_ID,
+	INTEGRATION_NAME,
+	LANES,
+	type Lane,
+	PLUGIN_ID,
+	TOOL_DESCRIPTION,
+} from "./constants/providers";
 import { resolveKey } from "./key";
 import { type CmdModel, isClaude, loadModels } from "./models";
 import { idsDiffer, readModelsCache, writeModelsCache } from "./modelsCache";
 import { createCommandCode } from "./provider";
 import { setupTimingLine, writeStartupLine } from "./startupLog";
-
-export const PLUGIN_ID = "command-code";
-export const PROVIDER_BASE = "https://api.commandcode.ai/provider/v1";
-/** Shared integration backing both lanes' credentials (/connect + env). */
-export const INTEGRATION_ID = "command-code";
-export const INTEGRATION_NAME = "Command Code";
 
 // The host's `ProviderDomain.transform` / `ToolDomain.transform` callbacks do
 // not infer their editor parameter through the package's re-exports, so the
@@ -47,35 +54,6 @@ type ProviderEditor = Parameters<
 type IntegrationEditor = Parameters<
 	Parameters<V2Context["integration"]["transform"]>[0]
 >[0];
-
-type Lane = {
-	id: "command-code-anthropic" | "command-code-openai";
-	name: string;
-	/** v2 runtime package (first-party, distinct from the v1 `npm` value). */
-	pkg: string;
-	/** Wire field reasoning must round-trip through on the openai-compatible
-	 * lane; v2 spells the old `interleaved: {field}` as `compatibility`. */
-	reasoningField?: string;
-};
-
-export type { Lane };
-
-const LANES: Lane[] = [
-	{
-		id: "command-code-anthropic",
-		name: "Command Code (Anthropic)",
-		pkg: "@opencode/ai/providers/anthropic",
-	},
-	{
-		id: "command-code-openai",
-		name: "Command Code (OpenAI)",
-		pkg: "@opencode/ai/providers/openai-compatible",
-		reasoningField: "reasoning_content",
-	},
-];
-
-export const TOOL_DESCRIPTION =
-	"Fetch live Command Code plan/usage: plan name, monthly credits, 5-hour & weekly windows, billing-period summary. Pass arg='plans' for the plan comparison table only, or extra cmduse flags (e.g. '--tz +05:30 daily').";
 
 /** opencode cost entry: $/1M rates, or [] when the catalog has none. */
 function costEntry(id: string): Array<{
@@ -124,7 +102,10 @@ export function toV2Model(m: CmdModel, lane: Lane): unknown {
 		cost: costEntry(m.id),
 		status: "active",
 		enabled: true,
-		limit: { context: m.contextLength || 128_000, output: 32_000 },
+		limit: {
+			context: m.contextLength || DEFAULT_CONTEXT_LENGTH,
+			output: DEFAULT_OUTPUT_TOKENS,
+		},
 		...(lane.reasoningField
 			? { compatibility: { reasoningField: lane.reasoningField } }
 			: {}),

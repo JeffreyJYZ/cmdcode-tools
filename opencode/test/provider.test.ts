@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { LanguageModelV3CallOptions } from "@ai-sdk/provider";
+import { DEFAULT_MAX_TOKENS } from "../src/constants/models";
 import { createCommandCode, laneOf } from "../src/provider";
 import {
 	anthropicReducer,
@@ -211,7 +212,7 @@ describe("wire bodies", () => {
 			content: "be terse",
 		});
 		expect(body.stream_options).toEqual({ include_usage: true });
-		expect(body.max_tokens).toBe(64_000);
+		expect(body.max_tokens).toBe(DEFAULT_MAX_TOKENS);
 	});
 
 	test("anthropic hoists system and caches it", () => {

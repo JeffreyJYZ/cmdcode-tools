@@ -5,6 +5,8 @@
 // verbatim as tool content or post as a synthetic message.
 
 import { spawn } from "node:child_process";
+import { CMDUSE_BIN_CANDIDATES } from "./constants/binaries";
+import { DEFAULT_ARGS, SUBCOMMANDS } from "./constants/cli";
 
 /** Fallback lookup paths: the opencode background service's PATH often lacks
  * the homebrew prefix, so the bare name alone is not enough. `CMDUSE_BIN` wins
@@ -12,32 +14,11 @@ import { spawn } from "node:child_process";
 export function cmduseCandidates(
 	env: Record<string, string | undefined> = process.env,
 ): string[] {
-	const candidates = [
-		env.CMDUSE_BIN,
-		"cmduse",
-		"/opt/homebrew/bin/cmduse",
-		"/usr/local/bin/cmduse",
-	];
+	const candidates = [env.CMDUSE_BIN, ...CMDUSE_BIN_CANDIDATES];
 	return candidates.filter((bin): bin is string => Boolean(bin));
 }
 
 const CANDIDATES = cmduseCandidates();
-
-/** Default invocation: one-shot dashboard, no colors / no live redraw. */
-const DEFAULT_ARGS = ["-1", "--plain"];
-
-/** cmduse subcommands — when the arg starts with one, pass it through
- * untouched; otherwise it is extra flags for the one-shot dashboard. */
-const SUBCOMMANDS = new Set([
-	"plans",
-	"models",
-	"daily",
-	"hourly",
-	"model",
-	"session",
-	"statusline",
-	"config",
-]);
 
 /** Shell-words split: whitespace-separated, with single/double quoting and
  * backslash escapes ("--tz +05:30", arg='a b'). Unterminated quotes close at
@@ -83,7 +64,7 @@ export function splitCliArgs(input: string): string[] {
  * "--tz +05:30 daily") passed through untouched. */
 export function buildCmduseArgs(arg: string): string[] {
 	const tokens = splitCliArgs(arg);
-	if (!tokens.length) return DEFAULT_ARGS;
+	if (!tokens.length) return [...DEFAULT_ARGS];
 	// Subcommands may follow their own flags (--tz +05:30 daily), so scan all
 	// tokens; a dashboard invocation never names one.
 	if (tokens.some((t) => SUBCOMMANDS.has(t))) return tokens;

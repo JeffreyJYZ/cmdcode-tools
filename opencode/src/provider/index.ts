@@ -17,6 +17,7 @@ import type {
 	LanguageModelV3StreamResult,
 	LanguageModelV3Usage,
 } from "@ai-sdk/provider";
+import { DEFAULT_BASE_URL } from "../constants/endpoints";
 import {
 	anthropicReducer,
 	openaiReducer,
@@ -24,8 +25,6 @@ import {
 	sseDecoder,
 } from "./stream";
 import { requestBody, type WireLane, type WireTool } from "./wire";
-
-export const DEFAULT_BASE_URL = "https://api.commandcode.ai";
 
 export interface CommandCodeProviderOptions {
 	/** Bearer key; the v2 host passes the resolved connection credential here. */

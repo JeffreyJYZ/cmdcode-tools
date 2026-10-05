@@ -3,17 +3,15 @@
 // Rows are `[label, value]` pairs plus standalone banners (`[message, ""]`),
 // the same shape cmd-provider's deals panel uses. Keeping this pure makes the
 // panel trivial to test and host-agnostic (v1 and v2 pass the same inputs).
+import { MODEL_CATEGORIES } from "../constants/gating";
 import {
-	type Category,
-	canonicalizeModelId,
-	MODEL_CATEGORIES,
-} from "../gating";
-import {
-	elapsedLabel,
 	FIVE_HOUR_SECS,
-	paceEtaSecs,
+	ROW_WIDTH,
+	TIER_DISPLAY,
 	WEEKLY_SECS,
-} from "./windows";
+} from "../constants/sidebar";
+import { type Category, canonicalizeModelId } from "../gating";
+import { elapsedLabel, paceEtaSecs } from "./windows";
 
 /**
  * Colour role for a row's *value*, resolved against the host theme by the
@@ -44,12 +42,11 @@ export function pctTone(pct: number): Tone {
 
 /**
  * The sidebar is 42 columns wide with 2+2 padding, and our panel keeps one more
- * column clear on the right, so a rendered row must stay within this. Rows that
- * cannot fit are split across an indented continuation (`""` label) rather than
- * wrapping in the host's renderer, which is what made the panel look broken.
+ * column clear on the right, so a rendered row must stay within ROW_WIDTH.
+ * Rows that cannot fit are split across an indented continuation (`""` label)
+ * rather than wrapping in the host's renderer, which is what made the panel
+ * look broken.
  */
-export const ROW_WIDTH = 37;
-
 /** A horizontal rule between blocks. */
 export function separator(): SidebarRow {
 	return ["─".repeat(ROW_WIDTH), "", "muted"];
@@ -151,11 +148,6 @@ export interface Usage {
 	 */
 	error?: string;
 }
-
-const TIER_DISPLAY: Readonly<Record<Category, string>> = {
-	opensource: "open source",
-	premium: "premium",
-};
 
 /** Money at credit scale: cents, but "$60" not "$60.00". */
 export function money(value: number): string {

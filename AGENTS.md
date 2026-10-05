@@ -56,6 +56,11 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
                    per-model catalog (disk-cached 1h, re-read on every poll so a catalog
                    change reaches a running panel; mpc scrapes live docs)
   scripts/build-tui.ts  builds dist/tui.js with @opentui/solid's transform
+  src/constants/    module-level DATA constants, one domain per file (binaries,
+                   cli args, endpoints, gating tables, model defaults, paths,
+                   provider ids/lanes, sidebar layout/windows, timing); every
+                   module and test imports the symbol rather than re-declaring a
+                   literal
 ```
 
 ## Core rules
@@ -80,7 +85,8 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
   script carries a GENERATIONS table and inlines those array vars; it picks the
   first generation that matches and fails loud when nothing does. A local CLI
   install is the offline fallback. The hand-probed `hardBlocked` entries live in that script. The file carries `extractedAt`
-  + `cliVersion`; cli and opencode warn when the snapshot is >30d old, and
+  + `cliVersion`; cli and opencode warn when the snapshot is older than
+  `opencode/src/constants/gating.ts`'s `GATE_STALE_DAYS`, and
   both warn when the API returns a plan id no `plans.json` rule matches
   (the dashboard would otherwise silently show "Free" with no cap).
 - **The per-model catalog lives in `opencode/src/catalog.ts`, generated.**
@@ -108,6 +114,14 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
   built `dist/index.js` must import nothing but node builtins, which is what keeps
   a fresh opencode start from installing their ~270 MB graph (`@opencode/ai`,
   `effect`, `@opentelemetry`, `@aws-sdk`) before the provider appears.
+- **Module-level DATA constants live in `src/constants/`, one domain per file.**
+  A value used in more than one place — or a literal a test asserts — is imported
+  from there, never re-declared. That covers binary candidate lists, CLI args,
+  endpoints, the gating tables, model caps/defaults, path segments, provider ids
+  and lanes, sidebar layout/window constants, and the poll/TTL timings. Functions,
+  `let` state and registries whose entries are functions stay with their code.
+  `src/gating.ts` keeps the canonicalization logic and re-exposes the tables; the
+  JSON in `core/` remains the single source of truth for gating data.
 - **The picker must never wait on the live list.** Two traps found the hard way:
   (1) `loadModels` falls back to "show everything" when the billing API is
   unreachable, and that ungated list swings between ~61 and ~82 ids with network
@@ -337,7 +351,7 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   through `npm stage publish` + `npm stage approve`, never a bare `npm publish`.
   0.3.8 made the panel fit its
   42-column sidebar: every row is
-  budgeted (ROW_WIDTH = 37) and the long ones split onto an indented continuation
+  budgeted (ROW_WIDTH) and the long ones split onto an indented continuation
   instead of wrapping, plus a rule between the account block and the model block.
   That release also coloured the panel: rows carry a `tone` (`base` / `muted` /
   `accent` / `ok` / `warn` / `crit`, see `sidebar/rows.ts`), `sidebar/panel.tsx`
@@ -355,7 +369,7 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   model's cap) to those totals reported the whole account against a single model's allowance, so the
   cap is dropped whenever there is no per-model figure to pair it with.
 - **A window row leads with its most actionable fact**: `LIMIT EXCEEDED` (the account API's own
-  `exceeded`) beats the pace ETA, which beats the informational elapsed share — the 37-column
+  `exceeded`) beats the pace ETA, which beats the informational elapsed share — the `ROW_WIDTH`-column
   budget fits exactly one of them beside the reset countdown. `paceEtaSecs` mirrors
   `cmduse_core::pace_eta` and is pinned by the shared `paceEta` vectors in
   `core/conformance.json`; the TS port grows a mirrored function only when it needs one.
@@ -388,10 +402,10 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   `lastModelUsage`) are read by every session in that process at the same time. That is *why* they
   are keyed (account-wide snapshot, catalog, per-model usage) rather than "the current panel's".
   The in-flight guard is the exception: `inFlight` lives inside the hook closure, so it is **per
-  session** — N open sessions on our provider each spawn their own cmduse every 5s, and the account
+  session** — N open sessions on our provider each spawn their own cmduse every `POLL_MS`, and the account
   API sees N calls a tick, not one. Nothing coordinates them; if that ever matters, the guard has to
   move to module scope.
-- **The panel polls every 5s** (0.3.15). The sqlite reads behind `Session` and
+- **The panel polls every `POLL_MS`** (0.3.15). The sqlite reads behind `Session` and
   `Usage (this model)` are free, so the cadence is set by the cmduse/ocuse spawn:
   one process and one account API call per poll, ~12 a minute. If that proves hot,
   cache the CLI snapshot in-process for ~30s and keep the local rows at 5s — the
@@ -399,7 +413,7 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
   poll is skipped while one is in flight: an outage parks a single cmduse
   invocation in its retry ladder (5 retries, 15s timeout each), and the old
   unchecked interval stacked a spawn per tick whose results landed out of order and
-  repainted the flapping snapshot. `data.ts` also kills any spawn at 30s so a
+  repainted the flapping snapshot. `data.ts` also kills any spawn at `CHILD_TIMEOUT_MS` so a
   black-hole fetch cannot pin the flag forever.
 - **A network outage must neither blank the model block nor flicker the account
   block** (0.3.18). Two independent causes, both fixed the same release:
@@ -424,7 +438,7 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
     (allowance, rates, Intelligence, Tok/s, Deal) comes from `mpc --json`, while
     the account block above is unaffected — that asymmetry is the tell. The usual
     cause is a dangling `~/.bun/bin/mpc` after the global `bun link` was pruned
-    (see the sibling repo's AGENTS.md): all three candidates (`mpc`,
+    (see the sibling repo's AGENTS.md): all three candidates (`MPC_BIN_CANDIDATES`: `mpc`,
     `~/.bun/bin/mpc`, `/opt/homebrew/bin/mpc`) resolve to the same dead path, so
     `spawn` yields `ENOENT` and the catalog silently stays empty. A dangling
     symlink prints nothing for `command -v mpc`, and `ls -l` on the bin still
@@ -433,7 +447,7 @@ nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
     next 5s poll, no reload needed.
 - **A promotion on the model shows as a `Deal` row** (0.3.14). mpc reports
   `cc.deal { badge, ends }` off the docs badge; `rows.ts` compacts the expiry to `Sep 30` so
-  the line fits the 37-column budget, and tones it `ok`. There is nothing to compute or expire:
+  the line fits the `ROW_WIDTH`-column budget, and tones it `ok`. There is nothing to compute or expire:
   CommandCode drops the badge and reverts the price itself when a deal lapses, so the row
   simply disappears. The disk cache is `~/.cache/command-code/cc-catalog.json`, and its
   `rows` is an array of `[key, value]` **pairs**, not an object — with the CommandCode side

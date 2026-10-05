@@ -1,4 +1,4 @@
-export const API_BASE = "https://api.commandcode.ai";
+import { API_BASE } from "./constants/endpoints";
 
 export function authHeaders(key: string): Record<string, string> {
 	return { Authorization: `Bearer ${key}`, Accept: "application/json" };

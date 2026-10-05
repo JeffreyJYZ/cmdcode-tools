@@ -8,6 +8,13 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { cmduseCandidates } from "../cli";
+import {
+	MPC_BIN_CANDIDATES,
+	OCUSE_BIN_CANDIDATES,
+} from "../constants/binaries";
+import { SPAWN_OPTIONS } from "../constants/cli";
+import { CACHE_DIR, CC_CATALOG_FILE } from "../constants/paths";
+import { CATALOG_CACHE_TTL_MS, CHILD_TIMEOUT_MS } from "../constants/timing";
 import { type ModelMeta, modelKey, type Usage } from "./rows";
 import { parseZenJson, type ZenUsage } from "./zen";
 
@@ -15,36 +22,12 @@ import { parseZenJson, type ZenUsage } from "./zen";
 // run, so CMDUSE_BIN reaches the sidebar too (the brew Cellar is read-only, so
 // there is no other way to point the panel at a dev build).
 const CMDUSE = cmduseCandidates();
-const MPC = ["mpc", join(homedir(), ".bun/bin/mpc"), "/opt/homebrew/bin/mpc"];
+const MPC = MPC_BIN_CANDIDATES;
 // ocuse ships in the same crate as cmduse (cmd-usage), so the same override
 // applies to it: a dev build can be pointed at without touching the Cellar.
-const OCUSE = [
-	process.env.OCUSE_BIN,
-	"ocuse",
-	"/opt/homebrew/bin/ocuse",
-	"/usr/local/bin/ocuse",
-].filter((bin): bin is string => Boolean(bin));
-// An hour, not six: mpc's catalog picks up new models, promotions and the
-// AA key, and a panel that loaded its map at mount used to keep stale data
-// until the client was restarted. One spawn an hour is cheap.
-const CACHE_TTL_MS = 60 * 60 * 1000;
-
-/** `detached` is load-bearing, not tidiness: it starts the child in its own
- * session, so it has no controlling terminal. cmduse's snapshot() paints a
- * "fetching usage…" spinner straight to /dev/tty — piping stdout/stderr does
- * not stop it — which would corrupt the opencode TUI this process inherits its
- * tty from. Detaching makes that open fail; stdout/stderr stay piped. */
-export const SPAWN_OPTIONS: Parameters<typeof spawn>[2] = {
-	stdio: ["ignore", "pipe", "pipe"],
-	detached: true,
-};
-
-/** How long one CLI spawn may run before it is killed. An outage can leave a
- * fetch hanging through cmduse's retry ladder (up to ~2 minutes across three
- * endpoints); the 5s poll would then stack spawns on top of each other. Bounding
- * it means each poll resolves quickly, so the panel keeps the last snapshot and
- * recovers as soon as the network does. */
-const CHILD_TIMEOUT_MS = 30_000;
+const OCUSE = [process.env.OCUSE_BIN, ...OCUSE_BIN_CANDIDATES].filter(
+	(bin): bin is string => Boolean(bin),
+);
 
 function run(bin: string, args: string[]): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -85,7 +68,10 @@ function run(bin: string, args: string[]): Promise<string> {
 	});
 }
 
-async function runFirst(candidates: string[], args: string[]): Promise<string> {
+async function runFirst(
+	candidates: readonly string[],
+	args: string[],
+): Promise<string> {
 	let last: unknown;
 	for (const bin of candidates) {
 		try {
@@ -230,7 +216,7 @@ export function parseMpcJson(text: string): Map<string, ModelMeta> {
 
 function cachePath(): string {
 	const base = process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache");
-	return join(base, "command-code", "cc-catalog.json");
+	return join(base, CACHE_DIR, CC_CATALOG_FILE);
 }
 
 /** mpc's catalog, cached on disk: it scrapes live docs over the network. */
@@ -240,7 +226,10 @@ export async function loadMeta(): Promise<Map<string, ModelMeta>> {
 			fetchedAt?: number;
 			rows?: [string, ModelMeta][];
 		};
-		if (cached.fetchedAt && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+		if (
+			cached.fetchedAt &&
+			Date.now() - cached.fetchedAt < CATALOG_CACHE_TTL_MS
+		) {
 			return new Map(cached.rows ?? []);
 		}
 	} catch {

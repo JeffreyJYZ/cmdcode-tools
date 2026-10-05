@@ -5,6 +5,7 @@ import {
 	runCmduse,
 	splitCliArgs,
 } from "../src/cli";
+import { CMDUSE_BIN_CANDIDATES } from "../src/constants/binaries";
 
 describe("splitCliArgs", () => {
 	test("whitespace split", () => {
@@ -108,11 +109,7 @@ describe("cmduseCandidates", () => {
 		expect(cmduseCandidates({ CMDUSE_BIN: "/tmp/cmdusedev" })[0]).toBe(
 			"/tmp/cmdusedev",
 		);
-		expect(cmduseCandidates({})).toEqual([
-			"cmduse",
-			"/opt/homebrew/bin/cmduse",
-			"/usr/local/bin/cmduse",
-		]);
+		expect(cmduseCandidates({})).toEqual([...CMDUSE_BIN_CANDIDATES]);
 		expect(cmduseCandidates({ CMDUSE_BIN: "" })).not.toContain("");
 	});
 });

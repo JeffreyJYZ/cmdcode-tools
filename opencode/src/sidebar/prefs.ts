@@ -11,21 +11,20 @@
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { OPENCODE_DIR, PREFS_FILE } from "../constants/paths";
+import { PREF_DEFAULTS } from "../constants/sidebar";
+import { PREFS_CACHE_MS } from "../constants/timing";
 
 export interface Prefs {
 	colors: boolean;
 }
 
-export const DEFAULTS: Prefs = { colors: false };
-
-/** Re-read window for the file. Small, so a change lands quickly either way. */
-const CACHE_MS = 5_000;
 let cached: { at: number; prefs: Prefs } | undefined;
 
 /** Preferences live beside opencode's own config, XDG layout honoured. */
 export function prefsPath(env: NodeJS.ProcessEnv = process.env): string {
 	const base = env.XDG_CONFIG_HOME ?? join(homedir(), ".config");
-	return join(base, "opencode", "command-code.json");
+	return join(base, OPENCODE_DIR, PREFS_FILE);
 }
 
 /** Only a literal `true` enables colour, so a typo cannot turn the panel on. */
@@ -34,14 +33,14 @@ export function parsePrefs(raw: unknown): Prefs {
 	return { colors: value === true };
 }
 
-/** Env override, then the file, then the default. Cached for `CACHE_MS`. */
+/** Env override, then the file, then the default. Cached for `PREFS_CACHE_MS`. */
 export function loadPrefs(
 	env: NodeJS.ProcessEnv = process.env,
 	now = Date.now(),
 ): Prefs {
-	if (cached && now - cached.at < CACHE_MS) return cached.prefs;
+	if (cached && now - cached.at < PREFS_CACHE_MS) return cached.prefs;
 	const flag = env.CMD_COLORS;
-	let prefs = DEFAULTS;
+	let prefs = PREF_DEFAULTS;
 	if (flag === "1" || flag === "true") prefs = { colors: true };
 	else if (flag === "0" || flag === "false") prefs = { colors: false };
 	else {
