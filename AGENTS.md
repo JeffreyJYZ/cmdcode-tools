@@ -2,8 +2,8 @@
 
 Workspace: cmduse-core + cmd-usage CLI (+ built-in MCP server) + opencode
 plugin, single source of shared logic. Two independent version lines:
-cmd-usage 0.7.x and cmduse-core 2.x (0.2–0.4 slots are yanked-forever on
-crates.io from the old cmd-usage crate).
+cmd-usage 0.7.x, cmduse-core 2.x (0.2–0.4 slots yanked-forever on crates.io
+from old cmd-usage crate).
 
 ## Layout
 
@@ -65,133 +65,129 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
 
 ## Core rules
 
-- **Pure logic and canonical data live in `core/`; the CLI is the application.**
-  A bug in plan table / window math / pace gate / dates / usage aggregation
-  gets ONE fix. `cli/` depends on `cmduse-core` by path and owns I/O only:
-  HTTP, filesystem, terminal, and formatting. Presentation stays local (ANSI
-  constants, colored bars, tables) — do NOT move it into core.
-- **Plan data lives in `core/plans.json`, gating data in `core/gating.json`,
-  never in code.** `core/build.rs` bakes both into Rust consts; `opencode`
-  imports the same files. Edit the JSON, not the generated consts or the TS.
-  repo-root `scripts/extract-gating.ts` regenerates `gating.json` (`bun run
-  extract`) from the published CLI package — the registry **tarball** first, CDNs
-  only as fallback: unpkg 500s on some versions and jsdelivr once served a
-  *truncated* cli.mjs that still passed a naive sanity check, which is what made a
-  refresh fail on anchors upstream has. Bundled releases rename every minified
-  helper (1.66 moved Fr/Ur/Sr/wr to qr/Yr/Cr/Er and the record factories
-  $r/_r to zr/Kr; **1.74 moved them again** — qr/Yr/Er/$r/_r → vr/Cr/Yo/Sr/wr,
-  the known set to `qo`, and it hoists a shared `blockedModels` array into a
-  variable referenced as `blockedModels:kr=[...]` / `blockedModels:kr`), so the
-  script carries a GENERATIONS table and inlines those array vars; it picks the
-  first generation that matches and fails loud when nothing does. A local CLI
-  install is the offline fallback. The hand-probed `hardBlocked` entries live in that script. The file carries `extractedAt`
-  + `cliVersion`; cli and opencode warn when the snapshot is older than
-  `opencode/src/constants/gating.ts`'s `GATE_STALE_DAYS`, and
-  both warn when the API returns a plan id no `plans.json` rule matches
-  (the dashboard would otherwise silently show "Free" with no cap).
-- **The per-model catalog lives in `opencode/src/catalog.ts`, generated.**
-  The listing API (`/provider/v1/models`) returns no capabilities and no rates,
-  so the only source is the official CLI package: `models.md` (context, efforts,
-  $/1M in/out/cache-read, plus cache-write on Anthropic models) and `dist/cli.mjs`
-  (`inputModalities`). Regenerate with `bun scripts/extract-catalog.ts` (in
-  `opencode/`, or `bun run extract:catalog`) after a Command Code release; it
-  fetches both, stamps the version, and warns about modalities-only ids the docs
-  have not priced yet. Models absent from the table are text-only with no price —
-  never assume vision or invent a rate. Two catalogue notes: 1.65 inverted the
-  modality default, so a model accepts images unless it is in the bundle's `Rr`
-  text-only denylist — the generator reads that set (explicit per-model records
-  still win) and mirrors the CLI's own `supportsVision`; and the same models.md
-  carries the `Min plan` column, which `plans.md` names as the access rule. The
-  sidebar reports it as `Min plan` **only when the gating snapshot has no tier**
-  for the model — with gating refreshing again (0.3.5) that is the exception, and
-  showing both rows read as redundant.
-- **The plugin halves are plain objects; `@opencode/*` is dev-only.** opencode
-  decodes the default export against its own `Plugin` interface (both `define`
-  helpers are the identity function), so `src/v2.ts` / `src/tui.tsx` export
-  `{ id, setup }` literals typed by `import type`, and `src/index.ts` defines its
-  v1 tool inline (`tool()` there is also identity) with `zod` for the args shape.
-  `@opencode/plugin` + `@opencode-ai/plugin` sit in devDependencies only: the
-  built `dist/index.js` must import nothing but node builtins, which is what keeps
-  a fresh opencode start from installing their ~270 MB graph (`@opencode/ai`,
-  `effect`, `@opentelemetry`, `@aws-sdk`) before the provider appears.
+- **Pure logic + canonical data live in `core/`; CLI is the application.** Bug
+  in plan table / window math / pace gate / dates / usage aggregation → ONE fix.
+  `cli/` depends on `cmduse-core` by path, owns I/O only: HTTP, filesystem,
+  terminal, formatting. Presentation stays local (ANSI constants, colored bars,
+  tables) — do NOT move into core.
+- **Plan data in `core/plans.json`, gating data in `core/gating.json`, never in
+  code.** `core/build.rs` bakes both into Rust consts; `opencode` imports same
+  files. Edit JSON, not generated consts or TS. repo-root
+  `scripts/extract-gating.ts` regenerates `gating.json` (`bun run extract`) from
+  published CLI package — registry **tarball** first, CDNs only fallback: unpkg
+  500s on some versions, jsdelivr once served *truncated* cli.mjs that still
+  passed naive sanity check, which made refresh fail on anchors upstream has.
+  Bundled releases rename every minified helper (1.66 moved Fr/Ur/Sr/wr →
+  qr/Yr/Cr/Er and record factories $r/_r → zr/Kr; **1.74 moved them again** —
+  qr/Yr/Er/$r/_r → vr/Cr/Yo/Sr/wr, known set to `qo`, and hoists shared
+  `blockedModels` array into var referenced `blockedModels:kr=[...]` /
+  `blockedModels:kr`), so script carries GENERATIONS table + inlines those array
+  vars; picks first generation that matches, fails loud when none does. Local
+  CLI install = offline fallback. Hand-probed `hardBlocked` entries live in that
+  script. File carries `extractedAt` + `cliVersion`; cli + opencode warn when
+  snapshot older than `opencode/src/constants/gating.ts`'s `GATE_STALE_DAYS`,
+  and both warn when API returns plan id no `plans.json` rule matches (dashboard
+  otherwise silently shows "Free" with no cap).
+- **Per-model catalog in `opencode/src/catalog.ts`, generated.** Listing API
+  (`/provider/v1/models`) returns no capabilities, no rates, so only source =
+  official CLI package: `models.md` (context, efforts, $/1M in/out/cache-read,
+  plus cache-write on Anthropic models) + `dist/cli.mjs` (`inputModalities`).
+  Regenerate `bun scripts/extract-catalog.ts` (in `opencode/`, or `bun run
+  extract:catalog`) after Command Code release; fetches both, stamps version,
+  warns on modalities-only ids docs have not priced yet. Models absent from
+  table = text-only, no price — never assume vision or invent rate. Two
+  catalogue notes: 1.65 inverted modality default, so model accepts images
+  unless in bundle's `Rr` text-only denylist — generator reads that set
+  (explicit per-model records still win), mirrors CLI's own `supportsVision`;
+  same models.md carries `Min plan` column, which `plans.md` names as access
+  rule. Sidebar reports it as `Min plan` **only when gating snapshot has no
+  tier** for model — with gating refreshing again (0.3.5) that is the exception,
+  and showing both rows read as redundant.
+- **Plugin halves are plain objects; `@opencode/*` dev-only.** opencode decodes
+  default export against own `Plugin` interface (both `define` helpers =
+  identity), so `src/v2.ts` / `src/tui.tsx` export `{ id, setup }` literals typed
+  by `import type`, and `src/index.ts` defines v1 tool inline (`tool()` there
+  also identity) with `zod` for args shape. `@opencode/plugin` +
+  `@opencode-ai/plugin` in devDependencies only: built `dist/index.js` must
+  import nothing but node builtins, which keeps fresh opencode start from
+  installing their ~270 MB graph (`@opencode/ai`, `effect`, `@opentelemetry`,
+  `@aws-sdk`) before provider appears.
 - **Module-level DATA constants live in `src/constants/`, one domain per file.**
-  A value used in more than one place — or a literal a test asserts — is imported
-  from there, never re-declared. That covers binary candidate lists, CLI args,
-  endpoints, the gating tables, model caps/defaults, path segments, provider ids
-  and lanes, sidebar layout/window constants, and the poll/TTL timings. Functions,
-  `let` state and registries whose entries are functions stay with their code.
-  `src/gating.ts` keeps the canonicalization logic and re-exposes the tables; the
-  JSON in `core/` remains the single source of truth for gating data.
-- **The picker must never wait on the live list.** Two traps found the hard way:
-  (1) `loadModels` falls back to "show everything" when the billing API is
-  unreachable, and that ungated list swings between ~61 and ~82 ids with network
-  luck — so an id-diff check sees a change on every start and fires a transform
-  anyway. `ModelSplit.gated` now marks that fallback and v2 ignores such a list
-  entirely (no cache write, no transform). (2) Even a legitimately changed list
-  must not transform on the first pass after start: the first deferred refresh
-  warms the cache only, and 30-minute ticks may update the registry.
-- **The live model list is cached to `$XDG_CACHE_HOME/command-code/models.json`.** A
-  warm start merges it during registration, so the picker is fresh at ~1ms and
-  the background refresh usually finds nothing to change. The refresh only calls
-  `provider.transform` when the id sets differ (`idsDiffer`) and is deferred 3s
-  past setup: a transform landing while the TUI paints makes the host re-publish
-  provider/model state, which reads as "the UI waited for the fetch". The listing
-  API itself takes ~2.5s; that is fine as long as it stays off the paint path.
-- **Startup timing goes to `$XDG_CACHE_HOME/command-code/startup.log`.** A
-  plugin's `console.log` runs in opencode's server process and is NOT captured by
-  its log file, so `src/startupLog.ts` appends one line per start:
+  Value used in >1 place — or literal a test asserts — imported from there, never
+  re-declared. Covers binary candidate lists, CLI args, endpoints, gating tables,
+  model caps/defaults, path segments, provider ids + lanes, sidebar layout/window
+  constants, poll/TTL timings. Functions, `let` state + registries whose entries
+  are functions stay with their code. `src/gating.ts` keeps canonicalization
+  logic, re-exposes tables; JSON in `core/` remains single source of truth for
+  gating data.
+- **Picker must never wait on live list.** Two traps found hard way: (1)
+  `loadModels` falls back to "show everything" when billing API unreachable, and
+  that ungated list swings between ~61 and ~82 ids with network luck — so
+  id-diff check sees change every start, fires transform anyway.
+  `ModelSplit.gated` now marks that fallback, v2 ignores such list entirely (no
+  cache write, no transform). (2) Even legit changed list must not transform on
+  first pass after start: first deferred refresh warms cache only, 30-minute
+  ticks may update registry.
+- **Live model list cached to `$XDG_CACHE_HOME/command-code/models.json`.** Warm
+  start merges it during registration, so picker fresh at ~1ms and background
+  refresh usually finds nothing to change. Refresh only calls
+  `provider.transform` when id sets differ (`idsDiffer`), deferred 3s past
+  setup: transform landing while TUI paints makes host re-publish provider/model
+  state, reads as "UI waited for fetch". Listing API takes ~2.5s; fine as long
+  as off paint path.
+- **Startup timing → `$XDG_CACHE_HOME/command-code/startup.log`.** Plugin's
+  `console.log` runs in opencode's server process, NOT captured by its log file,
+  so `src/startupLog.ts` appends one line per start:
   `setup: key=…ms register=…ms connection=…ms refresh=…ms models=…`. `register`
-  is the phase that gates the picker; if it grows, look at plugin load, not setup.
-- **`core/gating.json` is refreshed from `command-code@1.74.1` (85 categories,
-  9 plans, 92 known).** The scrape was re-anchored for the 1.74 bundle, so it no
-  longer falls back to "allow" for the newest models. The signal to watch is
-  `cliVersion`, not `extractedAt`: the snapshot can be a day old and eight
-  releases behind (the 1.74 re-anchor moved 1.65.2 catalog / 1.66.0 gating to
-  1.74.1), so compare against the registry's `latest` when a model appears
-  ungated. `plans.json` is hand-maintained beside it — its `nameRules`/`caps`
-  must cover every plan id the API returns (`individual-ultra` was rendering as
-  Free with no cap until its rule landed).
-- **Behavior vectors live in `core/conformance.json`.** Rust (`core` test)
-  asserts them all. Since plugin 0.2.0 the TS port (`opencode/test/
-  conformance.test.ts`) covers only the still-ported model-gating layer
-  (bare_model/canonicalize/gating) — money/compact/pct/duration/rel_time/
-  parse_iso_utc/elapsed_pct/pace_eta/monthly_window/plan_* have a single
-  implementation (Rust core) because the opencode plugin spawns the cmduse
-  CLI for all usage rendering instead of porting that logic.
+  gates picker; if it grows, look at plugin load, not setup.
+- **`core/gating.json` refreshed from `command-code@1.74.1` (85 categories,
+  9 plans, 92 known).** Scrape re-anchored for 1.74 bundle, so no longer falls
+  back to "allow" for newest models. Signal to watch = `cliVersion`, not
+  `extractedAt`: snapshot can be a day old and eight releases behind (1.74
+  re-anchor moved 1.65.2 catalog / 1.66.0 gating to 1.74.1), so compare against
+  registry `latest` when a model appears ungated. `plans.json` hand-maintained
+  beside it — its `nameRules`/`caps` must cover every plan id API returns
+  (`individual-ultra` rendered as Free, no cap, until its rule landed).
+- **Behavior vectors in `core/conformance.json`.** Rust (`core` test) asserts
+  all. Since plugin 0.2.0 TS port (`opencode/test/conformance.test.ts`) covers
+  only still-ported model-gating layer (bare_model/canonicalize/gating) —
+  money/compact/pct/duration/rel_time/parse_iso_utc/elapsed_pct/pace_eta/
+  monthly_window/plan_* have single implementation (Rust core) because opencode
+  plugin spawns cmduse CLI for all usage rendering instead of porting logic.
 - `core` keeps adapters out: cli wraps `rel_time`/`elapsed_pct` to its
   `u64`-now signatures.
-- Window caps (5-hour/weekly) come from the API `Window.cap` response, NOT
-  derived. `plan_monthly_cap` is the only static table (monthly pool); window
-  lengths are `core::FIVE_HOUR_SECS` / `core::WEEKLY_SECS`.
-- **License text is sourced, never copied.** MIT files come from the OSI
-  canonical (https://opensource.org/license/mit, SPDX `MIT`), fetched fresh —
-  never copied from another component's file. All crates/packages are MIT; the
-  body is identical, only the year/holder line is project-specific.
-- **Docs always move with the code.** Any user-visible change updates the
-  READMEs (`README.md`, `cli/README.md`), the `cli/cmduse.1` man page, and
-  this file in the same commit — never a follow-up "docs" commit. Check for
-  stale version refs and stale option/flag lists before committing.
+- Window caps (5-hour/weekly) come from API `Window.cap` response, NOT derived.
+  `plan_monthly_cap` = only static table (monthly pool); window lengths
+  `core::FIVE_HOUR_SECS` / `core::WEEKLY_SECS`.
+- **License text sourced, never copied.** MIT files from OSI canonical
+  (https://opensource.org/license/mit, SPDX `MIT`), fetched fresh — never copied
+  from another component's file. All crates/packages MIT; body identical, only
+  year/holder line project-specific.
+- **Docs always move with code.** Any user-visible change updates READMEs
+  (`README.md`, `cli/README.md`), `cli/cmduse.1` man page, this file in same
+  commit — never follow-up "docs" commit. Check for stale version refs and stale
+  option/flag lists before committing.
 
 ## Consumers (sibling repo, same owner)
 
-`mpc` (`~/dev/cmdcode-tools/oc-cmd-compare`) reads this workspace: it shells out to `cmduse`, and takes the
-per-model mix from opencode's own message store (`~/.local/share/opencode/opencode.db`) rather than
-from this plugin. Stable contracts, not incidental output:
+`mpc` (`~/dev/cmdcode-tools/oc-cmd-compare`) reads this workspace: shells out to `cmduse`, takes
+per-model mix from opencode's own message store (`~/.local/share/opencode/opencode.db`) not this
+plugin. Stable contracts, not incidental output:
 
 | contract | consumer |
 | --- | --- |
 | `cmduse plans --json` — plan name/price/credits/windows | mpc plan table |
 | `cmduse -1 --json` — `summary.requests`/`summary.cost`, `periodEnd` | mpc coverage line + billing window |
 | `cmduse model --json [--since ISO]` — `{source, since, models:{id: totals}}` | mpc `--usage` |
-| `mpc --json --shape off` — `{plans, rows:[{key, name, oc?, cc?}]}`, each side `{pricing{input,output,cacheRead,cacheWrite}, allowance, requestsPerMonth, requestsPerFiveHour, requestsPerWeek, ability, tps, deal?, free}`; a side is `null`/absent when unpriced, and `requestsPerMonth: null` means **unbounded** (free model), never "missing" | the sidebar's model rows (allowance, rates, Intelligence, Tok/s, Deal) |
+| `mpc --json --shape off` — `{plans, rows:[{key, name, oc?, cc?}]}`, each side `{pricing{input,output,cacheRead,cacheWrite}, allowance, requestsPerMonth, requestsPerFiveHour, requestsPerWeek, ability, tps, deal?, free}`; side `null`/absent when unpriced; `requestsPerMonth: null` means **unbounded** (free model), never "missing" | sidebar's model rows (allowance, rates, Intelligence, Tok/s, Deal) |
 
-Changing any of those shapes means updating mpc in the same effort; `CMDUSE_BIN` lets mpc test a
+Changing any of those shapes means updating mpc in same effort; `CMDUSE_BIN` lets mpc test a
 `cmdusedev` build. Local commits only — never publish or push without explicit go.
 
-**The sidebar's `mpc` spawn must keep `--shape off`.** mpc's default `--shape auto` shells out to
-`reqshape`, which itself runs `mpc --json` — so a bare `mpc --json` recurses (mpc -> reqshape ->
-mpc -> ...). The sidebar only wants mpc's catalog, never a workload, so the flag is the cycle break,
-not an optimisation. (`reqshape`'s own `loadMpc` carries the same flag for the same reason.)
+**Sidebar's `mpc` spawn must keep `--shape off`.** mpc's default `--shape auto` shells out to
+`reqshape`, which itself runs `mpc --json` — so bare `mpc --json` recurses (mpc -> reqshape ->
+mpc -> ...). Sidebar only wants mpc's catalog, never workload, so flag is cycle break, not
+optimisation. (`reqshape`'s own `loadMpc` carries same flag for same reason.)
 
 ## Build & test
 
@@ -204,507 +200,469 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | cargo run -p cm
 cd opencode && bun test && bun run typecheck
 ```
 
-**After the repo move, `target/` can carry a build script baked with the old
-absolute `CARGO_MANIFEST_DIR`.** `core/build.rs` reads `plans.json` relative to
-that constant, so a stale `target/debug/build/cmduse-core-*/build-script-build`
-fails with "read plans.json: No such file or directory" pointing at the *old*
-path (`~/dev/plugins/command-code-zed/...`). Fix with `cargo clean -p
-cmduse-core` (a full clean is not needed) before concluding the build is broken.
+**After repo move, `target/` can carry build script baked with old absolute
+`CARGO_MANIFEST_DIR`.** `core/build.rs` reads `plans.json` relative to that
+constant, so stale `target/debug/build/cmduse-core-*/build-script-build` fails
+with "read plans.json: No such file or directory" pointing at *old* path
+(`~/dev/plugins/command-code-zed/...`). Fix with `cargo clean -p cmduse-core`
+(full clean not needed) before concluding build broken.
 
-Tests must be hermetic: CI (Ubuntu) has no `cmduse` binary and no homebrew
-prefix, so anything that shells out to the real CLI needs a skip guard
-(`test.skipIf`) or an injected candidate list — a passing local run proves
-nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`,
-`cargo test --all-targets`, `cargo clippy --all-targets -- -D warnings`,
-`cargo package -p cmduse-core --allow-dirty`, then the opencode job's
+Tests must be hermetic: CI (Ubuntu) has no `cmduse` binary, no homebrew prefix,
+so anything shelling out to real CLI needs skip guard (`test.skipIf`) or injected
+candidate list — passing local run proves nothing about CI. Mirror CI before
+committing: `cargo fmt --all -- --check`, `cargo test --all-targets`,
+`cargo clippy --all-targets -- -D warnings`,
+`cargo package -p cmduse-core --allow-dirty`, then opencode job's
 `bun install && bun test && bun run typecheck && bun run build`.
 
 ## Publishing (NEVER without explicit user go)
 
-- **Versions are independent: `cmduse-core` is on its own major line; the CLI
-  is 0.7.x.** They are NOT a pair — do not try to read one from the other, and
-  never "sync" them. `cli/Cargo.toml` depends on `{ path = "../core", version = "2" }`,
-  so a new core minor/patch needs no CLI edit.
-- **Core's semver is loose on purpose: while it has no external consumers, a
-  breaking API change rides a MINOR bump** (so `elapsed_pct`'s u8 → f64 went
-  1.1.1 → 2.0.0 only because the strict rule was still in force; 2.0.0 is
-  published and stands). Reserve majors for the day something outside this repo
-  depends on the crate — otherwise every internal refactor costs a major and the
-  number stops meaning anything. Note breaking changes in the commit message.
-- Windows into the history: 1.1.1 was the last release before the
-  one-decimal-percentages change; 2.0.0 is `elapsed_pct` returning f64.
-- **Core's major always leads the CLI's.** When the CLI enters a major band
-  (e.g. CLI 1.0.0), publish `cmduse-core` at the next major (2.0.0) as a
-  line-separation release — no API change, note it in the description. This
-  keeps the two numbers from ever sitting in the same band and being read as a
-  pair again.
+- **Versions independent: `cmduse-core` on own major line; CLI is 0.7.x.** NOT a
+  pair — do not read one from other, never "sync". `cli/Cargo.toml` depends on
+  `{ path = "../core", version = "2" }`, so new core minor/patch needs no CLI
+  edit.
+- **Core semver loose on purpose: while no external consumers, breaking API
+  change rides MINOR bump** (so `elapsed_pct`'s u8 → f64 went 1.1.1 → 2.0.0 only
+  because strict rule still in force; 2.0.0 published, stands). Reserve majors
+  for day something outside repo depends on crate — else every internal refactor
+  costs a major and number stops meaning anything. Note breaking changes in
+  commit message.
+- Windows into history: 1.1.1 = last release before one-decimal-percentages
+  change; 2.0.0 = `elapsed_pct` returning f64.
+- **Core major always leads CLI's.** When CLI enters a major band (e.g. CLI
+  1.0.0), publish `cmduse-core` at next major (2.0.0) as line-separation release
+  — no API change, note in description. Keeps two numbers from ever sitting in
+  same band, read as pair again.
 - Publish order when core changed: `cmduse-core` first, then `cmd-usage` —
-  `cargo package -p cmd-usage` verifies against the *published* core, so a
-  core API the registry doesn't have yet fails the tarball build with compile
-  errors you won't see locally. If core did not change, publish the CLI alone.
-- **crates.io version slots are FOREVER.** 0.2.0–0.4.0 were published+yanked
-  on old `cmd-usage` — you can never re-upload those numbers. Current 0.x
-  release line is 0.7.7 (0.7.0 added the ocuse bin; 0.7.1 refreshed gating.json to
-  CLI 1.66; 0.7.2 added the `-1 --json` billing-period bounds; 0.7.3 gave the
-  ocuse dashboard cmduse's gauges, sparkline and live watch frame; 0.7.4 threaded
-  the colour flag through every ocuse renderer, reports included; 0.7.5 flagged an
-  over-cap model and added its share of period spend; 0.7.6 gave every
-  used/elapsed percentage one decimal and started shipping prebuilt binaries with
-  the release workflow; 0.7.7 added the monthly row's `$X by now` pro-rata
-  figure); 0.6.x was the
-  last CommandCode-only line (first free slot past the dead 0.2–0.4 range). Skip
-  taken numbers, never fight the 400.
+  `cargo package -p cmd-usage` verifies against *published* core, so core API
+  registry lacks yet fails tarball build with compile errors you won't see
+  locally. Core unchanged → publish CLI alone.
+- **crates.io version slots FOREVER.** 0.2.0–0.4.0 published+yanked on old
+  `cmd-usage` — can never re-upload those numbers. Current 0.x line 0.7.7 (0.7.0
+  added ocuse bin; 0.7.1 refreshed gating.json to CLI 1.66; 0.7.2 added
+  `-1 --json` billing-period bounds; 0.7.3 gave ocuse dashboard cmduse's gauges,
+  sparkline, live watch frame; 0.7.4 threaded colour flag through every ocuse
+  renderer, reports included; 0.7.5 flagged over-cap model, added its share of
+  period spend; 0.7.6 gave every used/elapsed percentage one decimal, started
+  shipping prebuilt binaries with release workflow; 0.7.7 added monthly row's
+  `$X by now` pro-rata figure); 0.6.x = last CommandCode-only line (first free
+  slot past dead 0.2–0.4 range). Skip taken numbers, never fight 400.
 - Clean tree required (commit first, incl. Cargo.lock).
-- **Releases carry prebuilt binaries (tag `cmduse-vX.Y.Z`).** `.github/workflows/release.yml`
-  builds six targets (macOS arm64/x86_64, Linux {aarch64,x86_64} × {musl,gnu}) and
-  publishes `cmduse-<version>-<target>.tar.gz` (binaries at the archive root plus
-  `cmduse.1` + `LICENSE-MIT`) with a `SHA256SUMS`, then a verify job re-downloads
-  and checks every asset. Asset names are a public contract: the Homebrew formula
-  urls and `cli/Cargo.toml`'s `[package.metadata.binstall]` both template them, so
-  changing the pattern breaks `brew` and `cargo binstall`. musl targets cross-link
-  through `cargo-zigbuild` (homebrew `cargo-zigbuild` + `zig` locally); the gnu and
-  darwin builds are native on their runners. The tag is created by hand after the
-  crate publish — CI takes it from there; `workflow_dispatch` dry-runs the build
-  matrix without creating a release.
+- **Releases carry prebuilt binaries (tag `cmduse-vX.Y.Z`).**
+  `.github/workflows/release.yml` builds six targets (macOS arm64/x86_64, Linux
+  {aarch64,x86_64} × {musl,gnu}), publishes `cmduse-<version>-<target>.tar.gz`
+  (binaries at archive root + `cmduse.1` + `LICENSE-MIT`) with `SHA256SUMS`,
+  then verify job re-downloads, checks every asset. Asset names public contract:
+  Homebrew formula urls + `cli/Cargo.toml`'s `[package.metadata.binstall]` both
+  template them, so changing pattern breaks `brew` + `cargo binstall`. musl
+  targets cross-link through `cargo-zigbuild` (homebrew `cargo-zigbuild` + `zig`
+  locally); gnu + darwin builds native on runners. Tag created by hand after
+  crate publish — CI takes it from there; `workflow_dispatch` dry-runs build
+  matrix without creating release.
 - Homebrew after every cmd-usage release: `JeffreyJYZ/homebrew-tap`,
-  `Formula/cmduse.rb` — **download the release, don't compile**: per-OS/arch url +
-  sha256 from the release's `SHA256SUMS` (Linux uses the musl asset; `bin.install
+  `Formula/cmduse.rb` — **download release, don't compile**: per-OS/arch url +
+  sha256 from release `SHA256SUMS` (Linux uses musl asset; `bin.install
   "cmduse", "ocuse", "cmdusedev"` + `man1.install "cmduse.1"`), no `depends_on
-  "rust"`. Fallback for uncovered platforms is `cargo install cmd-usage` /
+  "rust"`. Fallback for uncovered platforms: `cargo install cmd-usage` /
   `cargo binstall`.
-- `cargo binstall cmd-usage` works off the same assets (metadata in
-  `cli/Cargo.toml`, `bin-dir` at the archive root).
-- README/AGENTS updated in the same commit.
-- The opencode npm package (`opencode/package.json`) is versioned
-  **independently** of the Rust workspace (0.2.x vs 0.6.x) — intentional, not
-  drift. Don't sync them. 0.2.0 added opencode v2 support (dual v1+V2
-  entrypoint, `@opencode/plugin` + `@opencode-ai/plugin` deps, both external
-  in the bun build; v1 floor is the 1.18.29 object entrypoint); 0.2.x also
-  ships a TUI half (`./tui` export → `src/tui.ts`, `solid-js` devDep for the
-  test runner only — opencode resolves the TUI import at runtime). 0.2.5 adds
-  the session sidebar (`src/sidebar/*`, `src/tui.tsx`) which consumes
-  `mpc --json` for model allowance/rates/benchmarks. 0.2.8 fixed the real
-  "black line" / "fetching usage…" artifact: cmduse's `snapshot()` paints a
-  spinner straight to `/dev/tty` (piping stdout/stderr does not stop it), so the
-  sidebar's poll overpainted the TUI. Fix: spawn cmduse `detached` (no
-  controlling terminal → the `/dev/tty` open fails) and poll only while the
-  session is on one of our models. cmduse 0.6.12 also stops the spinner unless
-  it is driving the live dashboard on a tty. 0.2.7's app-slot `void` change was
-  a red herring — the claim already resolves to `null` safely. 0.2.9 adds the
-  active model's period usage to the panel (`src/sidebar/usageDb.ts`): a
-  read-only `bun:sqlite` scan of opencode's own store, since cmduse's account
-  API has no per-model dimension. Spend is shown only when the harness priced
-  it — CommandCode is subscription-billed, so opencode records cost 0 there.
-  0.2.10 fixed every model advertising as text-only: capabilities now come from
-  the generated `catalog.ts` (0.2.9 and earlier hardcoded `attachment: false`
-  + `input.image: false`, so no image could be attached even to `*-vision-*`).
-  0.2.11 dropped the `@opencode/*` runtime deps — the halves are plain objects
-  and type-only imports, so a fresh start no longer installs @opencode/plugin's
-  ~511 MB graph (@opencode/ai, effect, @opentelemetry, @aws-sdk) before the
-  provider appears. It also takes context/efforts/$-rates from the same generated
-  catalog (opencode prices CommandCode models now), adds effort variants on v2,
-  and shows percent elapsed on the sidebar's windows. 0.2.10 was never published
-  (0.2.9 → 0.2.11). 0.3.0 owns the streaming instead of borrowing opencode's
-  provider packages: `src/provider/` is an AI SDK v3 LanguageModel over
-  `/provider/v1/{messages,chat/completions}` (pure `wire.ts` conversion + a
-  `stream.ts` state machine), handed to v2 via `ctx.aisdk.hook("sdk", …)` and to
-  v1 by pointing `npm` at our own package pinned to its exact version (v1's
-  loader imports the module and takes the first `create*` export —
-  `createCommandCode`). Not yet ported from the reference implementation: retry
-  ladders, `pause_turn` continuation, and the legacy `/alpha/generate` fallback
-  Go accounts need when the provider API plan-gates them. 0.3.1 made the
-  provider appear in /model as fast as the seed allows: `setup()` registers the
-  provider + snapshot + aisdk hooks before it touches credentials (the
-  integration connection lookup can take seconds and only upgrades
-  `activation`/`apiKey` afterwards), the live list **merges** over the snapshot
-  (`mergeModels`: add + update, never remove, so a gated or partial response
-  cannot make a model vanish), and one always-on line reports where a slow start
-  went: `[command-code] setup: key=…ms register=…ms connection=…ms refresh=…ms
-  models=…`. Also: `<0.1%` instead of `0.0%` for windows just started, an unpkg
-  fallback in `scripts/extract-gating.ts` (a local CLI still wins — this machine
-  has 1.38.2 installed while 1.65.0 is published, so a real refresh must use the
-  published bundle or a newer CLI), and a README tip to pin the plugin specifier
-  so opencode stops re-resolving `@latest` on every start.
-  0.2.4 is burned: its
-  tarball never landed, so it is deprecated and skipped. 0.3.2 added the min-plan
-  row, CLI-accurate vision, a readable startup log and the CDN fallbacks; 0.3.3
-  cached the live list to disk so a warm start never waits on the listing API;
-  0.3.4 stopped the refresh from transforming after paint at all — the ungated
-  fallback list swings in size with network luck, which defeated the id-diff and
-  made every start look changed. 0.3.6 made the sidebar's Min plan row a
-  fallback: the tier leads, and Min plan fills in only when gating has no
-  category for the model. The rates line merged too: in/out plus cache read, with
-  cache write appended only when the model has one. 0.3.7 slowed the account poll
-  from 30s to 60s (POLL_MS): the totals move on request boundaries, and each poll
-  is a cmduse spawn. 0.3.13 put it back to 20s: with the panel also carrying
-  this-session totals and a per-model figure, staleness was the complaint, and a
-  poll is one spawn plus one indexed sqlite read. 0.3.15 dropped it to 5s (below).
-  0.3.18 stopped a network outage from blanking or flickering the panel (below).
-  0.3.19 scoped the per-model usage memory to its session and clamped the model's
-  share of the session to 100%: a figure from one conversation can no longer be
-  divided by another's total, and the live write race between the model's
-  `session_message` sum and the session's `session_v2.cost` no longer flashes
-  over 100%.
-  0.3.16 and 0.3.17 are burned: npm answered each `npm publish` with a 202 and then
-  left the version in a ghost "staged" state — absent from the packument (`npm
-  view`/`npm view time` stop at 0.3.15) and from `npm stage list`, while a retry
-  dies on `E409 Cannot publish over previously staged version` (staging it says
-  "Cannot stage previously published version"), with no stage-id to reject. That
-  is npm/cli#9889, and the trigger is the **bypass-2FA token migration**: npm is
-  restricting tokens that bypass 2FA for "direct publishing" (`npm publish` moves
-  to a staged/ghost state). Both are skipped like 0.2.4; publish from then on goes
-  through `npm stage publish` + `npm stage approve`, never a bare `npm publish`.
-  0.3.8 made the panel fit its
-  42-column sidebar: every row is
-  budgeted (ROW_WIDTH) and the long ones split onto an indented continuation
-  instead of wrapping, plus a rule between the account block and the model block.
-  That release also coloured the panel: rows carry a `tone` (`base` / `muted` /
+- `cargo binstall cmd-usage` works off same assets (metadata in
+  `cli/Cargo.toml`, `bin-dir` at archive root).
+- README/AGENTS updated in same commit.
+- opencode npm package (`opencode/package.json`) versioned **independently** of
+  Rust workspace (0.2.x vs 0.6.x) — intentional, not drift. Don't sync. 0.2.0
+  added opencode v2 support (dual v1+V2 entrypoint, `@opencode/plugin` +
+  `@opencode-ai/plugin` deps, both external in bun build; v1 floor = 1.18.29
+  object entrypoint); 0.2.x also ships TUI half (`./tui` export → `src/tui.ts`,
+  `solid-js` devDep for test runner only — opencode resolves TUI import at
+  runtime). 0.2.5 adds session sidebar (`src/sidebar/*`, `src/tui.tsx`)
+  consuming `mpc --json` for model allowance/rates/benchmarks. 0.2.8 fixed real
+  "black line" / "fetching usage…" artifact: cmduse's `snapshot()` paints
+  spinner straight to `/dev/tty` (piping stdout/stderr does not stop it), so
+  sidebar poll overpainted TUI. Fix: spawn cmduse `detached` (no controlling
+  terminal → `/dev/tty` open fails), poll only while session on one of our
+  models. cmduse 0.6.12 also stops spinner unless driving live dashboard on tty.
+  0.2.7's app-slot `void` change red herring — claim already resolves to `null`
+  safely. 0.2.9 adds active model's period usage to panel
+  (`src/sidebar/usageDb.ts`): read-only `bun:sqlite` scan of opencode's own
+  store, since cmduse account API has no per-model dimension. Spend shown only
+  when harness priced it — CommandCode subscription-billed, so opencode records
+  cost 0 there. 0.2.10 fixed every model advertising text-only: capabilities now
+  from generated `catalog.ts` (0.2.9 + earlier hardcoded `attachment: false` +
+  `input.image: false`, so no image attachable even to `*-vision-*`). 0.2.11
+  dropped `@opencode/*` runtime deps — halves are plain objects + type-only
+  imports, so fresh start no longer installs @opencode/plugin's ~511 MB graph
+  (@opencode/ai, effect, @opentelemetry, @aws-sdk) before provider appears. Also
+  takes context/efforts/$-rates from same generated catalog (opencode prices
+  CommandCode models now), adds effort variants on v2, shows percent elapsed on
+  sidebar windows. 0.2.10 never published (0.2.9 → 0.2.11). 0.3.0 owns streaming
+  instead of borrowing opencode's provider packages: `src/provider/` = AI SDK v3
+  LanguageModel over `/provider/v1/{messages,chat/completions}` (pure `wire.ts`
+  conversion + `stream.ts` state machine), handed to v2 via
+  `ctx.aisdk.hook("sdk", …)`, to v1 by pointing `npm` at our own package pinned
+  to exact version (v1 loader imports module, takes first `create*` export —
+  `createCommandCode`). Not yet ported from reference implementation: retry
+  ladders, `pause_turn` continuation, legacy `/alpha/generate` fallback Go
+  accounts need when provider API plan-gates them. 0.3.1 made provider appear in
+  /model as fast as seed allows: `setup()` registers provider + snapshot + aisdk
+  hooks before touching credentials (integration connection lookup can take
+  seconds, only upgrades `activation`/`apiKey` afterwards), live list **merges**
+  over snapshot (`mergeModels`: add + update, never remove, so gated/partial
+  response cannot make model vanish), one always-on line reports slow start:
+  `[command-code] setup: key=…ms register=…ms connection=…ms refresh=…ms
+  models=…`. Also: `<0.1%` instead of `0.0%` for windows just started, unpkg
+  fallback in `scripts/extract-gating.ts` (local CLI still wins — this machine
+  has 1.38.2 installed while 1.65.0 published, so real refresh must use published
+  bundle or newer CLI), README tip to pin plugin specifier so opencode stops
+  re-resolving `@latest` every start. 0.2.4 burned: tarball never landed,
+  deprecated + skipped. 0.3.2 added min-plan row, CLI-accurate vision, readable
+  startup log, CDN fallbacks; 0.3.3 cached live list to disk so warm start never
+  waits on listing API; 0.3.4 stopped refresh transforming after paint at all —
+  ungated fallback list swings in size with network luck, defeated id-diff, made
+  every start look changed. 0.3.6 made sidebar Min plan row a fallback: tier
+  leads, Min plan fills in only when gating has no category for model. Rates line
+  merged too: in/out + cache read, cache write appended only when model has one.
+  0.3.7 slowed account poll 30s → 60s (POLL_MS): totals move on request
+  boundaries, each poll is a cmduse spawn. 0.3.13 back to 20s: panel also carries
+  this-session totals + per-model figure, staleness was complaint, poll = one
+  spawn + one indexed sqlite read. 0.3.15 dropped to 5s (below). 0.3.18 stopped
+  network outage blanking/flickering panel (below). 0.3.19 scoped per-model
+  usage memory to its session, clamped model's share of session to 100%: figure
+  from one conversation no longer divided by another's total, live write race
+  between model's `session_message` sum and session's `session_v2.cost` no longer
+  flashes over 100%. 0.3.16 + 0.3.17 burned: npm answered each `npm publish` with
+  202 then left version in ghost "staged" state — absent from packument (`npm
+  view`/`npm view time` stop at 0.3.15) + from `npm stage list`, while retry dies
+  on `E409 Cannot publish over previously staged version` (staging it says
+  "Cannot stage previously published version"), no stage-id to reject. That is
+  npm/cli#9889, trigger = **bypass-2FA token migration**: npm restricting tokens
+  that bypass 2FA for "direct publishing" (`npm publish` moves to staged/ghost
+  state). Both skipped like 0.2.4; publish from then on goes through `npm stage
+  publish` + `npm stage approve`, never bare `npm publish`. 0.3.8 made panel fit
+  its 42-column sidebar: every row budgeted (ROW_WIDTH), long ones split onto
+  indented continuation instead of wrapping, plus rule between account block +
+  model block. That release coloured panel: rows carry `tone` (`base` / `muted` /
   `accent` / `ok` / `warn` / `crit`, see `sidebar/rows.ts`), `sidebar/panel.tsx`
-  maps tones onto the host theme, and headroom is severity-coded — 70% amber,
-  90% red — so a nearly-spent window reads without arithmetic.
-- **The panel serves three provider families** (0.3.12): `command-code*` (cmduse), `opencode-go`
-  and `opencode`/`opencode-zen` (ocuse plus mpc's `oc` side). `sessionKind()` is the one place
-  that decides, `panelTitle()` names the section, and `sidebar/zen.ts` builds that block:
-  per-model allowances (5h 20%, weekly 50%, monthly 100%) against ocuse's per-model window
-  totals, rates and benchmarks from the same mpc row's `oc` object. No reset countdowns there on
-  purpose — Go has no usage API, and ocuse approximates a reset as "now + window", which is worse
-  than nothing in a usage panel. `OCUSE_BIN` overrides the binary exactly like `CMDUSE_BIN`.
-  **A per-model cap is only paired with per-model spend.** `zenRows` falls back to ocuse's
-  account-wide `usage.totals` when the active model has no row; applying `oc.allowance` (that one
-  model's cap) to those totals reported the whole account against a single model's allowance, so the
-  cap is dropped whenever there is no per-model figure to pair it with.
-- **A window row leads with its most actionable fact**: `LIMIT EXCEEDED` (the account API's own
-  `exceeded`) beats the pace ETA, which beats the informational elapsed share — the `ROW_WIDTH`-column
-  budget fits exactly one of them beside the reset countdown. `paceEtaSecs` mirrors
-  `cmduse_core::pace_eta` and is pinned by the shared `paceEta` vectors in
-  `core/conformance.json`; the TS port grows a mirrored function only when it needs one.
-- **Monthly alone carries a pro-rata figure** (`cap × elapsed%`, rendered `$X by now` after the
-  elapsed share, in both the colored and plain cmduse renderers): the monthly pool is a budget, so
-  "what an even burn would have spent by now" is a fair comparison against `used`. The 5-hour and
-  weekly caps are throttles, where that number would read as a spend target — hence the
-  `pro_rata` flag rather than a blanket rule.
-- **A session's own spend is one indexed read** (`loadSessionUsage`, keyed by message id so an
-  in-place rewrite is not counted twice), shown as the `Session` row beside the model's
-  period figure.
-- **`verify-crate.ts` is the crate/tap release check** (0.3.12), the counterpart to
-  `verify-release.ts`: `cargo package` is byte-reproducible, so it compares the served `.crate`'s
-  sha256 against a local pack and then against the tap formula's pin — the two links
-  (`registry <- crate`, `formula <- registry`) that a hand-run release gets wrong. Checking an
-  older release needs `--no-pack`: this checkout can only reproduce the crate its manifest is at,
-  and a stale local pack is exactly the mismatch it exists to report.
-- **opencode v2 stores messages in `session_message`, not `message`** (0.3.13). The legacy table
-  stopped at the migration, so reading it reports zero for every recent session — the sidebar
-  showed `Usage (this model): 0 req` and `Session: 0 req` while cmduse's account rows looked fine,
-  which is the tell: only the DB-derived rows were wrong. v2 has no per-*message* cost (the model
-  ref is per turn), so the per-model figure is summed from each completed assistant turn's `cost`
-  (0.3.15 — an in-flight turn carries none, which is why an early sample read as zero), and the
-  Session row reads `session_v2.cost` plus a count of assistant turns.
-  `usageDb.ts` detects the table and keeps the v1 queries as the fallback.
-- **The plugin is loaded once per session attach, so several sessions are live at once.** One
-  opencode server run logs a `loading plugin` line for *each* attach (measured: 4 in a run with 4
-  sessions, and a 56-load long-lived run), all with the identical `entrypoint` URL — so bun's
-  module cache is shared and the sidebar's module-level caches (`lastSnapshot`, `lastMeta`,
-  `lastModelUsage`) are read by every session in that process at the same time. That is *why* they
-  are keyed (account-wide snapshot, catalog, per-model usage) rather than "the current panel's".
-  The in-flight guard is the exception: `inFlight` lives inside the hook closure, so it is **per
-  session** — N open sessions on our provider each spawn their own cmduse every `POLL_MS`, and the account
-  API sees N calls a tick, not one. Nothing coordinates them; if that ever matters, the guard has to
-  move to module scope.
-- **The panel polls every `POLL_MS`** (0.3.15). The sqlite reads behind `Session` and
-  `Usage (this model)` are free, so the cadence is set by the cmduse/ocuse spawn:
-  one process and one account API call per poll, ~12 a minute. If that proves hot,
-  cache the CLI snapshot in-process for ~30s and keep the local rows at 5s — the
-  account figures move on request boundaries, not continuously. Since 0.3.18 a
-  poll is skipped while one is in flight: an outage parks a single cmduse
-  invocation in its retry ladder (5 retries, 15s timeout each), and the old
-  unchecked interval stacked a spawn per tick whose results landed out of order and
-  repainted the flapping snapshot. `data.ts` also kills any spawn at `CHILD_TIMEOUT_MS` so a
-  black-hole fetch cannot pin the flag forever.
-- **A network outage must neither blank the model block nor flicker the account
-  block** (0.3.18). Two independent causes, both fixed the same release:
-  - `cmduse -1 --json` still **exits 0** when the account API is unreachable: it
-    prints the defaults (`plan: "Free"`, no caps, `fiveHour`/`weekly` null) beside an
-    `error` string. The human renderer refuses to show that fake frame; the JSON
-    consumer must too. `parseUsageJson` now lifts `error`, and `loadUsage` runs the
-    snapshot through `requireSnapshot`, which throws so `refresh`'s `catch` keeps the
-    last good snapshot. Without it the account block collapsed from ~7 rows to
-    `Plan: Free` and back — the "Monthly row flashes" report.
-  - The account block (`lastSnapshot`) and the per-model figure (`lastModelUsage`)
-    both survive a remount, but the mpc catalog had no such memory: `meta` started
-    empty and only filled after a successful spawn, so a remount during the outage
-    blanked the whole model block (name, tier, rates, and even the local
-    `Usage (this model)` rows — they live inside `modelRows`). `lastMeta` /
-    `rememberMeta` / `seededMeta` mirror the other two, an empty catalog is never
-    remembered, and `modelRows`/`zenRows` now take a `fallbackName` (the session
-    id's tail) so the name plus the store-backed rows still render when mpc is
-    unreachable. The mpc catalog needs the network; the local figures do not.
-  - **If the model block shows only the name and the local `Usage (this model)` /
-    `Session` rows, suspect `mpc`, not the network.** Every other model row
-    (allowance, rates, Intelligence, Tok/s, Deal) comes from `mpc --json`, while
-    the account block above is unaffected — that asymmetry is the tell. The usual
-    cause is a dangling `~/.bun/bin/mpc` after the global `bun link` was pruned
-    (see the sibling repo's AGENTS.md): all three candidates (`MPC_BIN_CANDIDATES`: `mpc`,
-    `~/.bun/bin/mpc`, `/opt/homebrew/bin/mpc`) resolve to the same dead path, so
-    `spawn` yields `ENOENT` and the catalog silently stays empty. A dangling
-    symlink prints nothing for `command -v mpc`, and `ls -l` on the bin still
-    shows the stale target — check the target exists instead. Restore with
-    `bun link` in `~/dev/cmdcode-tools/oc-cmd-compare`; the panel recovers on the
-    next 5s poll, no reload needed.
-- **A promotion on the model shows as a `Deal` row** (0.3.14). mpc reports
-  `cc.deal { badge, ends }` off the docs badge; `rows.ts` compacts the expiry to `Sep 30` so
-  the line fits the `ROW_WIDTH`-column budget, and tones it `ok`. There is nothing to compute or expire:
-  CommandCode drops the badge and reverts the price itself when a deal lapses, so the row
-  simply disappears. The disk cache is `~/.cache/command-code/cc-catalog.json`, and its
-  `rows` is an array of `[key, value]` **pairs**, not an object — with the CommandCode side
-  **flattened** into the value (`{allowance, intelligence, rates, name, oc, deal?}`), not
-  nested under `cc`. So a `jq '.rows[].cc.deal'` (or `.rows[][1].cc.deal`) reads nothing and
-  looks like "no deals are running", which is how 7 live deals read as zero; the working form
-  is `.rows[][1] | select(.deal)`.
-- **A session switch must not blank the panel.** The host leaves a session's model
-  (and so its provider) undefined for a frame while the tab bar switches, so
-  `sessionKind()` separates `unknown` from `other` — only a provider we know is
-  someone else's hides the section, and once a session has been on one of our models
-  an unresolved switch keeps it up. The account block also paints from an in-process
-  snapshot (`rememberSnapshot`/`seededRows`) because it is account-wide: without it
-  the panel re-armed by waiting a full cmduse spawn, which is the visible "disappears
-  then reloads". **The model block needs the same memory, keyed by model**
-  (`rememberModelUsage`/`seededModelUsage`): the account block was seeded on remount
-  while `Usage (this model)` started empty every time, so half the panel persisted and
-  half blanked. Keying matters as much as the memory — the old signal could still hold
-  the *previous* model's figures after a switch, and `refresh` is keyed on the provider,
-  so a switch between two of our models showed the wrong row for up to a minute. The
-  memo accepts a figure only when its key matches the current model, an unresolved id
-  keeps the last row up (the `wasOurs` call), and a separate effect tracks the id so a
-  switch re-reads the store — a sqlite scan, no cmduse spawn — instead of waiting for
-  the poll. **The memory is keyed by session as well as model**, because the figure is
-  the model's spend in a conversation and the panel divides it by that session's own
-  total: a model-keyed-only figure reused in a second session could read "over 100% of
-  session" (the two numbers were from different conversations). `refreshModelUsage`
-  also refuses an unscoped read — no session id means a period-wide scan across every
-  conversation, which must never be remembered as this session's figure. **And the
-  share is clamped to 100%**, because the two figures are written by different
-  statements: the model's from summing `session_message` cost, the session's from
-  `session_v2.cost`. For the moment between a turn's row landing and the session total
-  catching up the numerator leads, which flashed "105% of session" then settled to 100%
-  — a part of a whole never reads over the whole.
-- **Sidebar colour is opt-in; the default is plain text.** `sidebar/prefs.ts` reads
-  `~/.config/opencode/command-code.json` (`{"colors": true}`) with `CMD_COLORS=1|0` as a
-  per-run override, and caches the answer for a few seconds so a streaming session does not
-  stat the disk per render — that read happens inside `tui.tsx`'s colour getter, which is
-  why it must stay cheap. `mono()` collapses every tone to plain text (bold and dim carry
-  structure), and `test/sidebar-render.test.tsx` asserts the off frame is achromatic, so a
-  tone cannot leak colour back in.
-- **The v2 theme tokens are `text.base` / `text.muted`, not `text.default` /
-  `text.subdued`.** The panel passed the latter for a while, so `fg` was
-  `undefined` and the whole section rendered in the terminal's default colour.
-  The authoritative shape ships in `@opencode/theme@<cli version>`
-  (`text.feedback.{success,warning,error,info}.base`, `hue.accent[200]`); the
-  vendored types in `opencode-cmd-provider` are stale.
-- **Row colours come from the text palette; the hue scales are widget colours
-  and are only read for the two headline rows, in dark mode.** `hue.interactive[400]`
-  is a brown-orange (`#b67c56`) in the default dark theme, which painted the
-  figures — that is where the "dark orange" came from. `hue.accent[200]` is a
-  purple (`#9d7cd8`) and is what `Plan:` / `Model:` take, whole-line, so the two
-  rows the panel is about read apart; light themes put a peach in that slot, so
-  `hostColors(theme, "light")` falls back to the label hue instead.
-- **`<span fg={…}>` is silently ignored; spans need `<span style={{ fg }}>`.**
-  opentui types span props as `{}`, so a cast makes the wrong form compile and
-  the run then inherits no colour — the whole panel goes plain white. Colours
-  are per segment (bold label, toned value), and `test/sidebar-render.test.tsx`
-  renders the panel through `@opentui/solid`'s `testRender` and asserts the
-  captured frame's spans, which is the guard that catches both mistakes.
-- **A lighter shade of the same hue is not a distinction.** `#68d0dd` against
-  `#56b6c2` reads as identical in practice; headline/emphasis colours need a
-  different hue, not a neighbouring step.
-- **`cmduse -1 --json` carries the billing-period bounds since 0.7.2**
-  (`periodStartAt` / `periodEndAt`, epoch ms — the same units as `resetAt`).
-  `periodEnd` stays the display date. Before that, the sidebar could not render
-  the monthly window's resets countdown or elapsed share: `periodEnd` is a date
-  with no start, and inventing one is exactly what cmduse's anniversary
-  inference is opt-in about. The plugin mirrors `monthly_window`
-  (`core/src/lib.rs`) for that row, and shows spend alone when the fields are
-  missing (older cmduse). The plugin honours `CMDUSE_BIN` first, like `mpc`, so a
-  dev build can be pointed at without touching the brew Cellar (its binaries are
+  maps tones onto host theme, headroom severity-coded — 70% amber, 90% red — so
+  nearly-spent window reads without arithmetic.
+- **Panel serves three provider families** (0.3.12): `command-code*` (cmduse),
+  `opencode-go` + `opencode`/`opencode-zen` (ocuse plus mpc's `oc` side).
+  `sessionKind()` = one place that decides, `panelTitle()` names section,
+  `sidebar/zen.ts` builds that block: per-model allowances (5h 20%, weekly 50%,
+  monthly 100%) against ocuse's per-model window totals, rates + benchmarks from
+  same mpc row's `oc` object. No reset countdowns there on purpose — Go has no
+  usage API, ocuse approximates reset as "now + window", worse than nothing in
+  usage panel. `OCUSE_BIN` overrides binary exactly like `CMDUSE_BIN`.
+  **Per-model cap only paired with per-model spend.** `zenRows` falls back to
+  ocuse's account-wide `usage.totals` when active model has no row; applying
+  `oc.allowance` (that one model's cap) to those totals reported whole account
+  against single model's allowance, so cap dropped whenever no per-model figure
+  to pair it with.
+- **Window row leads with most actionable fact**: `LIMIT EXCEEDED` (account
+  API's own `exceeded`) beats pace ETA, which beats informational elapsed share —
+  `ROW_WIDTH`-column budget fits exactly one beside reset countdown.
+  `paceEtaSecs` mirrors `cmduse_core::pace_eta`, pinned by shared `paceEta`
+  vectors in `core/conformance.json`; TS port grows mirrored function only when
+  it needs one.
+- **Monthly alone carries pro-rata figure** (`cap × elapsed%`, rendered `$X by
+  now` after elapsed share, both colored + plain cmduse renderers): monthly pool
+  is budget, so "what even burn would have spent by now" is fair comparison
+  against `used`. 5-hour + weekly caps are throttles, where that number would
+  read as spend target — hence `pro_rata` flag, not blanket rule.
+- **Session's own spend = one indexed read** (`loadSessionUsage`, keyed by
+  message id so in-place rewrite not counted twice), shown as `Session` row
+  beside model's period figure.
+- **`verify-crate.ts` = crate/tap release check** (0.3.12), counterpart to
+  `verify-release.ts`: `cargo package` byte-reproducible, so compares served
+  `.crate` sha256 against local pack, then against tap formula's pin — the two
+  links (`registry <- crate`, `formula <- registry`) a hand-run release gets
+  wrong. Checking older release needs `--no-pack`: this checkout can only
+  reproduce crate its manifest is at, stale local pack = exactly the mismatch it
+  exists to report.
+- **opencode v2 stores messages in `session_message`, not `message`** (0.3.13).
+  Legacy table stopped at migration, so reading it reports zero for every recent
+  session — sidebar showed `Usage (this model): 0 req` and `Session: 0 req` while
+  cmduse account rows looked fine, which is the tell: only DB-derived rows wrong.
+  v2 has no per-*message* cost (model ref per turn), so per-model figure summed
+  from each completed assistant turn's `cost` (0.3.15 — in-flight turn carries
+  none, why early sample read zero), Session row reads `session_v2.cost` + count
+  of assistant turns. `usageDb.ts` detects table, keeps v1 queries as fallback.
+- **Plugin loaded once per session attach, so several sessions live at once.**
+  One opencode server run logs `loading plugin` line per *each* attach (measured
+  4 in run with 4 sessions, 56-load long-lived run), all identical `entrypoint`
+  URL — so bun module cache shared, sidebar module-level caches (`lastSnapshot`,
+  `lastMeta`, `lastModelUsage`) read by every session in that process
+  simultaneously. That is *why* they are keyed (account-wide snapshot, catalog,
+  per-model usage), not "current panel's". In-flight guard = exception:
+  `inFlight` lives inside hook closure, so **per session** — N open sessions on
+  our provider each spawn own cmduse every `POLL_MS`, account API sees N calls a
+  tick, not one. Nothing coordinates them; if that ever matters, guard must move
+  to module scope.
+- **Panel polls every `POLL_MS`** (0.3.15). sqlite reads behind `Session` +
+  `Usage (this model)` free, so cadence set by cmduse/ocuse spawn: one process,
+  one account API call per poll, ~12/min. If hot, cache CLI snapshot in-process
+  ~30s, keep local rows 5s — account figures move on request boundaries, not
+  continuously. Since 0.3.18 poll skipped while one in flight: outage parks
+  single cmduse invocation in retry ladder (5 retries, 15s timeout each), old
+  unchecked interval stacked spawn per tick whose results landed out of order,
+  repainted flapping snapshot. `data.ts` also kills any spawn at
+  `CHILD_TIMEOUT_MS` so black-hole fetch cannot pin flag forever.
+- **Network outage must neither blank model block nor flicker account block**
+  (0.3.18). Two independent causes, both fixed same release:
+  - `cmduse -1 --json` still **exits 0** when account API unreachable: prints
+    defaults (`plan: "Free"`, no caps, `fiveHour`/`weekly` null) beside `error`
+    string. Human renderer refuses fake frame; JSON consumer must too.
+    `parseUsageJson` now lifts `error`, `loadUsage` runs snapshot through
+    `requireSnapshot`, which throws so `refresh`'s `catch` keeps last good
+    snapshot. Without it account block collapsed from ~7 rows to `Plan: Free` and
+    back — "Monthly row flashes" report.
+  - Account block (`lastSnapshot`) + per-model figure (`lastModelUsage`) both
+    survive remount, but mpc catalog had no such memory: `meta` started empty,
+    filled only after successful spawn, so remount during outage blanked whole
+    model block (name, tier, rates, even local `Usage (this model)` rows — they
+    live inside `modelRows`). `lastMeta` / `rememberMeta` / `seededMeta` mirror
+    other two, empty catalog never remembered, `modelRows`/`zenRows` now take
+    `fallbackName` (session id's tail) so name + store-backed rows still render
+    when mpc unreachable. mpc catalog needs network; local figures do not.
+  - **If model block shows only name + local `Usage (this model)` / `Session`
+    rows, suspect `mpc`, not network.** Every other model row (allowance, rates,
+    Intelligence, Tok/s, Deal) from `mpc --json`, account block above unaffected
+    — asymmetry = tell. Usual cause dangling `~/.bun/bin/mpc` after global
+    `bun link` pruned (see sibling repo's AGENTS.md): all three candidates
+    (`MPC_BIN_CANDIDATES`: `mpc`, `~/.bun/bin/mpc`, `/opt/homebrew/bin/mpc`)
+    resolve to same dead path, so `spawn` yields `ENOENT`, catalog silently stays
+    empty. Dangling symlink prints nothing for `command -v mpc`, `ls -l` on bin
+    still shows stale target — check target exists instead. Restore with
+    `bun link` in `~/dev/cmdcode-tools/oc-cmd-compare`; panel recovers on next 5s
+    poll, no reload.
+- **Promotion on model shows as `Deal` row** (0.3.14). mpc reports
+  `cc.deal { badge, ends }` off docs badge; `rows.ts` compacts expiry to `Sep 30`
+  so line fits `ROW_WIDTH`-column budget, tones it `ok`. Nothing to
+  compute/expire: CommandCode drops badge, reverts price itself when deal lapses,
+  row simply disappears. Disk cache `~/.cache/command-code/cc-catalog.json`, its
+  `rows` = array of `[key, value]` **pairs**, not object — CommandCode side
+  **flattened** into value (`{allowance, intelligence, rates, name, oc, deal?}`),
+  not nested under `cc`. So `jq '.rows[].cc.deal'` (or `.rows[][1].cc.deal`)
+  reads nothing, looks like "no deals running", which is how 7 live deals read as
+  zero; working form `.rows[][1] | select(.deal)`.
+- **Session switch must not blank panel.** Host leaves session model (and so
+  provider) undefined for a frame while tab bar switches, so `sessionKind()`
+  separates `unknown` from `other` — only provider we know is someone else's
+  hides section, and once session has been on one of our models an unresolved
+  switch keeps it up. Account block also paints from in-process snapshot
+  (`rememberSnapshot`/`seededRows`) because account-wide: without it panel
+  re-armed by waiting full cmduse spawn, visible "disappears then reloads".
+  **Model block needs same memory, keyed by model**
+  (`rememberModelUsage`/`seededModelUsage`): account block seeded on remount
+  while `Usage (this model)` started empty every time, so half panel persisted,
+  half blanked. Keying matters as much as memory — old signal could still hold
+  *previous* model's figures after switch, and `refresh` keyed on provider, so
+  switch between two of our models showed wrong row up to a minute. Memo accepts
+  figure only when key matches current model, unresolved id keeps last row up
+  (`wasOurs` call), separate effect tracks id so switch re-reads store — sqlite
+  scan, no cmduse spawn — instead of waiting for poll. **Memory keyed by session
+  as well as model**, because figure = model's spend in conversation, panel
+  divides it by that session's own total: model-keyed-only figure reused in
+  second session could read "over 100% of session" (two numbers from different
+  conversations). `refreshModelUsage` also refuses unscoped read — no session id
+  = period-wide scan across every conversation, must never be remembered as this
+  session's figure. **Share clamped to 100%**, because two figures written by
+  different statements: model's from summing `session_message` cost, session's
+  from `session_v2.cost`. For the moment between turn's row landing and session
+  total catching up numerator leads, flashed "105% of session" then settled to
+  100% — part of whole never reads over whole.
+- **Sidebar colour opt-in; default plain text.** `sidebar/prefs.ts` reads
+  `~/.config/opencode/command-code.json` (`{"colors": true}`) with
+  `CMD_COLORS=1|0` per-run override, caches answer for few seconds so streaming
+  session does not stat disk per render — read happens inside `tui.tsx`'s colour
+  getter, why it must stay cheap. `mono()` collapses every tone to plain text
+  (bold + dim carry structure), `test/sidebar-render.test.tsx` asserts off frame
+  achromatic, so tone cannot leak colour back in.
+- **v2 theme tokens are `text.base` / `text.muted`, not `text.default` /
+  `text.subdued`.** Panel passed latter for a while, so `fg` was `undefined`,
+  whole section rendered in terminal default colour. Authoritative shape ships
+  in `@opencode/theme@<cli version>`
+  (`text.feedback.{success,warning,error,info}.base`, `hue.accent[200]`);
+  vendored types in `opencode-cmd-provider` stale.
+- **Row colours come from text palette; hue scales are widget colours, only read
+  for two headline rows, in dark mode.** `hue.interactive[400]` = brown-orange
+  (`#b67c56`) in default dark theme, painted figures — where "dark orange" came
+  from. `hue.accent[200]` = purple (`#9d7cd8`), what `Plan:` / `Model:` take,
+  whole-line, so two rows panel is about read apart; light themes put peach in
+  that slot, so `hostColors(theme, "light")` falls back to label hue instead.
+- **`<span fg={…}>` silently ignored; spans need `<span style={{ fg }}>`.**
+  opentui types span props as `{}`, so cast makes wrong form compile, run then
+  inherits no colour — whole panel plain white. Colours per segment (bold label,
+  toned value), `test/sidebar-render.test.tsx` renders panel through
+  `@opentui/solid`'s `testRender`, asserts captured frame's spans — guard
+  catching both mistakes.
+- **Lighter shade of same hue not a distinction.** `#68d0dd` against `#56b6c2`
+  reads identical in practice; headline/emphasis colours need different hue, not
+  neighbouring step.
+- **`cmduse -1 --json` carries billing-period bounds since 0.7.2**
+  (`periodStartAt` / `periodEndAt`, epoch ms — same units as `resetAt`).
+  `periodEnd` stays display date. Before that sidebar could not render monthly
+  window's resets countdown or elapsed share: `periodEnd` = date no start,
+  inventing one = exactly what cmduse anniversary inference is opt-in about.
+  Plugin mirrors `monthly_window` (`core/src/lib.rs`) for that row, shows spend
+  alone when fields missing (older cmduse). Plugin honours `CMDUSE_BIN` first,
+  like `mpc`, so dev build pointable without touching brew Cellar (its binaries
   read-only).
-- **Publish the npm package with `npm stage publish` + `npm stage approve`, never
-  a bare `npm publish`.** Bare `npm publish` is broken for this package on npm's
-  current account policy: it answers `202`/exit 0 and then leaves a ghost version
-  slot — absent from the packument (`npm view time` stops at the last good
-  version) and from `npm stage list`, and impossible to clear (a retry dies on
-  `E409 Cannot publish over previously staged version`, and staging it says
-  "Cannot stage previously published version"). That is npm/cli#9889; it burned
-  0.3.16 and 0.3.17. The trigger is the bypass-2FA token migration (npm's own
-  notice: "npm tokens that bypass 2FA are being restricted for account changes
-  and direct publishing"). Stage instead: `bun run build`, then `npm stage
-  publish` (works from the agent shell, no 2FA), which prints a stage id, then the
-  user runs `npm stage approve <stage-id>` (opens the browser for 2FA). Only
-  `approve` commits the version, so **the version is not live until that step** —
-  verify afterward, never treat a stage or a `202` as published.
-- **Every npm publish/approve step that needs 2FA fails from the agent shell**
-  (`EOTP`, prints an auth URL). Build first (`cd opencode && bun run build`) so
-  `dist/` is current. Never treat an `EOTP` as published — verify with `npm view
+- **Publish npm package with `npm stage publish` + `npm stage approve`, never
+  bare `npm publish`.** Bare `npm publish` broken for this package on npm's
+  current account policy: answers `202`/exit 0 then leaves ghost version slot —
+  absent from packument (`npm view time` stops at last good version) + from
+  `npm stage list`, impossible to clear (retry dies `E409 Cannot publish over
+  previously staged version`, staging it says "Cannot stage previously published
+  version"). That is npm/cli#9889; burned 0.3.16 + 0.3.17. Trigger = bypass-2FA
+  token migration (npm's own notice: "npm tokens that bypass 2FA are being
+  restricted for account changes and direct publishing"). Stage instead: `bun
+  run build`, then `npm stage publish` (works from agent shell, no 2FA), prints
+  stage id, then user runs `npm stage approve <stage-id>` (opens browser for
+  2FA). Only `approve` commits version, so **version not live until that step** —
+  verify afterward, never treat stage or `202` as published.
+- **Every npm publish/approve step needing 2FA fails from agent shell** (`EOTP`,
+  prints auth URL). Build first (`cd opencode && bun run build`) so `dist/`
+  current. Never treat `EOTP` as published — verify `npm view
   @jeffreyjyz/opencode-command-code version`.
-- **Verify a release with `bun scripts/verify-release.ts <version> [--expected <sha1>]`.**
-  It polls the packument and the tarball, reports `latest` / version / tarball
-  status in one line, and (given a local `npm pack` shasum) fails on a mismatch
-  or a tarball that disagrees about its version. Keep it in the release loop
-  rather than eyeballing the registry.
-- **The whole release check is that one command — do not hand-roll a registry
-  poller.** It already packs this checkout when `--expected` is omitted (so the
-  publish-time shasum needs no copy-paste), and polls up to `--tries N`
-  (default 40) at 20s intervals, exiting non-zero until the tarball is really
-  served. Wrapping it in another loop that re-fetches the packument duplicates
-  the checks it exists to own, and the duplicate is what then drifts. The pin
-  flip is the only extra step, and it must wait for this to pass:
-  `(cd opencode && bun scripts/verify-release.ts 0.3.8) && <edit the pin in
+- **Verify release with `bun scripts/verify-release.ts <version> [--expected
+  <sha1>]`.** Polls packument + tarball, reports `latest` / version / tarball
+  status one line, and (given local `npm pack` shasum) fails on mismatch or
+  tarball disagreeing about its version. Keep in release loop, not eyeballing
+  registry.
+- **Whole release check = that one command — do not hand-roll registry poller.**
+  Already packs this checkout when `--expected` omitted (so publish-time shasum
+  needs no copy-paste), polls up to `--tries N` (default 40) at 20s intervals,
+  exits non-zero until tarball really served. Wrapping it in another loop that
+  re-fetches packument duplicates checks it exists to own, duplicate then drifts.
+  Pin flip = only extra step, must wait for this to pass: `(cd opencode && bun
+  scripts/verify-release.ts 0.3.8) && <edit the pin in
   ~/.config/opencode/opencode.json>`.
-- **A successful publish is asynchronous, in two visible stages.** The CLI
-  returns `PUT 202` ("Your package is being processed") and exit 0 immediately,
-  but the registry updates the **packument** (so `dist-tags.latest` and
-  `versions[<v>]` appear) about a minute later, and serves the **tarball** at
-  `…/-/opencode-command-code-<v>.tgz` several minutes after that — measured on
-  this package: 0.2.7 ~4.5 min, 0.2.8 ~4.5 min, 0.2.11 ~5 min, 0.3.0 ~5 min.
-  During the gap, `latest` already points at the new version while its tarball
-  still 404s, so a consumer that resolves `@latest` in that window installs
-  nothing (this is what burned 0.2.4). Verify in this order: packument shows the
-  version → poll the tarball URL until 200 → compare
-  `shasum -a 1` against a local `npm pack` → only then restart opencode.
-- After publishing a plugin version, opencode may keep resolving the previous
-  one: its per-package install cache (`~/.cache/opencode/npm/<pkg>@latest/`) is
-  built from a **cached npm packument**, which can lag the registry for
-  minutes. Bump steps: `npm cache clean --force`, `rm -rf
+- **Successful publish asynchronous, two visible stages.** CLI returns `PUT 202`
+  ("Your package is being processed") + exit 0 immediately, but registry updates
+  **packument** (so `dist-tags.latest` + `versions[<v>]` appear) ~a minute later,
+  serves **tarball** at `…/-/opencode-command-code-<v>.tgz` several minutes
+  after — measured on this package: 0.2.7 ~4.5 min, 0.2.8 ~4.5 min, 0.2.11
+  ~5 min, 0.3.0 ~5 min. During gap `latest` already points at new version while
+  its tarball still 404s, so consumer resolving `@latest` in that window installs
+  nothing (this burned 0.2.4). Verify order: packument shows version → poll
+  tarball URL until 200 → compare `shasum -a 1` against local `npm pack` → only
+  then restart opencode.
+- After publishing plugin version, opencode may keep resolving previous:
+  per-package install cache (`~/.cache/opencode/npm/<pkg>@latest/`) built from
+  **cached npm packument**, can lag registry minutes. Bump steps: `npm cache
+  clean --force`, `rm -rf
   ~/.cache/opencode/npm/@jeffreyjyz/opencode-command-code@latest`, then
-  `opencode service restart` and confirm the version in `opencode plugin list`.
-  (`npm install --prefer-online` proves the registry has the new version.)
-  Temporary workaround if the cache is stubborn: pin the specifier to the exact
-  version in the user's `plugins` array.
+  `opencode service restart`, confirm version in `opencode plugin list`. (`npm
+  install --prefer-online` proves registry has new version.) Temporary workaround
+  if cache stubborn: pin specifier to exact version in user's `plugins` array.
 
 ## Learned-the-hard-way
 
-**ocuse exists because OpenCode has no usage API.** `https://opencode.ai/zen/go/v1/usage`
-is real but entitlement-gated (a key without a Go subscription gets `EntitlementError`), and
-`/zen/v1/usage` 404s; the console is the only place usage is shown. So `ocuse` reads
-`opencode.db` (provider ids `opencode-go` and `opencode`) — which carries real `cost` per
-request for both — and takes limits/rates from `core/zen.json`, generated by
-`scripts/extract-zen.ts` from the docs **mdx sources** (`raw.githubusercontent.com/.../go.mdx`
-and `zen.mdx`), because the rendered pages are HTML. Don't re-derive the docs by parsing HTML.
+**ocuse exists because OpenCode has no usage API.** `https://opencode.ai/zen/go/v1/usage` real but
+entitlement-gated (key without Go subscription gets `EntitlementError`), `/zen/v1/usage` 404s;
+console only place usage shown. So `ocuse` reads `opencode.db` (provider ids `opencode-go` +
+`opencode`) — carries real `cost` per request for both — and takes limits/rates from
+`core/zen.json`, generated by `scripts/extract-zen.ts` from docs **mdx sources**
+(`raw.githubusercontent.com/.../go.mdx` + `zen.mdx`), because rendered pages are HTML. Don't
+re-derive docs by parsing HTML.
 
 Traps found while building it, all worth remembering:
 
-- **Read `session_message` on an upgraded opencode.** v2 stopped appending to `message` at the
-  migration, so a `message`-only reader reports zero for every recent session — the same trap the
-  plugin hit in 0.3.13, and `ocuse` shared it until `db.rs` was taught to detect the table and read
-  `type = 'assistant'` with `data.model.{id,providerID}` (an in-flight turn carries no `tokens` and
-  is skipped). `message` stays as the fallback for an old store.
-- **Do not infer the billing anniversary from the oldest row by default.** Nothing local
-  records the renewal date, and the oldest row is usually mid-cycle: on real data (usage
-  2026-07-10 → 08-24, quiet afterwards) it inferred a September cycle and reported 4 requests
-  instead of 3.8K. The default is the calendar month; `--period-start` pins the truth and
-  `--infer-anniversary` keeps the heuristic opt-in.
-- **Skip flag values when finding the command** (`--window all daily`): a naive
-  "first non-flag argument" reads `all` as the command.
-- **`ocuse --json` must leave the watch loop.** The JSON branch lives in the catch-all arm while
-  an absent command word resolves to `watch`, so bare `--json` printed a live frame and never
-  exited; `wants_live_watch` excludes `--json` / `--once` / `-1`.
+- **Read `session_message` on upgraded opencode.** v2 stopped appending to `message` at
+  migration, so `message`-only reader reports zero for every recent session — same trap plugin
+  hit in 0.3.13, `ocuse` shared it until `db.rs` taught to detect table, read `type = 'assistant'`
+  with `data.model.{id,providerID}` (in-flight turn carries no `tokens`, skipped). `message` stays
+  fallback for old store.
+- **Do not infer billing anniversary from oldest row by default.** Nothing local records renewal
+  date, oldest row usually mid-cycle: on real data (usage 2026-07-10 → 08-24, quiet afterwards)
+  inferred September cycle, reported 4 requests instead of 3.8K. Default = calendar month;
+  `--period-start` pins truth, `--infer-anniversary` keeps heuristic opt-in.
+- **Skip flag values when finding command** (`--window all daily`): naive "first non-flag
+  argument" reads `all` as command.
+- **`ocuse --json` must leave watch loop.** JSON branch lives in catch-all arm while absent
+  command word resolves to `watch`, so bare `--json` printed live frame, never exited;
+  `wants_live_watch` excludes `--json` / `--once` / `-1`.
 
-The sidebar's TUI bundle must be compiled with `@opentui/solid`'s solid transform
-(`scripts/build-tui.ts`), not plain `bun build`: a plain JSX emit evaluates props at
-element-creation time, so the panel freezes at mount and never repaints when the session model
-changes. `@opentui/*` and `solid-js` stay external and the slice stays one bundle because both
-TUI hosts rewrite the entry's imports to their own module instances.
+Sidebar TUI bundle must be compiled with `@opentui/solid`'s solid transform
+(`scripts/build-tui.ts`), not plain `bun build`: plain JSX emit evaluates props at
+element-creation time, so panel freezes at mount, never repaints when session model changes.
+`@opentui/*` + `solid-js` stay external, slice stays one bundle because both TUI hosts rewrite
+entry's imports to their own module instances.
 
-**Percentages carry one decimal, everywhere.** `used/cap` and window elapsed are
-multiply-rounded (`(x*10).round()/10`) in `core::pct` / `core::elapsed_pct` and
-in the TS ports (`windows.ts`, `rows.ts`, `zen.ts`) so both languages agree at
-`.x5` — `format!("{:.1}")` alone is half-to-even and drifts. The shared
-`pct` / `elapsedPct` vectors in `core/conformance.json` pin the format ("12.5%",
-50.0) and must be updated with any change here. Only two percent-ish readings
-stay whole: the success rate on the dashboard, and the sidebar's sub-0.1%
-elapsed label ("<0.1%", not "0.0%", so a just-started window is distinguishable).
+**Percentages carry one decimal, everywhere.** `used/cap` + window elapsed multiply-rounded
+(`(x*10).round()/10`) in `core::pct` / `core::elapsed_pct` and TS ports (`windows.ts`, `rows.ts`,
+`zen.ts`) so both languages agree at `.x5` — `format!("{:.1}")` alone half-to-even, drifts. Shared
+`pct` / `elapsedPct` vectors in `core/conformance.json` pin format ("12.5%", 50.0), must be
+updated with any change here. Only two percent-ish readings stay whole: success rate on dashboard,
+sidebar's sub-0.1% elapsed label ("<0.1%", not "0.0%", so just-started window distinguishable).
 
-Release-workflow traps, both learned on the first tag: the verify job has **no
-checkout**, so `gh` needs `-R "$GITHUB_REPOSITORY"` (otherwise: `failed to run
-git: fatal: not a git repository`), and `sha256sum ./*.tar.gz` records
-`./`-prefixed names, which `sha256sum -c` cannot resolve after a plain download —
-strip the prefix when generating `SHA256SUMS`. A verify job runs in a context
-unlike the workstation that wrote the workflow, which is exactly why it exists.
+Release-workflow traps, both learned on first tag: verify job **no checkout**, so `gh` needs
+`-R "$GITHUB_REPOSITORY"` (otherwise `failed to run git: fatal: not a git repository`), and
+`sha256sum ./*.tar.gz` records `./`-prefixed names, which `sha256sum -c` cannot resolve after
+plain download — strip prefix when generating `SHA256SUMS`. Verify job runs in context unlike
+workstation that wrote workflow, exactly why it exists.
 
-A third (the annotations that drown the release log): the workflow's action pins
-drift behind their node24 majors — `checkout@v7`, `upload-artifact@v7`,
-`download-artifact@v8` are current while the workflow shipped v5s, and each
-deprecation line repeats once per job. Look the majors up
-(`gh api repos/<owner>/<repo>/releases/latest -q .tag_name`) rather than guessing;
-`goto-bus-stop/setup-zig` has no newer major (v2.2.1 is current), so its node20
-warning is expected and stays. Two of those annotations are noise, not faults:
-`Failed to save/restore: Cache service responded with 400` on the musl jobs is
-GitHub-side (rust-cache; the job still passes) and the macOS arm64 capacity line
-is a runner queue note. Exercise both workflows after such a bump — CI fires on
-the push and `workflow_dispatch` on release.yml dry-runs the matrix (done for the
-v7/v8 bump: both green, no release created).
+A third (annotations that drown release log): workflow's action pins drift behind their node24
+majors — `checkout@v7`, `upload-artifact@v7`, `download-artifact@v8` current while workflow
+shipped v5s, each deprecation line repeats once per job. Look majors up (`gh api
+repos/<owner>/<repo>/releases/latest -q .tag_name`) rather than guessing;
+`goto-bus-stop/setup-zig` has no newer major (v2.2.1 current), so its node20 warning expected,
+stays. Two of those annotations noise not faults: `Failed to save/restore: Cache service responded
+with 400` on musl jobs is GitHub-side (rust-cache; job still passes), macOS arm64 capacity line is
+runner queue note. Exercise both workflows after such a bump — CI fires on push,
+`workflow_dispatch` on release.yml dry-runs matrix (done for v7/v8 bump: both green, no release
+created).
 
-API endpoints, cumulative-diff reports, TLS retry, watch-mode redraw rules
-(frame's last line has NO trailing newline; frame-shrink = `\x1b[1B` +
-`\x1b[2K\x1b[1B` + `\x1b[2K` + `\x1b[{prev-n}F`; test redraw bytes via
-cli/src/main_tests.rs). **ocuse's watch shares that contract, not a copy of it:**
-`cli/src/bin/ocuse.rs` calls the same `redraw_frame` / `clip_to_width` / `term_size`
-(`pub` in lib.rs), its frame ends on its own status/countdown line, and
-`ocuse/render.rs`'s `watch_frame` adds the burst sparkline from 5-hour spend
-deltas (10s samples, 60 cap). Gauges/palette come from `cli/src/render.rs`
-(`bar`, `color_for`, the SGR consts) — never re-declare them in `ocuse/`.
-**Every `ocuse` renderer takes a `colour` flag, and that is the bug that shipped in
-0.7.3:** only `render_text` ever got one, so `ocuse daily|hourly|session|plans|model`
-and `statusline` printed plain on a tty. `every_renderer_respects_the_colour_flag`
-in `ocuse/render.rs` now asserts, per renderer, that `colour=false` leaks no escapes
-and `colour=true` colours something — add a case when you add a renderer. `Ink`
-helpers (`dim_on` / `cyan_on` / `bold_on`) are no-ops when colour is off, so plain
-output stays byte-identical by construction. Two row-level additions follow cmduse's
-"actionable before informational" ordering (`render.rs`'s own comment): a model over
-any of its windows carries `LIMIT EXCEEDED` beside its name (early, survives
-clipping), and its share of period spend rides at the end (clipped first). Go meters
-per model *and* per window, so the 5-hour cap counts the same as the month.
-MCP: hand-rolled stdio JSON-RPC (newline-delimited);
-notifications (no `id`) get NO response; tool errors are `isError: true`
-results, never JSON-RPC errors; stdout is protocol-only — anything printed by
-a tool body would corrupt the stream, so tool text goes through the result
-envelope. `--tz` offsets are **east-positive seconds** (`parse_tz("+05:30")=+19800`),
-matching `tz_offset_suffix`; local = UTC + tz. All day/hour bucketing must use
-that sign — a flipped `now - tz` silently shifts every local bucket (fixed in
-0.6.2; the sign tests now live in `core/src/reports.rs`, together with the
-bucketing they guard). `--tz` reaches the `--local` log path too (daily +
-hourly), not just the account API. `daily`/`hourly` must thread their `Fmt`: both helpers once
-hardcoded `Fmt::Table`, so `--json`/`--csv` silently printed a table (the format was parsed and
-validated, then ignored) — they now take the same `output_fmt(&args)` value `model`/`session` use.
-`recent_days` must stay **oldest-first**: it feeds `daily_from_cumulative`, whose
-`bucket[i] = cums[i] - cums[i+1]` needs ascending labels; newest-first made every difference
-negative, clamp to zero, and the empty-bucket drop hid it, so the window's whole total appeared on
-its oldest day (`hour_bounds` already `.rev()`s for the same reason; `core/src/reports.rs` pins it
-with a test). Report output goes through `render::color_enabled()`
-(NO_COLOR + stdout tty); never emit raw SGR when piped. Route exact local hour boundaries through `dates::iso_instant` — do NOT
-floor to a UTC hour, that breaks minute-bearing offsets like +05:30.
-`pace_eta` returns **seconds** (a duration); format it with `core::duration`,
-never `rel_time` — the latter expects an absolute reset epoch and renders any
-small duration as "resetting…" (bug shipped in cli + zed until 0.6.2 — zed
-since deleted — and again
-in the CLI statusline's `{5h_eta}`/`{wk_eta}` until 0.6.7). Any ETA text goes
-through `duration`.
+API endpoints, cumulative-diff reports, TLS retry, watch-mode redraw rules (frame's last line NO
+trailing newline; frame-shrink = `\x1b[1B` + `\x1b[2K\x1b[1B` + `\x1b[2K` + `\x1b[{prev-n}F`;
+test redraw bytes via cli/src/main_tests.rs). **ocuse's watch shares that contract, not a copy:**
+`cli/src/bin/ocuse.rs` calls same `redraw_frame` / `clip_to_width` / `term_size` (`pub` in
+lib.rs), its frame ends on own status/countdown line, `ocuse/render.rs`'s `watch_frame` adds burst
+sparkline from 5-hour spend deltas (10s samples, 60 cap). Gauges/palette from `cli/src/render.rs`
+(`bar`, `color_for`, SGR consts) — never re-declare in `ocuse/`. **Every `ocuse` renderer takes
+`colour` flag, and that is bug shipped in 0.7.3:** only `render_text` ever got one, so `ocuse
+daily|hourly|session|plans|model` + `statusline` printed plain on tty.
+`every_renderer_respects_the_colour_flag` in `ocuse/render.rs` now asserts, per renderer,
+`colour=false` leaks no escapes, `colour=true` colours something — add case when adding renderer.
+`Ink` helpers (`dim_on` / `cyan_on` / `bold_on`) no-ops when colour off, so plain output
+byte-identical by construction. Two row-level additions follow cmduse's "actionable before
+informational" ordering (`render.rs`'s own comment): model over any of its windows carries `LIMIT
+EXCEEDED` beside its name (early, survives clipping), its share of period spend rides at end
+(clipped first). Go meters per model *and* per window, so 5-hour cap counts same as month. MCP:
+hand-rolled stdio JSON-RPC (newline-delimited); notifications (no `id`) get NO response; tool
+errors `isError: true` results, never JSON-RPC errors; stdout protocol-only — anything printed by
+tool body corrupts stream, so tool text goes through result envelope. `--tz` offsets
+**east-positive seconds** (`parse_tz("+05:30")=+19800`), matching `tz_offset_suffix`; local = UTC
++ tz. All day/hour bucketing must use that sign — flipped `now - tz` silently shifts every local
+bucket (fixed 0.6.2; sign tests now in `core/src/reports.rs`, together with bucketing they guard).
+`--tz` reaches `--local` log path too (daily + hourly), not just account API. `daily`/`hourly` must
+thread their `Fmt`: both helpers once hardcoded `Fmt::Table`, so `--json`/`--csv` silently printed
+table (format parsed, validated, then ignored) — now take same `output_fmt(&args)` value
+`model`/`session` use. `recent_days` must stay **oldest-first**: feeds `daily_from_cumulative`,
+whose `bucket[i] = cums[i] - cums[i+1]` needs ascending labels; newest-first made every difference
+negative, clamp to zero, empty-bucket drop hid it, so window's whole total appeared on its oldest
+day (`hour_bounds` already `.rev()`s for same reason; `core/src/reports.rs` pins it with test).
+Report output goes through `render::color_enabled()` (NO_COLOR + stdout tty); never emit raw SGR
+when piped. Route exact local hour boundaries through `dates::iso_instant` — do NOT floor to UTC
+hour, breaks minute-bearing offsets like +05:30. `pace_eta` returns **seconds** (duration); format
+with `core::duration`, never `rel_time` — latter expects absolute reset epoch, renders any small
+duration as "resetting…" (bug shipped in cli + zed until 0.6.2 — zed since deleted — and again in
+CLI statusline's `{5h_eta}`/`{wk_eta}` until 0.6.7). Any ETA text goes through `duration`.
 
-`money` rounds to cents with explicit multiply-round (`(v*100).round()/100`),
-not `{:.2}`/`toFixed`: the two formats disagree at `.x5` ties (`0.125` →
-half-even `$0.12` vs half-away `$0.13`; `2.675*100` rounds up to `267.5`, so
-naive multiply gives `$2.68`). Both ports use the same multiply-round so the
-conformance vectors pin them.
+`money` rounds to cents with explicit multiply-round (`(v*100).round()/100`), not
+`{:.2}`/`toFixed`: two formats disagree at `.x5` ties (`0.125` → half-even `$0.12` vs half-away
+`$0.13`; `2.675*100` rounds up to `267.5`, so naive multiply gives `$2.68`). Both ports use same
+multiply-round so conformance vectors pin them.
 
-`--tz` account daily builds each `?since=` value as a UTC `Z` instant via
-`dates::iso_instant`; never interpolate an offset suffix — `+` decodes as a
-space server-side and silently corrupts the timestamp (fixed 0.6.7).
+`--tz` account daily builds each `?since=` value as UTC `Z` instant via `dates::iso_instant`;
+never interpolate offset suffix — `+` decodes as space server-side, silently corrupts timestamp
+(fixed 0.6.7).
 
-`gate`/`evaluateModelAccess` strip the provider qualifier with `bare_model`
-*before* canonicalizing the incoming model, so a provider-qualified input
-(`anthropic:claude-opus-5`) can't miss the category table and bypass
-`hardBlocked`.
+`gate`/`evaluateModelAccess` strip provider qualifier with `bare_model` *before* canonicalizing
+incoming model, so provider-qualified input (`anthropic:claude-opus-5`) can't miss category table,
+bypass `hardBlocked`.
 
-The update notice is drawn **inside** the watch frame (`render::update_box`),
-never via mid-frame `eprintln`; `-1` sends it to stderr. The crates.io check is
-cached 24h (`~/.cache/cmd-usage/last-check`, JSON `{checkedAt, latest}`) and the
-cached version replays every run until upgraded. Gate it with
+Update notice drawn **inside** watch frame (`render::update_box`), never via mid-frame
+`eprintln`; `-1` sends it to stderr. crates.io check cached 24h (`~/.cache/cmd-usage/last-check`,
+JSON `{checkedAt, latest}`), cached version replays every run until upgraded. Gate with
 `check_updates=false` or `--dismiss-update` / `dismissed_update=<ver>`.
