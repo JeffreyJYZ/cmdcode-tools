@@ -94,7 +94,9 @@ async function packLocalSha256(version: string): Promise<string | undefined> {
 		join(REPO, "target", "package", `${PKG}-${version}.crate`),
 	);
 	if (!(await file.exists())) {
-		console.error(`no crate at ${file.name} — is the manifest at ${version}?`);
+		console.error(
+			`no crate at ${file.name} — is the manifest at ${version}?`,
+		);
 		return undefined;
 	}
 	return sha256Hex(new Uint8Array(await file.arrayBuffer()));
@@ -120,7 +122,9 @@ async function main(): Promise<number> {
 	}
 	const expected =
 		value("--expected") ??
-		(args.includes("--no-pack") ? undefined : await packLocalSha256(version));
+		(args.includes("--no-pack")
+			? undefined
+			: await packLocalSha256(version));
 	if (expected) console.log(`expected sha256: ${expected}`);
 	const tries = Number(value("--tries") ?? 40);
 
@@ -148,7 +152,9 @@ async function main(): Promise<number> {
 		const response = await fetch(facts.tarballUrl).catch(() => undefined);
 		const status = response?.status ?? 0;
 		if (facts.versionPresent && status === 200 && response) {
-			const sha256 = sha256Hex(new Uint8Array(await response.arrayBuffer()));
+			const sha256 = sha256Hex(
+				new Uint8Array(await response.arrayBuffer()),
+			);
 			console.log(verdict(version, facts, status, sha256, expected));
 			if (expected && sha256 !== expected) {
 				console.error(

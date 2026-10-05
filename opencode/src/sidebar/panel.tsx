@@ -30,7 +30,10 @@ export interface HostTheme {
 		readonly base: RGBA;
 		readonly muted: RGBA;
 		readonly feedback: Readonly<
-			Record<"success" | "warning" | "error" | "info", { readonly base: RGBA }>
+			Record<
+				"success" | "warning" | "error" | "info",
+				{ readonly base: RGBA }
+			>
 		>;
 	};
 	readonly hue?: {

@@ -91,7 +91,10 @@ export async function subscriptions(key: string): Promise<SubData> {
 }
 
 export async function credits(key: string): Promise<Credits> {
-	const r = (await getJson("/alpha/billing/credits", key)) as Partial<Credits>;
+	const r = (await getJson(
+		"/alpha/billing/credits",
+		key,
+	)) as Partial<Credits>;
 	return {
 		credits: {
 			monthlyCredits: r.credits?.monthlyCredits ?? 0,

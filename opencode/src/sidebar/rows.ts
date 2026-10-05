@@ -320,7 +320,11 @@ export function modelRows(
 		// turn's row landing and the session total catching up the numerator can
 		// lead, which flashed "105% of session" then settled to 100%. A part of a
 		// whole never reads over the whole: clamp it.
-		rows.push(["Usage (this model)", `${count(usage.requests)} req`, "base"]);
+		rows.push([
+			"Usage (this model)",
+			`${count(usage.requests)} req`,
+			"base",
+		]);
 		const spend = usage.cost > 0 ? money(usage.cost) : "";
 		const share =
 			usage.cost > 0 && session && session.cost > 0
@@ -331,7 +335,11 @@ export function modelRows(
 	}
 	if (session) {
 		const spent = session.cost > 0 ? ` · ${money(session.cost)}` : "";
-		rows.push(["Session", `${count(session.requests)} req${spent}`, "base"]);
+		rows.push([
+			"Session",
+			`${count(session.requests)} req${spent}`,
+			"base",
+		]);
 	}
 	// Everything below is catalog data; without it the block is just the model
 	// and its local figures.

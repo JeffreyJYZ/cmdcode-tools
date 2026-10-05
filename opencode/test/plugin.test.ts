@@ -33,7 +33,9 @@ describe("canonicalizeModelId", () => {
 		);
 	});
 	test("unknown passes through", () => {
-		expect(canonicalizeModelId("totally-new-model")).toBe("totally-new-model");
+		expect(canonicalizeModelId("totally-new-model")).toBe(
+			"totally-new-model",
+		);
 	});
 });
 
@@ -44,7 +46,9 @@ describe("gating tables match CLI", () => {
 		expect(rules?.blockedModels).toContain(
 			"vercel-ai-gateway:meta/muse-spark-1.2",
 		);
-		expect(rules?.blockedModels).toContain("vercel-ai-gateway:xai/grok-4.6");
+		expect(rules?.blockedModels).toContain(
+			"vercel-ai-gateway:xai/grok-4.6",
+		);
 	});
 	test("pro blocks opus + fable, allows sonnet", () => {
 		const rules = PLAN_RULES["individual-pro"];
@@ -53,21 +57,25 @@ describe("gating tables match CLI", () => {
 	});
 	test("categories", () => {
 		expect(MODEL_CATEGORIES["claude-sonnet-5"]).toBe("premium");
-		expect(MODEL_CATEGORIES["deepseek/deepseek-v4-flash"]).toBe("opensource");
+		expect(MODEL_CATEGORIES["deepseek/deepseek-v4-flash"]).toBe(
+			"opensource",
+		);
 	});
 });
 
 describe("evaluateModelAccess (edges beyond conformance vectors)", () => {
 	test("newer sibling of premium model inherits premium (claude-fable-5-1)", () => {
-		expect(evaluateModelAccess("claude-fable-5-1", goat).allowed).toBe(false);
+		expect(evaluateModelAccess("claude-fable-5-1", goat).allowed).toBe(
+			false,
+		);
 	});
 	test("version-bumped id with no prefix sibling defaults to allow (API enforces)", () => {
 		expect(evaluateModelAccess("claude-sonnet-6", goat).allowed).toBe(true);
 	});
 	test("unprefixed unknown model on gated plan defaults opensource", () => {
-		expect(evaluateModelAccess("newvendor/new-open-model", goat).allowed).toBe(
-			true,
-		);
+		expect(
+			evaluateModelAccess("newvendor/new-open-model", goat).allowed,
+		).toBe(true);
 	});
 	test("empirically hard-blocked model on GOAT (API 403 MODEL_NOT_IN_PLAN)", () => {
 		expect(evaluateModelAccess("meta/muse-spark-1.1", goat).allowed).toBe(

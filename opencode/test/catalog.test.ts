@@ -98,8 +98,14 @@ describe("text-only denylist (1.65+ modality default)", () => {
 
 describe("mergeCatalog", () => {
 	test("joins pricing with modalities, defaulting to text", () => {
-		const catalog = mergeCatalog(parseModelsMd(MD), parseModalities(BUNDLE));
-		expect(catalog["claude-sonnet-5"]?.modalities).toEqual(["text", "image"]);
+		const catalog = mergeCatalog(
+			parseModelsMd(MD),
+			parseModalities(BUNDLE),
+		);
+		expect(catalog["claude-sonnet-5"]?.modalities).toEqual([
+			"text",
+			"image",
+		]);
 		expect(catalog["deepseek/x"]?.modalities).toEqual(["text"]);
 	});
 });
@@ -111,7 +117,9 @@ describe("generated catalog", () => {
 	});
 	test("flags vision, prices and reasoning from the table", () => {
 		expect(supportsImage("claude-sonnet-5")).toBe(true);
-		expect(supportsImage("deepseek/deepseek-v4-flash-vision-exp")).toBe(true);
+		expect(supportsImage("deepseek/deepseek-v4-flash-vision-exp")).toBe(
+			true,
+		);
 		expect(inputModalities("definitely/not-a-model")).toEqual(["text"]);
 		expect(modelCost("deepseek/deepseek-v4.1-flash")).toEqual({
 			input: 0.15,
@@ -133,7 +141,11 @@ describe("v2 model capabilities", () => {
 	};
 	test("advertises image input for a vision model", () => {
 		const info = toV2Model(
-			{ id: "claude-sonnet-5", name: "Claude Sonnet 5", contextLength: 1e6 },
+			{
+				id: "claude-sonnet-5",
+				name: "Claude Sonnet 5",
+				contextLength: 1e6,
+			},
 			lane,
 		) as {
 			capabilities: { input: string[] };

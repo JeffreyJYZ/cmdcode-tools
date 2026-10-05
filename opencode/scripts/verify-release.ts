@@ -123,7 +123,9 @@ async function main(): Promise<number> {
 	// Default: pack this checkout and compare — the publish-time shasum, no copy-paste.
 	const expected =
 		suppliedExpected ??
-		(args.includes("--no-pack") ? undefined : await packLocalShasum(pkgDir));
+		(args.includes("--no-pack")
+			? undefined
+			: await packLocalShasum(pkgDir));
 	if (expected)
 		console.log(
 			`expected sha1: ${expected}${suppliedExpected ? " (supplied)" : " (local npm pack)"}`,
@@ -173,7 +175,9 @@ async function versionFromTarball(
 	bytes: ArrayBuffer,
 ): Promise<string | undefined> {
 	try {
-		const { mkdtemp, writeFile, readFile } = await import("node:fs/promises");
+		const { mkdtemp, writeFile, readFile } = await import(
+			"node:fs/promises"
+		);
 		const { tmpdir } = await import("node:os");
 		const { join } = await import("node:path");
 		const dir = await mkdtemp(join(tmpdir(), "verify-release-"));

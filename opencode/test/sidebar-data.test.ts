@@ -158,7 +158,11 @@ test("parseMpcJson keeps the mpc key and a local key for lookup", () => {
 					name: "Tencent Hy3",
 					cc: {
 						allowance: 70,
-						pricing: { input: 0.14, output: 0.58, cacheRead: 0.035 },
+						pricing: {
+							input: 0.14,
+							output: 0.58,
+							cacheRead: 0.035,
+						},
 					},
 				},
 			],
@@ -217,16 +221,24 @@ describe("loadModelUsage", () => {
 	test("sums the window for one model only", () => {
 		const path = fixtureDb();
 		const week = Date.now() - 7 * 86_400_000;
-		expect(loadModelUsage("deepseek/deepseek-v4.1-flash", week, path)).toEqual({
+		expect(
+			loadModelUsage("deepseek/deepseek-v4.1-flash", week, path),
+		).toEqual({
 			requests: 2,
 			cost: 1.75,
 		});
 		// the vendored id and the bare one share a canonical key
-		expect(loadModelUsage("deepseek-v4.1-flash", week, path)?.requests).toBe(2);
+		expect(
+			loadModelUsage("deepseek-v4.1-flash", week, path)?.requests,
+		).toBe(2);
 	});
 	test("returns null without a store", () => {
 		expect(
-			loadModelUsage("deepseek/deepseek-v4.1-flash", 0, "/nope/missing.db"),
+			loadModelUsage(
+				"deepseek/deepseek-v4.1-flash",
+				0,
+				"/nope/missing.db",
+			),
 		).toBeNull();
 	});
 });
@@ -279,7 +291,10 @@ describe("loadSessionUsage", () => {
 			requests: 2,
 			cost: 1.75,
 		});
-		expect(loadSessionUsage("ses_b", path)).toEqual({ requests: 1, cost: 9 });
+		expect(loadSessionUsage("ses_b", path)).toEqual({
+			requests: 1,
+			cost: 9,
+		});
 	});
 
 	test("returns null without a store", () => {
@@ -345,7 +360,10 @@ describe("v2 store (session_message + session_v2)", () => {
 			requests: 4,
 			cost: 3.5,
 		});
-		expect(loadSessionUsage("ses_b", v2Db())).toEqual({ requests: 1, cost: 0 });
+		expect(loadSessionUsage("ses_b", v2Db())).toEqual({
+			requests: 1,
+			cost: 0,
+		});
 	});
 
 	test("per-model requests match on the canonical key, period-wide", () => {
@@ -357,7 +375,8 @@ describe("v2 store (session_message + session_v2)", () => {
 		});
 		// The 40-day-old turn is outside the window.
 		expect(
-			loadModelUsage("deepseek/deepseek-v4.1-flash", day, v2Db())?.requests,
+			loadModelUsage("deepseek/deepseek-v4.1-flash", day, v2Db())
+				?.requests,
 		).toBe(3);
 		expect(loadModelUsage("kimi-k2.7", day, v2Db())?.requests).toBe(1);
 	});
@@ -367,10 +386,12 @@ describe("v2 store (session_message + session_v2)", () => {
 		// this conversation, so the two figures are comparable. A session scope
 		// ignores the period, including the 40-day-old turn.
 		const path = v2Db();
-		expect(loadModelUsage("deepseek-v4.1-flash", 0, path, "ses_a")).toEqual({
-			requests: 3,
-			cost: 0,
-		});
+		expect(loadModelUsage("deepseek-v4.1-flash", 0, path, "ses_a")).toEqual(
+			{
+				requests: 3,
+				cost: 0,
+			},
+		);
 		expect(loadModelUsage("kimi-k2.7", 0, path, "ses_a")?.requests).toBe(1);
 		expect(
 			loadModelUsage("deepseek-v4.1-flash", 0, path, "ses_b")?.requests,
@@ -383,7 +404,10 @@ describe("periodStart", () => {
 	test("uses the published period start when cmduse sends one", () => {
 		const startAt = Date.UTC(2026, 7, 27, 12, 23);
 		expect(
-			periodStart({ periodStartAt: startAt, periodEnd: "2026-09-27" }, now),
+			periodStart(
+				{ periodStartAt: startAt, periodEnd: "2026-09-27" },
+				now,
+			),
 		).toBe(startAt);
 	});
 	test("takes the period end one calendar month back without one", () => {

@@ -49,7 +49,9 @@ describe("toV2Model", () => {
 			{ id: "deepseek/deepseek-v4-flash", name: "DS", contextLength: 1 },
 			openLane,
 		) as Record<string, unknown>;
-		expect(m.compatibility).toEqual({ reasoningField: "reasoning_content" });
+		expect(m.compatibility).toEqual({
+			reasoningField: "reasoning_content",
+		});
 	});
 	test("claude lane has no compatibility block", () => {
 		const m = toV2Model(
@@ -120,7 +122,9 @@ describe("staticSeedModels", () => {
 		const claude = seed["command-code-anthropic"] as Array<
 			Record<string, unknown>
 		>;
-		const open = seed["command-code-openai"] as Array<Record<string, unknown>>;
+		const open = seed["command-code-openai"] as Array<
+			Record<string, unknown>
+		>;
 		expect(claude.length + open.length).toBe(KNOWN_MODELS.length);
 		for (const m of claude) expect(isClaude(m.id as string)).toBe(true);
 		for (const m of open) expect(isClaude(m.id as string)).toBe(false);

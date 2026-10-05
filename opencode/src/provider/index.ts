@@ -106,7 +106,8 @@ export function createCommandCode(
 					maxOutputTokens: callOptions.maxOutputTokens,
 					temperature: callOptions.temperature,
 					tools: toolsOf(callOptions),
-					reasoningEffort: effortFrom(callOptions) ?? options.reasoningEffort,
+					reasoningEffort:
+						effortFrom(callOptions) ?? options.reasoningEffort,
 					images: images(modelId),
 				});
 				const response = await doFetch(`${baseURL}${endpoint(lane)}`, {
@@ -136,7 +137,9 @@ export function createCommandCode(
 						const emit = (parts: ReturnType<Reducer["feed"]>) => {
 							for (const part of parts) controller.enqueue(part);
 						};
-						const decode = sseDecoder((event) => emit(reducer.feed(event)));
+						const decode = sseDecoder((event) =>
+							emit(reducer.feed(event)),
+						);
 						try {
 							for (;;) {
 								const { done, value } = await reader.read();
@@ -167,20 +170,32 @@ export function createCommandCode(
 					raw: "unknown",
 				} as unknown as ReturnType<Reducer["feed"]>[number];
 				let usage: LanguageModelV3Usage = {
-					inputTokens: { total: 0, noCache: 0, cacheRead: 0, cacheWrite: 0 },
+					inputTokens: {
+						total: 0,
+						noCache: 0,
+						cacheRead: 0,
+						cacheWrite: 0,
+					},
 					outputTokens: { total: 0, text: 0, reasoning: 0 },
 				};
 				const textOf: Record<string, string> = {};
-				const toolsById = new Map<string, { name: string; input: string }>();
+				const toolsById = new Map<
+					string,
+					{ name: string; input: string }
+				>();
 				for (;;) {
 					const { done, value } = await reader.read();
 					if (done) break;
 					const part = value as Record<string, unknown>;
 					if (part.type === "text-delta")
 						textOf[String(part.id)] =
-							(textOf[String(part.id)] ?? "") + String(part.delta);
+							(textOf[String(part.id)] ?? "") +
+							String(part.delta);
 					else if (part.type === "reasoning-delta") {
-						content.push({ type: "reasoning", text: String(part.delta) });
+						content.push({
+							type: "reasoning",
+							text: String(part.delta),
+						});
 					} else if (part.type === "tool-input-start") {
 						toolsById.set(String(part.id), {
 							name: String(part.toolName),
@@ -205,8 +220,9 @@ export function createCommandCode(
 					content.push({ type: "text", text: value, id });
 				return {
 					content: content as never,
-					finishReason: (finish as unknown as { finishReason?: unknown })
-						.finishReason as never,
+					finishReason: (
+						finish as unknown as { finishReason?: unknown }
+					).finishReason as never,
 					usage,
 					warnings: [],
 				};

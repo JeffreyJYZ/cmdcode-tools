@@ -186,7 +186,8 @@ export async function credentialKey(
 	ctx: CredentialContext,
 ): Promise<string | undefined> {
 	try {
-		const connection = await ctx.integration.connection.active(INTEGRATION_ID);
+		const connection =
+			await ctx.integration.connection.active(INTEGRATION_ID);
 		if (connection) {
 			const credential = (await ctx.integration.connection.resolve(
 				connection,
@@ -233,7 +234,9 @@ export const commandCodeV2: PluginNs.Plugin = {
 		// behaves like the provider seed.
 		await ctx.integration.transform((editor: IntegrationEditor) => {
 			editor.update(INTEGRATION_ID, (integration) => {
-				if (integration.name === (integration.id as unknown as string)) {
+				if (
+					integration.name === (integration.id as unknown as string)
+				) {
 					integration.name = INTEGRATION_NAME;
 				}
 			});
@@ -261,12 +264,16 @@ export const commandCodeV2: PluginNs.Plugin = {
 					event.sdk = createCommandCode(
 						{
 							apiKey:
-								typeof options.apiKey === "string" ? options.apiKey : undefined,
+								typeof options.apiKey === "string"
+									? options.apiKey
+									: undefined,
 							baseURL:
 								typeof options.baseURL === "string"
 									? options.baseURL
 									: PROVIDER_BASE,
-							headers: options.headers as Record<string, string> | undefined,
+							headers: options.headers as
+								| Record<string, string>
+								| undefined,
 						},
 						images,
 					);
@@ -305,7 +312,10 @@ export const commandCodeV2: PluginNs.Plugin = {
 					// A local key is enough to enable now; an integration connection
 					// (looked up below) upgrades the same field when it lands.
 					provider.activation = localKey ? "enabled" : "auto";
-					provider.settings = { ...provider.settings, baseURL: PROVIDER_BASE };
+					provider.settings = {
+						...provider.settings,
+						baseURL: PROVIDER_BASE,
+					};
 					if (localKey && provider.settings.apiKey === undefined) {
 						provider.settings.apiKey = localKey;
 					}
@@ -359,7 +369,8 @@ export const commandCodeV2: PluginNs.Plugin = {
 		try {
 			const connectionStart = Date.now();
 			hasConnection =
-				(await ctx.integration.connection.active(INTEGRATION_ID)) !== undefined;
+				(await ctx.integration.connection.active(INTEGRATION_ID)) !==
+				undefined;
 			connectionMs = Date.now() - connectionStart;
 		} catch {}
 		if (hasConnection) {

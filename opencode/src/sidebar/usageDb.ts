@@ -13,7 +13,8 @@ import { type ModelUsage, modelKey } from "./rows";
 /** opencode's message store: `OPENCODE_DB`, else the XDG data dir. */
 export function usageDbPath(): string {
 	if (process.env.OPENCODE_DB) return process.env.OPENCODE_DB;
-	const base = process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share");
+	const base =
+		process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share");
 	return join(base, "opencode", "opencode.db");
 }
 
@@ -140,7 +141,8 @@ export function loadModelUsage(
 			} catch {
 				continue;
 			}
-			if (data.role !== "assistant" || !data.modelID || !data.tokens) continue;
+			if (data.role !== "assistant" || !data.modelID || !data.tokens)
+				continue;
 			if (modelKey(data.modelID) !== key) continue;
 			const id = `${data.modelID}@${row.time_created}`;
 			if (seen.has(id)) continue; // rows can be rewritten in place

@@ -51,7 +51,11 @@ function resultText(part: LanguageModelV3ToolResultPart): string {
 		(part as { result?: unknown }).result;
 	if (typeof output === "string") return output;
 	if (output && typeof output === "object") {
-		const o = output as { type?: string; value?: unknown; reason?: unknown };
+		const o = output as {
+			type?: string;
+			value?: unknown;
+			reason?: unknown;
+		};
 		if (typeof o.value === "string") return o.value;
 		if (o.value !== undefined) return JSON.stringify(o.value);
 		if (typeof o.reason === "string") return o.reason;
@@ -61,7 +65,11 @@ function resultText(part: LanguageModelV3ToolResultPart): string {
 
 /** `data:<mime>;base64,<b64>` (or a raw URL) for a file part. */
 function imageUrl(part: unknown): string | undefined {
-	const p = part as { data?: unknown; mediaType?: unknown; mimeType?: unknown };
+	const p = part as {
+		data?: unknown;
+		mediaType?: unknown;
+		mimeType?: unknown;
+	};
 	const mime = (p.mediaType ??
 		p.mimeType ??
 		"application/octet-stream") as string;
@@ -83,9 +91,15 @@ function pairedToolCallIds(prompt: LanguageModelV3Prompt): Set<string> {
 		for (const part of message.content as unknown as Array<
 			Record<string, unknown>
 		>) {
-			if (part.type === "tool-call" && typeof part.toolCallId === "string")
+			if (
+				part.type === "tool-call" &&
+				typeof part.toolCallId === "string"
+			)
 				calls.add(part.toolCallId);
-			if (part.type === "tool-result" && typeof part.toolCallId === "string")
+			if (
+				part.type === "tool-result" &&
+				typeof part.toolCallId === "string"
+			)
 				results.add(part.toolCallId);
 		}
 	}
@@ -104,7 +118,8 @@ function anthropicUserContent(content: unknown, images: boolean): unknown {
 	const parts = (content ?? []) as unknown as Array<Record<string, unknown>>;
 	const blocks: unknown[] = [];
 	for (const part of parts) {
-		if (part.type === "text") blocks.push({ type: "text", text: textOf(part) });
+		if (part.type === "text")
+			blocks.push({ type: "text", text: textOf(part) });
 		else if (part.type === "file" && images) {
 			const url = imageUrl(part);
 			if (url?.startsWith("data:")) {
@@ -117,7 +132,10 @@ function anthropicUserContent(content: unknown, images: boolean): unknown {
 		}
 	}
 	// Anthropic accepts a bare string for a single text part; keep that shape.
-	if (blocks.length === 1 && (blocks[0] as { type: string }).type === "text") {
+	if (
+		blocks.length === 1 &&
+		(blocks[0] as { type: string }).type === "text"
+	) {
 		return (blocks[0] as { text: string }).text;
 	}
 	return blocks;
@@ -128,7 +146,8 @@ function openaiUserContent(content: unknown, images: boolean): unknown {
 	const parts = (content ?? []) as unknown as Array<Record<string, unknown>>;
 	const blocks: unknown[] = [];
 	for (const part of parts) {
-		if (part.type === "text") blocks.push({ type: "text", text: textOf(part) });
+		if (part.type === "text")
+			blocks.push({ type: "text", text: textOf(part) });
 		else if (part.type === "file" && images) {
 			const url = imageUrl(part);
 			if (url) blocks.push({ type: "image_url", image_url: { url } });
@@ -177,14 +196,18 @@ export function anthropicBody(
 					});
 				}
 			}
-			if (content.length > 0) messages.push({ role: "assistant", content });
+			if (content.length > 0)
+				messages.push({ role: "assistant", content });
 			continue;
 		}
 		// tool results become user turns of tool_result blocks
 		for (const part of message.content as unknown as Array<
 			Record<string, unknown>
 		>) {
-			if (part.type !== "tool-result" || !paired.has(String(part.toolCallId)))
+			if (
+				part.type !== "tool-result" ||
+				!paired.has(String(part.toolCallId))
+			)
 				continue;
 			messages.push({
 				role: "user",
@@ -210,7 +233,11 @@ export function anthropicBody(
 	// One ephemeral cache breakpoint on the stable system prefix.
 	if (system)
 		body.system = [
-			{ type: "text", text: system, cache_control: { type: "ephemeral" } },
+			{
+				type: "text",
+				text: system,
+				cache_control: { type: "ephemeral" },
+			},
 		];
 	if (options.tools?.length) {
 		body.tools = options.tools.map((t) => ({
@@ -219,8 +246,10 @@ export function anthropicBody(
 			input_schema: t.inputSchema ?? {},
 		}));
 	}
-	if (options.temperature !== undefined) body.temperature = options.temperature;
-	if (options.reasoningEffort) body.reasoning_effort = options.reasoningEffort;
+	if (options.temperature !== undefined)
+		body.temperature = options.temperature;
+	if (options.reasoningEffort)
+		body.reasoning_effort = options.reasoningEffort;
 	return body;
 }
 
@@ -247,7 +276,8 @@ export function openaiBody(
 			const calls = (
 				message.content as unknown as Array<Record<string, unknown>>
 			).filter(
-				(p) => p.type === "tool-call" && paired.has(String(p.toolCallId)),
+				(p) =>
+					p.type === "tool-call" && paired.has(String(p.toolCallId)),
 			);
 			const texts = (
 				message.content as unknown as Array<Record<string, unknown>>
@@ -287,12 +317,17 @@ export function openaiBody(
 		for (const part of message.content as unknown as Array<
 			Record<string, unknown>
 		>) {
-			if (part.type !== "tool-result" || !paired.has(String(part.toolCallId)))
+			if (
+				part.type !== "tool-result" ||
+				!paired.has(String(part.toolCallId))
+			)
 				continue;
 			messages.push({
 				role: "tool",
 				tool_call_id: part.toolCallId,
-				content: resultText(part as unknown as LanguageModelV3ToolResultPart),
+				content: resultText(
+					part as unknown as LanguageModelV3ToolResultPart,
+				),
 			});
 		}
 	}
@@ -312,8 +347,10 @@ export function openaiBody(
 			},
 		}));
 	}
-	if (options.temperature !== undefined) body.temperature = options.temperature;
-	if (options.reasoningEffort) body.reasoning_effort = options.reasoningEffort;
+	if (options.temperature !== undefined)
+		body.temperature = options.temperature;
+	if (options.reasoningEffort)
+		body.reasoning_effort = options.reasoningEffort;
 	body.stream_options = { include_usage: true };
 	return body;
 }

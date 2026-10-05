@@ -108,7 +108,9 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 	setup(ctx) {
 		ctx.ui.slot({
 			append: "sidebar.content",
-			render: (input) => <PanelV2 ctx={ctx} sessionID={input.sessionID} />,
+			render: (input) => (
+				<PanelV2 ctx={ctx} sessionID={input.sessionID} />
+			),
 		});
 		// /cmd-usage prints the full cmduse dashboard in a dialog. keymap.layer()
 		// must run inside a render, so mount a no-op and register from there.
@@ -136,7 +138,9 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 									ctx.ui.toast.show({
 										title: "cmd-usage failed",
 										message:
-											error instanceof Error ? error.message : String(error),
+											error instanceof Error
+												? error.message
+												: String(error),
 										variant: "error",
 									});
 									return;

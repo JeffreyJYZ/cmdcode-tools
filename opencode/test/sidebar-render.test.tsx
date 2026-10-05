@@ -74,7 +74,9 @@ describe("rendered panel", () => {
 		);
 		expect(hex(colors.headline)).not.toBe(hex(colors.label));
 		expect(hex(find("open source")?.fg as RGBA)).toBe(hex(colors.base));
-		expect(hex(find("$57.40 / $70 (82%)")?.fg as RGBA)).toBe(hex(colors.warn));
+		expect(hex(find("$57.40 / $70 (82%)")?.fg as RGBA)).toBe(
+			hex(colors.warn),
+		);
 		expect(hex(colors.label)).not.toBe(hex(colors.base));
 
 		// Labels are bold (attributes set), values are not.

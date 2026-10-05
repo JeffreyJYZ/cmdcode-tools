@@ -52,7 +52,12 @@ describe("usageRows", () => {
 	};
 	test("renders plan, monthly, windows and period", () => {
 		const rows = usageRows(usage, 1_000_000_000_000 - 5 * 60_000);
-		expect(rows[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base", true]);
+		expect(rows[0]).toEqual([
+			"Plan",
+			"GOAT · $70/mo credits",
+			"base",
+			true,
+		]);
 		expect(rows[1]).toEqual(["Monthly", "$50.56 / $70 (72.2%)", "warn"]);
 		expect(rows[2]).toEqual(["5-hour", "$1.17/$14 (8.4%)", "ok"]);
 		expect(rows[3]?.[0]).toBe("");
@@ -159,7 +164,11 @@ describe("usageRows", () => {
 	test("omits elapsed when the window has not started", () => {
 		const notStarted = {
 			...usage,
-			fiveHour: { cap: 14, used: 1, resetAt: 1_000_000_000_000 + 6 * 3600_000 },
+			fiveHour: {
+				cap: 14,
+				used: 1,
+				resetAt: 1_000_000_000_000 + 6 * 3600_000,
+			},
 		};
 		const rows = usageRows(notStarted, 1_000_000_000_000);
 		expect(rows[2]?.[1]).not.toContain("elapsed");
@@ -180,7 +189,12 @@ describe("modelRows", () => {
 			intelligence: 39.5,
 			tps: 247,
 		});
-		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong", true]);
+		expect(rows[0]).toEqual([
+			"Model",
+			"DeepSeek V4.1 Flash",
+			"strong",
+			true,
+		]);
 		expect(rows[1]).toEqual(["Tier", "open source", "base"]);
 		expect(rows[2]).toEqual(["Allowance", "$60/mo", "base"]);
 		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out", "base"]);
@@ -195,7 +209,11 @@ describe("modelRows", () => {
 			rates: { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
 		});
 		expect(claude[1]).toEqual(["Rates", "$2/$10 in/out", "base"]);
-		expect(claude[2]).toEqual(["", "cache read $0.2 · write $2.5", "muted"]);
+		expect(claude[2]).toEqual([
+			"",
+			"cache read $0.2 · write $2.5",
+			"muted",
+		]);
 	});
 	test("a promotion from mpc rides along, expiry compacted", () => {
 		const rows = modelRows({
@@ -233,7 +251,12 @@ describe("modelRows", () => {
 			{ requests: 1_234, cost: 8.4 },
 			{ requests: 2_000, cost: 12 },
 		);
-		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong", true]);
+		expect(rows[0]).toEqual([
+			"Model",
+			"DeepSeek V4.1 Flash",
+			"strong",
+			true,
+		]);
 		expect(rows[1]).toEqual(["Usage (this model)", "1.2K req", "base"]);
 		// Spend and its denominator: 8.40 of the session's 12.00 is 70%.
 		expect(rows[2]).toEqual(["", "$8.40 · 70% of session", "muted"]);
@@ -282,7 +305,12 @@ describe("modelRows", () => {
 			{ requests: 30, cost: 2 },
 			"deepseek-v4.1-flash",
 		);
-		expect(rows[0]).toEqual(["Model", "deepseek-v4.1-flash", "strong", true]);
+		expect(rows[0]).toEqual([
+			"Model",
+			"deepseek-v4.1-flash",
+			"strong",
+			true,
+		]);
 		expect(rows.some((row) => row[0] === "Usage (this model)")).toBe(true);
 		expect(rows.some((row) => row[0] === "Session")).toBe(true);
 		// No catalog means no tier/rates/allowance rows.
@@ -307,7 +335,11 @@ describe("tones", () => {
 				plan: "GOAT",
 				monthlyCap: 70,
 				monthlyCredits: 4.2,
-				fiveHour: { cap: 14, used: 13.9, resetAt: Date.now() + 3_600_000 },
+				fiveHour: {
+					cap: 14,
+					used: 13.9,
+					resetAt: Date.now() + 3_600_000,
+				},
 			},
 			Date.now(),
 		);
@@ -324,7 +356,10 @@ describe("tones", () => {
 			"  cache read $0.003",
 			"",
 		]);
-		expect(parts(["Command Code", "", "muted"])).toEqual(["Command Code", ""]);
+		expect(parts(["Command Code", "", "muted"])).toEqual([
+			"Command Code",
+			"",
+		]);
 	});
 });
 
@@ -338,7 +373,9 @@ describe("tierFor", () => {
 
 describe("modelKey", () => {
 	test("mirrors mpc's normalization", () => {
-		expect(modelKey("deepseek/deepseek-v4.1-flash")).toBe("deepseekv41flash");
+		expect(modelKey("deepseek/deepseek-v4.1-flash")).toBe(
+			"deepseekv41flash",
+		);
 		expect(modelKey("DeepSeek V4 Flash (latest)")).toBe("deepseekv4flash");
 		expect(modelKey("zai-org/GLM-5.2-Fast")).toBe("glm52fast");
 	});
@@ -349,14 +386,16 @@ describe("elapsedLabel", () => {
 	test("a window minutes into a long period reads <1%, not 0%", () => {
 		// 40 minutes into a 7-day window
 		const resetAt = 1_000_000 + 7 * 86_400 - 2400;
-		expect(elapsedLabel(resetAt * 1000, 7 * 86_400, 1_000_000)).toBe("0.4%");
+		expect(elapsedLabel(resetAt * 1000, 7 * 86_400, 1_000_000)).toBe(
+			"0.4%",
+		);
 	});
 	test("exactly at the start stays 0%, and real percents round", () => {
 		const resetAt = 1_000_000 + fiveHour;
 		expect(elapsedLabel(resetAt * 1000, fiveHour, 1_000_000)).toBe("0.0%");
-		expect(elapsedLabel(resetAt * 1000, fiveHour, 1_000_000 + 13 * 60)).toBe(
-			"4.3%",
-		);
+		expect(
+			elapsedLabel(resetAt * 1000, fiveHour, 1_000_000 + 13 * 60),
+		).toBe("4.3%");
 	});
 	test("no reset time means no label", () => {
 		expect(elapsedLabel(undefined, fiveHour, 1_000_000)).toBeUndefined();

@@ -92,7 +92,13 @@ const MODEL_CAPABILITIES: Omit<SdkModel["capabilities"], "interleaved"> = {
 	attachment: false,
 	toolcall: true,
 	input: { text: true, audio: false, image: false, video: false, pdf: false },
-	output: { text: true, audio: false, image: false, video: false, pdf: false },
+	output: {
+		text: true,
+		audio: false,
+		image: false,
+		video: false,
+		pdf: false,
+	},
 };
 
 /** Published $/1M rates, so opencode prices a subscription provider correctly. */
@@ -132,7 +138,10 @@ function toModelDefs(
 					...(supportsImage(m.id)
 						? {
 								attachment: true,
-								input: { ...MODEL_CAPABILITIES.input, image: true },
+								input: {
+									...MODEL_CAPABILITIES.input,
+									image: true,
+								},
 							}
 						: {}),
 				},
@@ -247,7 +256,11 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			// lane is auth-gated (its /connect entry has no stored key headlessly).
 			// Confirm in the TUI after /connect, not via the CLI listing.
 			const claudeDefs = split
-				? toModelDefs(split.claude, "command-code-anthropic", PROVIDER_NPM)
+				? toModelDefs(
+						split.claude,
+						"command-code-anthropic",
+						PROVIDER_NPM,
+					)
 				: {};
 			const openDefs = split
 				? toModelDefs(split.open, "command-code-openai", PROVIDER_NPM, {
@@ -286,7 +299,8 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			// /cmd-usage command -> agent calls the cmd_usage tool
 			cfg.command ??= {};
 			cfg.command["cmd-usage"] = {
-				description: "Show Command Code plan, credits, and usage windows",
+				description:
+					"Show Command Code plan, credits, and usage windows",
 				template:
 					"Call the cmd_usage tool and present its markdown output verbatim to the user. If the tool errors, tell the user to run /connect (Command Code (Anthropic)) and retry. $ARGUMENTS",
 			};
@@ -298,7 +312,9 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			models: async (_provider, ctx) => {
 				const key = await resolveKey(async () => {
 					const a = ctx.auth;
-					return a?.type === "api" && a.key ? { key: a.key } : undefined;
+					return a?.type === "api" && a.key
+						? { key: a.key }
+						: undefined;
 				});
 				const split = await loadModels(key);
 				return toModelDefs(
@@ -324,7 +340,9 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 				// spawn wrapper. Piped stdout is plain text (colors auto-off).
 				async execute(args) {
 					const key = await resolveKey();
-					return runCmduse(args.arg ?? "", { env: { CMD_API_KEY: key } });
+					return runCmduse(args.arg ?? "", {
+						env: { CMD_API_KEY: key },
+					});
 				},
 			}),
 		},

@@ -46,7 +46,10 @@ export function elapsedLabel(
 ): string | undefined {
 	const pct = elapsedPct(resetAtMs, durSecs, nowSecs);
 	if (pct === undefined) return undefined;
-	if (pct === 0 && nowSecs > Math.floor((resetAtMs as number) / 1000) - durSecs)
+	if (
+		pct === 0 &&
+		nowSecs > Math.floor((resetAtMs as number) / 1000) - durSecs
+	)
 		return "<0.1%";
 	return `${pct.toFixed(1)}%`;
 }

@@ -114,7 +114,9 @@ export function seededModelUsage(
 		return undefined;
 	}
 	if (id === undefined) return lastModelUsage.usage;
-	return lastModelUsage.key === modelKey(id) ? lastModelUsage.usage : undefined;
+	return lastModelUsage.key === modelKey(id)
+		? lastModelUsage.usage
+		: undefined;
 }
 
 /**
@@ -201,7 +203,8 @@ export function useRows(
 			const session = sessionID();
 			refreshMeta();
 			// Session totals are provider-agnostic and cheap (one indexed read).
-			if (session) setSessionUsage(loadSessionUsage(session) ?? undefined);
+			if (session)
+				setSessionUsage(loadSessionUsage(session) ?? undefined);
 			if (kind === "ours") {
 				const snapshot = await loadUsage();
 				rememberSnapshot(snapshot);
@@ -262,7 +265,9 @@ export function useRows(
 		const kind = sessionKind(providerID());
 		if (!shows(kind) && (kind === "other" || !wasOurs())) return [];
 		const id = activeModelId();
-		const found = id ? (meta().get(modelKey(id)) ?? meta().get(id)) : undefined;
+		const found = id
+			? (meta().get(modelKey(id)) ?? meta().get(id))
+			: undefined;
 		// The session id is the only name available when the catalog is missing;
 		// its vendor prefix is noise, so keep the tail.
 		const fallbackName = id ? (id.split("/").pop() ?? id) : undefined;

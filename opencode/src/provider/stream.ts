@@ -26,7 +26,11 @@ export function sseDecoder(
 			const line = buffer.slice(0, nl).replace(/\r$/, "");
 			buffer = buffer.slice(nl + 1);
 			const trimmed = line.trim();
-			if (!trimmed || trimmed.startsWith(":") || trimmed.startsWith("event:"))
+			if (
+				!trimmed ||
+				trimmed.startsWith(":") ||
+				trimmed.startsWith("event:")
+			)
 				continue;
 			const payload = trimmed.startsWith("data:")
 				? trimmed.slice(5).trim()
@@ -144,7 +148,9 @@ export function anthropicReducer(): Reducer {
 	const open = (index: number, kind: "text" | "thinking"): Part[] => {
 		const id = `${kind === "text" ? "text" : "reasoning"}-${index}`;
 		blocks.set(index, { type: kind, id });
-		return [{ type: kind === "text" ? "text-start" : "reasoning-start", id }];
+		return [
+			{ type: kind === "text" ? "text-start" : "reasoning-start", id },
+		];
 	};
 
 	return {
@@ -164,7 +170,13 @@ export function anthropicReducer(): Reducer {
 				if (blockType === "tool_use") {
 					const id = text(block.id) || `tool-${index}`;
 					blocks.set(index, { type: "tool_use", id });
-					return [{ type: "tool-input-start", id, toolName: text(block.name) }];
+					return [
+						{
+							type: "tool-input-start",
+							id,
+							toolName: text(block.name),
+						},
+					];
 				}
 				blocks.set(index, { type: "other", id: `block-${index}` });
 				return [];
@@ -175,20 +187,35 @@ export function anthropicReducer(): Reducer {
 				const block = blocks.get(index);
 				const textDelta = text(delta.text);
 				if (textDelta) {
-					const parts = block?.type === "text" ? [] : open(index, "text");
+					const parts =
+						block?.type === "text" ? [] : open(index, "text");
 					const id = blocks.get(index)?.id ?? `text-${index}`;
-					return [...parts, { type: "text-delta", id, delta: textDelta }];
+					return [
+						...parts,
+						{ type: "text-delta", id, delta: textDelta },
+					];
 				}
 				const thinking = text(delta.thinking);
 				if (thinking) {
 					const parts =
-						block?.type === "thinking" ? [] : open(index, "thinking");
+						block?.type === "thinking"
+							? []
+							: open(index, "thinking");
 					const id = blocks.get(index)?.id ?? `reasoning-${index}`;
-					return [...parts, { type: "reasoning-delta", id, delta: thinking }];
+					return [
+						...parts,
+						{ type: "reasoning-delta", id, delta: thinking },
+					];
 				}
 				const partial = text(delta.partial_json);
 				if (partial && block?.type === "tool_use") {
-					return [{ type: "tool-input-delta", id: block.id, delta: partial }];
+					return [
+						{
+							type: "tool-input-delta",
+							id: block.id,
+							delta: partial,
+						},
+					];
 				}
 				return [];
 			}
@@ -197,7 +224,8 @@ export function anthropicReducer(): Reducer {
 				const block = blocks.get(index);
 				if (!block) return [];
 				blocks.delete(index);
-				if (block.type === "text") return [{ type: "text-end", id: block.id }];
+				if (block.type === "text")
+					return [{ type: "text-end", id: block.id }];
 				if (block.type === "thinking")
 					return [{ type: "reasoning-end", id: block.id }];
 				if (block.type === "tool_use")
@@ -326,7 +354,8 @@ export function openaiReducer(): Reducer {
 			const choice = rec(choices[0]);
 			const delta = rec(choice.delta);
 
-			const reasoning = text(delta.reasoning) || text(delta.reasoning_content);
+			const reasoning =
+				text(delta.reasoning) || text(delta.reasoning_content);
 			if (reasoning) {
 				if (!reasoningId) {
 					parts.push(...closeText());
@@ -348,14 +377,18 @@ export function openaiReducer(): Reducer {
 				}
 				parts.push({ type: "text-delta", id: textId, delta: content });
 			}
-			const calls = Array.isArray(delta.tool_calls) ? delta.tool_calls : [];
+			const calls = Array.isArray(delta.tool_calls)
+				? delta.tool_calls
+				: [];
 			if (calls.length > 0) {
 				parts.push(...closeReasoning(), ...closeText());
 				for (const raw of calls) {
 					const call = rec(raw);
 					const fn = rec(call.function);
 					const index =
-						typeof call.index === "number" ? call.index : tools.size;
+						typeof call.index === "number"
+							? call.index
+							: tools.size;
 					let buffer = tools.get(index);
 					if (!buffer) {
 						buffer = {
@@ -415,7 +448,11 @@ export function openaiReducer(): Reducer {
 				(usage !== undefined || choices.length === 0)
 			) {
 				finished = true;
-				parts.push(...closeReasoning(), ...closeText(), ...flushTools());
+				parts.push(
+					...closeReasoning(),
+					...closeText(),
+					...flushTools(),
+				);
 				parts.push({
 					type: "finish",
 					finishReason: pending,
@@ -425,7 +462,11 @@ export function openaiReducer(): Reducer {
 			return parts;
 		},
 		close() {
-			const parts = [...closeReasoning(), ...closeText(), ...flushTools()];
+			const parts = [
+				...closeReasoning(),
+				...closeText(),
+				...flushTools(),
+			];
 			if (pending && !finished) {
 				finished = true;
 				parts.push({

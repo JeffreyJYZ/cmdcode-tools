@@ -58,7 +58,11 @@ describe("anthropicReducer", () => {
 		const finish = parts.at(-1) as {
 			finishReason: { unified: string };
 			usage: {
-				inputTokens: { noCache: number; cacheRead: number; cacheWrite: number };
+				inputTokens: {
+					noCache: number;
+					cacheRead: number;
+					cacheWrite: number;
+				};
 			};
 		};
 		expect(finish.finishReason.unified).toBe("stop");
@@ -106,7 +110,9 @@ describe("openaiReducer", () => {
 	test("text turn with reasoning and a trailing usage chunk", () => {
 		const reduce = openaiReducer();
 		const parts = [
-			...reduce.feed({ choices: [{ delta: { reasoning_content: "think" } }] }),
+			...reduce.feed({
+				choices: [{ delta: { reasoning_content: "think" } }],
+			}),
 			...reduce.feed({ choices: [{ delta: { content: "hello" } }] }),
 			...reduce.feed({ choices: [{ delta: {}, finish_reason: "stop" }] }),
 			...reduce.feed({
@@ -151,7 +157,10 @@ describe("openaiReducer", () => {
 								{
 									index: 0,
 									id: "c1",
-									function: { name: "read", arguments: '{"p"' },
+									function: {
+										name: "read",
+										arguments: '{"p"',
+									},
 								},
 							],
 						},
@@ -162,12 +171,16 @@ describe("openaiReducer", () => {
 				choices: [
 					{
 						delta: {
-							tool_calls: [{ index: 0, function: { arguments: ":1}" } }],
+							tool_calls: [
+								{ index: 0, function: { arguments: ":1}" } },
+							],
 						},
 					},
 				],
 			}),
-			...reduce.feed({ choices: [{ delta: {}, finish_reason: "tool_calls" }] }),
+			...reduce.feed({
+				choices: [{ delta: {}, finish_reason: "tool_calls" }],
+			}),
 			...reduce.close(),
 		];
 		const call = parts.find((p) => p.type === "tool-call") as {
@@ -190,10 +203,9 @@ describe("wire bodies", () => {
 	] as unknown as LanguageModelV3CallOptions["prompt"];
 
 	test("openai keeps system in messages and asks for usage", () => {
-		const body = openaiBody("deepseek/x", prompt, { images: true }) as Record<
-			string,
-			unknown
-		>;
+		const body = openaiBody("deepseek/x", prompt, {
+			images: true,
+		}) as Record<string, unknown>;
 		expect((body.messages as unknown[])[0]).toEqual({
 			role: "system",
 			content: "be terse",
@@ -207,7 +219,11 @@ describe("wire bodies", () => {
 			images: true,
 		}) as Record<string, unknown>;
 		expect(body.system).toEqual([
-			{ type: "text", text: "be terse", cache_control: { type: "ephemeral" } },
+			{
+				type: "text",
+				text: "be terse",
+				cache_control: { type: "ephemeral" },
+			},
 		]);
 		expect((body.messages as unknown[])[0]).toEqual({
 			role: "user",
@@ -220,14 +236,18 @@ describe("wire bodies", () => {
 			{
 				role: "assistant",
 				content: [
-					{ type: "tool-call", toolCallId: "a", toolName: "read", input: {} },
+					{
+						type: "tool-call",
+						toolCallId: "a",
+						toolName: "read",
+						input: {},
+					},
 				],
 			},
 		] as unknown as LanguageModelV3CallOptions["prompt"];
-		const body = openaiBody("deepseek/x", orphan, { images: true }) as Record<
-			string,
-			unknown
-		>;
+		const body = openaiBody("deepseek/x", orphan, {
+			images: true,
+		}) as Record<string, unknown>;
 		expect(body.messages).toEqual([]);
 	});
 });
@@ -266,7 +286,12 @@ describe("createCommandCode", () => {
 			if (done) break;
 			types.push((value as { type: string }).type);
 		}
-		expect(types).toEqual(["text-start", "text-delta", "text-end", "finish"]);
+		expect(types).toEqual([
+			"text-start",
+			"text-delta",
+			"text-end",
+			"finish",
+		]);
 	});
 
 	test("surfaces an HTTP failure with the lane and status", async () => {
@@ -274,7 +299,9 @@ describe("createCommandCode", () => {
 			{
 				baseURL: "https://example.test",
 				fetch: (async () =>
-					new Response("nope", { status: 403 })) as unknown as typeof fetch,
+					new Response("nope", {
+						status: 403,
+					})) as unknown as typeof fetch,
 			},
 			() => false,
 		);

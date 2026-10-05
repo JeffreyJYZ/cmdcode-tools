@@ -80,7 +80,9 @@ export async function loadModels(key: string): Promise<ModelSplit> {
 		// for "upstream added models".
 		gated = false;
 	}
-	const allowed = models.filter((m) => evaluateModelAccess(m.id, plan).allowed);
+	const allowed = models.filter(
+		(m) => evaluateModelAccess(m.id, plan).allowed,
+	);
 	const { claude, open } = splitModels(allowed);
 	return { claude, open, gated };
 }

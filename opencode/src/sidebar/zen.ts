@@ -109,7 +109,11 @@ function windowRows(
 	if (typeof limit !== "number" || limit <= 0) {
 		// Zen is pay-as-you-go: no allowance, so the spend stands alone.
 		return [
-			[label, `${money(spent.cost)} · ${count(spent.requests)} req`, "base"],
+			[
+				label,
+				`${money(spent.cost)} · ${count(spent.requests)} req`,
+				"base",
+			],
 		];
 	}
 	const cap = limit * share;
@@ -185,7 +189,11 @@ export function zenRows(
 	rows.push(["Model", clip(name, valueWidth("Model")), "strong", true]);
 	if (session) {
 		const spent = session.cost > 0 ? ` · ${money(session.cost)}` : "";
-		rows.push(["Session", `${count(session.requests)} req${spent}`, "base"]);
+		rows.push([
+			"Session",
+			`${count(session.requests)} req${spent}`,
+			"base",
+		]);
 	}
 	if (!meta) return rows;
 	if (typeof limit === "number") {
@@ -193,7 +201,10 @@ export function zenRows(
 	}
 	if (oc?.rates) {
 		const cache = [`cache read ${rate(oc.rates.cacheRead)}`];
-		if (typeof oc.rates.cacheWrite === "number" && oc.rates.cacheWrite > 0) {
+		if (
+			typeof oc.rates.cacheWrite === "number" &&
+			oc.rates.cacheWrite > 0
+		) {
 			cache.push(`write ${rate(oc.rates.cacheWrite)}`);
 		}
 		rows.push([
@@ -206,6 +217,7 @@ export function zenRows(
 	if (typeof oc?.ability === "number") {
 		rows.push(["Intelligence", String(oc.ability), "base"]);
 	}
-	if (typeof oc?.tps === "number") rows.push(["Tok/s", String(oc.tps), "base"]);
+	if (typeof oc?.tps === "number")
+		rows.push(["Tok/s", String(oc.tps), "base"]);
 	return rows;
 }

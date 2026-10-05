@@ -56,9 +56,9 @@ describe("sidebar rows fit the panel", () => {
 		}
 		// The two rows that used to overflow (53 and 57 columns) are split.
 		expect(rows.map((row) => row[0])).toContain("5-hour");
-		expect(rows.filter((row) => row[0] === "").length).toBeGreaterThanOrEqual(
-			3,
-		);
+		expect(
+			rows.filter((row) => row[0] === "").length,
+		).toBeGreaterThanOrEqual(3);
 	});
 
 	test("fits the awkward cases: claude cache write, long name, big money", () => {

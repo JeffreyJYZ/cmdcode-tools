@@ -75,7 +75,12 @@ describe("zenRows", () => {
 		expect(find("Weekly")).toEqual(["Weekly", "$1/$30 (3.3%)", "ok"]);
 		expect(find("Month")).toEqual(["Month", "$12/$60 (20.0%)", "ok"]);
 		expect(find("Period")).toEqual(["Period", "58 requests · $17", "base"]);
-		expect(find("Model")).toEqual(["Model", "GLM 5.3 Flash", "strong", true]);
+		expect(find("Model")).toEqual([
+			"Model",
+			"GLM 5.3 Flash",
+			"strong",
+			true,
+		]);
 		expect(find("Session")).toEqual(["Session", "5 req · $0.25", "base"]);
 		expect(find("Allowance")).toEqual(["Allowance", "$60/mo", "base"]);
 		expect(find("Rates")).toEqual(["Rates", "$0.1/$0.2 in/out", "base"]);
@@ -113,7 +118,11 @@ describe("zenRows", () => {
 			oc: { plan: "Zen" },
 		});
 		const find = (label: string) => rows.find((row) => row[0] === label);
-		expect(find("Plan")).toEqual(["Plan", "Zen · limits per model", "base"]);
+		expect(find("Plan")).toEqual([
+			"Plan",
+			"Zen · limits per model",
+			"base",
+		]);
 		expect(find("5-hour")).toEqual(["5-hour", "$0.50 · 1 req", "base"]);
 		expect(find("Allowance")).toBeUndefined();
 		expect(find("Rates")).toBeUndefined();
@@ -155,7 +164,12 @@ describe("zenRows", () => {
 		);
 		const find = (label: string) => rows.find((row) => row[0] === label);
 		expect(find("Period")).toBeDefined();
-		expect(find("Model")).toEqual(["Model", "glm-5.3-flash", "strong", true]);
+		expect(find("Model")).toEqual([
+			"Model",
+			"glm-5.3-flash",
+			"strong",
+			true,
+		]);
 		expect(find("Session")).toEqual(["Session", "5 req · $0.25", "base"]);
 		expect(find("Allowance")).toBeUndefined();
 		expect(find("Rates")).toBeUndefined();

@@ -37,7 +37,12 @@ describe("account snapshot cache", () => {
 		});
 		const after = seededRows();
 		// Whatever ran first, the cached snapshot must yield the plan row now.
-		expect(after[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base", true]);
+		expect(after[0]).toEqual([
+			"Plan",
+			"GOAT · $70/mo credits",
+			"base",
+			true,
+		]);
 		expect(after.map((row) => row[0])).toContain("Monthly");
 		expect(before.length).toBeLessThanOrEqual(after.length);
 	});
@@ -70,7 +75,10 @@ describe("model usage cache", () => {
 		// numbers, which is what a stale shared signal used to do after a switch.
 		expect(seededModelUsage("kimi-k2.7")).toBeUndefined();
 		// An unresolved id (mid-switch) keeps the row up instead of blanking it.
-		expect(seededModelUsage(undefined)).toEqual({ requests: 12, cost: 1.5 });
+		expect(seededModelUsage(undefined)).toEqual({
+			requests: 12,
+			cost: 1.5,
+		});
 	});
 
 	test("never paints another conversation's figure", () => {
@@ -86,7 +94,9 @@ describe("model usage cache", () => {
 			requests: 9,
 			cost: 4,
 		});
-		expect(seededModelUsage("deepseek-v4.1-flash", "ses_b")).toBeUndefined();
+		expect(
+			seededModelUsage("deepseek-v4.1-flash", "ses_b"),
+		).toBeUndefined();
 	});
 });
 

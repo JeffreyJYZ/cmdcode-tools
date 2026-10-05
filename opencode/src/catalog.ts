@@ -459,7 +459,12 @@ export const MODEL_CATALOG: Readonly<Record<string, CatalogEntry>> = {
 		name: "Qwen 3.7 Flash",
 		context: 1000000,
 		efforts: null,
-		cost: { input: 0.03, output: 0.13, cacheRead: 0.006, cacheWrite: 0.038 },
+		cost: {
+			input: 0.03,
+			output: 0.13,
+			cacheRead: 0.006,
+			cacheWrite: 0.038,
+		},
 		modalities: ["text", "image"],
 		minPlan: "Go",
 	},

@@ -48,9 +48,15 @@ describe("sidebar prefs", () => {
 	test("CMD_COLORS overrides the file both ways", () => {
 		const { env } = configDir();
 		writeFileSync(prefsPath(env), '{"colors": true}');
-		expect(loadPrefs({ ...env, CMD_COLORS: "1" }, tick()).colors).toBe(true);
-		expect(loadPrefs({ ...env, CMD_COLORS: "0" }, tick()).colors).toBe(false);
-		expect(loadPrefs({ ...env, CMD_COLORS: "nope" }, tick()).colors).toBe(true);
+		expect(loadPrefs({ ...env, CMD_COLORS: "1" }, tick()).colors).toBe(
+			true,
+		);
+		expect(loadPrefs({ ...env, CMD_COLORS: "0" }, tick()).colors).toBe(
+			false,
+		);
+		expect(loadPrefs({ ...env, CMD_COLORS: "nope" }, tick()).colors).toBe(
+			true,
+		);
 	});
 
 	test("repeat reads inside the window do not hit the disk", () => {

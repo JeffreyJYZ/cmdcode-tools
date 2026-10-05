@@ -16,7 +16,10 @@ export async function resolveKey(
 		if (auth?.key) return auth.key;
 	} catch {}
 	try {
-		const text = await readFile(`${homedir()}/.commandcode/auth.json`, "utf8");
+		const text = await readFile(
+			`${homedir()}/.commandcode/auth.json`,
+			"utf8",
+		);
 		const v = JSON.parse(text);
 		if (typeof v.apiKey === "string" && v.apiKey) return v.apiKey;
 	} catch {}

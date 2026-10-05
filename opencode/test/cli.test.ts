@@ -18,7 +18,10 @@ describe("splitCliArgs", () => {
 		expect(splitCliArgs("  a\t b   c ")).toEqual(["a", "b", "c"]);
 	});
 	test("double quotes keep spaces", () => {
-		expect(splitCliArgs('--model "gpt 5.5"')).toEqual(["--model", "gpt 5.5"]);
+		expect(splitCliArgs('--model "gpt 5.5"')).toEqual([
+			"--model",
+			"gpt 5.5",
+		]);
 	});
 	test("single quotes keep spaces literally", () => {
 		expect(splitCliArgs("'a b' c")).toEqual(["a b", "c"]);
@@ -45,7 +48,11 @@ describe("buildCmduseArgs", () => {
 		]);
 	});
 	test("bare flags prepend the one-shot dashboard", () => {
-		expect(buildCmduseArgs("--local")).toEqual(["-1", "--plain", "--local"]);
+		expect(buildCmduseArgs("--local")).toEqual([
+			"-1",
+			"--plain",
+			"--local",
+		]);
 		expect(buildCmduseArgs("--tz +05:30 hourly")).toEqual([
 			"--tz",
 			"+05:30",

@@ -186,7 +186,10 @@ export function mergeCatalog(
 	const denied = new Set(textOnly.map((id) => id.toLowerCase()));
 	const out: Record<string, CatalogEntry> = {};
 	for (const [id, entry] of Object.entries(pricing)) {
-		out[id] = { ...entry, modalities: modalitiesFor(id, modalities, denied) };
+		out[id] = {
+			...entry,
+			modalities: modalitiesFor(id, modalities, denied),
+		};
 	}
 	return out;
 }

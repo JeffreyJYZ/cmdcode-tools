@@ -46,7 +46,9 @@ export function loadPrefs(
 	else if (flag === "0" || flag === "false") prefs = { colors: false };
 	else {
 		try {
-			prefs = parsePrefs(JSON.parse(readFileSync(prefsPath(env), "utf8")));
+			prefs = parsePrefs(
+				JSON.parse(readFileSync(prefsPath(env), "utf8")),
+			);
 		} catch {
 			// absent / unreadable / not JSON: the default stands
 		}

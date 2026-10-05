@@ -36,7 +36,9 @@ describe("verify-crate helpers", () => {
 
 	test("manifest version comes from the first version line", () => {
 		expect(
-			manifestVersion(`[package]\nname = "cmd-usage"\nversion = "0.7.5"\n`),
+			manifestVersion(
+				`[package]\nname = "cmd-usage"\nversion = "0.7.5"\n`,
+			),
 		).toBe("0.7.5");
 		expect(manifestVersion("no version here")).toBeUndefined();
 	});
@@ -53,7 +55,9 @@ describe("verify-crate helpers", () => {
 			indexStatus: 404,
 			tarballUrl: "",
 		};
-		expect(verdict("0.7.5", absent, 404)).toContain("absent from the index");
+		expect(verdict("0.7.5", absent, 404)).toContain(
+			"absent from the index",
+		);
 		const indexed: CrateFacts = {
 			versionPresent: true,
 			indexStatus: 200,

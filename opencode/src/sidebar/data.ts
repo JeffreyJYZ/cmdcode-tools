@@ -95,7 +95,9 @@ async function runFirst(candidates: string[], args: string[]): Promise<string> {
 			if ((e as NodeJS.ErrnoException)?.code !== "ENOENT") throw e;
 		}
 	}
-	throw last instanceof Error ? last : new Error(`${candidates[0]} not found`);
+	throw last instanceof Error
+		? last
+		: new Error(`${candidates[0]} not found`);
 }
 
 /** Parse `cmduse -1 --json` into the usage snapshot. */
@@ -114,22 +116,29 @@ export function parseUsageJson(text: string): Usage {
 	const summary = (raw.summary ?? {}) as Record<string, unknown>;
 	return {
 		plan: typeof raw.plan === "string" ? raw.plan : undefined,
-		monthlyCap: typeof raw.monthlyCap === "number" ? raw.monthlyCap : undefined,
+		monthlyCap:
+			typeof raw.monthlyCap === "number" ? raw.monthlyCap : undefined,
 		monthlyCredits:
-			typeof raw.monthlyCredits === "number" ? raw.monthlyCredits : undefined,
+			typeof raw.monthlyCredits === "number"
+				? raw.monthlyCredits
+				: undefined,
 		fiveHour: win(raw.fiveHour),
 		weekly: win(raw.weekly),
-		periodEnd: typeof raw.periodEnd === "string" ? raw.periodEnd : undefined,
+		periodEnd:
+			typeof raw.periodEnd === "string" ? raw.periodEnd : undefined,
 		// cmduse 0.7.2+ also publishes the period bounds in epoch ms; older
 		// builds omit them and the monthly row then shows spend only.
 		periodStartAt:
-			typeof raw.periodStartAt === "number" ? raw.periodStartAt : undefined,
+			typeof raw.periodStartAt === "number"
+				? raw.periodStartAt
+				: undefined,
 		periodEndAt:
 			typeof raw.periodEndAt === "number" ? raw.periodEndAt : undefined,
 		requests:
 			typeof summary.requests === "number" ? summary.requests : undefined,
 		cost: typeof summary.cost === "number" ? summary.cost : undefined,
-		error: typeof raw.error === "string" && raw.error ? raw.error : undefined,
+		error:
+			typeof raw.error === "string" && raw.error ? raw.error : undefined,
 	};
 }
 

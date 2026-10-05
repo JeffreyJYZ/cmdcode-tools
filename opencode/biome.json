@@ -1,0 +1,9 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+	"files": {
+		"includes": ["**", "!**/.delta", "!**/dist", "!**/node_modules"]
+	},
+	"formatter": {
+		"indentWidth": 4
+	}
+}
