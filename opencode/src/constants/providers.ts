@@ -37,7 +37,7 @@ export type Lane = {
 };
 
 /** The Anthropic and OpenAI-compatible provider lanes this plugin owns. */
-export const LANES: Lane[] = [
+export const LANES: [Lane, Lane] = [
 	{
 		id: "command-code-anthropic",
 		name: "Command Code (Anthropic)",

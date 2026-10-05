@@ -43,8 +43,8 @@ export async function loadModels(key: string): Promise<ModelSplit> {
 		cache &&
 		cache.key === key &&
 		Date.now() - cache.at < MODELS_CACHE_TTL_MS;
-	if (fresh) {
-		models = cache!.models;
+	if (fresh && cache) {
+		models = cache.models;
 	} else {
 		try {
 			const resp = await providerModels(key);

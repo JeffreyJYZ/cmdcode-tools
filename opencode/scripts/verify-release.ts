@@ -101,7 +101,8 @@ async function main(): Promise<number> {
 	const valueFlags = new Set(["--expected", "--tries"]);
 	let explicitVersion: string | undefined;
 	for (let i = 0; i < args.length; i++) {
-		const arg = args[i]!;
+		const arg = args[i];
+		if (arg === undefined) continue;
 		if (valueFlags.has(arg)) {
 			i++;
 			continue;

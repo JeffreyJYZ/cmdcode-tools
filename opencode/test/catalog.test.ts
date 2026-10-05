@@ -53,7 +53,7 @@ describe("parseModelsMd", () => {
 		expect(rows["z/z"]?.context).toBe(1_050_000);
 		expect(rows["deepseek/x"]?.minPlan).toBe("Go");
 		expect(rows["z/z"]?.minPlan).toBe("Go");
-		expect(rows["bad"]).toBeUndefined();
+		expect(rows.bad).toBeUndefined();
 	});
 });
 

@@ -127,11 +127,12 @@ export function createCommandCode(
 					);
 				}
 
+				const responseBody = response.body;
 				const reducer: Reducer =
 					lane === "anthropic" ? anthropicReducer() : openaiReducer();
 				const stream = new ReadableStream({
 					async start(controller) {
-						const reader = response.body!.getReader();
+						const reader = responseBody.getReader();
 						const decoder = new TextDecoder();
 						const emit = (parts: ReturnType<Reducer["feed"]>) => {
 							for (const part of parts) controller.enqueue(part);

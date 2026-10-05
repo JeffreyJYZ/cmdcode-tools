@@ -168,8 +168,9 @@ test("parseMpcJson keeps the mpc key and a local key for lookup", () => {
 			],
 		}),
 	);
-	expect(meta.get("tencenthy3")).toBeDefined();
-	expect(meta.get("tencenthy3")).toBe(meta.get("tencenthy3")!);
+	const tencent = meta.get("tencenthy3");
+	expect(tencent).toBeDefined();
+	expect(tencent).toBe(meta.get("tencenthy3"));
 });
 
 // Regression: cmduse's snapshot() writes a "fetching usage…" spinner directly

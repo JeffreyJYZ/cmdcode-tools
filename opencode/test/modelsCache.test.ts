@@ -20,7 +20,8 @@ describe("models cache", () => {
 		});
 		const read = await readModelsCache();
 		expect(read?.claude.map((x) => x.id)).toEqual(["claude-sonnet-5"]);
-		expect(idsDiffer(read!.open, [m("deepseek/x")])).toBe(false);
+		if (!read) throw new Error("expected a cache entry");
+		expect(idsDiffer(read.open, [m("deepseek/x")])).toBe(false);
 		delete process.env.XDG_CACHE_HOME;
 	});
 

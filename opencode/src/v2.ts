@@ -16,12 +16,7 @@
 // cmd_usage tool both spawn the cmduse CLI (Rust cmduse-core), which owns all
 // window math and formatting (see ./cli.ts).
 import type { Plugin as PluginNs } from "@opencode/plugin";
-import {
-	inputModalities,
-	isReasoningModel,
-	modelCost,
-	reasoningVariants,
-} from "./catalog";
+import { inputModalities, modelCost, reasoningVariants } from "./catalog";
 import { runCmduse } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import { KNOWN_MODELS } from "./constants/gating";
@@ -272,11 +267,11 @@ export const commandCodeV2: PluginNs.Plugin = {
 		if (cached) {
 			seed["command-code-anthropic"] = mergeModels(
 				seed["command-code-anthropic"],
-				cached.claude.map((m) => toV2Model(m, LANES[0]!)),
+				cached.claude.map((m) => toV2Model(m, LANES[0])),
 			);
 			seed["command-code-openai"] = mergeModels(
 				seed["command-code-openai"],
-				cached.open.map((m) => toV2Model(m, LANES[1]!)),
+				cached.open.map((m) => toV2Model(m, LANES[1])),
 			);
 		}
 		await ctx.provider.transform((editor: ProviderEditor) => {
@@ -431,14 +426,14 @@ export const commandCodeV2: PluginNs.Plugin = {
 						"command-code-anthropic",
 						mergeModels(
 							seed["command-code-anthropic"],
-							split.claude.map((m) => toV2Model(m, LANES[0]!)),
+							split.claude.map((m) => toV2Model(m, LANES[0])),
 						) as never,
 					);
 					editor.models.set(
 						"command-code-openai",
 						mergeModels(
 							seed["command-code-openai"],
-							split.open.map((m) => toV2Model(m, LANES[1]!)),
+							split.open.map((m) => toV2Model(m, LANES[1])),
 						) as never,
 					);
 				});
