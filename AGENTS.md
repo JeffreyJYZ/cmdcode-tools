@@ -177,7 +177,11 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
 - **Docs always move with code.** Any user-visible change updates READMEs
   (`README.md`, `cli/README.md`), `cli/cmduse.1` man page, this file in same
   commit — never follow-up "docs" commit. Check for stale version refs and stale
-  option/flag lists before committing.
+  option/flag lists before committing. **README badges: shields.io
+  `?style=flat-square`** (CI via shields workflow-status, since GitHub's native
+  `badge.svg` is fixed-shape and can't match); one badge line per README —
+  CI + version (npm/crates) + license. Add npm badges only for packages actually
+  published (`reqshape` is not → no npm badge).
 
 ## Consumers (in-repo package `oc-cmd-compare`)
 
