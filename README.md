@@ -11,23 +11,23 @@ Personal tooling for [opencode](https://opencode.ai) and Command Code, kept in o
 
 | Project | Dir | What it is |
 | --- | --- | --- |
-| cmduse | [`core/`](core) · [`cli/`](cli) · [`opencode/`](opencode) | Everything Command Code usage: the `cmd-usage` CLI (`cmduse` / `ocuse`), the shared `cmduse-core`, and the opencode plugin (`@jeffreyjyz/opencode-command-code`). |
+| cmduse | [`core/`](core) · [`cmduse/`](cmduse) · [`opencode-plugin/`](opencode-plugin) | Everything Command Code usage: the `cmd-usage` CLI (`cmduse` / `ocuse`), the shared `cmduse-core`, and the opencode plugin (`@jeffreyjyz/opencode-command-code`). |
 | [`mpc`](oc-cmd-compare) | `oc-cmd-compare/` | Compare model pricing across OpenCode Go and Command Code plans. |
 | [`reqshape`](reqshape) | `reqshape/` | Measure the shape of your requests from opencode's own history, then price it against any model. |
 | [opencode-context](opencode-context) | `opencode-context/` | opencode plugin: a `/context` dialog plus a `context_breakdown` tool showing where the window went. |
 | [opencode-shell-rc](opencode-shell-rc) | `opencode-shell-rc/` | opencode plugin: make the agent's non-interactive `zsh` load your aliases and functions via a fast `ZDOTDIR` shim. |
 | [opencode-session-dir](opencode-session-dir) | `opencode-session-dir/` | opencode plugin: bind extra working directories to a single session, durably across restarts. |
 
-Everything Command Code (commandcode.ai) usage lives under `core/` + `cli/` + `opencode/`: a terminal dashboard with a built-in MCP server, and an opencode provider. One Cargo workspace shares the plan table and window math via `cmduse-core`; the opencode plugin is a separate TS package that registers the providers and delegates usage rendering to the `cmduse` CLI. The three `opencode-*` plugins are opencode v2 plugins (server half, and a TUI half where needed). See each project's `AGENTS.md` for design rules and the traps found the hard way.
+Everything Command Code (commandcode.ai) usage lives under `core/` + `cmduse/` + `opencode-plugin/`: a terminal dashboard with a built-in MCP server, and an opencode provider. One Cargo workspace shares the plan table and window math via `cmduse-core`; the opencode plugin is a separate TS package that registers the providers and delegates usage rendering to the `cmduse` CLI. The three `opencode-*` plugins are opencode v2 plugins (server half, and a TUI half where needed). See each project's `AGENTS.md` for design rules and the traps found the hard way.
 
 ## cmduse components
 
 | Component | Crate / dir | Install | Docs |
 |---|---|---|---|
-| `cmduse` CLI | `cli/` (crate `cmd-usage`, bin `cmduse`) | [crates.io](https://crates.io/crates/cmd-usage) · [brew](https://github.com/JeffreyJYZ/homebrew-tap) | **[cli/README.md](cli/README.md)** · [man page](cli/cmduse.1) |
-| `ocuse` (same crate) | `cli/` (bin `ocuse`) | same crate as `cmduse` | OpenCode Go/Zen usage from local data — see below |
+| `cmduse` CLI | `cmduse/` (crate `cmd-usage`, bin `cmduse`) | [crates.io](https://crates.io/crates/cmd-usage) · [brew](https://github.com/JeffreyJYZ/homebrew-tap) | **[cmduse/README.md](cmduse/README.md)** · [man page](cmduse/cmduse.1) |
+| `ocuse` (same crate) | `cmduse/` (bin `ocuse`) | same crate as `cmduse` | OpenCode Go/Zen usage from local data — see below |
 | Shared core | `core/` (crate `cmduse-core`) | [crates.io](https://crates.io/crates/cmduse-core) | [docs.rs/cmduse-core](https://docs.rs/cmduse-core) · versioned on its own `2.x` line, not as a pair with the CLI |
-| opencode plugin | `opencode/` (`@jeffreyjyz/opencode-command-code`) | [npm](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code) | [opencode/src/index.ts](opencode/src/index.ts) |
+| opencode plugin | `opencode-plugin/` (`@jeffreyjyz/opencode-command-code`) | [npm](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code) | [opencode-plugin/src/index.ts](opencode-plugin/src/index.ts) |
 
 ## Install the CLI
 
@@ -43,7 +43,7 @@ Then run `cmduse` for the live dashboard, or `cmduse plans` / `cmduse models`.
 
 ### Development binary
 
-`cargo build --bin cmdusedev` builds the same program under a different name, so a local build never shadows the Homebrew-installed `cmduse`. Tools that shell out can target it via `CMDUSE_BIN=/path/to/cmdusedev`. Full usage, config, and statusline docs live in **[cli/README.md](cli/README.md)**.
+`cargo build --bin cmdusedev` builds the same program under a different name, so a local build never shadows the Homebrew-installed `cmduse`. Tools that shell out can target it via `CMDUSE_BIN=/path/to/cmdusedev`. Full usage, config, and statusline docs live in **[cmduse/README.md](cmduse/README.md)**.
 
 ## Build
 
@@ -162,4 +162,4 @@ Any other MCP host: run `cmduse mcp` as a stdio server. The opencode plugin does
 
 ## License
 
-MIT — see [cli/LICENSE-MIT](cli/LICENSE-MIT), [core/LICENSE-MIT](core/LICENSE-MIT), and [opencode/LICENSE](opencode/LICENSE).
+MIT — see [cmduse/LICENSE-MIT](cmduse/LICENSE-MIT), [core/LICENSE-MIT](core/LICENSE-MIT), and [opencode-plugin/LICENSE](opencode-plugin/LICENSE).

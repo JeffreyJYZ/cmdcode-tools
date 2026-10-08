@@ -57,6 +57,6 @@ bun run build     # server bundle + solid-transformed tui + declarations
 
 ## Publishing (NEVER without explicit go)
 
-Same policy as sibling repos: local commits only until user says push. Publishing from this account must go through `npm stage publish` + user's `npm stage approve` — bare `npm publish` leaves ghost versions (see `cmduse/AGENTS.md` for the full trap). Version this package independently. After publish, opencode's per-package install cache can lag npm: `npm cache clean`, remove `~/.cache/opencode/npm/@jeffreyjyz/opencode-context@latest`, then user restarts. **Never restart or reload opencode yourself.**
+Same policy as sibling repos: local commits only until user says push. Publishing from this account must go through `npm stage publish` + user's `npm stage approve` — bare `npm publish` leaves ghost versions (see the root `AGENTS.md` for the full trap). Version this package independently. After publish, opencode's per-package install cache can lag npm: `npm cache clean`, remove `~/.cache/opencode/npm/@jeffreyjyz/opencode-context@latest`, then user restarts. **Never restart or reload opencode yourself.**
 
 - **`npm stage publish` failing `E401 "authentication token seems to be invalid"` is a dead `~/.npmrc` token, not a staging problem.** Confirm with `npm whoami` (also 401). This account's token is invalidated by npm's bypass-2FA restriction; fix interactively — user runs `npm login` (browser), then re-stage. Do not log in from the agent shell, do not paste/log the token (rotate if leaked into transcript).

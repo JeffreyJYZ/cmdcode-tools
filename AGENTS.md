@@ -33,13 +33,13 @@ core/              cmduse-core: pure logic + canonical data, no I/O
                    monthly_window (cap−remaining clamp + period duration),
                    gate/gate_allowed, bare_model + canonical_model
                    (provider/alias normalization, mirror
-                   opencode/src/{access,gating}.ts)
+                   opencode-plugin/src/{access,gating}.ts)
   src/dates.rs     ISO/UTC date helpers (parse_iso_utc, parse_tz_parts,
                    civil_from_days, iso_instant, now_secs, …)
   src/reports.rs   usage aggregation: Usage/Totals, day+hour bucketing in a
                    fixed offset, cumulative-difference math, local bucket fold
   src/wire.rs      API wire DTOs (Credits/Window/SubData/UsageSummary/…)
-cli/               cmd-usage, published to crates.io (bins: cmduse, cmdusedev, ocuse)
+cmduse/            cmd-usage, published to crates.io (bins: cmduse, cmdusedev, ocuse)
   src/lib.rs       `pub fn run()` — the CLI body; `src/main.rs` and
                    `src/bin/cmdusedev.rs` are thin entry points (the dev twin
                    lets a local build avoid shadowing the installed `cmduse`)
@@ -50,7 +50,7 @@ cli/               cmd-usage, published to crates.io (bins: cmduse, cmdusedev, o
                    comes from core::reports
   src/mcp.rs       `cmduse mcp` MCP stdio server (hand-rolled JSON-RPC; tools
                    reuse the same output helpers as the CLI subcommands)
-opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
+opencode-plugin/   @jeffreyjyz/opencode-command-code TS plugin (dual opencode
                    v1 (server()) + v2 (setup()) entrypoints; no core crate;
                    imports ../../core/{gating,conformance}.json; usage
                    rendering delegates to the cmduse CLI via src/cli.ts)
@@ -78,7 +78,7 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
 
 - **Pure logic + canonical data live in `core/`; CLI is the application.** Bug
   in plan table / window math / pace gate / dates / usage aggregation → ONE fix.
-  `cli/` depends on `cmduse-core` by path, owns I/O only: HTTP, filesystem,
+  `cmduse/` depends on `cmduse-core` by path, owns I/O only: HTTP, filesystem,
   terminal, formatting. Presentation stays local (ANSI constants, colored bars,
   tables) — do NOT move into core.
 - **Plan data in `core/plans.json`, gating data in `core/gating.json`, never in
@@ -96,14 +96,14 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
   vars; picks first generation that matches, fails loud when none does. Local
   CLI install = offline fallback. Hand-probed `hardBlocked` entries live in that
   script. File carries `extractedAt` + `cliVersion`; cli + opencode warn when
-  snapshot older than `opencode/src/constants/gating.ts`'s `GATE_STALE_DAYS`,
+  snapshot older than `opencode-plugin/src/constants/gating.ts`'s `GATE_STALE_DAYS`,
   and both warn when API returns plan id no `plans.json` rule matches (dashboard
   otherwise silently shows "Free" with no cap).
-- **Per-model catalog in `opencode/src/catalog.ts`, generated.** Listing API
+- **Per-model catalog in `opencode-plugin/src/catalog.ts`, generated.** Listing API
   (`/provider/v1/models`) returns no capabilities, no rates, so only source =
   official CLI package: `models.md` (context, efforts, $/1M in/out/cache-read,
   plus cache-write on Anthropic models) + `dist/cli.mjs` (`inputModalities`).
-  Regenerate `bun scripts/extract-catalog.ts` (in `opencode/`, or `bun run
+  Regenerate `bun scripts/extract-catalog.ts` (in `opencode-plugin/`, or `bun run
   extract:catalog`) after Command Code release; fetches both, stamps version,
   warns on modalities-only ids docs have not priced yet. Models absent from
   table = text-only, no price — never assume vision or invent rate. Two
@@ -160,7 +160,7 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
   beside it — its `nameRules`/`caps` must cover every plan id API returns
   (`individual-ultra` rendered as Free, no cap, until its rule landed).
 - **Behavior vectors in `core/conformance.json`.** Rust (`core` test) asserts
-  all. Since plugin 0.2.0 TS port (`opencode/test/conformance.test.ts`) covers
+  all. Since plugin 0.2.0 TS port (`opencode-plugin/test/conformance.test.ts`) covers
   only still-ported model-gating layer (bare_model/canonicalize/gating) —
   money/compact/pct/duration/rel_time/parse_iso_utc/elapsed_pct/pace_eta/
   monthly_window/plan_* have single implementation (Rust core) because opencode
@@ -175,7 +175,7 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
   from another component's file. All crates/packages MIT; body identical, only
   year/holder line project-specific.
 - **Docs always move with code.** Any user-visible change updates READMEs
-  (`README.md`, `cli/README.md`), `cli/cmduse.1` man page, this file in same
+  (`README.md`, `cmduse/README.md`), `cmduse/cmduse.1` man page, this file in same
   commit — never follow-up "docs" commit. Check for stale version refs and stale
   option/flag lists before committing. **README badges: shields.io
   `?style=flat-square`** (CI via shields workflow-status, since GitHub's native
@@ -233,7 +233,7 @@ committing: `cargo fmt --all -- --check`, `cargo test --all-targets`,
 ## Publishing (NEVER without explicit user go)
 
 - **Versions independent: `cmduse-core` on own major line; CLI is 0.7.x.** NOT a
-  pair — do not read one from other, never "sync". `cli/Cargo.toml` depends on
+  pair — do not read one from other, never "sync". `cmduse/Cargo.toml` depends on
   `{ path = "../core", version = "2" }`, so new core minor/patch needs no CLI
   edit.
 - **Core semver loose on purpose: while no external consumers, breaking API
@@ -268,7 +268,7 @@ committing: `cargo fmt --all -- --check`, `cargo test --all-targets`,
   {aarch64,x86_64} × {musl,gnu}), publishes `cmduse-<version>-<target>.tar.gz`
   (binaries at archive root + `cmduse.1` + `LICENSE-MIT`) with `SHA256SUMS`,
   then verify job re-downloads, checks every asset. Asset names public contract:
-  Homebrew formula urls + `cli/Cargo.toml`'s `[package.metadata.binstall]` both
+  Homebrew formula urls + `cmduse/Cargo.toml`'s `[package.metadata.binstall]` both
   template them, so changing pattern breaks `brew` + `cargo binstall`. musl
   targets cross-link through `cargo-zigbuild` (homebrew `cargo-zigbuild` + `zig`
   locally); gnu + darwin builds native on runners. Tag created by hand after
@@ -281,9 +281,9 @@ committing: `cargo fmt --all -- --check`, `cargo test --all-targets`,
   "rust"`. Fallback for uncovered platforms: `cargo install cmd-usage` /
   `cargo binstall`.
 - `cargo binstall cmd-usage` works off same assets (metadata in
-  `cli/Cargo.toml`, `bin-dir` at archive root).
+  `cmduse/Cargo.toml`, `bin-dir` at archive root).
 - README/AGENTS updated in same commit.
-- opencode npm package (`opencode/package.json`) versioned **independently** of
+- opencode npm package (`opencode-plugin/package.json`) versioned **independently** of
   Rust workspace (0.2.x vs 0.6.x) — intentional, not drift. Don't sync. 0.2.0
   added opencode v2 support (dual v1+V2 entrypoint, `@opencode/plugin` +
   `@opencode-ai/plugin` deps, both external in bun build; v1 floor = 1.18.29
@@ -630,10 +630,10 @@ created).
 
 API endpoints, cumulative-diff reports, TLS retry, watch-mode redraw rules (frame's last line NO
 trailing newline; frame-shrink = `\x1b[1B` + `\x1b[2K\x1b[1B` + `\x1b[2K` + `\x1b[{prev-n}F`;
-test redraw bytes via cli/src/main_tests.rs). **ocuse's watch shares that contract, not a copy:**
-`cli/src/bin/ocuse.rs` calls same `redraw_frame` / `clip_to_width` / `term_size` (`pub` in
+test redraw bytes via cmduse/src/main_tests.rs). **ocuse's watch shares that contract, not a copy:**
+`cmduse/src/bin/ocuse.rs` calls same `redraw_frame` / `clip_to_width` / `term_size` (`pub` in
 lib.rs), its frame ends on own status/countdown line, `ocuse/render.rs`'s `watch_frame` adds burst
-sparkline from 5-hour spend deltas (10s samples, 60 cap). Gauges/palette from `cli/src/render.rs`
+sparkline from 5-hour spend deltas (10s samples, 60 cap). Gauges/palette from `cmduse/src/render.rs`
 (`bar`, `color_for`, SGR consts) — never re-declare in `ocuse/`. **Every `ocuse` renderer takes
 `colour` flag, and that is bug shipped in 0.7.3:** only `render_text` ever got one, so `ocuse
 daily|hourly|session|plans|model` + `statusline` printed plain on tty.

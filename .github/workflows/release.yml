@@ -3,7 +3,7 @@ name: Release
 # Tag-driven binary releases: `cmduse-vX.Y.Z` builds all six targets, packages
 # them as cmduse-<version>-<target>.tar.gz, and publishes them to a GitHub
 # Release. The names are a public contract — the Homebrew formula's urls and
-# cli/Cargo.toml's [package.metadata.binstall] both template them, so changing
+# cmduse/Cargo.toml's [package.metadata.binstall] both template them, so changing
 # the pattern breaks brew and `cargo binstall` users.
 on:
   push:
@@ -77,7 +77,7 @@ jobs:
             stage="cmduse-${version}-${target}"
             mkdir -p "stage/${stage}"
             install -m 0755 "${dir}/cmduse" "${dir}/ocuse" "${dir}/cmdusedev" "stage/${stage}/"
-            install -m 0644 cli/cmduse.1 cli/LICENSE-MIT "stage/${stage}/"
+            install -m 0644 cmduse/cmduse.1 cmduse/LICENSE-MIT "stage/${stage}/"
             # Deterministic archive, flattened: binaries at the archive root so
             # both the Homebrew formula and binstall's bin-dir stay simple.
             tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 \

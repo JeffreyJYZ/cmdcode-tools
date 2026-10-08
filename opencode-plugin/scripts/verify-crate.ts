@@ -12,7 +12,7 @@
 //   bun scripts/verify-crate.ts [version] [--crate <name>] [--formula <path>]
 //                               [--expected <sha256>] [--tries N] [--no-pack]
 //
-// Without a version it uses cli/Cargo.toml, which is the release-in-progress.
+// Without a version it uses cmduse/Cargo.toml, which is the release-in-progress.
 // Checking an *older* release needs --no-pack (or --expected <published sha>):
 // this checkout can only reproduce the crate its manifest is at, and a stale
 // local pack is exactly the mismatch this script exists to report.
@@ -110,7 +110,7 @@ async function main(): Promise<number> {
 	};
 	const crate = value("--crate") ?? PKG;
 	const manifest = (await Bun.file(
-		join(REPO, "cli/Cargo.toml"),
+		join(REPO, "cmduse/Cargo.toml"),
 	).text()) as string;
 	const explicit = args.find((a) => !a.startsWith("--") && /^\d/.test(a));
 	const version = explicit ?? manifestVersion(manifest);

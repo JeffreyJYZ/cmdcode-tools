@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - package: opencode
+          - package: opencode-plugin
             build: true
           - package: oc-cmd-compare
           - package: reqshape

@@ -49,7 +49,7 @@ bun run build
 
 ## Publishing (NEVER without explicit go)
 
-Same policy as sibling repos: local commits only until user says push. Publishing from this account must go through `npm stage publish` + user's `npm stage approve` — a bare `npm publish` leaves ghost versions (see `cmduse/AGENTS.md`). Version this package independently. After a publish, opencode's per-package install cache can lag npm: `npm cache clean`, remove `~/.cache/opencode/npm/@jeffreyjyz/opencode-shell-rc@latest`, then user restarts. **Never restart or reload opencode yourself.**
+Same policy as sibling repos: local commits only until user says push. Publishing from this account must go through `npm stage publish` + user's `npm stage approve` — a bare `npm publish` leaves ghost versions (see the root `AGENTS.md`). Version this package independently. After a publish, opencode's per-package install cache can lag npm: `npm cache clean`, remove `~/.cache/opencode/npm/@jeffreyjyz/opencode-shell-rc@latest`, then user restarts. **Never restart or reload opencode yourself.**
 
 See `opencode-context/AGENTS.md` for the `E401`/dead-`.npmrc`-token trap on `npm stage publish` (same account).
 

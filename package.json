@@ -2,7 +2,7 @@
 	"name": "cmdcode-tools",
 	"private": true,
 	"workspaces": [
-		"opencode",
+		"opencode-plugin",
 		"oc-cmd-compare",
 		"reqshape",
 		"opencode-context",

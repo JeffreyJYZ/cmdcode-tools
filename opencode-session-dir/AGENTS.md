@@ -77,7 +77,7 @@ bun run build
 Same policy as sibling repos: local commits only until user says push. Publishing
 from this account must go through `npm stage publish` + user's
 `npm stage approve` — bare `npm publish` leaves ghost versions (see
-`cmduse/AGENTS.md`). `npm stage publish` leaves `0.0.0-stage` version in
+the root `AGENTS.md`). `npm stage publish` leaves `0.0.0-stage` version in
 packument; staging placeholder, not ghost. Verify with raw packument, not
 `npm view` (cache can lag).
 

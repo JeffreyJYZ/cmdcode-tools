@@ -8,8 +8,8 @@ Agent-facing notes for `mpc`. README user-facing — keep it so; architecture, g
 
 | sibling | mpc's dependency on it |
 | --- | --- |
-| `cmduse` (Rust CLI, `cli/`) | shelled out for `plans --json` (plan price/windows), `-1 --json` (account totals, coverage), `model --json --since <ISO>` (windowed per-model local usage) |
-| `@jeffreyjyz/opencode-command-code` (`opencode/`) | consumes `mpc --json` for session sidebar (allowance, rates, Intelligence, Tok/s per model) |
+| `cmduse` (Rust CLI, `cmduse/`) | shelled out for `plans --json` (plan price/windows), `-1 --json` (account totals, coverage), `model --json --since <ISO>` (windowed per-model local usage) |
+| `@jeffreyjyz/opencode-command-code` (`opencode-plugin/`) | consumes `mpc --json` for session sidebar (allowance, rates, Intelligence, Tok/s per model) |
 | `reqshape` (`~/dev/cmdcode-tools/reqshape`) | `--shape auto` (default) / `measured` runs `reqshape --format json`, reads its combined per-req `profile` as one workload for both plans (`REQSHAPE_BIN` overrides binary); reqshape in turn runs `mpc --json --shape off` |
 
 Contracts mustn't drift silently: cmduse JSON shapes (`plans`, `-1`, `model`) and `mpc --json`'s `rows[].{key,name,cc:{allowance,pricing,ability,tps,deal},oc:{...}}`, read by plugin sidebar. Change either side → update other same effort. `CMDUSE_BIN` points every cmduse call at dev build (`cmdusedev`). Payload top-level `workload` became `workloads` (one entry per side) when per-side shapes landed; plugin reads `rows[]` only, so rename needed no companion change — check `useRows.ts` before assuming any other key unread.

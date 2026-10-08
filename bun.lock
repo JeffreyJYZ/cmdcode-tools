@@ -20,7 +20,21 @@
         "typescript": "^5.9.0",
       },
     },
-    "opencode": {
+    "opencode-context": {
+      "name": "@jeffreyjyz/opencode-context",
+      "version": "0.1.1",
+      "dependencies": {
+        "@opentui/core": "0.5.12",
+        "@opentui/solid": "0.5.12",
+        "solid-js": "1.9.12",
+      },
+      "devDependencies": {
+        "@opencode/plugin": "^2.0.11",
+        "@types/bun": "latest",
+        "typescript": "^7",
+      },
+    },
+    "opencode-plugin": {
       "name": "@jeffreyjyz/opencode-command-code",
       "version": "0.3.19",
       "dependencies": {
@@ -35,20 +49,6 @@
         "@opencode/plugin": "^2.0.11",
         "@types/bun": "latest",
         "typescript": "^5",
-      },
-    },
-    "opencode-context": {
-      "name": "@jeffreyjyz/opencode-context",
-      "version": "0.1.1",
-      "dependencies": {
-        "@opentui/core": "0.5.12",
-        "@opentui/solid": "0.5.12",
-        "solid-js": "1.9.12",
-      },
-      "devDependencies": {
-        "@opencode/plugin": "^2.0.11",
-        "@types/bun": "latest",
-        "typescript": "^7",
       },
     },
     "opencode-session-dir": {
@@ -231,7 +231,7 @@
 
     "@isaacs/string-locale-compare": ["@isaacs/string-locale-compare@1.1.0", "", {}, "sha512-SQ7Kzhh9+D+ZW9MA0zkYv3VXhIDNx+LzM6EJ+/65I3QY+enU6Itte7E5XX7EWrqLW2FN4n06GWzBnPoC3th2aQ=="],
 
-    "@jeffreyjyz/opencode-command-code": ["@jeffreyjyz/opencode-command-code@workspace:opencode"],
+    "@jeffreyjyz/opencode-command-code": ["@jeffreyjyz/opencode-command-code@workspace:opencode-plugin"],
 
     "@jeffreyjyz/opencode-context": ["@jeffreyjyz/opencode-context@workspace:opencode-context"],
 
