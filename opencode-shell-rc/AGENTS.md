@@ -34,6 +34,7 @@ No TUI half, no runtime dependencies (node builtins only).
 - **PTY/terminal path is a different service** (`experimental.persistentPty`) and is *not* covered by this hook — only `Shell.create` callers (shell tool, session shell, server shell handler) are.
 - **`biome check .` aborts on a nested root configuration when a `.delta/` directory is present**; this repo's `biome.json` excludes `**/.delta`.
 - **Local-directory plugins resolve `index`/`server`/`tui` beside the package root, not the `exports` map.** So repo ships a root `index.js` shim that re-exports `dist/`; npm installs use `exports`. Keep shim in sync.
+- **Bare `ls` (and `ls -la`) can print NOTHING in an agent shell — that is the shell, not the plugin.** When `ls` is an `eza` alias (`ls='eza --icons=always'`), `eza` with no path operand reads file names from **stdin**; the agent shell's stdin is empty, so it exits 0 with no output (interactively a tty makes it list the cwd, which is why the alias looks fine). Fix in the **escape hatch**, not the plugin: a `ls()` in `~/.config/opencode/shell.zsh` that `unalias ls` and appends `.` when no argument is a path operand (the shim sources that file for agent shells only). Do NOT push this into the plugin's generated shim — it would need to override every user's alias and sort flags from operands, changing behavior for all installs.
 
 ## Tests
 
