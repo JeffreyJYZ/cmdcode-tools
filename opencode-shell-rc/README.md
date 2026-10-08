@@ -1,5 +1,9 @@
 # @jeffreyjyz/opencode-shell-rc
 
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@jeffreyjyz/opencode-shell-rc?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc)
+[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+
 Make the opencode agent shell load your **zsh aliases and functions**. The shell
 tool runs `/bin/zsh -c …` in a *non-interactive* shell, which never reads
 `~/.zshrc`, so an alias like `gp='git push'` fails in agent shells. This plugin

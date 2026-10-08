@@ -1,5 +1,9 @@
 # @jeffreyjyz/opencode-context
 
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@jeffreyjyz/opencode-context?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/opencode-context)
+[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+
 Context-window breakdown for opencode. `/context` opens a dialog showing where
 the window went — system prompt, tool definitions, thinking, tool inputs and
 outputs (split per tool), user and assistant messages — with a stacked bar and a

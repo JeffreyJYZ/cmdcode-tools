@@ -1,5 +1,8 @@
 # reqshape
 
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+
 Measure the shape of your requests from opencode's own history, then price that
 shape against any model — so "how many requests does a $60 allowance actually buy
 me?" stops being a guess.

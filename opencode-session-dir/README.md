@@ -1,5 +1,9 @@
 # @jeffreyjyz/opencode-session-dir
 
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@jeffreyjyz/opencode-session-dir?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/opencode-session-dir)
+[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+
 Bind extra working directories to **one** opencode session — durably, across
 restarts. Other sessions never see them.
 

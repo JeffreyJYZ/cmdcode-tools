@@ -1,5 +1,9 @@
 # cmduse
 
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/cmd-usage?style=flat-square)](https://crates.io/crates/cmd-usage)
+[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE-MIT)
+
 Live [Command Code](https://commandcode.ai) usage dashboard for your terminal.
 
 Plan dashboard, account-wide usage reports (all harnesses), offline local reports, and a customisable statusline.

@@ -1,5 +1,9 @@
 # mpc — model price compare
 
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/mpc?style=flat-square)](https://www.npmjs.com/package/mpc)
+[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+
 Compare what the same model actually costs you on **OpenCode Go** vs **CommandCode**
 (GOAT / Pro / Max), using one fixed per-request workload.
 
