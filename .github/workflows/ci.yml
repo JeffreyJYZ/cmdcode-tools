@@ -18,15 +18,30 @@ jobs:
       - run: cargo run -p cmd-usage -- -V          # binary smoke-test
       - run: cargo package -p cmduse-core --allow-dirty  # crate packages + verifies
 
-  opencode-plugin:
+  typescript:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: opencode
+            build: true
+          - package: oc-cmd-compare
+          - package: reqshape
+          - package: opencode-context
+            build: true
+          - package: opencode-shell-rc
+            build: true
+          - package: opencode-session-dir
+            build: true
     defaults:
       run:
-        working-directory: opencode
+        working-directory: ${{ matrix.package }}
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bun test
       - run: bun run typecheck
-      - run: bun run build
+      - if: matrix.build
+        run: bun run build

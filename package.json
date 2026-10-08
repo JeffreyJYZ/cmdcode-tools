@@ -1,6 +1,14 @@
 {
 	"name": "cmdcode-tools",
 	"private": true,
+	"workspaces": [
+		"opencode",
+		"oc-cmd-compare",
+		"reqshape",
+		"opencode-context",
+		"opencode-shell-rc",
+		"opencode-session-dir"
+	],
 	"scripts": {
 		"extract": "bun run scripts/extract-gating.ts"
 	}

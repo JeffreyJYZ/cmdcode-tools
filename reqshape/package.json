@@ -1,0 +1,25 @@
+{
+	"name": "reqshape",
+	"version": "0.1.0",
+	"description": "Measure the shape of your requests from opencode's own history, then price it against any model",
+	"license": "MIT",
+	"type": "module",
+	"bin": {
+		"reqshape": "src/index.ts"
+	},
+	"scripts": {
+		"start": "bun run src/index.ts",
+		"test": "bun test",
+		"fmt": "biome format --write .",
+		"check": "biome check --write .",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.13",
+		"@types/bun": "latest",
+		"typescript": "^5.9.0"
+	},
+	"dependencies": {
+		"cac": "^7.0.0"
+	}
+}

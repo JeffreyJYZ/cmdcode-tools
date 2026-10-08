@@ -1,0 +1,43 @@
+{
+	"name": "@jeffreyjyz/opencode-shell-rc",
+	"version": "0.1.0",
+	"description": "Make the opencode agent shell load your zsh aliases and functions (via a fast ZDOTDIR shim), without paying for oh-my-zsh/compinit on every command.",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js"
+	},
+	"scripts": {
+		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target bun --external @opencode/plugin && tsc -p tsconfig.build.json",
+		"test": "bun test",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@opencode/plugin": "^2.0.11",
+		"@types/bun": "latest",
+		"typescript": "^7"
+	},
+	"files": [
+		"dist",
+		"index.js",
+		"LICENSE"
+	],
+	"keywords": [
+		"opencode",
+		"opencode-plugin",
+		"zsh",
+		"zdotdir",
+		"aliases"
+	],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/JeffreyJYZ/opencode-shell-rc.git"
+	},
+	"homepage": "https://github.com/JeffreyJYZ/opencode-shell-rc#readme",
+	"bugs": "https://github.com/JeffreyJYZ/opencode-shell-rc/issues",
+	"publishConfig": {
+		"access": "public"
+	}
+}

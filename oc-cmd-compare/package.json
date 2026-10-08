@@ -1,0 +1,25 @@
+{
+	"name": "mpc",
+	"version": "0.1.0",
+	"description": "Compare model pricing across opencode Go and Command Code plans",
+	"license": "MIT",
+	"type": "module",
+	"bin": {
+		"mpc": "src/index.ts"
+	},
+	"scripts": {
+		"start": "bun run src/index.ts",
+		"test": "bun test",
+		"fmt": "biome format --write .",
+		"check": "biome check --write .",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.13",
+		"@types/bun": "latest",
+		"typescript": "^5.9.0"
+	},
+	"dependencies": {
+		"cac": "^7.0.0"
+	}
+}

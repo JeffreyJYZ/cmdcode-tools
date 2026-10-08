@@ -1,0 +1,50 @@
+{
+	"name": "@jeffreyjyz/opencode-session-dir",
+	"version": "0.1.0",
+	"description": "Bind extra working directories to a single opencode session, durably across restarts. Other sessions never see them.",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js",
+		"./tui": "./dist/tui.js"
+	},
+	"scripts": {
+		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target bun --external @opencode/plugin && bun scripts/build-tui.ts && tsc -p tsconfig.build.json",
+		"test": "bun test",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@opentui/core": "0.5.12",
+		"@opentui/solid": "0.5.12",
+		"solid-js": "1.9.12"
+	},
+	"devDependencies": {
+		"@opencode/plugin": "^2.0.11",
+		"@types/bun": "latest",
+		"typescript": "^7"
+	},
+	"files": [
+		"dist",
+		"index.js",
+		"tui.js",
+		"LICENSE"
+	],
+	"keywords": [
+		"opencode",
+		"opencode-plugin",
+		"working-directory",
+		"session",
+		"permissions"
+	],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/JeffreyJYZ/opencode-session-dir.git"
+	},
+	"homepage": "https://github.com/JeffreyJYZ/opencode-session-dir#readme",
+	"bugs": "https://github.com/JeffreyJYZ/opencode-session-dir/issues",
+	"publishConfig": {
+		"access": "public"
+	}
+}

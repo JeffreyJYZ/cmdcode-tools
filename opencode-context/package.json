@@ -1,0 +1,49 @@
+{
+	"name": "@jeffreyjyz/opencode-context",
+	"version": "0.1.1",
+	"description": "Context-window breakdown for opencode: a /context dialog plus a context_breakdown tool showing where the window went (system prompt, tool definitions, thinking, tool I/O, messages), delta.app style.",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js",
+		"./tui": "./dist/tui.js"
+	},
+	"scripts": {
+		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target bun --external @opencode/plugin && bun scripts/build-tui.ts && tsc -p tsconfig.build.json",
+		"test": "bun test",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@opentui/core": "0.5.12",
+		"@opentui/solid": "0.5.12",
+		"solid-js": "1.9.12"
+	},
+	"devDependencies": {
+		"@opencode/plugin": "^2.0.11",
+		"@types/bun": "latest",
+		"typescript": "^7"
+	},
+	"files": [
+		"dist",
+		"index.js",
+		"tui.js",
+		"LICENSE"
+	],
+	"keywords": [
+		"opencode",
+		"opencode-plugin",
+		"context",
+		"tokens"
+	],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/JeffreyJYZ/opencode-context.git"
+	},
+	"homepage": "https://github.com/JeffreyJYZ/opencode-context#readme",
+	"bugs": "https://github.com/JeffreyJYZ/opencode-context/issues",
+	"publishConfig": {
+		"access": "public"
+	}
+}

@@ -1,3 +1,6 @@
 target/
 extension.wasm
+node_modules/
+dist/
+.delta/
 .DS_Store

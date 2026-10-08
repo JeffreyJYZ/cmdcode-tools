@@ -1,7 +1,18 @@
 # AGENTS.md
 
-Workspace: cmduse-core + cmd-usage CLI (+ built-in MCP server) + opencode
-plugin, single source of shared logic. Two independent version lines:
+Monorepo root (`JeffreyJYZ/cmdcode-tools`): everything at this root is ONE git
+repo — the former `cmduse` repo's history, plus five packages absorbed from
+sibling repos (each kept its own published identity + GitHub remote; only local
+checkouts were merged). Root `Cargo.toml` = Rust workspace (`core`, `cli`);
+root `package.json` = npm/bun workspace (`opencode`, `oc-cmd-compare`,
+`reqshape`, `opencode-context`, `opencode-shell-rc`, `opencode-session-dir`);
+ONE root `bun.lock`. Per-package `bun.lock` files were removed. Nested
+`.github/workflows` are inert — CI lives only in root `.github/workflows`.
+Packages share no code; coupling is via installed binaries + published plugins,
+never relative paths.
+
+Within the Rust workspace: cmduse-core + cmd-usage CLI (+ built-in MCP server) +
+opencode plugin, single source of shared logic. Two independent version lines:
 cmd-usage 0.7.x, cmduse-core 2.x (0.2–0.4 slots yanked-forever on crates.io
 from old cmd-usage crate).
 
@@ -168,7 +179,7 @@ opencode/          @jeffreyjyz/opencode-command-code TS plugin (dual opencode
   commit — never follow-up "docs" commit. Check for stale version refs and stale
   option/flag lists before committing.
 
-## Consumers (sibling repo, same owner)
+## Consumers (in-repo package `oc-cmd-compare`)
 
 `mpc` (`~/dev/cmdcode-tools/oc-cmd-compare`) reads this workspace: shells out to `cmduse`, takes
 per-model mix from opencode's own message store (`~/.local/share/opencode/opencode.db`) not this
@@ -427,7 +438,7 @@ committing: `cargo fmt --all -- --check`, `cargo test --all-targets`,
     rows, suspect `mpc`, not network.** Every other model row (allowance, rates,
     Intelligence, Tok/s, Deal) from `mpc --json`, account block above unaffected
     — asymmetry = tell. Usual cause dangling `~/.bun/bin/mpc` after global
-    `bun link` pruned (see sibling repo's AGENTS.md): all three candidates
+    `bun link` pruned (see `oc-cmd-compare/AGENTS.md`): all three candidates
     (`MPC_BIN_CANDIDATES`: `mpc`, `~/.bun/bin/mpc`, `/opt/homebrew/bin/mpc`)
     resolve to same dead path, so `spawn` yields `ENOENT`, catalog silently stays
     empty. Dangling symlink prints nothing for `command -v mpc`, `ls -l` on bin
