@@ -1,0 +1,42 @@
+name: Snapshot mpc data
+
+# Keeps `website/src/data/mpc.json` fresh without a redeploy. mpc is Bun-only
+# (Bun.file/Bun.write/bun:sqlite/Bun.spawn), so it cannot run in a Vercel
+# Function; a scheduled CI job is the only place with Bun to run it. The
+# /compare page fetches the committed snapshot in the browser.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One run at a time so two crons cannot race the push.
+concurrency:
+  group: mpc-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    # Only the canonical repo: a fork's schedule would push into a mirror.
+    if: github.repository == 'JeffreyJYZ/cmdcode-tools'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      # Root install: the workspace, so mpc's `cac` dependency is present.
+      - run: bun install
+      - run: bun run --cwd website snapshot:mpc
+      - name: Commit on material change
+        run: |
+          # `generatedAt` churns every run; ignore it when deciding.
+          if git diff --ignore-matching-lines='"generatedAt"' --quiet -- website/src/data/mpc.json; then
+            echo "no material change"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add website/src/data/mpc.json
+          git commit -m "chore(data): refresh mpc snapshot [skip ci]"
+          git push

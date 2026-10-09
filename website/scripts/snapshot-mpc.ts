@@ -28,38 +28,85 @@ import type {
 /** CommandCode plans mpc can price, in the order the page shows them. */
 const CC_PLAN_KEYS = ["go", "goat", "pro", "max10", "max20"] as const;
 
-/** In order: explicit override, PATH, then the two common bun/homebrew spots. */
-const BINARY_CANDIDATES = [
-	process.env.MPC_BIN,
-	"mpc",
-	join(homedir(), ".bun", "bin", "mpc"),
-	"/opt/homebrew/bin/mpc",
-].filter((c): c is string => Boolean(c));
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = join(SCRIPT_DIR, "..", "..");
 
-const OUT_FILE = join(
-	fileURLToPath(import.meta.url),
-	"..",
-	"..",
-	"src",
-	"data",
-	"mpc.json",
-);
+/**
+ * The workspace source, run straight through `bun`. This is the candidate that
+ * works in CI, where no `mpc` binary is installed: `bun oc-cmd-compare/src/index.ts`
+ * needs only the checkout plus the root `bun install` (for `cac`).
+ */
+const WORKSPACE_ENTRY = join(REPO_ROOT, "oc-cmd-compare", "src", "index.ts");
 
-/** First candidate that resolves to a real executable path. */
-function resolveMpc(): string {
-	for (const candidate of BINARY_CANDIDATES) {
-		if (candidate.includes("/")) {
-			if (existsSync(candidate)) return candidate;
-		} else {
-			const resolved = Bun.which(candidate);
-			if (resolved) return resolved;
-		}
+/** One way to invoke mpc: an executable plus any args before mpc's own flags. */
+type MpcCandidate = {
+	command: string;
+	prefixArgs: string[];
+	/** Human label for the run log, so each run reports which candidate it used. */
+	label: string;
+};
+
+/**
+ * In order: explicit override, PATH, the two common bun/homebrew spots, then the
+ * workspace source with bun — the only form that works in CI.
+ */
+function candidates(): MpcCandidate[] {
+	const list: MpcCandidate[] = [];
+	// MPC_BIN first, so a local `dev:link` / `mpcdev` build still wins.
+	if (process.env.MPC_BIN) {
+		list.push({
+			command: process.env.MPC_BIN,
+			prefixArgs: [],
+			label: `MPC_BIN=${process.env.MPC_BIN}`,
+		});
+	}
+	list.push({ command: "mpc", prefixArgs: [], label: "mpc (PATH)" });
+	list.push({
+		command: join(homedir(), ".bun", "bin", "mpc"),
+		prefixArgs: [],
+		label: "~/.bun/bin/mpc",
+	});
+	list.push({
+		command: "/opt/homebrew/bin/mpc",
+		prefixArgs: [],
+		label: "/opt/homebrew/bin/mpc",
+	});
+	list.push({
+		command: "bun",
+		prefixArgs: [WORKSPACE_ENTRY],
+		label: `bun ${WORKSPACE_ENTRY}`,
+	});
+	return list;
+}
+
+/** The candidate with a resolved executable, or null if it is not usable here. */
+function usable(candidate: MpcCandidate): MpcCandidate | null {
+	const command = candidate.command.includes("/")
+		? existsSync(candidate.command)
+			? candidate.command
+			: null
+		: Bun.which(candidate.command);
+	if (!command) return null;
+	// A source-run candidate also needs its entry file present.
+	const entry = candidate.prefixArgs[0];
+	if (entry && !existsSync(entry)) return null;
+	return { ...candidate, command };
+}
+
+/** First candidate that resolves on this machine. */
+function resolveMpc(): MpcCandidate {
+	const options = candidates();
+	for (const candidate of options) {
+		const resolved = usable(candidate);
+		if (resolved) return resolved;
 	}
 	throw new Error(
-		`mpc not found. Looked at: ${BINARY_CANDIDATES.join(", ")}. ` +
+		`mpc not found. Looked at: ${options.map((c) => c.label).join(", ")}. ` +
 			"Install it (bun link in oc-cmd-compare) or set MPC_BIN.",
 	);
 }
+
+const OUT_FILE = join(SCRIPT_DIR, "..", "src", "data", "mpc.json");
 
 type RawSide = {
 	allowance: number;
@@ -103,9 +150,16 @@ function toSide(raw: RawSide | null | undefined): MpcSide | null {
 	return side;
 }
 
-function runMpc(bin: string, planKey: string): RawRun {
-	const args = ["--json", "--shape", "off", "--cc-plan", planKey];
-	const proc = spawnSync(bin, args, {
+function runMpc(mpc: MpcCandidate, planKey: string): RawRun {
+	const args = [
+		...mpc.prefixArgs,
+		"--json",
+		"--shape",
+		"off",
+		"--cc-plan",
+		planKey,
+	];
+	const proc = spawnSync(mpc.command, args, {
 		encoding: "utf8",
 		maxBuffer: 64 * 1024 * 1024,
 	});
@@ -123,14 +177,14 @@ function runMpc(bin: string, planKey: string): RawRun {
 }
 
 function main(): void {
-	const bin = resolveMpc();
-	console.log(`snapshot:mpc — using ${bin}`);
+	const mpc = resolveMpc();
+	console.log(`snapshot:mpc — using ${mpc.label}`);
 
 	const byPlan: Record<string, MpcRun> = {};
 	const plans: MpcPlanInfo[] = [];
 
 	for (const key of CC_PLAN_KEYS) {
-		const raw = runMpc(bin, key);
+		const raw = runMpc(mpc, key);
 		const cc = raw.plans.cc;
 		const rows: MpcRow[] = raw.rows.map((row) => ({
 			key: row.key,
