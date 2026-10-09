@@ -19,7 +19,9 @@ import { existsSync, mkdirSync, rmSync, symlinkSync } from "node:fs"
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
 
-const ROOT = resolve(new URL("..", import.meta.url).pathname)
+import { fileURLToPath } from "node:url"
+
+const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)))
 
 /** One dev twin: the name to link and the absolute file it must run. */
 interface DevCommand {

@@ -121,8 +121,6 @@ cd opencode-plugin && bun test && bun run typecheck
 
 Tests must be hermetic: CI (Ubuntu) has no `cmduse` binary, no homebrew prefix, so anything shelling out to real CLI needs skip guard (`test.skipIf`) or injected candidate list — passing local run proves nothing about CI. Mirror CI before committing: `cargo fmt --all -- --check`, `cargo test --all-targets`, `cargo clippy --all-targets -- -D warnings`, `cargo package -p cmduse-core --allow-dirty`, then opencode job's `bun install && bun test && bun run typecheck && bun run build`.
 
-- **Dev twins + `bun run dev:link`.** `cmdusedev`/`ocusedev` (Rust) + `mpcdev`/`reqshapedev` (bun) run the working-copy build; `bun run dev:link` (`scripts/dev-link.ts`; `--dir` overrides, default `~/dev/bin`) runs `cargo build -p cmd-usage` then links **only** those four names, so the installed `cmduse`/`ocuse`/`mpc`/`reqshape` are never shadowed. Idempotent, replaces dangling links after `cargo clean`, and exits non-zero if the link dir is off `$PATH` (prints the `export PATH=` line). Point consumers at the dev build via `CMDUSE_BIN`/`OCUSE_BIN`/`MPC_BIN`/`REQSHAPE_BIN`.
-
 ## Publishing (NEVER without explicit user go)
 
 - **Versions independent: `cmduse-core` on own major line; CLI is 0.7.x.** NOT a pair — do not read one from other, never "sync". `cmduse/Cargo.toml` depends on `{ path = "../core", version = "2" }`, so new core minor/patch needs no CLI edit.
