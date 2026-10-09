@@ -2,9 +2,7 @@
 
 Live Command Code usage dashboard for your terminal.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/crates/v/cmd-usage?style=flat-square)](https://crates.io/crates/cmd-usage)
-[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE-MIT)
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml) [![crates.io](https://img.shields.io/crates/v/cmd-usage?style=flat-square)](https://crates.io/crates/cmd-usage) [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE-MIT)
 
 ## What it is
 
@@ -72,17 +70,11 @@ cmduse daily --json          # JSON output (daily, hourly, model, session, model
 cmduse daily --csv           # CSV output for daily/hourly/model/session
 ```
 
-Color: SGR escapes are suppressed when stdout is not a terminal or when
-`NO_COLOR` is set non-empty. The live dashboard's spinner goes straight to
-/dev/tty, so it only runs when stdout is a terminal — `--plain`, or any piped
-or redirected run, never writes to the terminal at all. `--plain` forces plain
-text; reports have no `--plain` — pipe them or use `--json`/`--csv`.
+Color: SGR escapes are suppressed when stdout is not a terminal or when `NO_COLOR` is set non-empty. The live dashboard's spinner goes straight to /dev/tty, so it only runs when stdout is a terminal — `--plain`, or any piped or redirected run, never writes to the terminal at all. `--plain` forces plain text; reports have no `--plain` — pipe them or use `--json`/`--csv`.
 
 ## MCP server
 
-`cmduse mcp` runs an MCP stdio server (newline-delimited JSON-RPC, hand-rolled
-— no extra dependencies) so any MCP-capable host (Zed, and others) can call
-Command Code usage as tools:
+`cmduse mcp` runs an MCP stdio server (newline-delimited JSON-RPC, hand-rolled — no extra dependencies) so any MCP-capable host (Zed, and others) can call Command Code usage as tools:
 
 | Tool | Body |
 |---|---|
@@ -92,9 +84,7 @@ Command Code usage as tools:
 | `daily` | account daily report; args `days`, `tz` (±HH:MM), `local` |
 | `hourly` | account hourly report; args `hours`, `tz`, `local` |
 
-Auth is the same as the CLI (`CMD_API_KEY`, then `~/.commandcode/auth.json`).
-Tool errors come back as `isError: true` results; stdout carries protocol
-traffic only. Zed config:
+Auth is the same as the CLI (`CMD_API_KEY`, then `~/.commandcode/auth.json`). Tool errors come back as `isError: true` results; stdout carries protocol traffic only. Zed config:
 
 ```json
 {
@@ -104,23 +94,15 @@ traffic only. Zed config:
 }
 ```
 
-`-1 --json` emits a single dashboard object (plan, credits, both windows,
-billing summary). `--gated --json` on `models` emits every model with
-`allowed` and `reason` instead of filtering.
+`-1 --json` emits a single dashboard object (plan, credits, both windows, billing summary). `--gated --json` on `models` emits every model with `allowed` and `reason` instead of filtering.
 
-GNU forms are accepted: `--interval=5m`, `--days=14`, and attached short values
-like `-i30` / `-w40`. `--last`/`-l` are aliases for `--days`.
+GNU forms are accepted: `--interval=5m`, `--days=14`, and attached short values like `-i30` / `-w40`. `--last`/`-l` are aliases for `--days`.
 
-Cap alerts: in watch mode a desktop notification fires once when a window
-crosses into overflow (macOS `osascript`, Linux `notify-send`). Disable with
-`cmduse config set notify=false`.
+Cap alerts: in watch mode a desktop notification fires once when a window crosses into overflow (macOS `osascript`, Linux `notify-send`). Disable with `cmduse config set notify=false`.
 
 Burn-rate: windows show `on pace to hit cap in …` when the current spend rate projects hitting the cap before the window resets, and only once the window is ≥10% elapsed (flat-rate projection is unreliable early). ponytail: assumes flat spend rate; bursty sessions shift the ETA.
 
-Watch mode: a `spend bursts (N samples)` sparkline shows $ spent per refresh.
-It is on by default, hidden while idle (all-zero deltas), and its sample count
-is configurable. Session-only: a fresh run starts a fresh trend (no stale
-data from earlier runs):
+Watch mode: a `spend bursts (N samples)` sparkline shows $ spent per refresh. It is on by default, hidden while idle (all-zero deltas), and its sample count is configurable. Session-only: a fresh run starts a fresh trend (no stale data from earlier runs):
 
 ```sh
 cmduse config set burst_on=false      # turn the sparkline off
@@ -180,10 +162,7 @@ CLI flags override config. `cmduse config set interval=<s> width=<n> burst_on=<b
 
 ## Updates
 
-Once per day (cache at `~/.cache/cmd-usage/last-check`) the dashboard checks
-crates.io; when a newer `cmd-usage` exists it shows a boxed notice inside the
-watch frame (stderr for `-1`). The cached version is replayed every run, so the
-reminder persists until you upgrade. Dismiss or disable:
+Once per day (cache at `~/.cache/cmd-usage/last-check`) the dashboard checks crates.io; when a newer `cmd-usage` exists it shows a boxed notice inside the watch frame (stderr for `-1`). The cached version is replayed every run, so the reminder persists until you upgrade. Dismiss or disable:
 
 ```sh
 cmduse --dismiss-update              # hide this version until a newer one
@@ -204,8 +183,7 @@ Logged-in [Command Code CLI](https://commandcode.ai) — reads your API key from
 
 ### ocuse — OpenCode Go/Zen (same crate, second binary)
 
-The same crate ships `ocuse`, which tracks **OpenCode Go** (the $10/mo subscription) and
-**OpenCode Zen** (pay-as-you-go) with the same CLI shape:
+The same crate ships `ocuse`, which tracks **OpenCode Go** (the $10/mo subscription) and **OpenCode Zen** (pay-as-you-go) with the same CLI shape:
 
 ```sh
 ocuse                 # watch: live frame (colour, gauges, spend-burst sparkline)
@@ -217,26 +195,11 @@ ocuse statusline
 ocuse mcp             # MCP stdio server (usage/plans/daily/hourly/session/model)
 ```
 
-Two upstream facts shape it: OpenCode publishes **no usage API** (the one route,
-`/zen/go/v1/usage`, is entitlement-gated; the console is the only surface), and Go's
-allowance is **per model** — each model has a monthly dollar limit with windows of
-5h = 20%, weekly = 50%, monthly = 100%. So `ocuse` reports your local usage from
-`opencode.db` (providers `opencode-go` and `opencode`, which record real `cost`) against
-the limits in `core/zen.json` (regenerated with `bun scripts/extract-zen.ts`).
+Two upstream facts shape it: OpenCode publishes **no usage API** (the one route, `/zen/go/v1/usage`, is entitlement-gated; the console is the only surface), and Go's allowance is **per model** — each model has a monthly dollar limit with windows of 5h = 20%, weekly = 50%, monthly = 100%. So `ocuse` reports your local usage from `opencode.db` (providers `opencode-go` and `opencode`, which record real `cost`) against the limits in `core/zen.json` (regenerated with `bun scripts/extract-zen.ts`).
 
-The billing period has no local record, so the default is the calendar month:
-`--period-start YYYY-MM-DD` pins the real one, `--window all|<n>d` reports other ranges,
-and `--tz` shifts day/hour buckets.
+The billing period has no local record, so the default is the calendar month: `--period-start YYYY-MM-DD` pins the real one, `--window all|<n>d` reports other ranges, and `--tz` shifts day/hour buckets.
 
-`ocuse` renders with `cmduse`'s own presentation: the same palette, the same
-severity-coloured gauges (green <70%, yellow 70–90%, red ≥90%), the same in-place watch
-redraw (`cmduse`'s `redraw_frame`, so a shrinking frame never scrolls), and the same
-spend-burst sparkline. Both watch loop and gauges reuse `cmduse/src/render.rs` rather than a
-second copy. Every subcommand takes the colour flag — `daily`, `hourly`, `session`, `model`,
-`plans` and `statusline` included (bold headings, dim secondary text, cyan figures, an
-over-cap window *or* model flagged `LIMIT EXCEEDED`, and a per-model share of period spend).
-`--plain`, `NO_COLOR` and a piped stdout drop colour and gauges; scripted output stays
-escape-free.
+`ocuse` renders with `cmduse`'s own presentation: the same palette, the same severity-coloured gauges (green <70%, yellow 70–90%, red ≥90%), the same in-place watch redraw (`cmduse`'s `redraw_frame`, so a shrinking frame never scrolls), and the same spend-burst sparkline. Both watch loop and gauges reuse `cmduse/src/render.rs` rather than a second copy. Every subcommand takes the colour flag — `daily`, `hourly`, `session`, `model`, `plans` and `statusline` included (bold headings, dim secondary text, cyan figures, an over-cap window *or* model flagged `LIMIT EXCEEDED`, and a per-model share of period spend). `--plain`, `NO_COLOR` and a piped stdout drop colour and gauges; scripted output stays escape-free.
 
 ## Notes
 

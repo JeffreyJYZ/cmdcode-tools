@@ -2,16 +2,11 @@
 
 Compare what the same model actually costs you on OpenCode Go vs CommandCode, using one fixed per-request workload.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/mpc?style=flat-square)](https://www.npmjs.com/package/mpc)
-[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/mpc?style=flat-square)](https://www.npmjs.com/package/mpc) [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
 ## What it is
 
-Both providers sell the same shape of thing: a monthly subscription that grants a pool of
-usage credits, with a per-model allowance priced at API token rates. `mpc` normalises both
-onto one table so you can see, per model, how many requests a month each plan buys and what
-each request really costs you.
+Both providers sell the same shape of thing: a monthly subscription that grants a pool of usage credits, with a per-model allowance priced at API token rates. `mpc` normalises both onto one table so you can see, per model, how many requests a month each plan buys and what each request really costs you.
 
 ## Install
 
@@ -48,14 +43,11 @@ mpc --json                            # machine-readable output
 mpc --check                           # validate live sources and report drift
 ```
 
-Flags are parsed with [cac](https://github.com/cacjs/cac); `--help` and `--version` come from it.
-Unknown flags and out-of-range values are rejected.
+Flags are parsed with [cac](https://github.com/cacjs/cac); `--help` and `--version` come from it. Unknown flags and out-of-range values are rejected.
 
 ## Your real usage (`--usage`)
 
-Project what you actually ran onto both plans, from the local CommandCode session logs
-(offline). `--usage-window` picks the range — `period` (the billing cycle, default), `all`, or
-`<n>d`:
+Project what you actually ran onto both plans, from the local CommandCode session logs (offline). `--usage-window` picks the range — `period` (the billing cycle, default), `all`, or `<n>d`:
 
 ```sh
 mpc --usage
@@ -75,14 +67,9 @@ Sources, merged when more than one is present:
 | session-log scan (`~/.commandcode/projects`) | fallback when cmduse lacks the window |
 | `--usage-file` | anything else you have |
 
-The DB is read-only via `bun:sqlite`; assistant messages carry `cost`, `tokens` and
-`modelID`/`providerID`, so no plugin is required for the opencode side. Set `CMDUSE_BIN` to test
-against a dev cmduse (`cmdusedev`).
+The DB is read-only via `bun:sqlite`; assistant messages carry `cost`, `tokens` and `modelID`/`providerID`, so no plugin is required for the opencode side. Set `CMDUSE_BIN` to test against a dev cmduse (`cmdusedev`).
 
-**Scope caveat.** Only *local* sources exist — the account API exposes totals, not per-model
-usage, and Studio's API surface is the same endpoint. The report prints a coverage line
-(`local usage N of M account requests (x%)`) and warns below 90%, so a partial mix is visible
-rather than silently wrong.
+**Scope caveat.** Only *local* sources exist — the account API exposes totals, not per-model usage, and Studio's API surface is the same endpoint. The report prints a coverage line (`local usage N of M account requests (x%)`) and warns below 90%, so a partial mix is visible rather than silently wrong.
 
 ```text
 MODEL          your req    your $    CC $/req  CC $/mo    OC $/req  OC $/mo  cheaper
@@ -92,19 +79,11 @@ totals  your mix · CC $2.4761/mo · OpenCode $2.7686/mo
         head-to-head  2 of 2 models · CC $2.4761/mo · OpenCode $2.7686/mo · cheaper CommandCode by $0.2925 (12%)
 ```
 
-Usage is per-model **totals**, so `your $` is the list value of the tokens, `CC $/mo` is what that
-subscription would cost you, and models that exceed a plan's allowance are flagged `over cap`.
-The `head-to-head` line answers "which plan is cheaper *for my mix*", so it is restricted to the
-models **both** plans price — a model only one provider sells would otherwise pad that side's total
-and "prove" the other cheaper on traffic it cannot serve. One-sided rows are excluded and counted.
-Unknown models are listed, never dropped. Accepts the cmduse shape, `{"entries": [...]}`, or a bare
-array of `{ model, requests, tokensIn, cacheRead, tokensOut }`.
+Usage is per-model **totals**, so `your $` is the list value of the tokens, `CC $/mo` is what that subscription would cost you, and models that exceed a plan's allowance are flagged `over cap`. The `head-to-head` line answers "which plan is cheaper *for my mix*", so it is restricted to the models **both** plans price — a model only one provider sells would otherwise pad that side's total and "prove" the other cheaper on traffic it cannot serve. One-sided rows are excluded and counted. Unknown models are listed, never dropped. Accepts the cmduse shape, `{"entries": [...]}`, or a bare array of `{ model, requests, tokensIn, cacheRead, tokensOut }`.
 
 ## Config file
 
-Every flag persists. `mpc` reads `~/.config/mpc/config.json` (or `$XDG_CONFIG_HOME/mpc/config.json`),
-overridden by CLI flags, and `--config <path>` / `--no-config` control it. Keys are the camelCase
-flag names, negations are plain booleans:
+Every flag persists. `mpc` reads `~/.config/mpc/config.json` (or `$XDG_CONFIG_HOME/mpc/config.json`), overridden by CLI flags, and `--config <path>` / `--no-config` control it. Keys are the camelCase flag names, negations are plain booleans:
 
 ```json
 {
@@ -129,9 +108,7 @@ flag names, negations are plain booleans:
 defaults  <  plugins (listed order)  <  user config  <  CLI flags
 ```
 
-Relative paths resolve against the config file's directory. A plugin is a `.json` file, or a
-`.js`/`.ts`/package whose default export is a config object (or a sync/async function returning
-one, given `{ env, cwd, configDir }`). JS plugins run code — same trust as your shell.
+Relative paths resolve against the config file's directory. A plugin is a `.json` file, or a `.js`/`.ts`/package whose default export is a config object (or a sync/async function returning one, given `{ env, cwd, configDir }`). JS plugins run code — same trust as your shell.
 
 ## Options
 
@@ -233,19 +210,9 @@ Reasoning bills at the output rate *on top of* output — opencode's own provide
 
 ### Measuring instead of assuming
 
-By default mpc asks **reqshape** for the shape of your real traffic, read from opencode's own
-store, and prices **both** plans on that single per-req profile, so the comparison isolates price
-and allowance from traffic and the footer prints one workload line. reqshape only leads once it has
-`SHAPE_MIN_REQS` (500) measured requests — below that the fixed 800/50K/200 workload is steadier.
-The footer's `shape` line says plainly which was used, the sample size behind the choice, and the
-alternative flag.
+By default mpc asks **reqshape** for the shape of your real traffic, read from opencode's own store, and prices **both** plans on that single per-req profile, so the comparison isolates price and allowance from traffic and the footer prints one workload line. reqshape only leads once it has `SHAPE_MIN_REQS` (500) measured requests — below that the fixed 800/50K/200 workload is steadier. The footer's `shape` line says plainly which was used, the sample size behind the choice, and the alternative flag.
 
-`req/mo` then answers "how many of *my* requests fit this allowance" rather than "how many of a
-hypothetical 800/50K/200 ones do". Force the fixed workload with `--shape off`, force reqshape
-regardless of sample with `--shape measured`, or save a payload once with
-`reqshape --format json > shape.json` and reuse it with `--shape shape.json`; `--since <date>`
-narrows the window. A missing `reqshape` binary (`REQSHAPE_BIN` overrides it) is a warning, not a
-failure: mpc keeps the fixed workload and carries on.
+`req/mo` then answers "how many of *my* requests fit this allowance" rather than "how many of a hypothetical 800/50K/200 ones do". Force the fixed workload with `--shape off`, force reqshape regardless of sample with `--shape measured`, or save a payload once with `reqshape --format json > shape.json` and reuse it with `--shape shape.json`; `--since <date>` narrows the window. A missing `reqshape` binary (`REQSHAPE_BIN` overrides it) is a warning, not a failure: mpc keeps the fixed workload and carries on.
 
 The **index** behind `COST` is a 0-100 volume score across every model-provider entry:
 
@@ -253,9 +220,7 @@ The **index** behind `COST` is a 0-100 volume score across every model-provider 
 index = 100 * volume
 ```
 
-where `volume` is min-max normalised `log10(requestsPerMonth)`. Cache and output prices are **not**
-folded in — they are their own columns — so `COST` reads as "how many requests the plan buys".
-Free models get `∞` requests and `index = 100`.
+where `volume` is min-max normalised `log10(requestsPerMonth)`. Cache and output prices are **not** folded in — they are their own columns — so `COST` reads as "how many requests the plan buys". Free models get `∞` requests and `index = 100`.
 
 ## Ability scores (`VAL`)
 
@@ -266,14 +231,7 @@ COST = 100 - 100·volume                                     # inverted: 0 is be
 VAL = 100 * (0.35*ability + 0.10*tps + 0.25*volume + 0.15*cache + 0.15*output)
 ```
 
-`--bench-weight` and `--tps-weight` set the ability and speed shares; the remaining weight
-splits volume/cache/output 50/25/25. Ability and `tps` come from the same source, so `--bench cc`
-reads both CommandCode's `Intelligence` and `Tok/s` columns.
-Speed variants (`…Fast`, `…HighSpeed`, `…UltraSpeed`, `…FlashX`) inherit their base model's
-ability — same weights — and, when the benchmark publishes no throughput for the variant, the
-base's throughput ×`SPEED_TPS_FACTOR` (a speed tier is multiples of its base). Without that a Fast model was scored
-at the neutral rate, ranking it below its slower base. Unscored models show `ability —` and `VAL —`
-and are excluded from the ability normalisation range.
+`--bench-weight` and `--tps-weight` set the ability and speed shares; the remaining weight splits volume/cache/output 50/25/25. Ability and `tps` come from the same source, so `--bench cc` reads both CommandCode's `Intelligence` and `Tok/s` columns. Speed variants (`…Fast`, `…HighSpeed`, `…UltraSpeed`, `…FlashX`) inherit their base model's ability — same weights — and, when the benchmark publishes no throughput for the variant, the base's throughput ×`SPEED_TPS_FACTOR` (a speed tier is multiples of its base). Without that a Fast model was scored at the neutral rate, ranking it below its slower base. Unscored models show `ability —` and `VAL —` and are excluded from the ability normalisation range.
 
 | `--bench` | source | coverage |
 | --- | --- | --- |
@@ -282,33 +240,18 @@ and are excluded from the ability normalisation range.
 | `cc` | CommandCode's `Intelligence` column | every matched model |
 | `file:<path>` / `url:<url>` | your JSON, `{ "model": score }` or `[{ model, score }]` | whatever you supply |
 
-The default is `aa` when an AA key is available (`AA_API_KEY` or `--aa-key`), otherwise `cc`; an
-explicit `--bench` always wins. After the lead source, misses are filled from the same benchmark's
-keyless page scrape (`aa-web`) and then from CommandCode, the last resort — `--no-fallback`
-disables the fills. Because CC's `Intelligence` column and AA publish the same index, a `cc`-led
-run asks AA only when it still lacks throughput (CC's plan pages no longer publish `Tok/s`). The
-`aa-web` result is cached under `$XDG_CACHE_HOME/mpc/` (or `~/.cache/mpc/`) for 7 days;
-`--refresh` busts it.
+The default is `aa` when an AA key is available (`AA_API_KEY` or `--aa-key`), otherwise `cc`; an explicit `--bench` always wins. After the lead source, misses are filled from the same benchmark's keyless page scrape (`aa-web`) and then from CommandCode, the last resort — `--no-fallback` disables the fills. Because CC's `Intelligence` column and AA publish the same index, a `cc`-led run asks AA only when it still lacks throughput (CC's plan pages no longer publish `Tok/s`). The `aa-web` result is cached under `$XDG_CACHE_HOME/mpc/` (or `~/.cache/mpc/`) for 7 days; `--refresh` busts it.
 
 ## Model matching
 
-Names from the two catalogs are collapsed onto one canonical key (lowercase, vendor prefix
-stripped, punctuation removed, parenthetical qualifiers dropped), with a small alias table
-for branding differences (`Tencent Hy3` ↔ `hy3`, `…Vision (exp)` ↔ `…vision-exp`). Models
-present on only one side still appear; the other column shows `—`.
+Names from the two catalogs are collapsed onto one canonical key (lowercase, vendor prefix stripped, punctuation removed, parenthetical qualifiers dropped), with a small alias table for branding differences (`Tencent Hy3` ↔ `hy3`, `…Vision (exp)` ↔ `…vision-exp`). Models present on only one side still appear; the other column shows `—`.
 
 ## Notes and limits
 
-- CommandCode plans are read from their docs pages: `goat`, `pro` and the Max plans list
-  explicit per-model credits; the **Go** ($1) plan publishes only a rate list, so every model
-  draws on the plan's whole $10 credit pool.
-- Models CommandCode lists with rates but no explicit credits row (the "older models also
-  available" set) use the documented standard allowance ($20 on GOAT, $30 on Pro).
-- OpenCode Go has no shared credit pool; each model carries its own monthly limit, so the
-  plan's "credits" figure is the sum of those limits (an upper bound, not a pool).
-- `$/1K` and `req/$` are plan-relative: they divide by the plan's own price, so a cheaper
-  subscription can post a lower per-request cost while buying fewer requests. Compare
-  `req/mo` for volume and `$/1K` for the effective rate.
+- CommandCode plans are read from their docs pages: `goat`, `pro` and the Max plans list explicit per-model credits; the **Go** ($1) plan publishes only a rate list, so every model draws on the plan's whole $10 credit pool.
+- Models CommandCode lists with rates but no explicit credits row (the "older models also available" set) use the documented standard allowance ($20 on GOAT, $30 on Pro).
+- OpenCode Go has no shared credit pool; each model carries its own monthly limit, so the plan's "credits" figure is the sum of those limits (an upper bound, not a pool).
+- `$/1K` and `req/$` are plan-relative: they divide by the plan's own price, so a cheaper subscription can post a lower per-request cost while buying fewer requests. Compare `req/mo` for volume and `$/1K` for the effective rate.
 - Values reflect the docs at fetch time; active deals are picked up automatically.
 
 ## Development

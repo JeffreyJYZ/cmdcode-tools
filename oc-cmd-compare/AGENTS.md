@@ -114,8 +114,7 @@ Same prune hits every `bun link` in group (`reqshape` too); global symlink store
 - Keep README user-facing; agent/design notes here.
 - **Size limits (pragmatic, not a game):**
   1. Aim ~100 lines per file, hard cap **150**. Split when a file has two reasons to change, never just to hit a number.
-  2. A directory holds at most **6 entries** (files + subdirectories). Group by responsibility.
-  Check: `wc -l $(rg --files -g '*.ts' src test)` and a per-dir entry count.
+  2. A directory holds at most **6 entries** (files + subdirectories). Group by responsibility. Check: `wc -l $(rg --files -g '*.ts' src test)` and a per-dir entry count.
 - **No re-export-only barrels.** Import concrete modules. A module holding real code and also re-exporting a few names for convenience fine.
 
 ## Scraping lessons (the messy part)

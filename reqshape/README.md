@@ -2,24 +2,15 @@
 
 Measure the shape of your requests from opencode's own history, then price that shape against any model.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
-[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml) [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
 ## What it is
 
-A **req** is one model call — the same unit the opencode sidebar counts: a single
-`assistant` row in opencode's store. An agentic ask is many reqs, because the
-model is called again after every tool result.
+A **req** is one model call — the same unit the opencode sidebar counts: a single `assistant` row in opencode's store. An agentic ask is many reqs, because the model is called again after every tool result.
 
-`reqshape` reads that history, drops the requests that ask for nothing, averages
-the rest, and hands you the answer as a token vector: *one of my requests is
-8.2K input, 309 output, 139 reasoning, 248K cache read*. Then it prices that
-vector on every model OpenCode Go and CommandCode sell, and divides each plan's
-allowance and window caps by the result.
+`reqshape` reads that history, drops the requests that ask for nothing, averages the rest, and hands you the answer as a token vector: *one of my requests is 8.2K input, 309 output, 139 reasoning, 248K cache read*. Then it prices that vector on every model OpenCode Go and CommandCode sell, and divides each plan's allowance and window caps by the result.
 
-`mpc` answers the same question with a fixed assumption (800 in / 50K cache / 200
-out). This answers it with your actual traffic — and usually disagrees, because
-context is re-read on every call and yours is deep.
+`mpc` answers the same question with a fixed assumption (800 in / 50K cache / 200 out). This answers it with your actual traffic — and usually disagrees, because context is re-read on every call and yours is deep.
 
 ## Install
 
@@ -76,9 +67,7 @@ CC account  1,898 reqs this period · GOAT · ends 2026-10-27
 
 ## Why "cache read" is the whole story
 
-Every request re-sends the conversation, and providers bill the re-sent part as
-cached tokens. So cache read is not a property of how you prompt; it is a
-function of **how far into the conversation you are**:
+Every request re-sends the conversation, and providers bill the re-sent part as cached tokens. So cache read is not a property of how you prompt; it is a function of **how far into the conversation you are**:
 
 | position in its session | reqs | cache read / req |
 | --- | --- | --- |
@@ -88,36 +77,21 @@ function of **how far into the conversation you are**:
 | 21–100 | 1,043 | 62.2K |
 | 101+ | 5,737 | 301.5K |
 
-The first request of a conversation is essentially free to re-send; the hundredth
-re-sends 300K tokens. On this history **78% of all requests sit at 101+**, which
-is why the per-request average (248K) is four times the per-conversation average
-(64K) — one enormous session otherwise sets the profile.
+The first request of a conversation is essentially free to re-send; the hundredth re-sends 300K tokens. On this history **78% of all requests sit at 101+**, which is why the per-request average (248K) is four times the per-conversation average (64K) — one enormous session otherwise sets the profile.
 
-`--weight turn` (the default) treats every req as one data point, because that is
-the unit you are billed in. `--weight session` gives each conversation one vote
-and prices that instead. Both are printed either way, so you can see the gap.
+`--weight turn` (the default) treats every req as one data point, because that is the unit you are billed in. `--weight session` gives each conversation one vote and prices that instead. Both are printed either way, so you can see the gap.
 
-A model with no published cache-read rate is billed for that context at its
-**input** rate, and flagged with `*`. This is the single biggest swing in the
-table: a model with no caching support is not slightly more expensive for this
-traffic, it is unusable.
+A model with no published cache-read rate is billed for that context at its **input** rate, and flagged with `*`. This is the single biggest swing in the table: a model with no caching support is not slightly more expensive for this traffic, it is unusable.
 
 ## Noise filtering
 
-"hi", "thanks", "ok", "continue" are real requests but say nothing about the work
-you do. `reqshape` drops an ask — the prompt *and* every req it drove — when:
+"hi", "thanks", "ok", "continue" are real requests but say nothing about the work you do. `reqshape` drops an ask — the prompt *and* every req it drove — when:
 
-- its prompt normalises to a keyword (`hi`, `hey there`, `thanks`, `great`,
-  `lgtm`, `continue please`, …) — edit the list with `--keywords`
-- its prompt is nothing but emoji or punctuation (`--min-chars` adds a length
-  floor)
+- its prompt normalises to a keyword (`hi`, `hey there`, `thanks`, `great`, `lgtm`, `continue please`, …) — edit the list with `--keywords`
+- its prompt is nothing but emoji or punctuation (`--min-chars` adds a length floor)
 - it produced almost no output (`--min-output N`)
 
-Structural noise is always dropped: auto-generated `synthetic` prompts, the
-`compaction` summary turn, `shell` commands, and `system` rows are not requests
-you made. `--keep-trivial` turns off the prompt filters and keeps everything else
-the same, and `--explain` prints every reason with its count — nothing is
-silently discarded.
+Structural noise is always dropped: auto-generated `synthetic` prompts, the `compaction` summary turn, `shell` commands, and `system` rows are not requests you made. `--keep-trivial` turns off the prompt filters and keeps everything else the same, and `--explain` prints every reason with its count — nothing is silently discarded.
 
 ## Options
 
@@ -148,29 +122,17 @@ silently discarded.
 reqshape --in 0.15 --out 0.6 --cache-read 0.003 --budget 60 --five-hour 12 --weekly 30
 ```
 
-`--budget` is the monthly allowance; `--five-hour` and `--weekly` are the plan's
-caps, and without them those two columns show `—` rather than inventing a window.
-Omit `--cache-read` and the context is billed at the input rate, flagged `*`.
+`--budget` is the monthly allowance; `--five-hour` and `--weekly` are the plan's caps, and without them those two columns show `—` rather than inventing a window. Omit `--cache-read` and the context is billed at the input rate, flagged `*`.
 
 ## Where the numbers come from
 
-- **Your traffic** — opencode's own store, read-only (`~/.local/share/opencode/opencode.db`).
-  v2's `session_message` is read when present, the pre-v2 `message` table otherwise,
-  and session metadata is joined across `session` and `session_v2`.
-- **Model rates, allowances and window caps** — `mpc --json`. The 5-hour and weekly
-  caps are read back from mpc's own figures, so the provider's window rule is not
-  restated here where it could drift.
-- **The account line** — `cmduse -1 --json`, purely as context for how much of
-  your usage this profile covers. If it cannot answer, the line is simply absent.
+- **Your traffic** — opencode's own store, read-only (`~/.local/share/opencode/opencode.db`). v2's `session_message` is read when present, the pre-v2 `message` table otherwise, and session metadata is joined across `session` and `session_v2`.
+- **Model rates, allowances and window caps** — `mpc --json`. The 5-hour and weekly caps are read back from mpc's own figures, so the provider's window rule is not restated here where it could drift.
+- **The account line** — `cmduse -1 --json`, purely as context for how much of your usage this profile covers. If it cannot answer, the line is simply absent.
 
 ### Per side, and back into `mpc`
 
-`--format json` carries `sides.oc` and `sides.cc`: the same measured profile
-split by whose traffic it is (requests to `opencode*` vs the `CC_PREFIXES`
-ids), with each side's own request count. `mpc --shape measured` reads exactly that
-payload and prices each plan on its side's shape, so its estimated `req/mo` is
-"how many of *my* requests fit" instead of a fixed 800-in / 50K-cache /
-200-out assumption.
+`--format json` carries `sides.oc` and `sides.cc`: the same measured profile split by whose traffic it is (requests to `opencode*` vs the `CC_PREFIXES` ids), with each side's own request count. `mpc --shape measured` reads exactly that payload and prices each plan on its side's shape, so its estimated `req/mo` is "how many of *my* requests fit" instead of a fixed 800-in / 50K-cache / 200-out assumption.
 
 Runs take about 20 seconds: both `mpc` and `cmduse` go to the network.
 

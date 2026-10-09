@@ -1,9 +1,6 @@
 # Command Code tooling
 
-[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/crates/v/cmd-usage?style=flat-square)](https://crates.io/crates/cmd-usage)
-[![npm](https://img.shields.io/npm/v/@jeffreyjyz/opencode-command-code?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code)
-[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](#license)
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml) [![crates.io](https://img.shields.io/crates/v/cmd-usage?style=flat-square)](https://crates.io/crates/cmd-usage) [![npm](https://img.shields.io/npm/v/@jeffreyjyz/opencode-command-code?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code) [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](#license)
 
 Personal tooling for [opencode](https://opencode.ai) and Command Code, kept in one repo. Each subdirectory is an independent package — Cargo crates, npm plugins, and CLIs — sharing no code; coupling is by *installed* binaries and published plugins (via env vars such as `CMDUSE_BIN` / `MPC_BIN` / `REQSHAPE_BIN`, each defaulting to the global command name), never by a relative path. This repo was formerly the standalone `cmduse` repo plus five sibling repos, now folded together at the root.
 

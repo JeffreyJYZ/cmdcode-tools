@@ -96,8 +96,7 @@ for (const p of projects) {
 
 Create `website/src/content/projects.ts` with the six projects in this order: `cmduse` (kind `crate`, repoPath `cmduse`, links: github `https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/cmduse`, crates `https://crates.io/crates/cmd-usage`), `mpc` (`npm-cli`, `oc-cmd-compare`, npm `https://www.npmjs.com/package/mpc`), `reqshape` (`npm-cli`, `reqshape`, npm omitted — not published), `opencode-context` (`npm-plugin`, `opencode-context`, npm `https://www.npmjs.com/package/@jeffreyjyz/opencode-context`), `opencode-shell-rc` (`npm-plugin`, `opencode-shell-rc`, npm `…/@jeffreyjyz/opencode-shell-rc`), `opencode-session-dir` (`npm-plugin`, `opencode-session-dir`, npm `…/@jeffreyjyz/opencode-session-dir`). Give each a one-line `tagline` (reuse the README's opening line) and `order` 0..5. `source` for every project: `https://github.com/JeffreyJYZ/cmdcode-tools`.
 
-Run: `cd website && bun install && bun test test/readmes.test.ts`
-Expected: FAIL — existing READMEs lack `## What it is` / `## Links`.
+Run: `cd website && bun install && bun test test/readmes.test.ts` Expected: FAIL — existing READMEs lack `## What it is` / `## Links`.
 
 - [ ] **Step 3: Rewrite all six READMEs to the skeleton**
 
@@ -105,8 +104,7 @@ For each README, keep the existing content but restructure to: `# Title` → tag
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `cd website && bun test test/readmes.test.ts`
-Expected: PASS (6 tests).
+Run: `cd website && bun test test/readmes.test.ts` Expected: PASS (6 tests).
 
 - [ ] **Step 5: Record the documentation conventions**
 
@@ -155,8 +153,7 @@ export default nextConfig;
 
 `globals.css`: `@import "tailwindcss";`. `layout.tsx`: a root layout returning `<html lang="en"><body>{children}</body></html>` with a `metadata` export (`title`, `description`). `page.tsx`: a placeholder heading. Run from `website/`:
 
-Run: `bun typecheck && bun check && bun build`
-Expected: all three exit 0; `out/index.html` exists.
+Run: `bun typecheck && bun check && bun build` Expected: all three exit 0; `out/index.html` exists.
 
 - [ ] **Step 3: Commit**
 
@@ -200,8 +197,7 @@ export const sans = localFont({
 
 - [ ] **Step 4: Verify build gate and commit**
 
-Run: `bun typecheck && bun check && bun build`
-Expected: exit 0.
+Run: `bun typecheck && bun check && bun build` Expected: exit 0.
 
 ```bash
 git add website
@@ -240,8 +236,7 @@ git commit -m "feat(website): design tokens, Satoshi font, and app shell"
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd website && bun test test/docs.test.ts test/toc.test.ts`
-Expected: FAIL — modules not found.
+Run: `cd website && bun test test/docs.test.ts test/toc.test.ts` Expected: FAIL — modules not found.
 
 - [ ] **Step 3: Implement the transforms**
 
@@ -249,8 +244,7 @@ Expected: FAIL — modules not found.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd website && bun test test/docs.test.ts test/toc.test.ts`
-Expected: PASS.
+Run: `cd website && bun test test/docs.test.ts test/toc.test.ts` Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
@@ -491,8 +485,7 @@ Append a job to the root `.github/workflows/ci.yml` that sets `working-directory
 
 - [ ] **Step 3: Full verification**
 
-Run from `website/`: `bun install && bun check && bun typecheck && bun build && bun check:links`.
-Expected: all exit 0; the six `/docs/<slug>` routes, `/guides/*`, `/compare`, `/changelog`, `sitemap.xml`, and `404.html` exist in `out/`. Preview the whole site once with `agent-browser` in both themes.
+Run from `website/`: `bun install && bun check && bun typecheck && bun build && bun check:links`. Expected: all exit 0; the six `/docs/<slug>` routes, `/guides/*`, `/compare`, `/changelog`, `sitemap.xml`, and `404.html` exist in `out/`. Preview the whole site once with `agent-browser` in both themes.
 
 - [ ] **Step 4: Commit**
 
