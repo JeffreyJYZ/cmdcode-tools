@@ -2,8 +2,7 @@
 	"packageManager": "bun",
 	"scripts": {
 		"dev": "next dev",
-		"build": "next build",
-		"postbuild": "pagefind --site out",
+		"build": "next build && pagefind --site out",
 		"check": "biome check",
 		"check:links": "bun scripts/check-links.ts",
 		"snapshot:mpc": "bun scripts/snapshot-mpc.ts",
