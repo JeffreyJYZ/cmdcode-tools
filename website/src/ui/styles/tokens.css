@@ -22,6 +22,14 @@
 	--royalblue: royalblue;
 	--blue-400: #60a5fa;
 	--blue-700: #1d4ed8;
+	/* Signal scale, mirroring mpc's green/amber/red: favourable / middling /
+	   poor. 400 reads on the dark canvas, 700 on the light one. */
+	--green-400: #4ade80;
+	--green-700: #15803d;
+	--amber-400: #fbbf24;
+	--amber-700: #b45309;
+	--red-400: #f87171;
+	--red-700: #b91c1c;
 
 	/* semantic — dark (default) */
 	--bg: var(--neutral-900);
@@ -33,6 +41,9 @@
 	/* hover must stay readable on the dark canvas: royalblue is 3.70:1,
 	   blue-400 is 7.03:1, and a different hue reads as a real state change. */
 	--accent-hover: var(--blue-400);
+	--ok: var(--green-400);
+	--warn: var(--amber-400);
+	--crit: var(--red-400);
 
 	/* component — layout metrics */
 	--rail-width: 1px;
@@ -50,5 +61,8 @@
 		--hairline: var(--neutral-300);
 		--accent: var(--royalblue);
 		--accent-hover: var(--blue-700);
+		--ok: var(--green-700);
+		--warn: var(--amber-700);
+		--crit: var(--red-700);
 	}
 }

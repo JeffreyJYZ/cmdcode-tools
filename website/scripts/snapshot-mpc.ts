@@ -108,11 +108,27 @@ function resolveMpc(): MpcCandidate {
 
 const OUT_FILE = join(SCRIPT_DIR, "..", "src", "data", "mpc.json");
 
+/** The full side mpc's `--json --shape off` emits (see `MpcSide`). */
 type RawSide = {
+	provider: string;
+	plan: string;
+	pricing: {
+		input: number;
+		output: number;
+		cacheRead: number;
+		cacheWrite: number | null;
+	};
 	allowance: number;
 	requestsPerMonth: number | null;
+	requestsPerFiveHour: number | null;
+	requestsPerWeek: number | null;
 	costPerRequest: number;
+	payPerRequest: number;
+	multiplier: number;
 	ability: number | null;
+	tps: number | null;
+	index: number;
+	valueIndex: number | null;
 	free?: boolean;
 	deal?: { badge: string };
 };
@@ -136,14 +152,28 @@ type RawPlan = {
 	weekly: number | null;
 };
 
-/** Trim one provider's projection to the fields the table reads. */
+/**
+ * Persist the whole side mpc reports — every field its own columns read, plus
+ * the identifiers — so the page never has to drop a column for want of data.
+ * A `null`/absent numeric collapses to `null`, never `undefined` (JSON-safe).
+ */
 function toSide(raw: RawSide | null | undefined): MpcSide | null {
 	if (!raw) return null;
 	const side: MpcSide = {
+		provider: raw.provider,
+		plan: raw.plan,
+		pricing: raw.pricing,
 		allowance: raw.allowance,
 		requestsPerMonth: raw.requestsPerMonth ?? null,
+		requestsPerFiveHour: raw.requestsPerFiveHour ?? null,
+		requestsPerWeek: raw.requestsPerWeek ?? null,
 		costPerRequest: raw.costPerRequest,
+		payPerRequest: raw.payPerRequest,
+		multiplier: raw.multiplier,
 		ability: raw.ability ?? null,
+		tps: raw.tps ?? null,
+		index: raw.index,
+		valueIndex: raw.valueIndex ?? null,
 		free: raw.free === true,
 	};
 	if (raw.deal) side.deal = { badge: raw.deal.badge };
