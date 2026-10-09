@@ -1,5 +1,5 @@
 import { cac } from "cac";
-import type { Options } from "~/cli/options.ts";
+import type { Options } from "#~/cli/options.ts";
 import pkg from "../../../package.json" with { type: "json" };
 import { type Bag, toOptions } from "./map.ts";
 

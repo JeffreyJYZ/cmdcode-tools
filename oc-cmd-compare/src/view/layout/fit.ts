@@ -1,6 +1,6 @@
-import { BAR } from "~/constants/view.ts";
-import type { Column, FitResult, Row } from "~/view/schema.ts";
-import { columns } from "~/view/schema.ts";
+import { BAR } from "#~/constants/view.ts";
+import type { Column, FitResult, Row } from "#~/view/schema.ts";
+import { columns } from "#~/view/schema.ts";
 import { buildSegments } from "./segments.ts";
 
 function measure(

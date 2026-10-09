@@ -1,5 +1,5 @@
-import type { Options } from "~/cli/options.ts";
-import { SETS, TIERS, type Tier } from "~/constants/cli.ts";
+import type { Options } from "#~/cli/options.ts";
+import { SETS, TIERS, type Tier } from "#~/constants/cli.ts";
 
 /**
  * The tier the flags asked for. The default is the full set — `--fit` used to

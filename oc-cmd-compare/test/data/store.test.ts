@@ -6,7 +6,7 @@ import {
 	fillFromCache,
 	readAbilityCache,
 	writeAbilityCache,
-} from "~/data/bench/store.ts";
+} from "#~/data/bench/store.ts";
 
 const ORIGINAL = process.env.XDG_CACHE_HOME;
 afterEach(() => {

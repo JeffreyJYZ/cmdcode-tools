@@ -4,8 +4,8 @@ import {
 	SHAPE_MEASURED,
 	SHAPE_MIN_REQS,
 	SHAPE_OFF,
-} from "~/constants/shape.ts";
-import type { Workload } from "~/types.ts";
+} from "#~/constants/shape.ts";
+import type { Workload } from "#~/types.ts";
 import { runBinary } from "./cmduse.ts";
 
 interface Profile {

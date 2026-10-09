@@ -1,5 +1,5 @@
-import { PROVIDER_COLOR, SGR } from "~/constants/view.ts";
-import type { CompareRow } from "~/types.ts";
+import { PROVIDER_COLOR, SGR } from "#~/constants/view.ts";
+import type { CompareRow } from "#~/types.ts";
 import { footer } from "./footer.ts";
 import { tally } from "./layout/segments.ts";
 import { printTable } from "./layout/table.ts";

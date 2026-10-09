@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { buildAsks } from "~/measure/asks.ts";
-import type { RawMessage, RawTokens } from "~/measure/rows.ts";
-import type { SessionRow } from "~/measure/store.ts";
+import { buildAsks } from "#~/measure/asks.ts";
+import type { RawMessage, RawTokens } from "#~/measure/rows.ts";
+import type { SessionRow } from "#~/measure/store.ts";
 
 const SESSION = "ses_1";
 

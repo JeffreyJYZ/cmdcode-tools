@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { resolveColumns, trimsToWidth } from "~/cli/flow/columns.ts";
-import { parseArgs } from "~/cli/run.ts";
+import { resolveColumns, trimsToWidth } from "#~/cli/flow/columns.ts";
+import { parseArgs } from "#~/cli/run.ts";
 import {
 	DETAIL_COLUMNS,
 	MEDIUM_COLUMNS,
 	MINIMAL_COLUMNS,
-} from "~/constants/view.ts";
+} from "#~/constants/view.ts";
 
 describe("resolveColumns", () => {
 	test("plain mpc is the full set, trimmed to the terminal", () => {

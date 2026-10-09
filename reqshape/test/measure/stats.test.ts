@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { stats } from "~/measure/stats.ts";
+import { stats } from "#~/measure/stats.ts";
 
 describe("stats", () => {
 	test("reports the mean, the nearest-rank percentiles and the max", () => {

@@ -1,4 +1,4 @@
-import type { ScoreConfig } from "~/cli/engine/score.ts";
+import type { ScoreConfig } from "#~/cli/engine/score.ts";
 
 /** Tokens per million, the denominator of every per-M-token rate. */
 export const PER_MILLION = 1_000_000;

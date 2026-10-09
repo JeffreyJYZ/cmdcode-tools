@@ -1,6 +1,6 @@
-import { AA_MODELS_URL } from "~/constants/sources.ts";
-import { fetchText } from "~/data/scrape/index.ts";
-import { normalizeKey } from "~/keys.ts";
+import { AA_MODELS_URL } from "#~/constants/sources.ts";
+import { fetchText } from "#~/data/scrape/index.ts";
+import { normalizeKey } from "#~/keys.ts";
 
 /** A model label and its Artificial Analysis Intelligence Index. */
 interface Scored {

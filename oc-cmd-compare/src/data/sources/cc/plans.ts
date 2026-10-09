@@ -1,5 +1,5 @@
-import { CC_PLANS } from "~/constants/sources.ts";
-import type { PlanInfo } from "~/types.ts";
+import { CC_PLANS } from "#~/constants/sources.ts";
+import type { PlanInfo } from "#~/types.ts";
 import { cmdusePlans, money } from "./cmduse.ts";
 
 /** Plan price + windows for a CommandCode plan, from the official JSON. */

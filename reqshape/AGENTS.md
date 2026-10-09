@@ -79,8 +79,7 @@ bun link                       # exposes the `reqshape` binary
 
 ## Rules
 
-- Biome only, tabs width 4, TypeScript, Bun over npm, `cac` only runtime dep. Imports: `~/` outside file's own dir, `./` siblings.
-- `tsconfig.json` `paths` `~/*`, **no `baseUrl`**. Bun honours it runtime + tests, so no build step.
+- Biome only, tabs width 4, TypeScript, Bun over npm, `cac` only runtime dep. Imports: `#~/` outside file's own dir, `./` siblings. The alias is the `"#~/*": "./src/*"` entry in `package.json` `imports`, **not** a tsconfig `paths` — a tsconfig alias does not survive `npm install` (published tarball ships no `tsconfig.json`, so an installed copy dies `Cannot find module '~/…'`; fixed 0.1.2). `imports` ships with package.json and resolves package-scoped, immune to the consumer's cwd or its own `~/*` tsconfig; `#/` alone is an invalid key so the prefix is `#~`. Bun honours it runtime + tests, tsc resolves it natively, so no build step.
 - Tests must not touch network: unit tests build fixtures; live `mpc`/`cmduse` by hand, never `bun test`.
 - Size limits: ~100 lines/file, hard cap 150; ≤6 entries per dir. Check `wc -l $(rg --files -g '*.ts' src test)` + per-dir count. `test/` split `cli/`, `measure/`, `market/`, `view/`.
 - No re-export-only barrels; import the owning module.

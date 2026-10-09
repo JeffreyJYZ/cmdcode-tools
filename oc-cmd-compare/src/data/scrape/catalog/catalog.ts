@@ -4,9 +4,9 @@ import {
 	nameCell,
 	parseMoney,
 	type Table,
-} from "~/data/scrape/tables.ts";
-import { displayName, normalizeKey } from "~/keys.ts";
-import type { CatalogEntry, ModelPricing, ProviderId } from "~/types.ts";
+} from "#~/data/scrape/tables.ts";
+import { displayName, normalizeKey } from "#~/keys.ts";
+import type { CatalogEntry, ModelPricing, ProviderId } from "#~/types.ts";
 import { dealIn } from "./deal.ts";
 import { variantScore } from "./variant.ts";
 

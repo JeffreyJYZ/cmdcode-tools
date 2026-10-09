@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { extractCatalog, parseRoleRows } from "~/data/scrape/index.ts";
+import { extractCatalog, parseRoleRows } from "#~/data/scrape/index.ts";
 
 describe("parseRoleRows (div grid model lists)", () => {
 	const GRID_FIXTURE = `

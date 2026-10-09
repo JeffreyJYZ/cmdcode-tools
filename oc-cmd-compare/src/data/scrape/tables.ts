@@ -1,4 +1,4 @@
-import { BOUNDARY } from "~/constants/data.ts";
+import { BOUNDARY } from "#~/constants/data.ts";
 
 export type Table = string[][];
 

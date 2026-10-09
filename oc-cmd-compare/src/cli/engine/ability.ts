@@ -1,4 +1,4 @@
-import { SPEED_SUFFIXES, SPEED_TPS_FACTOR } from "~/constants/scoring.ts";
+import { SPEED_SUFFIXES, SPEED_TPS_FACTOR } from "#~/constants/scoring.ts";
 
 /**
  * The base key a speed variant shares weights with, or undefined. FlashX is the

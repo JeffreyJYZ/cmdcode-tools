@@ -1,15 +1,15 @@
-import { entriesOf } from "~/market/entries.ts";
-import { type Projection, projectAll } from "~/market/project.ts";
-import { customEntry, type RateEntry } from "~/market/rates.ts";
-import { loadAccount, loadMpc } from "~/market/sources.ts";
-import { buildAsks } from "~/measure/asks.ts";
-import { filterAsks } from "~/measure/filter.ts";
-import { buildShape } from "~/measure/profile.ts";
-import { readStore } from "~/measure/store.ts";
-import type { Profile } from "~/types.ts";
-import { setColorMode } from "~/view/format.ts";
-import { renderJson } from "~/view/json.ts";
-import { renderText } from "~/view/render.ts";
+import { entriesOf } from "#~/market/entries.ts";
+import { type Projection, projectAll } from "#~/market/project.ts";
+import { customEntry, type RateEntry } from "#~/market/rates.ts";
+import { loadAccount, loadMpc } from "#~/market/sources.ts";
+import { buildAsks } from "#~/measure/asks.ts";
+import { filterAsks } from "#~/measure/filter.ts";
+import { buildShape } from "#~/measure/profile.ts";
+import { readStore } from "#~/measure/store.ts";
+import type { Profile } from "#~/types.ts";
+import { setColorMode } from "#~/view/format.ts";
+import { renderJson } from "#~/view/json.ts";
+import { renderText } from "#~/view/render.ts";
 import type { Options } from "./options.ts";
 import { parseArgs } from "./parse.ts";
 

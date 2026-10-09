@@ -1,6 +1,6 @@
-import { PROVIDER_COLOR, PROVIDER_TINT, SGR } from "~/constants/view.ts";
-import type { EntryMetrics, ProviderId } from "~/types.ts";
-import type { Row } from "~/view/schema.ts";
+import { PROVIDER_COLOR, PROVIDER_TINT, SGR } from "#~/constants/view.ts";
+import type { EntryMetrics, ProviderId } from "#~/types.ts";
+import type { Row } from "#~/view/schema.ts";
 import { fmtRate, shortProviderName } from "./format.ts";
 
 /** Which side is cheaper per request on this row. */

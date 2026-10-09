@@ -7,7 +7,7 @@
     },
     "oc-cmd-compare": {
       "name": "@jeffreyjyz/mpc",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "bin": {
         "mpc": "src/index.ts",
       },
@@ -76,7 +76,7 @@
     },
     "reqshape": {
       "name": "@jeffreyjyz/reqshape",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "bin": {
         "reqshape": "src/index.ts",
       },

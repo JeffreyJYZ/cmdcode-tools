@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildRows } from "~/cli/engine/index.ts";
+import { buildRows } from "#~/cli/engine/index.ts";
 import { ccPlan, entry, ocPlan, workloads } from "../fixtures.ts";
 
 describe("buildRows", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { entriesOf } from "~/market/entries.ts";
-import { customEntry, type MpcJson, planLabel } from "~/market/rates.ts";
+import { entriesOf } from "#~/market/entries.ts";
+import { customEntry, type MpcJson, planLabel } from "#~/market/rates.ts";
 
 /** mpc's own payload, reduced to the fields this tool reads. */
 export const MPC: MpcJson = {

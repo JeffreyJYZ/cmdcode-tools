@@ -1,4 +1,4 @@
-import type { ColorMode } from "~/cli/options.ts";
+import type { ColorMode } from "#~/cli/options.ts";
 import type { Bag } from "./validate.ts";
 
 /** Comma-separated or repeated flag, read as numbers. */

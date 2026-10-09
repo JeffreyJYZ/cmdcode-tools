@@ -1,7 +1,7 @@
-import type { Options } from "~/cli/options.ts";
-import { loadOcGoModelIds } from "~/data/sources/opencode.ts";
-import { normalizeKey } from "~/keys.ts";
-import type { CatalogEntry, CompareRow } from "~/types.ts";
+import type { Options } from "#~/cli/options.ts";
+import { loadOcGoModelIds } from "#~/data/sources/opencode.ts";
+import { normalizeKey } from "#~/keys.ts";
+import type { CatalogEntry, CompareRow } from "#~/types.ts";
 
 export interface AbilityInfo {
 	label: string;

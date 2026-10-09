@@ -1,4 +1,4 @@
-import { BOUNDARY } from "~/constants/data.ts";
+import { BOUNDARY } from "#~/constants/data.ts";
 import type { Table } from "./tables.ts";
 
 /**

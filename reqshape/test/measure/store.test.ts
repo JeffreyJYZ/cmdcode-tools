@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readStore } from "~/measure/store.ts";
+import { readStore } from "#~/measure/store.ts";
 
 function tempPath(): string {
 	return join(mkdtempSync(join(tmpdir(), "reqshape-")), "opencode.db");

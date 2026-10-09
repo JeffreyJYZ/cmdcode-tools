@@ -1,4 +1,4 @@
-import { ANSI } from "~/constants/ansi.ts";
+import { ANSI } from "#~/constants/ansi.ts";
 
 let colored = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 

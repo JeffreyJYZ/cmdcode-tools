@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { resolveBag } from "~/cli/config.ts";
-import { parseArgs } from "~/cli/parse/cac.ts";
+import { resolveBag } from "#~/cli/config.ts";
+import { parseArgs } from "#~/cli/parse/cac.ts";
 
 function scratch(): string {
 	return mkdtempSync(join(tmpdir(), "mpc-test-"));

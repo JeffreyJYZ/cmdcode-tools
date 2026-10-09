@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { normalizeKey } from "~/keys.ts";
+import { normalizeKey } from "#~/keys.ts";
 import { hasV2, readV2Turns, type Turn } from "./opencodeV2.ts";
 import type { UsageEntry } from "./parse.ts";
 

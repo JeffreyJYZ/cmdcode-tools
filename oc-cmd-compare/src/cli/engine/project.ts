@@ -1,6 +1,6 @@
-import { PER_MILLION } from "~/constants/scoring.ts";
-import type { UsageEntry } from "~/data/usage/index.ts";
-import type { CatalogEntry, PlanInfo, ProviderId } from "~/types.ts";
+import { PER_MILLION } from "#~/constants/scoring.ts";
+import type { UsageEntry } from "#~/data/usage/index.ts";
+import type { CatalogEntry, PlanInfo, ProviderId } from "#~/types.ts";
 
 export interface SideProjection {
 	/** Cost of one real request at list rates. */

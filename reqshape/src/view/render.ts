@@ -1,6 +1,6 @@
-import type { Projection } from "~/market/project.ts";
-import type { AccountSummary } from "~/market/sources.ts";
-import type { DropCount, Shape } from "~/types.ts";
+import type { Projection } from "#~/market/project.ts";
+import type { AccountSummary } from "#~/market/sources.ts";
+import type { DropCount, Shape } from "#~/types.ts";
 import { bold, dim, fmtCount, fmtInt } from "./format.ts";
 import {
 	block,

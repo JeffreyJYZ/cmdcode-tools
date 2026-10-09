@@ -8,7 +8,7 @@ import {
 	pad,
 	prettyModel,
 	setColorMode,
-} from "~/view/format.ts";
+} from "#~/view/format.ts";
 
 setColorMode(false);
 

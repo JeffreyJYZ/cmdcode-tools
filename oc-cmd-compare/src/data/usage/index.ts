@@ -1,4 +1,4 @@
-import { runCmduse } from "~/data/cmduse.ts";
+import { runCmduse } from "#~/data/cmduse.ts";
 import { defaultUsageLog, mergeUsage, readUsageLog } from "./log.ts";
 import { scanLogs } from "./logs.ts";
 import { defaultOpencodeDb, readOpencodeDb } from "./opencodeDb.ts";

@@ -1,4 +1,4 @@
-import type { Profile } from "~/types.ts";
+import type { Profile } from "#~/types.ts";
 import type { RateEntry } from "./rates.ts";
 
 /** One model's answer to "how many requests does my allowance buy me?". */

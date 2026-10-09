@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { fitColumns, tableWidth } from "~/view/render.ts";
+import { fitColumns, tableWidth } from "#~/view/render.ts";
 import { row } from "../fixtures.ts";
 
 describe("fitColumns", () => {

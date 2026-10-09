@@ -1,5 +1,5 @@
-import { LEGEND, PROVIDER_COLOR, SGR } from "~/constants/view.ts";
-import type { CompareRow, PlanInfo, Workload } from "~/types.ts";
+import { LEGEND, PROVIDER_COLOR, SGR } from "#~/constants/view.ts";
+import type { CompareRow, PlanInfo, Workload } from "#~/types.ts";
 import { tally } from "./layout/segments.ts";
 import type { ReportMeta } from "./schema.ts";
 import {

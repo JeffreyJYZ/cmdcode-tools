@@ -1,4 +1,4 @@
-import type { CompareRow, PlanInfo, ProviderId, Workload } from "~/types.ts";
+import type { CompareRow, PlanInfo, ProviderId, Workload } from "#~/types.ts";
 
 export type Row = CompareRow;
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { buildMetrics } from "~/cli/engine/index.ts";
-import { assignIndex } from "~/cli/engine/score.ts";
-import { DEFAULT_SCORE } from "~/constants/scoring.ts";
+import { buildMetrics } from "#~/cli/engine/index.ts";
+import { assignIndex } from "#~/cli/engine/score.ts";
+import { DEFAULT_SCORE } from "#~/constants/scoring.ts";
 import { ccPlan, entry, metric, workloads } from "../fixtures.ts";
 
 describe("buildMetrics", () => {

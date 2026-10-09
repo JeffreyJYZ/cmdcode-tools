@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { DEFAULT_KEYWORDS } from "~/constants/keywords.ts";
-import { normalizePrompt, trivialReason } from "~/measure/filter.ts";
+import { DEFAULT_KEYWORDS } from "#~/constants/keywords.ts";
+import { normalizePrompt, trivialReason } from "#~/measure/filter.ts";
 
 const KEYWORDS = new Set(DEFAULT_KEYWORDS);
 

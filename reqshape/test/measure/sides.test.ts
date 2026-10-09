@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { CC_PREFIXES } from "~/constants/providers.ts";
-import { sideOf, sideProfiles } from "~/measure/sides.ts";
-import type { Req } from "~/types.ts";
+import { CC_PREFIXES } from "#~/constants/providers.ts";
+import { sideOf, sideProfiles } from "#~/measure/sides.ts";
+import type { Req } from "#~/types.ts";
 
 function req(provider: string, values: Partial<Req> = {}): Req {
 	return {

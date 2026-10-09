@@ -3,8 +3,8 @@ import {
 	headerIndex,
 	nameCell,
 	type Table,
-} from "~/data/scrape/tables.ts";
-import { normalizeKey } from "~/keys.ts";
+} from "#~/data/scrape/tables.ts";
+import { normalizeKey } from "#~/keys.ts";
 
 /**
  * Pull one numeric column out of any tables that carry it, keyed by model.

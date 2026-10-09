@@ -1,4 +1,4 @@
-import { normalizeKey } from "~/keys.ts";
+import { normalizeKey } from "#~/keys.ts";
 
 /** Pure parser over one AA API page, for tests and the loader. */
 export function parseAaApi(body: unknown): {

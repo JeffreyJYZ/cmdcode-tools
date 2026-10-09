@@ -1,5 +1,5 @@
-import { FORMATS, METRICS } from "~/constants/cli.ts";
-import type { Workload } from "~/types.ts";
+import { FORMATS, METRICS } from "#~/constants/cli.ts";
+import type { Workload } from "#~/types.ts";
 
 export type Metric = "val" | "cost" | "perreq" | "req" | "name";
 export type ColorMode = "auto" | "always" | "never";

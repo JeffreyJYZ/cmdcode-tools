@@ -1,4 +1,4 @@
-import { ALIASES, BOUNDARY } from "~/constants/data.ts";
+import { ALIASES, BOUNDARY } from "#~/constants/data.ts";
 
 /**
  * Collapse a model name from either catalog onto a shared key.

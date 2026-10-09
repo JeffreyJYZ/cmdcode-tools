@@ -1,12 +1,12 @@
-import { buildRows } from "~/cli/engine/index.ts";
-import type { ScoreConfig } from "~/cli/engine/score.ts";
-import type { Options } from "~/cli/options.ts";
-import { loadAbility } from "~/data/bench/index.ts";
-import { loadShapes } from "~/data/shape.ts";
-import { loadCcCatalog } from "~/data/sources/cc/catalog.ts";
-import { loadCcPlan } from "~/data/sources/cc/plans.ts";
-import { loadOcGoCatalog, ocGoPlan } from "~/data/sources/opencode.ts";
-import type { ProviderId, Workload } from "~/types.ts";
+import { buildRows } from "#~/cli/engine/index.ts";
+import type { ScoreConfig } from "#~/cli/engine/score.ts";
+import type { Options } from "#~/cli/options.ts";
+import { loadAbility } from "#~/data/bench/index.ts";
+import { loadShapes } from "#~/data/shape.ts";
+import { loadCcCatalog } from "#~/data/sources/cc/catalog.ts";
+import { loadCcPlan } from "#~/data/sources/cc/plans.ts";
+import { loadOcGoCatalog, ocGoPlan } from "#~/data/sources/opencode.ts";
+import type { ProviderId, Workload } from "#~/types.ts";
 
 function scoreConfig(options: Options): ScoreConfig {
 	return {

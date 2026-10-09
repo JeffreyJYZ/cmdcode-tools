@@ -1,4 +1,4 @@
-import { API_URL } from "~/constants/sources.ts";
+import { API_URL } from "#~/constants/sources.ts";
 import { parseAaApi } from "./parse.ts";
 
 /** Full catalog via the Artificial Analysis API. Needs a key. Paginated. */

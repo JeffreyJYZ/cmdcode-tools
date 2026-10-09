@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { scanLogs } from "~/data/usage/logs.ts";
+import { scanLogs } from "#~/data/usage/logs.ts";
 
 function writeLog(dir: string, name: string, lines: unknown[]): void {
 	writeFileSync(

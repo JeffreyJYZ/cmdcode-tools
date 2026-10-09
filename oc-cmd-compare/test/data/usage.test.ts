@@ -2,9 +2,9 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { chmodSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { loadUsage } from "~/data/usage/index.ts";
-import { mergeUsage, readUsageLog } from "~/data/usage/log.ts";
-import { parseUsage } from "~/data/usage/parse.ts";
+import { loadUsage } from "#~/data/usage/index.ts";
+import { mergeUsage, readUsageLog } from "#~/data/usage/log.ts";
+import { parseUsage } from "#~/data/usage/parse.ts";
 
 const CMDUSE = JSON.stringify({
 	models: {

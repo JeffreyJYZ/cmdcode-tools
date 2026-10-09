@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { buildShape } from "~/measure/profile.ts";
-import type { Ask, Req } from "~/types.ts";
+import { buildShape } from "#~/measure/profile.ts";
+import type { Ask, Req } from "#~/types.ts";
 
 function req(
 	position: number,

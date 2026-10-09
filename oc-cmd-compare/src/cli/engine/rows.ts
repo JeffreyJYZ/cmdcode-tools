@@ -1,4 +1,4 @@
-import { DEFAULT_SCORE } from "~/constants/scoring.ts";
+import { DEFAULT_SCORE } from "#~/constants/scoring.ts";
 import type {
 	CatalogEntry,
 	CompareRow,
@@ -6,7 +6,7 @@ import type {
 	PlanInfo,
 	ProviderId,
 	Workload,
-} from "~/types.ts";
+} from "#~/types.ts";
 import { buildMetrics } from "./index.ts";
 import type { ScoreConfig } from "./score.ts";
 

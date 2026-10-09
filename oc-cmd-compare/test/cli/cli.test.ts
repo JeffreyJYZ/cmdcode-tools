@@ -2,10 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { resolveBag } from "~/cli/config.ts";
-import { parseArgs, run } from "~/cli/run.ts";
-import { BENCH_DEFAULT } from "~/constants/cli.ts";
-import { SHAPE_AUTO, SHAPE_MEASURED, SHAPE_OFF } from "~/constants/shape.ts";
+import { resolveBag } from "#~/cli/config.ts";
+import { parseArgs, run } from "#~/cli/run.ts";
+import { BENCH_DEFAULT } from "#~/constants/cli.ts";
+import { SHAPE_AUTO, SHAPE_MEASURED, SHAPE_OFF } from "#~/constants/shape.ts";
 
 describe("parseArgs", () => {
 	test("defaults", () => {

@@ -1,7 +1,7 @@
-import type { Projection } from "~/market/project.ts";
-import type { RateEntry } from "~/market/rates.ts";
-import type { DropCount, Shape } from "~/types.ts";
-import type { Report } from "~/view/render.ts";
+import type { Projection } from "#~/market/project.ts";
+import type { RateEntry } from "#~/market/rates.ts";
+import type { DropCount, Shape } from "#~/types.ts";
+import type { Report } from "#~/view/render.ts";
 
 export function entry(overrides: Partial<RateEntry> = {}): RateEntry {
 	return {

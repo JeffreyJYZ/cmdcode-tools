@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { answeredByCac } from "~/cli/flags.ts";
-import { parseArgs } from "~/cli/parse.ts";
-import { DEFAULT_KEYWORDS } from "~/constants/keywords.ts";
+import { answeredByCac } from "#~/cli/flags.ts";
+import { parseArgs } from "#~/cli/parse.ts";
+import { DEFAULT_KEYWORDS } from "#~/constants/keywords.ts";
 
 // cac handles -h/-v by exiting the process, so tests must not pass them.
 describe("parseArgs", () => {

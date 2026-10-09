@@ -1,12 +1,15 @@
 {
 	"name": "@jeffreyjyz/reqshape",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Measure the shape of your requests from opencode's own history, then price it against any model",
 	"license": "MIT",
 	"type": "module",
 	"bin": {
 		"reqshape": "src/index.ts",
 		"reqshapedev": "src/index.ts"
+	},
+	"imports": {
+		"#~/*": "./src/*"
 	},
 	"files": [
 		"src",

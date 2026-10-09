@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { BOUNDARY } from "~/constants/data.ts";
-import { displayName, normalizeKey } from "~/keys.ts";
+import { BOUNDARY } from "#~/constants/data.ts";
+import { displayName, normalizeKey } from "#~/keys.ts";
 
 describe("normalizeKey", () => {
 	test("strips vendor prefix and punctuation", () => {

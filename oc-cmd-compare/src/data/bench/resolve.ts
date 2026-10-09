@@ -1,4 +1,4 @@
-import { loadAaApi } from "~/data/sources/aa/api.ts";
+import { loadAaApi } from "#~/data/sources/aa/api.ts";
 import { loadCc } from "./cc.ts";
 import { loadAaWebCached, loadFile, loadUrl } from "./store.ts";
 import {

@@ -1,5 +1,5 @@
-import { LABEL } from "~/constants/layout.ts";
-import type { DropCount, Shape, Side } from "~/types.ts";
+import { LABEL } from "#~/constants/layout.ts";
+import type { DropCount, Shape, Side } from "#~/types.ts";
 import {
 	bold,
 	dim,

@@ -1,5 +1,5 @@
-import type { Column } from "~/view/schema.ts";
-import * as f from "~/view/text/index.ts";
+import type { Column } from "#~/view/schema.ts";
+import * as f from "#~/view/text/index.ts";
 
 export const CC_COLUMNS: Record<string, Column> = {
 	"cc-rates": {

@@ -1,6 +1,6 @@
-import { GAP } from "~/constants/view.ts";
-import type { Column, GroupKey, Segment } from "~/view/schema.ts";
-import { paint } from "~/view/text/index.ts";
+import { GAP } from "#~/constants/view.ts";
+import type { Column, GroupKey, Segment } from "#~/view/schema.ts";
+import { paint } from "#~/view/text/index.ts";
 
 function groupOf(id: string): GroupKey {
 	if (id === "model") return "model";
@@ -70,7 +70,7 @@ export function renderSegment(
 		.join(GAP);
 }
 
-import type { Row, Tally } from "~/view/schema.ts";
+import type { Row, Tally } from "#~/view/schema.ts";
 
 export function tally(rows: Row[]): Tally {
 	const result: Tally = {

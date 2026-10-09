@@ -11,10 +11,7 @@
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
 		"skipLibCheck": true,
-		"types": ["bun"],
-		"paths": {
-			"~/*": ["./src/*"]
-		}
+		"types": ["bun"]
 	},
 	"include": ["src", "test"]
 }

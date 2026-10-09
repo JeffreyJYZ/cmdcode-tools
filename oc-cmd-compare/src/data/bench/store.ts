@@ -1,6 +1,6 @@
-import { CACHE_TTL_MS } from "~/constants/sources.ts";
-import { fetchText } from "~/data/scrape/index.ts";
-import { normalizeKey } from "~/keys.ts";
+import { CACHE_TTL_MS } from "#~/constants/sources.ts";
+import { fetchText } from "#~/data/scrape/index.ts";
+import { normalizeKey } from "#~/keys.ts";
 
 function parseJsonScores(text: string): Map<string, number> {
 	const body = JSON.parse(text) as unknown;
@@ -39,7 +39,7 @@ export async function loadUrl(url: string): Promise<Map<string, number>> {
 import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { loadAaWeb } from "~/data/sources/aa/web.ts";
+import { loadAaWeb } from "#~/data/sources/aa/web.ts";
 
 function cachePath(): string {
 	const base = process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache");

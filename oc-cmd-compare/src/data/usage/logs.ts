@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { normalizeKey } from "~/keys.ts";
+import { normalizeKey } from "#~/keys.ts";
 import type { UsageEntry } from "./parse.ts";
 
 interface Totals {

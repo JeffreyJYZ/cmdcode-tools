@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { fmtUsd } from "~/view/render.ts";
+import { fmtUsd } from "#~/view/render.ts";
 
 describe("fmtUsd", () => {
 	test("no scientific notation for tiny values", () => {

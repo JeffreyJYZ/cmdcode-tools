@@ -1,4 +1,4 @@
-import type { ColorMode } from "~/cli/options.ts";
+import type { ColorMode } from "#~/cli/options.ts";
 
 let color = true;
 

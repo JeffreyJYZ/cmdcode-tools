@@ -1,5 +1,5 @@
-import type { EntryMetrics } from "~/types.ts";
-import type { Row } from "~/view/schema.ts";
+import type { EntryMetrics } from "#~/types.ts";
+import type { Row } from "#~/view/schema.ts";
 
 export function fmtCount(n: number): string {
 	if (!Number.isFinite(n)) return "∞";
@@ -59,7 +59,7 @@ export function fmtTps(row: Row): string {
 	return tps === null ? "—" : Math.round(tps).toString();
 }
 
-import type { ProviderId } from "~/types.ts";
+import type { ProviderId } from "#~/types.ts";
 
 export function providerName(provider: ProviderId): string {
 	return provider === "oc-go" ? "OpenCode" : "CommandCode";

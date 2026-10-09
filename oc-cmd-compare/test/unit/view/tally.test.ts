@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { tally } from "~/view/render.ts";
+import { tally } from "#~/view/render.ts";
 import { row } from "../fixtures.ts";
 
 describe("tally", () => {

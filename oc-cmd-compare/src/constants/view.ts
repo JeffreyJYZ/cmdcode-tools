@@ -1,6 +1,6 @@
-import type { ProviderId } from "~/types.ts";
-import { CC_COLUMNS } from "~/view/columns/cc.ts";
-import { OC_COLUMNS } from "~/view/columns/oc.ts";
+import type { ProviderId } from "#~/types.ts";
+import { CC_COLUMNS } from "#~/view/columns/cc.ts";
+import { OC_COLUMNS } from "#~/view/columns/oc.ts";
 
 /**
  * SGR codes with **one meaning each**. `green` = favourable (cheaper side, free,

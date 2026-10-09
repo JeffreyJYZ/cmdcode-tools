@@ -1,5 +1,5 @@
-import { CC_PREFIXES } from "~/constants/providers.ts";
-import type { Req, Side, SideShape } from "~/types.ts";
+import { CC_PREFIXES } from "#~/constants/providers.ts";
+import type { Req, Side, SideShape } from "#~/types.ts";
 import { reqProfile } from "./stats.ts";
 
 /** Which plan a provider id's traffic belongs to; null when it is neither. */

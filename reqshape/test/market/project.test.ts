@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { project } from "~/market/project.ts";
-import { customEntry, type RateEntry } from "~/market/rates.ts";
-import type { Profile } from "~/types.ts";
+import { project } from "#~/market/project.ts";
+import { customEntry, type RateEntry } from "#~/market/rates.ts";
+import type { Profile } from "#~/types.ts";
 
 const profile: Profile = {
 	input: 1_000,

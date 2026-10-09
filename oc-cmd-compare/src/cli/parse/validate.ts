@@ -1,4 +1,4 @@
-import { INTERNAL, KNOWN, VALUED } from "~/constants/cli.ts";
+import { INTERNAL, KNOWN, VALUED } from "#~/constants/cli.ts";
 
 export type Bag = Record<string, unknown>;
 

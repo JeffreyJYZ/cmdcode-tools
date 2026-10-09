@@ -1,4 +1,4 @@
-import type { AskKind } from "~/types.ts";
+import type { AskKind } from "#~/types.ts";
 
 /**
  * Row kinds that *open* a new ask. Only a prompt the user typed does.

@@ -1,6 +1,6 @@
-import type { Projection } from "~/market/project.ts";
-import { providerName } from "~/market/rates.ts";
-import type { DropCount, Shape } from "~/types.ts";
+import type { Projection } from "#~/market/project.ts";
+import { providerName } from "#~/market/rates.ts";
+import type { DropCount, Shape } from "#~/types.ts";
 
 export interface JsonInput {
 	shape: Shape;

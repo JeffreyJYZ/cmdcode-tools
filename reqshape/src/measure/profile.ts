@@ -1,4 +1,4 @@
-import type { Ask, Bucket, Profile, Req, Shape, Stats } from "~/types.ts";
+import type { Ask, Bucket, Profile, Req, Shape, Stats } from "#~/types.ts";
 import { sideProfiles } from "./sides.ts";
 import { emptyProfile, FIELDS, mean, reqProfile, stats } from "./stats.ts";
 

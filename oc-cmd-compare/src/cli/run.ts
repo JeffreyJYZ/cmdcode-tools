@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
-import { COLUMN_HELP, COLUMN_IDS } from "~/constants/view.ts";
-import { loadUsage } from "~/data/usage/index.ts";
-import { renderUsage } from "~/view/layout/usage.ts";
+import { COLUMN_HELP, COLUMN_IDS } from "#~/constants/view.ts";
+import { loadUsage } from "#~/data/usage/index.ts";
+import { renderUsage } from "#~/view/layout/usage.ts";
 import {
 	fitColumns,
 	renderCsv,
@@ -11,7 +11,7 @@ import {
 	setColorMode,
 	setThresholds,
 	tally,
-} from "~/view/render.ts";
+} from "#~/view/render.ts";
 import { describeConfig, resolveBag } from "./config.ts";
 import { project } from "./engine/project.ts";
 import { runCheck } from "./flow/check.ts";

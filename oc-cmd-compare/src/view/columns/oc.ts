@@ -1,5 +1,5 @@
-import type { Column } from "~/view/schema.ts";
-import * as f from "~/view/text/index.ts";
+import type { Column } from "#~/view/schema.ts";
+import * as f from "#~/view/text/index.ts";
 
 export const OC_COLUMNS: Record<string, Column> = {
 	"oc-rates": {

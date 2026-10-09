@@ -1,5 +1,5 @@
-import type { Metric, Options } from "~/cli/options.ts";
-import type { CompareRow } from "~/types.ts";
+import type { Metric, Options } from "#~/cli/options.ts";
+import type { CompareRow } from "#~/types.ts";
 
 export function matches(row: CompareRow, pattern: Options["model"]): boolean {
 	if (!pattern) return true;

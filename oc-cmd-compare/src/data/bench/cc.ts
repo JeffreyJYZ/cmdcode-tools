@@ -1,9 +1,9 @@
-import { PAGES, TPS_HEADER } from "~/constants/sources.ts";
+import { PAGES, TPS_HEADER } from "#~/constants/sources.ts";
 import {
 	extractNumericColumn,
 	fetchText,
 	parseTables,
-} from "~/data/scrape/index.ts";
+} from "#~/data/scrape/index.ts";
 import { type BenchData, emptyData } from "./types.ts";
 
 export async function loadCc(): Promise<BenchData> {

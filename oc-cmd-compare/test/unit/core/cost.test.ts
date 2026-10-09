@@ -3,8 +3,8 @@ import {
 	costPerRequest,
 	lookupAbility,
 	lookupTps,
-} from "~/cli/engine/index.ts";
-import { SPEED_TPS_FACTOR } from "~/constants/scoring.ts";
+} from "#~/cli/engine/index.ts";
+import { SPEED_TPS_FACTOR } from "#~/constants/scoring.ts";
 
 describe("costPerRequest", () => {
 	test("sums input, cache and output at per-million rates", () => {

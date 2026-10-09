@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import type { DropCount } from "~/types.ts";
-import { setColorMode } from "~/view/format.ts";
-import { renderText } from "~/view/render.ts";
+import type { DropCount } from "#~/types.ts";
+import { setColorMode } from "#~/view/format.ts";
+import { renderText } from "#~/view/render.ts";
 import { entry, projection, report } from "./fixtures.ts";
 
 setColorMode(false);

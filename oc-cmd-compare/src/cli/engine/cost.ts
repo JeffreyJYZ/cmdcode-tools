@@ -1,5 +1,5 @@
-import { PER_MILLION } from "~/constants/scoring.ts";
-import type { ModelPricing, PlanInfo, Workload } from "~/types.ts";
+import { PER_MILLION } from "#~/constants/scoring.ts";
+import type { ModelPricing, PlanInfo, Workload } from "#~/types.ts";
 
 /**
  * USD of list-rate spend for a single request under the fixed workload.

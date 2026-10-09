@@ -6,8 +6,8 @@ import {
 	SHAPE_AUTO,
 	SHAPE_GUARD_ENV,
 	SHAPE_MIN_REQS,
-} from "~/constants/shape.ts";
-import { loadShapes, reqsOf, workloadOf } from "~/data/shape.ts";
+} from "#~/constants/shape.ts";
+import { loadShapes, reqsOf, workloadOf } from "#~/data/shape.ts";
 
 const PROFILE = {
 	input: 7_151,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { project } from "~/cli/engine/project.ts";
-import type { UsageEntry } from "~/data/usage/index.ts";
-import { headToHead } from "~/view/layout/usage.ts";
+import { project } from "#~/cli/engine/project.ts";
+import type { UsageEntry } from "#~/data/usage/index.ts";
+import { headToHead } from "#~/view/layout/usage.ts";
 import { ccPlan, entry, ocPlan } from "../fixtures.ts";
 
 const usage: UsageEntry = {

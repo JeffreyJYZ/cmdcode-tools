@@ -1,6 +1,6 @@
-import { BADGE, BOUNDARY, ENDS } from "~/constants/data.ts";
-import { cellText } from "~/data/scrape/tables.ts";
-import type { Deal } from "~/types.ts";
+import { BADGE, BOUNDARY, ENDS } from "#~/constants/data.ts";
+import { cellText } from "#~/data/scrape/tables.ts";
+import type { Deal } from "#~/types.ts";
 
 /**
  * Read the promotion from a raw model name cell. `nameCell` deliberately keeps

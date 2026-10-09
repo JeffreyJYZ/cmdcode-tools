@@ -1,5 +1,5 @@
-import type { ScaleMode } from "~/cli/options.ts";
-import type { EntryMetrics } from "~/types.ts";
+import type { ScaleMode } from "#~/cli/options.ts";
+import type { EntryMetrics } from "#~/types.ts";
 import { logMinmax, minmax } from "./cost.ts";
 
 /** Everything the scorer can be told to do differently. */

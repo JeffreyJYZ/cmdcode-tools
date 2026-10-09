@@ -6,9 +6,9 @@ import {
 	parseMetric,
 	parseOnly,
 	type ScaleMode,
-} from "~/cli/options.ts";
-import { ARG_DEFAULTS, BENCH_DEFAULT } from "~/constants/cli.ts";
-import { SHAPE_MEASURED } from "~/constants/shape.ts";
+} from "#~/cli/options.ts";
+import { ARG_DEFAULTS, BENCH_DEFAULT } from "#~/constants/cli.ts";
+import { SHAPE_MEASURED } from "#~/constants/shape.ts";
 import {
 	colorMode,
 	numbers,

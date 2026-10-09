@@ -1,11 +1,11 @@
-import { DEFAULT_SCORE } from "~/constants/scoring.ts";
+import { DEFAULT_SCORE } from "#~/constants/scoring.ts";
 import type {
 	CatalogEntry,
 	EntryMetrics,
 	PlanInfo,
 	ProviderId,
 	Workload,
-} from "~/types.ts";
+} from "#~/types.ts";
 import { lookupAbility, lookupTps } from "./ability.ts";
 import { costPerRequest, windowRatios } from "./cost.ts";
 import { assignIndex, assignValueIndex, type ScoreConfig } from "./score.ts";

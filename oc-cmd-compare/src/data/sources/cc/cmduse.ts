@@ -1,4 +1,4 @@
-import { runCmduse } from "~/data/cmduse.ts";
+import { runCmduse } from "#~/data/cmduse.ts";
 
 interface CmdusePlan {
 	name: string;

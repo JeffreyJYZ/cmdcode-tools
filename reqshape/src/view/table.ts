@@ -1,6 +1,6 @@
-import { CELL, MONEY, NAME, PLAN } from "~/constants/layout.ts";
-import type { Projection } from "~/market/project.ts";
-import { planLabel } from "~/market/rates.ts";
+import { CELL, MONEY, NAME, PLAN } from "#~/constants/layout.ts";
+import type { Projection } from "#~/market/project.ts";
+import { planLabel } from "#~/market/rates.ts";
 import { dim, fmtCount, fmtUsd, pad } from "./format.ts";
 
 export function tableHeader(): string {

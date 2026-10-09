@@ -1,4 +1,4 @@
-import type { CustomRates } from "~/market/rates.ts";
+import type { CustomRates } from "#~/market/rates.ts";
 
 /**
  * cac prints --help and --version itself and only sets `run = false`, which is

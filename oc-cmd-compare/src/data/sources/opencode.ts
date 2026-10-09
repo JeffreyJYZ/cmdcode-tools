@@ -2,9 +2,13 @@ import {
 	DOC_URL,
 	OC_MODELS_URL,
 	PRICE_PER_MONTH,
-} from "~/constants/sources.ts";
-import { extractCatalog, fetchText, parseTables } from "~/data/scrape/index.ts";
-import type { CatalogEntry, PlanInfo } from "~/types.ts";
+} from "#~/constants/sources.ts";
+import {
+	extractCatalog,
+	fetchText,
+	parseTables,
+} from "#~/data/scrape/index.ts";
+import type { CatalogEntry, PlanInfo } from "#~/types.ts";
 
 /** Per-model token rates + monthly usage limit for OpenCode Go. */
 export async function loadOcGoCatalog(peak = false): Promise<CatalogEntry[]> {

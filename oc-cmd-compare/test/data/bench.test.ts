@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { parseAaApi } from "~/data/sources/aa/parse.ts";
-import { parseAaWeb } from "~/data/sources/aa/web.ts";
+import { parseAaApi } from "#~/data/sources/aa/parse.ts";
+import { parseAaWeb } from "#~/data/sources/aa/web.ts";
 
 // Mirrors the shape Artificial Analysis embeds in its models page flight data.
 const AA_FIXTURE = `<script>{"citation":"Artificial Analysis (2025). LLM benchmarks dataset.","data":[{"label":"Claude Opus 5.5 (max with fallback)","intelligenceIndex":57.62,"detailsUrl":"/models/claude-opus-5-5"},{"label":"GLM-5.3-Flash","intelligenceIndex":30.5,"detailsUrl":"/models/glm-5-3-flash"},{"label":"Qwen3.8 Max (0902)","intelligenceIndex":41.1,"detailsUrl":"/models/qwen3-8-max-0902"}]}</script>`;

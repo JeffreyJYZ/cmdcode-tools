@@ -1,4 +1,4 @@
-import type { Profile, Req, Stats } from "~/types.ts";
+import type { Profile, Req, Stats } from "#~/types.ts";
 
 export function mean(values: number[]): number {
 	if (values.length === 0) return 0;
