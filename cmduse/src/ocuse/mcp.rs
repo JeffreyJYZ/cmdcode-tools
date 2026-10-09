@@ -11,7 +11,14 @@ use serde_json::{json, Value};
 const PROTOCOL_VERSION: &str = "2025-06-18";
 
 /// Serve stdin -> stdout until the host closes the pipe.
-pub fn run(db_path: &str, days: i64, tz_secs: i64, colour: bool, period_start: Option<i64>) {
+pub fn run(
+    db_path: &str,
+    days: i64,
+    tz_secs: i64,
+    colour: bool,
+    plan: &str,
+    period_start: Option<i64>,
+) {
     use std::io::{BufRead, Write};
     let stdin = std::io::stdin();
     let mut out = std::io::stdout().lock();
@@ -23,7 +30,7 @@ pub fn run(db_path: &str, days: i64, tz_secs: i64, colour: bool, period_start: O
         let Ok(msg) = serde_json::from_str::<Value>(&line) else {
             continue; // not JSON: ignore, a host bug shouldn't kill the server
         };
-        if let Some(response) = handle(&msg, db_path, days, tz_secs, colour, period_start) {
+        if let Some(response) = handle(&msg, db_path, days, tz_secs, colour, plan, period_start) {
             if writeln!(out, "{response}").is_err() {
                 break; // stdout closed: host is gone
             }
@@ -39,6 +46,7 @@ pub fn handle(
     days: i64,
     tz_secs: i64,
     colour: bool,
+    plan: &str,
     period_start: Option<i64>,
 ) -> Option<Value> {
     let method = msg.get("method")?.as_str()?;
@@ -54,7 +62,7 @@ pub fn handle(
         })),
         "ping" => Ok(json!({})),
         "tools/list" => Ok(json!({ "tools": tools() })),
-        "tools/call" => tool_call(msg, db_path, days, tz_secs, colour, period_start),
+        "tools/call" => tool_call(msg, db_path, days, tz_secs, colour, plan, period_start),
         other => Err((-32601, format!("method not found: {other}"))),
     };
     Some(match result {
@@ -72,6 +80,7 @@ fn tool_call(
     days: i64,
     tz_secs: i64,
     colour: bool,
+    plan: &str,
     period_start: Option<i64>,
 ) -> Result<Value, (i64, String)> {
     let name = msg
@@ -84,12 +93,18 @@ fn tool_call(
         .unwrap_or(json!({}));
     let number =
         |key: &str, fallback: i64| args.get(key).and_then(|v| v.as_i64()).unwrap_or(fallback);
+    // The plan may be overridden per call; it defaults to the server's flag.
+    let plan_id = args
+        .get("plan")
+        .and_then(|v| v.as_str())
+        .unwrap_or(plan)
+        .to_string();
 
     let rows = || db::read_rows(db_path, crate::ocuse::window::now_ms() - days * 86_400_000);
     let text = match name {
         "usage" => rows().map(|rows| {
             render::render_text(
-                &window::build(&rows, &zen::catalog(), window::now_ms(), None),
+                &window::build(&rows, &zen::catalog(), &plan_id, window::now_ms(), None),
                 db_path,
                 15,
                 colour,
@@ -128,7 +143,13 @@ fn tool_call(
                 .unwrap_or_default()
                 .to_string();
             rows().map(|rows| {
-                let report = window::build(&rows, &zen::catalog(), window::now_ms(), period_start);
+                let report = window::build(
+                    &rows,
+                    &zen::catalog(),
+                    &plan_id,
+                    window::now_ms(),
+                    period_start,
+                );
                 render::model_text(&report, &wanted, colour)
             })
         }
@@ -150,12 +171,12 @@ fn tool_call(
 
 fn tools() -> Value {
     json!([
-        { "name": "usage", "description": "OpenCode Go/Zen usage: period totals, rolling windows, per-model spend against each model's monthly limit.", "inputSchema": { "type": "object", "properties": {} } },
-        { "name": "plans", "description": "The Go/Zen catalogue from the docs: per-model monthly limits and $/1M rates.", "inputSchema": { "type": "object", "properties": {} } },
+        { "name": "usage", "description": "OpenCode Go/Zen usage: period totals, rolling windows, per-model spend against each model's monthly limit. Defaults to the Go plan.", "inputSchema": { "type": "object", "properties": { "plan": { "type": "string", "description": "Go plan: go (default) or go-plus" } } } },
+        { "name": "plans", "description": "The Go/Zen catalogue from the docs: both Go plans' per-model monthly limits and the shared $/1M rates.", "inputSchema": { "type": "object", "properties": {} } },
         { "name": "daily", "description": "Spend, requests and tokens per day.", "inputSchema": { "type": "object", "properties": { "days": { "type": "integer", "description": "days of history (default 120)" } } } },
         { "name": "hourly", "description": "Spend, requests and tokens per hour.", "inputSchema": { "type": "object", "properties": { "hours": { "type": "integer", "description": "hours of history (default 24)" } } } },
         { "name": "session", "description": "Spend per OpenCode session, newest first.", "inputSchema": { "type": "object", "properties": { "limit": { "type": "integer", "description": "sessions to list (default 20)" } } } },
-        { "name": "model", "description": "One model's limit, spend and window figures.", "inputSchema": { "type": "object", "properties": { "id": { "type": "string", "description": "model id, e.g. glm-5.2" } }, "required": ["id"] } },
+        { "name": "model", "description": "One model's limit, spend and window figures, against the given Go plan.", "inputSchema": { "type": "object", "properties": { "id": { "type": "string", "description": "model id, e.g. glm-5.2" }, "plan": { "type": "string", "description": "Go plan: go (default) or go-plus" } }, "required": ["id"] } },
     ])
 }
 
@@ -170,6 +191,7 @@ mod tests {
             120,
             0,
             false,
+            crate::ocuse::zen::DEFAULT_PLAN,
             None,
         )
         .expect("notification")

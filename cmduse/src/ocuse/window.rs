@@ -150,10 +150,18 @@ pub fn month_start(rows: &[Row], now_ms: i64) -> (i64, bool) {
 
 /// Build the report: window totals plus a per-model breakdown for the period.
 ///
+/// `plan_id` selects which Go plan's per-model allowances the figures are
+/// measured against (the store records no subscription, so the caller chooses);
 /// `since_override` pins the period start (from `--period-start`); otherwise the
 /// anniversary heuristic in [`month_start`] applies. Rows before the period are
 /// anniversary evidence only — never listed — so the table and the totals agree.
-pub fn build(rows: &[Row], catalog: &Catalog, now_ms: i64, since_override: Option<i64>) -> Report {
+pub fn build(
+    rows: &[Row],
+    catalog: &Catalog,
+    plan_id: &str,
+    now_ms: i64,
+    since_override: Option<i64>,
+) -> Report {
     let (inferred_start, month_inferred) = month_start(rows, now_ms);
     let since_ms = since_override.unwrap_or(inferred_start);
     let five_cut = now_ms - FIVE_HOUR_SECS * 1000;
@@ -187,7 +195,7 @@ pub fn build(rows: &[Row], catalog: &Catalog, now_ms: i64, since_override: Optio
             .or_insert_with(|| ModelUsage {
                 id: row.model.clone(),
                 provider: row.provider.clone(),
-                limit: catalog.go_limit(&row.model),
+                limit: catalog.go_limit(plan_id, &row.model),
                 month: Totals::default(),
                 five_hour: Totals::default(),
                 weekly: Totals::default(),
@@ -245,7 +253,13 @@ mod tests {
             row(now - 40 * 86_400, "glm-5.3-flash", 8.0), // previous cycle: anniversary evidence
         ];
         let catalog = crate::ocuse::zen::catalog();
-        let report = build(&rows, &catalog, now * 1000, None);
+        let report = build(
+            &rows,
+            &catalog,
+            crate::ocuse::zen::DEFAULT_PLAN,
+            now * 1000,
+            None,
+        );
         assert!(
             report.month_inferred,
             "anniversary inferred from the earliest row"
@@ -271,7 +285,13 @@ mod tests {
     fn models_sort_by_month_spend() {
         let now = days_from_civil(2026, 9, 27) * 86_400;
         let rows = vec![row(now - 60, "cheap", 0.1), row(now - 60, "pricey", 5.0)];
-        let report = build(&rows, &crate::ocuse::zen::catalog(), now * 1000, None);
+        let report = build(
+            &rows,
+            &crate::ocuse::zen::catalog(),
+            crate::ocuse::zen::DEFAULT_PLAN,
+            now * 1000,
+            None,
+        );
         assert_eq!(report.models[0].id, "pricey");
     }
 }

@@ -23,12 +23,15 @@ USAGE:
   ocuse daily [--days N]  spend per day
   ocuse hourly [--days N] spend per hour
   ocuse session          spend per session (newest first)
-  ocuse plans           the Go/Zen catalogue: limits and rates
+  ocuse plans           the Go/Zen catalogue: both plans' limits and rates
   ocuse statusline      one compact line
   ocuse mcp             MCP stdio server (usage/plans/daily/hourly/session/model)
 
 FLAGS:
   --db <path>           opencode store (default $OPENCODE_DB or ~/.local/share/opencode/opencode.db)
+  --plan <id>           Go plan to measure against: go (default) or go-plus.
+                        No auto-detection: there is no usage API and the local
+                        store records no subscription, so the plan is explicit.
   --days <n>            how many days of history to read (default 120)
   --window <w>          report window: month (default, calendar month UTC), all, or <n>d
   --period-start <date>  pin the period start (YYYY-MM-DD, UTC)
@@ -152,6 +155,7 @@ pub fn run() {
     // (`--window all daily` must mean `daily`, not `all`).
     let value_flags = [
         "--db",
+        "--plan",
         "--days",
         "--rows",
         "--window",
@@ -175,6 +179,18 @@ pub fn run() {
     if command == "plans" {
         print!("{}", render::plans_text(colour));
         return;
+    }
+
+    // Which Go plan the allowances are measured against: explicit, because the
+    // store records no subscription and there is no usage API to ask.
+    let catalog = zen::catalog();
+    let plan_id = value("--plan").unwrap_or_else(|| zen::DEFAULT_PLAN.to_string());
+    if catalog.plan(&plan_id).is_none() {
+        eprintln!(
+            "ocuse: --plan expects one of {} (got {plan_id})",
+            catalog.plan_ids().join(", ")
+        );
+        std::process::exit(2);
     }
 
     let period_label = if flag("--period-start") {
@@ -201,10 +217,9 @@ pub fn run() {
         }
     };
 
-    let catalog = zen::catalog();
     match command.as_str() {
         "statusline" => {
-            let mut report = build(&read(), &catalog, now, period_start);
+            let mut report = build(&read(), &catalog, &plan_id, now, period_start);
             report.period_label = period_label;
             println!("{}", render::status_line(&report, colour));
         }
@@ -219,7 +234,7 @@ pub fn run() {
         "session" => print!("{}", render::session_text(&read(), 20, colour)),
         "mcp" => {
             // stdio JSON-RPC; stdout carries protocol only, so nothing else may print.
-            mcp::run(&db_path, days, tz_secs, false, period_start);
+            mcp::run(&db_path, days, tz_secs, false, &plan_id, period_start);
         }
         "model" => {
             let wanted = args
@@ -228,7 +243,7 @@ pub fn run() {
                 .and_then(|i| args.get(i + 1))
                 .filter(|v| !v.starts_with('-'))
                 .cloned();
-            let mut report = build(&read(), &catalog, now, period_start);
+            let mut report = build(&read(), &catalog, &plan_id, now, period_start);
             report.period_label = period_label;
             match wanted {
                 Some(id) => print!("{}", render::model_text(&report, &id, colour)),
@@ -250,7 +265,7 @@ pub fn run() {
             let mut history: Vec<f64> = Vec::new();
             let mut last_five: Option<f64> = None;
             loop {
-                let report = build(&read(), &catalog, now_ms(), period_start);
+                let report = build(&read(), &catalog, &plan_id, now_ms(), period_start);
                 let (_, cols) = crate::term_size().unwrap_or((0, 0));
                 let cols = (cols > 0).then_some(cols);
                 // 5-hour spend only rises between refreshes, so the delta is the
@@ -285,7 +300,7 @@ pub fn run() {
             }
         }
         _ => {
-            let mut report = build(&read(), &catalog, now, period_start);
+            let mut report = build(&read(), &catalog, &plan_id, now, period_start);
             report.period_label = period_label;
             if flag("--json") {
                 println!("{}", render::render_json(&report));

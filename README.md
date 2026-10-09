@@ -117,7 +117,7 @@ A bare name makes opencode re-resolve `@latest` (a registry round-trip) on every
 
 ## OpenCode Go/Zen usage (`ocuse`)
 
-`ocuse` tracks what you actually ran on **OpenCode Go** (the $10/mo subscription) and **OpenCode Zen** (pay-as-you-go), using the same CLI shape as `cmduse`:
+`ocuse` tracks what you actually ran on **OpenCode Go** (the Go subscription) and **OpenCode Zen** (pay-as-you-go), using the same CLI shape as `cmduse`:
 
 ```sh
 ocuse                 # watch: live frame (colour, gauges, spend-burst sparkline)
@@ -125,7 +125,7 @@ ocuse -1              # one-shot dashboard
 ocuse --json
 ocuse daily|hourly|session
 ocuse model [id]
-ocuse plans           # the docs catalogue: limits and rates
+ocuse plans           # the docs catalogue: both plans' limits and rates
 ocuse statusline
 ocuse mcp             # MCP stdio server
 ```
@@ -133,7 +133,7 @@ ocuse mcp             # MCP stdio server
 Two differences from `cmduse` are worth knowing up front, both from upstream:
 
 - **OpenCode publishes no usage API.** The console tracks usage; the one API route (`/zen/go/v1/usage`) answers `EntitlementError` for keys without a Go subscription, and Zen has no equivalent at all. So `ocuse` reports your **local** usage — opencode.db, which records `cost`, tokens and the model for every request, for both providers.
-- **Go's allowance is per model**, not per account: each model has a monthly dollar limit, with windows of 5h = 20%, weekly = 50%, monthly = 100%. The dashboard shows each model against its own limit, and the header's window lines sum the caps of the models you used.
+- **Go's allowance is per model**, not per account: each model has a monthly dollar limit, with windows of 5h = 20%, weekly = 50%, monthly = 100%. The dashboard shows each model against its own limit, and the header's window lines sum the caps of the models you used. Go ships **two plans** — Go ($10/mo) and Go Plus ($40/mo) — with the same token prices but different per-model limits; nothing local records which one you have (the subscription lives in the console), so select it with `--plan go|go-plus` (default `go`).
 
 The monthly *period* has no local record (renewals are in the console), so the default is the calendar month; `--period-start YYYY-MM-DD` pins the real one and `--window all|<n>d` reports other ranges (inference from your first Go request exists behind `--infer-anniversary`, but it guesses wrong on sparse history).
 

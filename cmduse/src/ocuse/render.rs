@@ -400,53 +400,65 @@ fn shorten(path: &str) -> String {
 
 // ---- catalogues and history tables (shared with the MCP server) -------------
 
-/// The catalogue: what each product costs and (for Go) what it allows.
+/// The catalogue: what each product costs and (for Go) what each plan allows.
+///
+/// Both Go plans are listed because the docs define two — Go and Go Plus — that
+/// share one token price list but grant each model a different monthly limit.
 pub fn plans_text(colour: bool) -> String {
     let ink = Ink::new(colour);
     let catalog = crate::ocuse::zen::catalog();
     let mut out = format!(
-        "{}OpenCode plans{} {}\n\n",
+        "{}OpenCode plans{} {}\n",
         ink.bold,
         ink.reset,
         ink.dim_on(format!("(docs, extracted {})", catalog.extracted_at)),
     );
     out.push_str(&format!(
-        "{}GO{} — {}/month · windows: 5h {} · weekly {} · monthly {}\n",
-        ink.bold,
-        ink.reset,
-        ink.cyan_on(format!("${:.2}", catalog.go.price_usd)),
+        "{}windows (both plans): 5h {} · weekly {} · monthly {}{}\n",
+        ink.dim,
         ink.cyan_on(format!("{:.1}%", catalog.go.window_share.five_hour * 100.0)),
         ink.cyan_on(format!("{:.1}%", catalog.go.window_share.weekly * 100.0)),
         ink.cyan_on(format!("{:.1}%", catalog.go.window_share.monthly * 100.0)),
+        ink.reset,
     ));
-    out.push_str(&format!(
-        "{}MODEL                            LIMIT    IN     OUT    CACHE{}\n",
-        ink.bold, ink.reset
-    ));
-    for model in &catalog.go.models {
-        let rate = model.variants.first();
-        let limit = model
-            .monthly_limit
-            .map(cmduse_core::money)
-            .unwrap_or_else(|| "—".into());
+    for plan in catalog.go.plans.values() {
         out.push_str(&format!(
-            "{:<28} {} {} {} {}\n",
-            model.id,
-            ink.cyan_on(format!("{limit:>7}")),
-            ink.cyan_on(format!(
-                "{:>6}",
-                rate.map(|r| format!("${}", r.input)).unwrap_or_default()
-            )),
-            ink.cyan_on(format!(
-                "{:>6}",
-                rate.map(|r| format!("${}", r.output)).unwrap_or_default()
-            )),
-            ink.cyan_on(format!(
-                "{:>8}",
-                rate.map(|r| format!("${}", r.cache_read))
-                    .unwrap_or_default()
-            )),
+            "\n{}{}{} — {}/month\n",
+            ink.bold,
+            plan.label,
+            ink.reset,
+            ink.cyan_on(format!("${:.2}", plan.price_usd)),
         ));
+        out.push_str(&format!(
+            "{}MODEL                            LIMIT    IN     OUT    CACHE{}\n",
+            ink.bold, ink.reset
+        ));
+        for model in &catalog.go.models {
+            let rate = model.variants.first();
+            let limit = plan
+                .allowance_by_model
+                .get(&model.id)
+                .map(|limit| cmduse_core::money(*limit))
+                .unwrap_or_else(|| "—".into());
+            out.push_str(&format!(
+                "{:<28} {} {} {} {}\n",
+                model.id,
+                ink.cyan_on(format!("{limit:>7}")),
+                ink.cyan_on(format!(
+                    "{:>6}",
+                    rate.map(|r| format!("${}", r.input)).unwrap_or_default()
+                )),
+                ink.cyan_on(format!(
+                    "{:>6}",
+                    rate.map(|r| format!("${}", r.output)).unwrap_or_default()
+                )),
+                ink.cyan_on(format!(
+                    "{:>8}",
+                    rate.map(|r| format!("${}", r.cache_read))
+                        .unwrap_or_default()
+                )),
+            ));
+        }
     }
     out.push_str(&format!(
         "\n{}\n",
@@ -630,7 +642,7 @@ mod tests {
             cost_usd: 30.0,
             ..Default::default()
         }];
-        crate::ocuse::window::build(&rows, &zen::catalog(), now, None)
+        crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None)
     }
 
     #[test]
@@ -763,7 +775,8 @@ mod tests {
             cost_usd: 5.0,
             ..Default::default()
         }];
-        let report = crate::ocuse::window::build(&rows, &zen::catalog(), now, None);
+        let report =
+            crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None);
         for colour in [false, true] {
             let text = render_text(&report, "/tmp/opencode.db", 10, colour);
             assert!(!text.contains("LIMIT EXCEEDED"), "colour={colour}: {text}");
@@ -775,7 +788,13 @@ mod tests {
         let detail = model_text(&report(), "glm-5.3-flash", false);
         assert!(detail.contains("100.0% of period spend"), "{detail}");
         // A period with nothing to divide by omits the row rather than printing NaN.
-        let empty = crate::ocuse::window::build(&[], &zen::catalog(), 1_800_000_000_000, None);
+        let empty = crate::ocuse::window::build(
+            &[],
+            &zen::catalog(),
+            zen::DEFAULT_PLAN,
+            1_800_000_000_000,
+            None,
+        );
         assert!(!model_text(&empty, "glm-5.3-flash", false).contains("share"));
     }
 

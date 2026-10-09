@@ -183,19 +183,19 @@ Logged-in [Command Code CLI](https://commandcode.ai) — reads your API key from
 
 ### ocuse — OpenCode Go/Zen (same crate, second binary)
 
-The same crate ships `ocuse`, which tracks **OpenCode Go** (the $10/mo subscription) and **OpenCode Zen** (pay-as-you-go) with the same CLI shape:
+The same crate ships `ocuse`, which tracks **OpenCode Go** (the Go subscription) and **OpenCode Zen** (pay-as-you-go) with the same CLI shape:
 
 ```sh
 ocuse                 # watch: live frame (colour, gauges, spend-burst sparkline)
 ocuse -1 --json       # one-shot, machine-readable
 ocuse daily|hourly|session
 ocuse model [id]
-ocuse plans           # the docs catalogue: limits and rates
+ocuse plans           # the docs catalogue: both plans' limits and rates
 ocuse statusline
 ocuse mcp             # MCP stdio server (usage/plans/daily/hourly/session/model)
 ```
 
-Two upstream facts shape it: OpenCode publishes **no usage API** (the one route, `/zen/go/v1/usage`, is entitlement-gated; the console is the only surface), and Go's allowance is **per model** — each model has a monthly dollar limit with windows of 5h = 20%, weekly = 50%, monthly = 100%. So `ocuse` reports your local usage from `opencode.db` (providers `opencode-go` and `opencode`, which record real `cost`) against the limits in `core/zen.json` (regenerated with `bun scripts/extract-zen.ts`).
+Two upstream facts shape it: OpenCode publishes **no usage API** (the one route, `/zen/go/v1/usage`, is entitlement-gated; the console is the only surface), and Go's allowance is **per model** — each model has a monthly dollar limit with windows of 5h = 20%, weekly = 50%, monthly = 100%. Go comes in **two plans** — Go ($10/mo) and Go Plus ($40/mo) — that share the token prices but grant different per-model limits; nothing local records your plan, so `ocuse` selects it with `--plan go|go-plus` (default `go`). So `ocuse` reports your local usage from `opencode.db` (providers `opencode-go` and `opencode`, which record real `cost`) against the limits in `core/zen.json` (regenerated with `bun scripts/extract-zen.ts`).
 
 The billing period has no local record, so the default is the calendar month: `--period-start YYYY-MM-DD` pins the real one, `--window all|<n>d` reports other ranges, and `--tz` shifts day/hour buckets.
 
