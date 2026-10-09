@@ -422,7 +422,7 @@ git commit -m "feat(website): changelog from release/registry snapshots"
 
 - [ ] **Step 1: Add constants and per-route metadata**
 
-`src/lib/consts/index.ts`: `REPO_URL`, `SITE_URL = "https://octools.jyz.land"`, `RELEASES_URL`, `NPM_ORG_URL`, and re-export the project links. **Brand name is `octools`**: set it as the layout `title`/`openGraph.siteName`, the landing page `<h1>`, and the browser-title template (currently `cmdcode-tools` — rename). Add `generateMetadata` to the docs route (title/description from the loader) and static `metadata` to layout/landing/guides/compare/changelog using `SITE_URL`.
+`src/lib/consts/index.ts`: `REPO_URL`, `SITE_URL = "https://cmdtools.jyz.land"`, `RELEASES_URL`, `NPM_ORG_URL`, and re-export the project links. **Brand name is `cmdtools`**: set it as the layout `title`/`openGraph.siteName`, the landing page `<h1>`, and the browser-title template (currently `cmdcode-tools` — rename). Add `generateMetadata` to the docs route (title/description from the loader) and static `metadata` to layout/landing/guides/compare/changelog using `SITE_URL`.
 
 - [ ] **Step 2: Add 404, sitemap, OG**
 

@@ -187,7 +187,7 @@ Next.js 16 App Router, React 19, TypeScript `^7` (native — matches the workspa
 - `website/package.json` scripts: `dev`, `build`, `check`/`format`/`lint` (Biome), `typecheck`, `snapshot:mpc`, `snapshot:releases`.
 - Root `.github/workflows/ci.yml`: add a job that runs in `website/` (`bun install && bun check && bun typecheck && bun build`), independent of the existing Rust/workspace jobs so it cannot destabilize them.
 - Vercel: a project with **Root Directory = `website/`** — a project setting, **not** expressible in `vercel.json`; Vercel auto-detects Next, `next.config.ts` uses `output: "export"`. `vercel.json` is optional and, if present, mirrors vobes: `$schema` + an `ignoreCommand` that skips builds when no `website/` path changed. No deploy/publish without explicit user go.
-- Site identity: name **octools**, served at `https://octools.jyz.land` (subdomain of the user's `jyz.land`; its DNS is on Vercel, so adding the domain is a one-click record). `SITE_URL` (Task 10) is that URL; the page `<h1>`/title/OG use the name `octools`.
+- Site identity: name **cmdtools**, served at `https://cmdtools.jyz.land` (subdomain of the user's `jyz.land`; its DNS is on Vercel, so adding the domain is a one-click record). `SITE_URL` (Task 10) is that URL; the page `<h1>`/title/OG use the name `cmdtools`. (`octools.jyz.land` is a leftover preview alias — keep as a redirect or remove.)
 
 ## Verification
 
