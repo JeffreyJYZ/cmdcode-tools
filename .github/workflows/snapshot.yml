@@ -25,9 +25,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+      # mpc shells out to `cmduse` for the CommandCode plan table, and the
+      # runner has no `cmduse`; build it from this checkout and point mpc at it.
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build -p cmd-usage
       # Root install: the workspace, so mpc's `cac` dependency is present.
       - run: bun install
       - run: bun run --cwd website snapshot:mpc
+        env:
+          CMDUSE_BIN: ${{ github.workspace }}/target/debug/cmduse
       - name: Commit on material change
         run: |
           # `generatedAt` churns every run; ignore it when deciding.
