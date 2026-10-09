@@ -10,6 +10,7 @@
 		"opencode-session-dir"
 	],
 	"scripts": {
-		"extract": "bun run scripts/extract-gating.ts"
+		"extract": "bun run scripts/extract-gating.ts",
+		"dev:link": "bun run scripts/dev-link.ts"
 	}
 }

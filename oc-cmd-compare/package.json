@@ -5,7 +5,8 @@
 	"license": "MIT",
 	"type": "module",
 	"bin": {
-		"mpc": "src/index.ts"
+		"mpc": "src/index.ts",
+		"mpcdev": "src/index.ts"
 	},
 	"files": [
 		"src",

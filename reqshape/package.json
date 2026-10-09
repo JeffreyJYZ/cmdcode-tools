@@ -5,7 +5,8 @@
 	"license": "MIT",
 	"type": "module",
 	"bin": {
-		"reqshape": "src/index.ts"
+		"reqshape": "src/index.ts",
+		"reqshapedev": "src/index.ts"
 	},
 	"files": [
 		"src",

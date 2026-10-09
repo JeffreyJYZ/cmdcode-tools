@@ -29,6 +29,12 @@ path = "src/bin/cmdusedev.rs"
 name = "ocuse"
 path = "src/bin/ocuse.rs"
 
+# Dev twin of ocuse: same code, different name, so a local build never shadows
+# the installed `ocuse` (consumers can target it via OCUSE_BIN).
+[[bin]]
+name = "ocusedev"
+path = "src/bin/ocusedev.rs"
+
 # cargo binstall: the release workflow publishes cmduse-<version>-<target>.tar.gz
 # with the binaries at the archive root. Assets are a public contract shared with
 # the Homebrew formula (see .github/workflows/release.yml).
