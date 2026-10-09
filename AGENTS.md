@@ -215,7 +215,7 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | cargo run -p cm
 cd opencode-plugin && bun test && bun run typecheck
 ```
 
-**`typecheck` → `bun check` once Bun's type checker is in stable** (canary-only as of Bun 1.4.2, Oct 2026; ships in the next release — decided to wait). Then change each package's `typecheck` script from `tsc --noEmit` to `bun check`; all tsconfigs are already TS7-clean (no `baseUrl`, `moduleResolution: "bundler"`, `types: ["bun"]`, `./`-relative `paths`). **Keep `tsc -p tsconfig.build.json` in every `build` script** — `bun check` never emits, so `.d.ts` still comes from `tsc`. Pin CI's `setup-bun` to canary in the same change, or the matrix's `typecheck` step fails on stable.
+**TypeScript: every package pins `typescript: ^7` (the native/Go port) — fast `tsc` is the default here; never pin `^5` (the slow JS line).** `bun check` (Bun's own checker) is optional: canary-only as of Bun 1.4.2 (Oct 2026), ships stable next — decided to wait. If adopted, change each package's `typecheck` from `tsc --noEmit` to `bun check` (tsconfigs are already TS7-clean), keep `tsc -p tsconfig.build.json` in every `build` (it emits `.d.ts`; `bun check` never emits), and pin CI's `setup-bun` to canary in the same change.
 
 **After repo move, `target/` can carry build script baked with old absolute
 `CARGO_MANIFEST_DIR`.** `core/build.rs` reads `plans.json` relative to that
