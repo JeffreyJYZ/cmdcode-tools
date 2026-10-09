@@ -1,0 +1,151 @@
+/*
+ * Docs article styling. Scoped to `.docs-prose` and placed in the `components`
+ * layer (imported after `globals.css`, which declares the layer order) so
+ * Tailwind utilities can still override any single property.
+ */
+@layer components {
+	.docs-prose {
+		font-size: 1rem;
+		line-height: 1.7;
+	}
+
+	.docs-prose p {
+		margin: 0 0 1.25rem;
+	}
+
+	.docs-prose ul,
+	.docs-prose ol {
+		margin: 0 0 1.25rem;
+		padding-left: 1.5rem;
+	}
+
+	.docs-prose ul {
+		list-style: disc;
+	}
+
+	.docs-prose ol {
+		list-style: decimal;
+	}
+
+	.docs-prose li + li {
+		margin-top: 0.35rem;
+	}
+
+	.docs-prose h2 {
+		margin: 2.75rem 0 1rem;
+		padding-bottom: 0.4rem;
+		border-bottom: 1px solid var(--hairline);
+		scroll-margin-top: 5rem;
+	}
+
+	.docs-prose h3 {
+		margin: 2rem 0 0.75rem;
+		scroll-margin-top: 5rem;
+	}
+
+	.docs-prose a {
+		text-decoration: underline;
+		text-underline-offset: 0.15em;
+	}
+
+	.docs-prose .heading-anchor {
+		margin-left: 0.4rem;
+		color: var(--muted);
+		text-decoration: none;
+		opacity: 0;
+	}
+
+	.docs-prose h2:hover .heading-anchor,
+	.docs-prose h3:hover .heading-anchor,
+	.docs-prose .heading-anchor:focus-visible {
+		opacity: 1;
+	}
+
+	.docs-prose blockquote {
+		margin: 0 0 1.25rem;
+		padding-left: 1rem;
+		border-left: 2px solid var(--hairline);
+		color: var(--muted);
+	}
+
+	.docs-prose code {
+		font-family: var(--font-mono);
+		font-size: 0.875em;
+	}
+
+	.docs-prose :not(pre) > code {
+		padding: 0.1rem 0.35rem;
+		border: 1px solid var(--hairline);
+		border-radius: 0.375rem;
+		background: var(--surface);
+	}
+
+	.docs-prose .table-wrap {
+		margin: 0 0 1.25rem;
+		overflow-x: auto;
+	}
+
+	.docs-prose table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.9375rem;
+	}
+
+	.docs-prose th,
+	.docs-prose td {
+		padding: 0.5rem 0.75rem;
+		border: 1px solid var(--hairline);
+		text-align: left;
+		vertical-align: top;
+	}
+
+	.docs-prose th {
+		background: var(--surface);
+		font-weight: 600;
+	}
+
+	.docs-prose .code-block {
+		position: relative;
+		margin: 0 0 1.25rem;
+	}
+
+	.docs-prose pre {
+		overflow-x: auto;
+		padding: 1rem;
+		border: 1px solid var(--hairline);
+		border-radius: 0.5rem;
+		font-size: 0.875rem;
+		line-height: 1.6;
+	}
+
+	.docs-prose pre code {
+		padding: 0;
+		border: 0;
+		background: none;
+		font-size: inherit;
+	}
+
+	.docs-prose .code-copy {
+		position: absolute;
+		top: 0.5rem;
+		right: 0.5rem;
+		z-index: 1;
+		padding: 0.25rem 0.5rem;
+		border: 1px solid var(--hairline);
+		border-radius: 0.375rem;
+		background: var(--surface);
+		color: var(--muted);
+		font-size: 0.75rem;
+		cursor: pointer;
+	}
+
+	.docs-prose .code-copy:hover {
+		color: var(--fg);
+	}
+
+	.docs-prose hr {
+		margin: 2rem 0;
+		border: 0;
+		border-top: 1px solid var(--hairline);
+	}
+}

@@ -8,6 +8,7 @@ import "@/ui/styles/utilities.css";
 import "@/ui/styles/headings.css";
 import "@/ui/styles/links.css";
 import "./globals.css";
+import "@/ui/styles/prose.css";
 import { SiteFooter } from "@/ui/components/site-footer";
 import { SiteNav } from "@/ui/components/site-nav";
 import { sans } from "@/ui/fonts";

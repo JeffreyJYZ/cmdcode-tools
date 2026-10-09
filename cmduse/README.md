@@ -199,11 +199,11 @@ Two upstream facts shape it: OpenCode publishes **no usage API** (the one route,
 
 The billing period has no local record, so the default is the calendar month: `--period-start YYYY-MM-DD` pins the real one, `--window all|<n>d` reports other ranges, and `--tz` shifts day/hour buckets.
 
-`ocuse` renders with `cmduse`'s own presentation: the same palette, the same severity-coloured gauges (green <70%, yellow 70–90%, red ≥90%), the same in-place watch redraw (`cmduse`'s `redraw_frame`, so a shrinking frame never scrolls), and the same spend-burst sparkline. Both watch loop and gauges reuse `cmduse/src/render.rs` rather than a second copy. Every subcommand takes the colour flag — `daily`, `hourly`, `session`, `model`, `plans` and `statusline` included (bold headings, dim secondary text, cyan figures, an over-cap window *or* model flagged `LIMIT EXCEEDED`, and a per-model share of period spend). `--plain`, `NO_COLOR` and a piped stdout drop colour and gauges; scripted output stays escape-free.
+`ocuse` renders with `cmduse`'s own presentation: the same palette, the same severity-coloured gauges (green &lt;70%, yellow 70–90%, red ≥90%), the same in-place watch redraw (`cmduse`'s `redraw_frame`, so a shrinking frame never scrolls), and the same spend-burst sparkline. Both watch loop and gauges reuse `cmduse/src/render.rs` rather than a second copy. Every subcommand takes the colour flag — `daily`, `hourly`, `session`, `model`, `plans` and `statusline` included (bold headings, dim secondary text, cyan figures, an over-cap window *or* model flagged `LIMIT EXCEEDED`, and a per-model share of period spend). `--plain`, `NO_COLOR` and a piped stdout drop colour and gauges; scripted output stays escape-free.
 
 ## Notes
 
-- Window bars: green <70%, yellow 70–90%, red ≥90%, plus `LIMIT EXCEEDED` flag.
+- Window bars: green &lt;70%, yellow 70–90%, red ≥90%, plus `LIMIT EXCEEDED` flag.
 - Report tables show cache read and cache write separately; `daily` is bucketed in UTC unless `--tz`, and `--local` honors `--tz`; token totals in the model/session `Tokens` column include both cache columns.
 - Spend-burst sparkline appears in watch mode after 2 refreshes (bars = $ spent between refreshes, ~3 min of history at 5s interval, capped at 40 samples; tall = burst, flat = idle).
 - `ocuse`'s watch frame uses the same three pieces: `redraw_frame` parks the cursor on the frame's last line (its status/countdown line), the sparkline tracks 5-hour spend deltas at 10s samples (capped at 60), and `Ink` carries `cmduse`'s palette as empty strings when colour is off.
