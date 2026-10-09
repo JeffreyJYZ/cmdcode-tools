@@ -20,16 +20,17 @@ export function deriveTitle(md: string, fallback: string): string {
 }
 
 /**
- * Page description = the first plain paragraph after the title.
+ * Index of the first plain-prose line (a tagline), or -1.
  *
  * Skips fences (whole block), headings, list/table/blockquote starts and badge
- * lines, so a README that opens with code or structure falls back rather than
- * emitting code or an empty string.
+ * lines, so a README that opens with code or structure yields no prose line.
+ * Shared by `deriveDescription` and `stripLeadParagraph` so both agree on which
+ * line is the tagline.
  */
-export function deriveDescription(md: string, fallback: string): string {
+function findFirstProseLine(lines: string[]): number {
 	let inFence = false;
-	for (const raw of md.split("\n")) {
-		const line = raw.trim();
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i].trim();
 		if (FENCE_RE.test(line)) {
 			inFence = !inFence;
 			continue;
@@ -38,9 +39,38 @@ export function deriveDescription(md: string, fallback: string): string {
 		if (HEADING_RE.test(line)) continue;
 		if (STRUCTURAL_RE.test(line)) continue;
 		if (BADGE_RE.test(line)) continue;
-		return line;
+		return i;
 	}
-	return fallback;
+	return -1;
+}
+
+/**
+ * Page description = the first plain paragraph after the title.
+ *
+ * Falls back to `fallback` when the README opens with code or structure rather
+ * than a prose tagline.
+ */
+export function deriveDescription(md: string, fallback: string): string {
+	const lines = md.split("\n");
+	const i = findFirstProseLine(lines);
+	return i === -1 ? fallback : lines[i].trim();
+}
+
+/**
+ * Remove the lead paragraph from `md` (plus one following blank line).
+ *
+ * Only strips when the first prose line equals `description`; otherwise the
+ * description came from `fallback` (the README had no prose tagline) and `md`
+ * is returned unchanged, so a real paragraph from the first section is never
+ * lost. Pure: no fs/network/framework imports.
+ */
+export function stripLeadParagraph(md: string, description: string): string {
+	const lines = md.split("\n");
+	const i = findFirstProseLine(lines);
+	if (i === -1 || lines[i].trim() !== description.trim()) return md;
+	let end = i + 1;
+	if (lines[end] !== undefined && lines[end].trim() === "") end += 1;
+	return [...lines.slice(0, i), ...lines.slice(end)].join("\n");
 }
 
 /**

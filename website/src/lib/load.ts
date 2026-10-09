@@ -7,6 +7,7 @@ import {
 	type LinkContext,
 	rewriteLinks,
 	stripBadgeBlock,
+	stripLeadParagraph,
 } from "@/lib/docs";
 import { extractToc, type TocEntry } from "@/lib/toc";
 
@@ -54,19 +55,28 @@ function stripLeadingH1(md: string): string {
  *
  * Derived title/description fall back to the manifest's name/tagline; the
  * shields badge run is removed; README-relative links are rewritten to GitHub
- * blob URLs (or `/docs/<slug>` for a cross-project README); the leading H1 is
- * stripped and the H2/H3 table of contents is extracted from the body.
+ * blob URLs (or `/docs/<slug>` for a cross-project README); the leading H1 and
+ * the lead paragraph (rendered separately in the page header) are stripped and
+ * the H2/H3 table of contents is extracted from the body.
  */
 export async function loadProjectDoc(project: Project): Promise<ProjectDoc> {
 	const raw = await readFile(fileURLToPath(readmeUrl(project)), "utf8");
-	const title = deriveTitle(raw, project.name);
-	const description = deriveDescription(raw, project.tagline);
+	// Parse order: strip badges → derive title/description → strip H1 → strip
+	// lead paragraph (so the header's lead `<p>` is not repeated in the body).
+	const stripped = stripBadgeBlock(raw);
+	const title = deriveTitle(stripped, project.name);
+	const description = deriveDescription(stripped, project.tagline);
 	const ctx: LinkContext = {
 		repoUrl: REPO_URL,
 		ref: DOCS_REF,
 		projectPath: project.repoPath,
 		projectByPath,
 	};
-	const body = stripLeadingH1(rewriteLinks(stripBadgeBlock(raw), ctx));
+	// Strip the lead paragraph before link rewriting so the line still matches
+	// the `description` it was derived from (a relative link would have moved it).
+	const body = rewriteLinks(
+		stripLeadParagraph(stripLeadingH1(stripped), description),
+		ctx,
+	);
 	return { title, description, body, toc: extractToc(body) };
 }

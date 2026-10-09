@@ -5,6 +5,7 @@ import {
 	type LinkContext,
 	rewriteLinks,
 	stripBadgeBlock,
+	stripLeadParagraph,
 } from "@/lib/docs";
 
 describe("deriveTitle", () => {
@@ -50,6 +51,30 @@ describe("deriveDescription", () => {
 	test("falls back when a table comes first", () => {
 		expect(deriveDescription("# T\n\n| a | b |\n| - | - |", "fb")).toBe(
 			"fb",
+		);
+	});
+});
+
+describe("stripLeadParagraph", () => {
+	test("removes the lead paragraph and one following blank line", () => {
+		expect(
+			stripLeadParagraph(
+				"# T\n\ntagline here\n\n## X\n\nbody",
+				"tagline here",
+			),
+		).toBe("# T\n\n## X\n\nbody");
+	});
+
+	test("leaves md unchanged when the first prose line is not the description (guard)", () => {
+		expect(stripLeadParagraph("# T\n\n## X\n\nreal text", "fallback")).toBe(
+			"# T\n\n## X\n\nreal text",
+		);
+	});
+
+	test("skips a leading fenced block when finding the lead paragraph", () => {
+		const md = "# T\n\n```sh\nx\n```\n\nreal lead\n\n## X";
+		expect(stripLeadParagraph(md, "real lead")).toBe(
+			"# T\n\n```sh\nx\n```\n\n## X",
 		);
 	});
 });
