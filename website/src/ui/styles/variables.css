@@ -2,6 +2,10 @@
  * Font families. `--font-sans` is set on <html> by next/font/local
  * (`--font-sans` variable on `sans`); this appends the fallback chain.
  * Mono is the system monospace stack — no self-hosted mono font.
+ *
+ * The self-reference below is order-dependent: next/font emits its class
+ * after this rule, so the class wins. If this sheet ever loads last, the
+ * declaration becomes invalid-at-computed-value-time and the var is unset.
  */
 :root {
 	--font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;

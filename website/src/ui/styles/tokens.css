@@ -20,6 +20,7 @@
 	--white: #ffffff;
 	--lightblue: lightblue;
 	--royalblue: royalblue;
+	--blue-400: #60a5fa;
 	--blue-700: #1d4ed8;
 
 	/* semantic — dark (default) */
@@ -29,7 +30,9 @@
 	--surface: var(--neutral-800);
 	--hairline: var(--neutral-700);
 	--accent: var(--lightblue);
-	--accent-hover: var(--royalblue);
+	/* hover must stay readable on the dark canvas: royalblue is 3.70:1,
+	   blue-400 is 7.03:1, and a different hue reads as a real state change. */
+	--accent-hover: var(--blue-400);
 
 	/* component — layout metrics */
 	--rail-width: 1px;
