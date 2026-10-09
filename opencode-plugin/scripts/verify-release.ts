@@ -1,8 +1,9 @@
 // Verify a published plugin release before trusting it.
 //
-//   bun scripts/verify-release.ts 0.3.3                    # latest check
-//   bun scripts/verify-release.ts 0.3.3 --expected <sha1>  # compare to a local npm pack
-//   bun scripts/verify-release.ts 0.3.3 --tries 3          # short poll (default 40 x 20s)
+//   bun scripts/verify-release.ts 0.3.3                       # latest check
+//   bun scripts/verify-release.ts 0.3.3 --expected <sha1>    # compare to a local npm pack
+//   bun scripts/verify-release.ts 0.3.3 --tries 3            # short poll (default 40 x 20s)
+//   bun scripts/verify-release.ts 0.1.2 --dir oc-cmd-compare # any npm package in the repo
 //
 // A successful `npm publish` is asynchronous in two stages: the packument
 // (dist-tags.latest + versions[<v>]) updates about a minute in, and the tarball
@@ -10,11 +11,21 @@
 // a version whose tarball still 404s — installing then yields nothing (that is
 // what burned 0.2.4). This script polls until both are true, then checks the
 // served bytes.
+//
+// Without --dir the target is this script's own package
+// (@jeffreyjyz/opencode-command-code). --dir <path> is absolute or relative to
+// the repo root; name + local version come from that dir's package.json and
+// `npm pack` runs there — so the tool covers every npm package in the monorepo
+// (oc-cmd-compare, reqshape), not just the plugin.
 import { createHash } from "node:crypto";
+import { isAbsolute, join } from "node:path";
 
 const PKG = "@jeffreyjyz/opencode-command-code";
 const REGISTRY = "https://registry.npmjs.org";
-const encoded = PKG.replace("/", "%2F");
+/** This package's own dir — the default target when no --dir is given. */
+const PACKAGE_DIR = new URL("..", import.meta.url).pathname;
+/** Monorepo root, the base for a relative --dir. */
+const REPO = new URL("../../", import.meta.url).pathname;
 
 export interface ReleaseFacts {
 	latest: string;
@@ -22,7 +33,16 @@ export interface ReleaseFacts {
 	tarballUrl: string;
 }
 
-export function factsFrom(packument: unknown, version: string): ReleaseFacts {
+/** The conventional scoped tarball path, when the packument omits dist.tarball. */
+export function conventionalTarball(name: string, version: string): string {
+	return `${REGISTRY}/${name.replace("/", "%2F")}/-/${name.split("/")[1]}-${version}.tgz`;
+}
+
+export function factsFrom(
+	packument: unknown,
+	version: string,
+	name = PKG,
+): ReleaseFacts {
 	const body = (packument ?? {}) as {
 		"dist-tags"?: Record<string, string>;
 		versions?: Record<string, { dist?: { tarball?: string } }>;
@@ -32,7 +52,7 @@ export function factsFrom(packument: unknown, version: string): ReleaseFacts {
 		versionPresent: Boolean(body.versions?.[version]),
 		tarballUrl:
 			body.versions?.[version]?.dist?.tarball ??
-			`${REGISTRY}/${encoded}/-/${PKG.split("/")[1]}-${version}.tgz`,
+			conventionalTarball(name, version),
 	};
 }
 
@@ -62,18 +82,34 @@ export function sha1Hex(bytes: ArrayBuffer | Uint8Array): string {
 		.digest("hex");
 }
 
-/** The version in this package's own manifest — the one you just published. */
+/** The version in a package manifest — the one you just published. */
 export function localVersion(manifest: {
 	version?: string;
 }): string | undefined {
 	return typeof manifest.version === "string" ? manifest.version : undefined;
 }
 
+/** Resolve `--dir` (absolute, or relative to the repo root); default = own dir. */
+export function resolveTargetDir(dirArg?: string): string {
+	if (!dirArg) return PACKAGE_DIR;
+	return isAbsolute(dirArg) ? dirArg : join(REPO, dirArg);
+}
+
+/** Name + version of the package in `dir`, read from its package.json. */
+export async function readManifest(dir: string): Promise<{
+	name?: string;
+	version?: string;
+}> {
+	return (await Bun.file(join(dir, "package.json")).json()) as {
+		name?: string;
+		version?: string;
+	};
+}
+
 /** `npm pack` the package in `dir` and return the tarball's sha1. */
 async function packLocalShasum(dir: string): Promise<string | undefined> {
 	const { mkdtemp } = await import("node:fs/promises");
 	const { tmpdir } = await import("node:os");
-	const { join } = await import("node:path");
 	const dest = await mkdtemp(join(tmpdir(), "verify-pack-"));
 	const proc = Bun.spawnSync(["npm", "pack", "--pack-destination", dest], {
 		cwd: dir,
@@ -86,19 +122,22 @@ async function packLocalShasum(dir: string): Promise<string | undefined> {
 		);
 		return undefined;
 	}
-	const name = proc.stdout.toString().trim().split("\n").pop() ?? "";
-	const file = join(dest, name);
-	return sha1Hex(await Bun.file(file).arrayBuffer());
+	const packed = proc.stdout.toString().trim().split("\n").pop() ?? "";
+	return sha1Hex(await Bun.file(join(dest, packed)).arrayBuffer());
 }
 
 async function main(): Promise<number> {
 	const args = process.argv.slice(2);
-	const pkgDir = new URL("..", import.meta.url).pathname;
-	const manifest = (await Bun.file(
-		new URL("../package.json", import.meta.url),
-	).json()) as { version?: string };
+	const value = (flag: string) => {
+		const i = args.indexOf(flag);
+		return i >= 0 ? args[i + 1] : undefined;
+	};
+	const dir = resolveTargetDir(value("--dir"));
+	const manifest = await readManifest(dir);
+	const name = manifest.name ?? PKG;
+	const encoded = name.replace("/", "%2F");
 	// Flags that take a value must not have it mistaken for the version.
-	const valueFlags = new Set(["--expected", "--tries"]);
+	const valueFlags = new Set(["--expected", "--tries", "--dir"]);
 	let explicitVersion: string | undefined;
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
@@ -112,33 +151,27 @@ async function main(): Promise<number> {
 	const version = explicitVersion ?? localVersion(manifest);
 	if (!version) {
 		console.error(
-			"usage: bun scripts/verify-release.ts [version] [--expected <sha1>] [--tries N] [--no-pack]",
+			"usage: bun scripts/verify-release.ts [version] [--dir <path>] [--expected <sha1>] [--tries N] [--no-pack]",
 		);
 		return 2;
 	}
 	if (!explicitVersion)
 		console.log(`no version given; using package.json (${version})`);
-	const expectedIndex = args.indexOf("--expected");
-	const suppliedExpected =
-		expectedIndex >= 0 ? args[expectedIndex + 1] : undefined;
-	// Default: pack this checkout and compare — the publish-time shasum, no copy-paste.
+	// Default: pack the target dir and compare — the publish-time shasum, no copy-paste.
 	const expected =
-		suppliedExpected ??
-		(args.includes("--no-pack")
-			? undefined
-			: await packLocalShasum(pkgDir));
+		value("--expected") ??
+		(args.includes("--no-pack") ? undefined : await packLocalShasum(dir));
 	if (expected)
 		console.log(
-			`expected sha1: ${expected}${suppliedExpected ? " (supplied)" : " (local npm pack)"}`,
+			`expected sha1: ${expected}${value("--expected") ? " (supplied)" : " (local npm pack)"}`,
 		);
-	const triesIndex = args.indexOf("--tries");
-	const tries = triesIndex >= 0 ? Number(args[triesIndex + 1] ?? 40) : 40;
+	const tries = Number(value("--tries") ?? 40);
 
 	for (let i = 1; i <= tries; i++) {
 		const packument = await fetch(`${REGISTRY}/${encoded}`)
 			.then((r) => r.json())
 			.catch(() => undefined);
-		const facts = factsFrom(packument, version);
+		const facts = factsFrom(packument, version, name);
 		const response = await fetch(facts.tarballUrl).catch(() => undefined);
 		const status = response?.status ?? 0;
 		if (facts.versionPresent && status === 200 && response) {
@@ -159,14 +192,14 @@ async function main(): Promise<number> {
 				);
 				return 1;
 			}
-			console.log(`verified ${PKG}@${version}`);
+			console.log(`verified ${name}@${version}`);
 			return 0;
 		}
 		console.log(`try=${i} ${verdict(version, facts, status)}`);
 		if (i < tries) await Bun.sleep(20_000);
 	}
 	console.error(
-		`timeout: ${PKG}@${version} not fully published after ${tries} tries`,
+		`timeout: ${name}@${version} not fully published after ${tries} tries`,
 	);
 	return 1;
 }
@@ -180,7 +213,6 @@ async function versionFromTarball(
 			"node:fs/promises"
 		);
 		const { tmpdir } = await import("node:os");
-		const { join } = await import("node:path");
 		const dir = await mkdtemp(join(tmpdir(), "verify-release-"));
 		const file = join(dir, "p.tgz");
 		await writeFile(file, Buffer.from(bytes));
