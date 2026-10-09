@@ -10,10 +10,10 @@
  * `reqshape`, which itself runs `mpc`, so a bare `mpc --json` recurses
  * (mpc → reqshape → mpc → …). `off` is the cycle break, not an optimisation.
  *
- * A machine often has a stale `mpc` on PATH (an install predating `--oc-plan`)
- * that exits non-zero on the flag, so candidate selection probes by *running*,
- * not merely by resolving: an auto-discovered candidate that fails is logged and
- * skipped, while an explicit `MPC_BIN` that fails stays fatal.
+ * Candidate selection resolves, it does not probe by running: the first
+ * candidate that resolves wins, and a resolved candidate that fails to run is
+ * fatal. Silently advancing to a *different* mpc would commit a snapshot built
+ * by a binary the operator never intended.
  */
 
 import { spawnSync } from "node:child_process";
@@ -53,7 +53,7 @@ export type MpcCandidate = {
 	prefixArgs: string[];
 	/** Human label for the run log, so each run reports which candidate it used. */
 	label: string;
-	/** True for `MPC_BIN`: a failure here is fatal, never a silent fall-through. */
+	/** True for `MPC_BIN`: failing to resolve it is fatal, never a skip. */
 	explicit: boolean;
 };
 
@@ -101,8 +101,8 @@ export function candidates(): MpcCandidate[] {
 
 /**
  * The candidate with a resolved executable (and, for a source run, an existing
- * entry file), or null when it cannot even be located here. Resolution is only
- * the first filter — whether it *runs* is decided by `selectSnapshot`.
+ * entry file), or null when it cannot even be located here. Whether it *runs*
+ * is not decided here: a resolved candidate that fails is fatal.
  */
 export function resolvable(
 	candidate: MpcCandidate,
@@ -248,6 +248,7 @@ export function buildSnapshot(
 	for (const ccKey of CC_PLAN_KEYS) {
 		const runs: Record<string, MpcRun> = {};
 		let cc: RawPlan | null = null;
+		let rowsInPlan = 0;
 		for (const ocKey of OC_PLAN_KEYS) {
 			const raw = run(mpc, ccKey, ocKey);
 			cc = raw.plans.cc;
@@ -259,6 +260,7 @@ export function buildSnapshot(
 				cc: toSide(row.cc),
 			}));
 			runs[ocKey] = { rows, tally: raw.tally };
+			rowsInPlan = rows.length;
 			if (!seenOc.has(ocKey)) {
 				seenOc.add(ocKey);
 				ocPlans.push({
@@ -280,7 +282,7 @@ export function buildSnapshot(
 			weekly: cc.weekly ?? null,
 		});
 		console.log(
-			`  ${ccKey}: ${Object.keys(runs).length} OpenCode plans (${cc.label})`,
+			`  ${ccKey}: ${rowsInPlan} rows × ${OC_PLAN_KEYS.length} OpenCode plans (${cc.label})`,
 		);
 	}
 
@@ -293,10 +295,10 @@ export function buildSnapshot(
 }
 
 /**
- * Pick the first candidate that both resolves and *runs*, assembling the
- * snapshot from it. An auto-discovered candidate that fails to run is logged
- * and skipped (a stale global `mpc` without `--oc-plan` is the usual case); an
- * explicit `MPC_BIN` that cannot be resolved or fails stays fatal.
+ * Pick the first candidate that resolves and build the snapshot from it.
+ * Resolution order is preserved. A resolved candidate that fails to run is
+ * **fatal** — never a silent fall-through to a different `mpc`. An explicit
+ * `MPC_BIN` that cannot be resolved is fatal too.
  */
 export function selectSnapshot(
 	options: MpcCandidate[],
@@ -312,25 +314,12 @@ export function selectSnapshot(
 			tried.push(reason);
 			continue;
 		}
-		try {
-			const snapshot = buildSnapshot(resolved, run);
-			return { mpc: resolved, snapshot };
-		} catch (err) {
-			if (option.explicit) throw err;
-			const reason = `${resolved.label} failed to run`;
-			console.warn(
-				`snapshot:mpc — ${reason}, trying next: ${errorMessage(err)}`,
-			);
-			tried.push(`${reason} (${errorMessage(err)})`);
-		}
+		const snapshot = buildSnapshot(resolved, run);
+		return { mpc: resolved, snapshot };
 	}
 	throw new Error(
 		`no runnable mpc. Tried: ${tried.join(", ") || options.map((c) => c.label).join(", ")}`,
 	);
-}
-
-function errorMessage(err: unknown): string {
-	return err instanceof Error ? err.message : String(err);
 }
 
 export function main(): void {

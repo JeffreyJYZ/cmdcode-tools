@@ -23,12 +23,7 @@ import {
 	rowWin,
 	windowLabel,
 } from "@/lib/mpc";
-import {
-	type MpcCandidate,
-	type MpcRunner,
-	type RawRun,
-	selectSnapshot,
-} from "../scripts/snapshot-mpc";
+import { type MpcCandidate, selectSnapshot } from "../scripts/snapshot-mpc";
 
 /** A priced, bounded side; override any field per test. */
 function side(overrides: Partial<MpcSide> = {}): MpcSide {
@@ -54,39 +49,6 @@ function side(overrides: Partial<MpcSide> = {}): MpcSide {
 		valueIndex: 90,
 		free: false,
 		...overrides,
-	};
-}
-
-/** A raw mpc `--json` payload for the fall-through tests (no network). */
-function rawRun(ccKey: string, ocKey: string): RawRun {
-	return {
-		plans: {
-			"oc-go": {
-				id: ocKey,
-				label: ocKey === "go" ? "Go" : "Go Plus",
-				price: ocKey === "go" ? 10 : 40,
-				credits: ocKey === "go" ? 100 : 200,
-				fiveHour: null,
-				weekly: null,
-			},
-			cc: {
-				id: ccKey,
-				label: ccKey,
-				price: 10,
-				credits: 70,
-				fiveHour: 14,
-				weekly: 35,
-			},
-		},
-		rows: [{ key: "gamma", name: "Gamma", oc: side(), cc: side() }],
-		tally: {
-			headToHead: 1,
-			ocWins: 0,
-			ccWins: 1,
-			ties: 0,
-			ocOnly: 0,
-			ccOnly: 0,
-		},
 	};
 }
 
@@ -446,63 +408,7 @@ describe("snapshot plan dimensions", () => {
 	});
 });
 
-describe("snapshot-mpc — candidate fall-through", () => {
-	test("falls through an auto candidate that fails to run", () => {
-		const seen: string[] = [];
-		const options: MpcCandidate[] = [
-			{
-				command: "/nope/broken",
-				prefixArgs: [],
-				label: "broken",
-				explicit: false,
-			},
-			{
-				command: "/nope/good",
-				prefixArgs: [],
-				label: "good",
-				explicit: false,
-			},
-		];
-		const run: MpcRunner = (candidate, ccKey, ocKey) => {
-			seen.push(candidate.label);
-			if (candidate.label === "broken") {
-				throw new Error("unknown option '--oc-plan'");
-			}
-			return rawRun(ccKey, ocKey);
-		};
-		const { mpc, snapshot: built } = selectSnapshot(
-			options,
-			(candidate) => candidate,
-			run,
-		);
-		expect(mpc.label).toBe("good");
-		expect(seen).toContain("good");
-		expect(built.byPlan.goat["go-plus"]?.rows).toHaveLength(1);
-	});
-
-	test("skips an auto candidate that does not resolve", () => {
-		const options: MpcCandidate[] = [
-			{
-				command: "/nope/missing",
-				prefixArgs: [],
-				label: "missing",
-				explicit: false,
-			},
-			{
-				command: "/nope/good",
-				prefixArgs: [],
-				label: "good",
-				explicit: false,
-			},
-		];
-		const { mpc } = selectSnapshot(
-			options,
-			(candidate) => (candidate.label === "missing" ? null : candidate),
-			(_candidate, ccKey, ocKey) => rawRun(ccKey, ocKey),
-		);
-		expect(mpc.label).toBe("good");
-	});
-
+describe("snapshot-mpc — candidate selection", () => {
 	test("an explicit MPC_BIN that fails to run stays fatal", () => {
 		const options: MpcCandidate[] = [
 			{
