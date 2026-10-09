@@ -40,6 +40,7 @@ export function toOptions(bag: Bag): Options {
 	const window = numbers(bag, "window");
 	return {
 		ccPlan: String(pick(bag, "ccPlan")),
+		ocPlan: String(pick(bag, "ocPlan")),
 		workload: {
 			input: int("in", pick(bag, "in")),
 			cacheRead: int("cache", pick(bag, "cache")),

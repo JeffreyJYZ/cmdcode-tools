@@ -31,6 +31,7 @@ mpc --help
 mpc                                   # oc-go Go vs CommandCode GOAT, default workload
 mpc --cc-plan pro                     # compare against CommandCode Pro
 mpc --cc-plan go                      # ...or the $1 Go plan
+mpc --oc-plan go-plus                 # OpenCode Go Plus ($40) instead of Go ($10)
 mpc --minimal                         # model + req/mo both sides + win + val
 mpc --medium                          # allowances + the rate views per side
 mpc --detail                          # every column, untrimmed (for copy/paste or agents)
@@ -88,6 +89,7 @@ Every flag persists. `mpc` reads `~/.config/mpc/config.json` (or `$XDG_CONFIG_HO
 ```json
 {
   "ccPlan": "goat",
+  "ocPlan": "go",
   "columns": ["model", "oc-per1k", "cc-per1k", "val"],
   "presets": { "cheap": ["model", "oc-per1k", "cc-per1k", "cost"] },
   "metric": "val",
@@ -115,6 +117,7 @@ Relative paths resolve against the config file's directory. A plugin is a `.json
 | Flag | Default | Meaning |
 | --- | --- | --- |
 | `--cc-plan <id>` | `goat` | CommandCode plan: `go`, `goat`, `pro`, `max10`, `max20` |
+| `--oc-plan <id>` | `go` | OpenCode Go plan: `go`, `go-plus` (same token rates, higher per-model limits) |
 | `--in <n>` | `800` | fixed input tokens per request |
 | `--cache <n>` | `50000` | fixed cache-read tokens per request |
 | `--out <n>` | `200` | fixed output tokens per request |
@@ -166,7 +169,7 @@ Relative paths resolve against the config file's directory. A plugin is a `.json
 | --- | --- |
 | `cmduse plans --json` | CommandCode plan price, credits, 5h/weekly windows |
 | `commandcode.ai/docs/plans/{goat,pro,max}` | per-model credits + token rates |
-| `opencode.ai/docs/go/` | oc-go per-model monthly limit + token rates |
+| `opencode.ai/docs/go/` | oc-go per-model monthly limit (per Go plan) + shared token rates |
 | `opencode.ai/zen/go/v1/models` | oc-go live model list (`--check` drift) |
 
 ## Reading the table
@@ -250,7 +253,7 @@ Names from the two catalogs are collapsed onto one canonical key (lowercase, ven
 
 - CommandCode plans are read from their docs pages: `goat`, `pro` and the Max plans list explicit per-model credits; the **Go** ($1) plan publishes only a rate list, so every model draws on the plan's whole $10 credit pool.
 - Models CommandCode lists with rates but no explicit credits row (the "older models also available" set) use the documented standard allowance ($20 on GOAT, $30 on Pro).
-- OpenCode Go has no shared credit pool; each model carries its own monthly limit, so the plan's "credits" figure is the sum of those limits (an upper bound, not a pool).
+- OpenCode sells two Go plans — **Go** ($10/mo) and **Go Plus** ($40/mo) — with identical token rates but different per-model monthly limits; `--oc-plan` picks which. Go has no shared credit pool, so the plan's "credits" figure is the sum of the per-model limits (an upper bound, not a pool).
 - `$/1K` and `req/$` are plan-relative: they divide by the plan's own price, so a cheaper subscription can post a lower per-request cost while buying fewer requests. Compare `req/mo` for volume and `$/1K` for the effective rate.
 - Values reflect the docs at fetch time; active deals are picked up automatically.
 

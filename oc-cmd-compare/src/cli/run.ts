@@ -4,6 +4,7 @@ import { loadUsage } from "#~/data/usage/index.ts";
 import { renderUsage } from "#~/view/layout/usage.ts";
 import {
 	fitColumns,
+	planTitle,
 	renderCsv,
 	renderJson,
 	renderMarkdown,
@@ -145,7 +146,7 @@ export async function run(argv: string[]): Promise<number> {
 		: { ids: requested, dropped: [] as string[] };
 	renderText(result, meta, fitted.ids, fitted.dropped);
 	console.log(
-		`\n${result.length} models · OpenCode Go vs CommandCode ${ccPlanInfo.label} · ${ocEntries.length} OpenCode / ${ccEntries.length} CommandCode entries`,
+		`\n${result.length} models · ${planTitle(ocPlanInfo)} vs CommandCode ${ccPlanInfo.label} · ${ocEntries.length} OpenCode / ${ccEntries.length} CommandCode entries`,
 	);
 	return 0;
 }

@@ -10,6 +10,7 @@ export function parseFlags(argv: string[]): Bag {
 		"--cc-plan <id>",
 		"CommandCode plan: go, goat, pro, max10, max20",
 	)
+		.option("--oc-plan <id>", "OpenCode Go plan: go, go-plus")
 		.option("--in <n>", "input tokens per request")
 		.option("--cache <n>", "cache-read tokens per request")
 		.option("--out <n>", "output tokens per request")

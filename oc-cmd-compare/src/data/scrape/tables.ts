@@ -1,4 +1,5 @@
 import { BOUNDARY } from "#~/constants/data.ts";
+import { parseTabTables } from "./tabs.ts";
 
 export type Table = string[][];
 
@@ -21,49 +22,7 @@ export function nameCell(cell: string): string {
 
 /** Parse every <table> on a page into rows of trimmed cell text. */
 export async function parseTables(html: string): Promise<Table[]> {
-	const tables: Table[] = [];
-	let table: Table | null = null;
-	let row: string[] | null = null;
-	let cell: string | null = null;
-
-	const rewriter = new HTMLRewriter()
-		.on("table", {
-			element(el) {
-				table = [];
-				el.onEndTag(() => {
-					if (table) tables.push(table);
-					table = null;
-				});
-			},
-		})
-		.on("tr", {
-			element(el) {
-				const start = table;
-				row = [];
-				el.onEndTag(() => {
-					if (row && start) start.push(row);
-					row = null;
-				});
-			},
-		})
-		.on("th, td", {
-			element(el) {
-				const current = row;
-				cell = "";
-				el.onEndTag(() => {
-					// BOUNDARY marks a text-node boundary so "$60" + "4x" stays
-					// two tokens instead of collapsing into "$604x".
-					if (current) current.push((cell ?? "").trim());
-					cell = null;
-				});
-			},
-			text(chunk) {
-				if (cell !== null) cell += `${chunk.text}${BOUNDARY}`;
-			},
-		});
-
-	await rewriter.transform(new Response(html)).text();
-	return tables;
+	return (await parseTabTables(html)).map((tab) => tab.table);
 }
 
 /**

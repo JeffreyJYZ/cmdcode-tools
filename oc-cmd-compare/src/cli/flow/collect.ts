@@ -21,7 +21,7 @@ function scoreConfig(options: Options): ScoreConfig {
 
 export async function collect(options: Options) {
 	const [ocEntries, ccEntries, ccPlanInfo, shape] = await Promise.all([
-		loadOcGoCatalog(options.peak),
+		loadOcGoCatalog(options.ocPlan, options.peak),
 		loadCcCatalog(options.ccPlan),
 		loadCcPlan(options.ccPlan),
 		loadShapes(options.shape, options.since),
@@ -52,7 +52,7 @@ export async function collect(options: Options) {
 				fallback: !options.noFallback,
 				refresh: options.refresh,
 			});
-	const ocPlanInfo = ocGoPlan(ocEntries);
+	const ocPlanInfo = ocGoPlan(ocEntries, options.ocPlan);
 	const rows = buildRows(
 		ocEntries,
 		ccEntries,

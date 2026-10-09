@@ -36,7 +36,7 @@ src/cli/flow/                collect.ts, sort.ts, check.ts, columns.ts
 src/cli/engine/              cost.ts, rows.ts, score.ts, ability.ts, scale.ts, index.ts
 src/data/sources/            opencode.ts + cc/ (plans, cmduse, catalog) + aa/ (web, api, parse)
 src/data/bench/              index.ts (loadAbility), resolve.ts, cc.ts, store.ts, types.ts
-src/data/scrape/             index.ts, tables.ts, roleRows.ts; catalog/ (catalog, numeric, variant)
+src/data/scrape/             index.ts, tables.ts, tabs.ts, roleRows.ts; catalog/ (catalog, numeric, variant)
 src/data/usage/              index.ts (loadUsage), parse.ts (UsageEntry), log.ts (JSONL + merge),
                              logs.ts (session scan), opencodeDb.ts (opencode store, both
                              layouts), opencodeV2.ts (session_message reader)
@@ -185,3 +185,5 @@ Everything below was a real bug. Keep them in mind when touching `src/html.ts`.
 ## Sources and drift
 
 Live, per run — no cache. `mpc --check` reports parse counts, unmatched model keys, OpenCode Go live model id count. Docs page changes shape → parsers throw with URL; fix the parser, don't silently fall back.
+
+- **OpenCode Go has two plans; `--oc-plan go|go-plus` picks which** (default `go`, `OC_PLANS` in `constants/sources.ts`). They share one token price list and differ only in per-model monthly limits, so on the docs page the two priced tables have **identical headers** — `creditHeader: /monthly limit/i` matches both, and first-table-wins would silently pin every run to Go. The **tab label** is the discriminator: `parseTabTables` tags each `<table>` with the label of the `role="tabpanel"` it sits in (via the `a[role="tab"]` anchors), and `loadOcGoCatalog` keeps only tables whose label equals the plan's. A **second, equally-synced tab block lists request-count estimates** with no rates; its tables carry no Input/Output columns, so `extractCatalog` rejects them — never re-add a "first table wins" shortcut. `ocGoPlan(entries, planId)` sets `id`/`label`/`price` from the plan. Default (`go`) output must stay byte-identical; `planTitle` replaces the old hardcoded summary string. Fixture tests: `test/data/oc-plans.test.ts`.

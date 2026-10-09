@@ -51,9 +51,33 @@ export const CC_PLANS: Record<string, CcPlanDef> = {
 	},
 };
 
+/** One OpenCode Go plan: a docs tab label and its monthly subscription price. */
+interface OcPlanDef {
+	/** Docs tab label; the discriminator between the two plans' tables. */
+	label: string;
+	/** Subscription USD per month. */
+	price: number;
+}
+
+const GO_PRICE_PER_MONTH = 10;
+const GO_PLUS_PRICE_PER_MONTH = 40;
+
+/**
+ * OpenCode Go has two plans sharing one token price list but granting each
+ * model a different monthly limit. The docs put each plan's allowance table in
+ * a `<TabItem label="…">`; the tab label is what tells the otherwise identical
+ * tables apart, so it doubles as the plan's identity here.
+ */
+export const OC_PLANS: Record<string, OcPlanDef> = {
+	go: { label: "Go", price: GO_PRICE_PER_MONTH },
+	"go-plus": { label: "Go Plus", price: GO_PLUS_PRICE_PER_MONTH },
+};
+
+/** The Go plan used when `--oc-plan` is not given. */
+export const DEFAULT_OC_PLAN = "go";
+
 export const DOC_URL = "https://opencode.ai/docs/go/";
 export const OC_MODELS_URL = "https://opencode.ai/zen/go/v1/models";
-export const PRICE_PER_MONTH = 10;
 
 export const API_URL = "https://artificialanalysis.ai/api/v2/data/llms/models";
 export const AA_MODELS_URL = "https://artificialanalysis.ai/models";

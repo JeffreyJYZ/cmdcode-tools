@@ -10,6 +10,7 @@ export {
 	parseMoney,
 	parseTables,
 } from "./tables.ts";
+export { parseTabTables, type TabTable } from "./tabs.ts";
 
 export async function fetchText(url: string): Promise<string> {
 	const res = await fetch(url, {

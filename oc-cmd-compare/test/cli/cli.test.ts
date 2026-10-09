@@ -11,6 +11,7 @@ describe("parseArgs", () => {
 	test("defaults", () => {
 		const o = parseArgs([]);
 		expect(o.ccPlan).toBe("goat");
+		expect(o.ocPlan).toBe("go");
 		expect(o.workload).toEqual({
 			input: 800,
 			cacheRead: 50_000,
@@ -58,12 +59,15 @@ describe("parseArgs", () => {
 		const o = parseArgs([
 			"--cc-plan",
 			"pro",
+			"--oc-plan",
+			"go-plus",
 			"--metric",
 			"req",
 			"--peak",
 			"--json",
 		]);
 		expect(o.ccPlan).toBe("pro");
+		expect(o.ocPlan).toBe("go-plus");
 		expect(o.metric).toBe("req");
 		expect(o.peak).toBe(true);
 		expect(o.json).toBe(true);

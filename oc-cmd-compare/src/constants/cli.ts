@@ -1,5 +1,6 @@
 import type { Format, Metric } from "#~/cli/options.ts";
 import { SHAPE_AUTO } from "#~/constants/shape.ts";
+import { DEFAULT_OC_PLAN } from "#~/constants/sources.ts";
 import {
 	DETAIL_COLUMNS,
 	MEDIUM_COLUMNS,
@@ -23,6 +24,7 @@ export const BENCH_DEFAULT = { keyed: "aa", keyless: "cc" } as const;
 /** The raw CLI bag defaults, before config/plugin layering. */
 export const ARG_DEFAULTS = {
 	ccPlan: "goat",
+	ocPlan: DEFAULT_OC_PLAN,
 	in: 800,
 	cache: 50_000,
 	out: 200,
@@ -49,6 +51,7 @@ export const INTERNAL = new Set(["--", "help", "h", "version", "v"]);
 
 export const KNOWN = new Set([
 	"ccPlan",
+	"ocPlan",
 	"in",
 	"cache",
 	"out",
@@ -110,6 +113,7 @@ export const KNOWN = new Set([
  */
 export const VALUED = new Set([
 	"ccPlan",
+	"ocPlan",
 	"in",
 	"cache",
 	"out",
