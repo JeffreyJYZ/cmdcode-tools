@@ -4,6 +4,7 @@
 		"dev": "next dev",
 		"build": "next build",
 		"check": "biome check",
+		"snapshot:mpc": "bun scripts/snapshot-mpc.ts",
 		"format": "biome format --write",
 		"lint": "biome lint",
 		"typecheck": "tsc --noEmit"

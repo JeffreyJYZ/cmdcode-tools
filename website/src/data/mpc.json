@@ -1,0 +1,5630 @@
+{
+	"generatedAt": "2026-10-09T10:31:14.073Z",
+	"plans": [
+		{
+			"key": "go",
+			"label": "Go",
+			"price": 1,
+			"credits": 10,
+			"fiveHour": 3,
+			"weekly": 6
+		},
+		{
+			"key": "goat",
+			"label": "GOAT",
+			"price": 10,
+			"credits": 70,
+			"fiveHour": 14,
+			"weekly": 35
+		},
+		{
+			"key": "pro",
+			"label": "Pro",
+			"price": 20,
+			"credits": 80,
+			"fiveHour": 16,
+			"weekly": 40
+		},
+		{
+			"key": "max10",
+			"label": "Max 10x",
+			"price": 100,
+			"credits": 150,
+			"fiveHour": 45,
+			"weekly": 90
+		},
+		{
+			"key": "max20",
+			"label": "Max 20x",
+			"price": 200,
+			"credits": 300,
+			"fiveHour": 90,
+			"weekly": 180
+		}
+	],
+	"byPlan": {
+		"go": {
+			"rows": [
+				{
+					"key": "musespark13contributor",
+					"name": "Muse Spark 1.3 Contributor",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 272727.2727272727,
+						"costPerRequest": 0.00022,
+						"ability": 48.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 45454.545454545456,
+						"costPerRequest": 0.00022,
+						"ability": 48.1,
+						"free": false
+					}
+				},
+				{
+					"key": "ling31flash",
+					"name": "Ling 3.1 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": 41.1,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				},
+				{
+					"key": "musespark12contributor",
+					"name": "Muse Spark 1.2 Contributor",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 272727.2727272727,
+						"costPerRequest": 0.00022,
+						"ability": 39.6,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 45454.545454545456,
+						"costPerRequest": 0.00022,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv41flash",
+					"name": "DeepSeek V4.1 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 153846.15384615384,
+						"costPerRequest": 0.00039,
+						"ability": 39.5,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 25641.02564102564,
+						"costPerRequest": 0.00039,
+						"ability": 39.5,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26flash",
+					"name": "MiMo V2.6 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 194805.1948051948,
+						"costPerRequest": 0.000308,
+						"ability": 37.9,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 32467.532467532466,
+						"costPerRequest": 0.000308,
+						"ability": 37.9,
+						"free": false
+					}
+				},
+				{
+					"key": "claudehaiku55",
+					"name": "Claude Haiku 5.5",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 22058.823529411762,
+						"costPerRequest": 0.00068,
+						"ability": 43.4,
+						"free": false
+					},
+					"cc": null
+				},
+				{
+					"key": "mimov26pro",
+					"name": "MiMo V2.6 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 21329.54141485958,
+						"costPerRequest": 0.00070325,
+						"ability": 46.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 14245.014245014245,
+						"costPerRequest": 0.000702,
+						"ability": 46.3,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flash",
+					"name": "DeepSeek V4 Flash",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00039,
+						"ability": 34.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 25641.02564102564,
+						"costPerRequest": 0.00039,
+						"ability": 34.3,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flashvisionexp",
+					"name": "DeepSeek V4 Flash Vision",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 38461.53846153846,
+						"costPerRequest": 0.00039,
+						"ability": 34.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 25641.02564102564,
+						"costPerRequest": 0.00039,
+						"ability": 34.8,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv41flashfast",
+					"name": "DeepSeek V4.1 Flash Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 9578.544061302682,
+						"costPerRequest": 0.001044,
+						"ability": 39.5,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt6luna",
+					"name": "GPT-6 Luna",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 22058.823529411762,
+						"costPerRequest": 0.00068,
+						"ability": 38.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 14705.882352941175,
+						"costPerRequest": 0.00068,
+						"ability": 38.1,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53flash",
+					"name": "GLM-5.3 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 34883.72093023256,
+						"costPerRequest": 0.00172,
+						"ability": 41.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 5813.9534883720935,
+						"costPerRequest": 0.00172,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38flash",
+					"name": "Qwen 3.8 Flash",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 29585.79881656805,
+						"costPerRequest": 0.001014,
+						"ability": 39.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 9784.735812133073,
+						"costPerRequest": 0.001022,
+						"ability": 39.8,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov25",
+					"name": "MiMo V2.5",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 194805.1948051948,
+						"costPerRequest": 0.000308,
+						"ability": 25.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 32467.532467532466,
+						"costPerRequest": 0.000308,
+						"ability": 25.2,
+						"free": false,
+						"deal": {
+							"badge": "-98%"
+						}
+					}
+				},
+				{
+					"key": "gpt56luna",
+					"name": "GPT-5.6 Luna",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 10714.285714285714,
+						"costPerRequest": 0.0014,
+						"ability": 37.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 7142.857142857143,
+						"costPerRequest": 0.0014,
+						"ability": 37.3,
+						"free": false
+					}
+				},
+				{
+					"key": "step5preview",
+					"name": "Step 5 Preview",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 2604.1666666666665,
+						"costPerRequest": 0.00384,
+						"ability": 43.7,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4pro",
+					"name": "DeepSeek V4 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 7411.067193675889,
+						"costPerRequest": 0.002024,
+						"ability": 36,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 4940.711462450592,
+						"costPerRequest": 0.002024,
+						"ability": 36,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53flashx",
+					"name": "GLM-5.3 FlashX",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 2327.746741154562,
+						"costPerRequest": 0.004296,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov25pro",
+					"name": "MiMo V2.5 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 21329.54141485958,
+						"costPerRequest": 0.00070325,
+						"ability": 26,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 14245.014245014245,
+						"costPerRequest": 0.000702,
+						"ability": 26,
+						"free": false,
+						"deal": {
+							"badge": "-99%"
+						}
+					}
+				},
+				{
+					"key": "longcat20",
+					"name": "LongCat 2.0",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00078,
+						"ability": 19.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 12820.51282051282,
+						"costPerRequest": 0.00078,
+						"ability": 19.1,
+						"free": false
+					}
+				},
+				{
+					"key": "hy3",
+					"name": "Tencent Hy3",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 30333.670374115267,
+						"costPerRequest": 0.001978,
+						"ability": 25.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 5055.6117290192105,
+						"costPerRequest": 0.001978,
+						"ability": 25.3,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flashfast",
+					"name": "DeepSeek V4 Flash Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 2606.8821689259644,
+						"costPerRequest": 0.0038360000000000004,
+						"ability": 34.3,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm3",
+					"name": "MiniMax M3",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00348,
+						"ability": 29.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 2873.5632183908046,
+						"costPerRequest": 0.00348,
+						"ability": 29.2,
+						"free": false,
+						"deal": {
+							"badge": "-50%"
+						}
+					}
+				},
+				{
+					"key": "glm53",
+					"name": "GLM-5.3",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 1000,
+						"costPerRequest": 0.015,
+						"ability": 44.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 666.6666666666667,
+						"costPerRequest": 0.015,
+						"ability": 44.8,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38max0902",
+					"name": "Qwen 3.8 Max 0902",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 653.5947712418301,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38max",
+					"name": "Qwen 3.8 Max",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 980.3921568627451,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 653.5947712418301,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37plus",
+					"name": "Qwen 3.7 Plus",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 22727.272727272728,
+						"costPerRequest": 0.00264,
+						"ability": 25.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 2155.1724137931033,
+						"costPerRequest": 0.00464,
+						"ability": 25.2,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen3827b",
+					"name": "Qwen 3.8 27B",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 3424.6575342465753,
+						"costPerRequest": 0.00292,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm27",
+					"name": "MiniMax M2.7",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00348,
+						"ability": 22.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 2873.5632183908046,
+						"costPerRequest": 0.00348,
+						"ability": 22.8,
+						"free": false
+					}
+				},
+				{
+					"key": "grok47",
+					"name": "Grok 4.7",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 539.568345323741,
+						"costPerRequest": 0.0278,
+						"ability": 46.4,
+						"free": false
+					},
+					"cc": null
+				},
+				{
+					"key": "grok46",
+					"name": "Grok 4.6",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 539.568345323741,
+						"costPerRequest": 0.0278,
+						"ability": 44.3,
+						"free": false
+					},
+					"cc": null
+				},
+				{
+					"key": "mistrallarge4",
+					"name": "Mistral Large 4",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 1120.573733751681,
+						"costPerRequest": 0.008924,
+						"ability": 38.4,
+						"free": false
+					}
+				},
+				{
+					"key": "glm52",
+					"name": "GLM-5.2",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 4000,
+						"costPerRequest": 0.015,
+						"ability": 33.7,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 666.6666666666667,
+						"costPerRequest": 0.015,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "step35flash",
+					"name": "Step 3.5 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 8833.922261484098,
+						"costPerRequest": 0.001132,
+						"ability": 17,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm25",
+					"name": "MiniMax M2.5",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 5050.50505050505,
+						"costPerRequest": 0.00198,
+						"ability": 22.8,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik3",
+					"name": "Kimi K3",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 735.2941176470588,
+						"costPerRequest": 0.0204,
+						"ability": 43.6,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 490.19607843137254,
+						"costPerRequest": 0.0204,
+						"ability": 43.6,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik26",
+					"name": "Kimi K2.6",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 6276.150627615062,
+						"costPerRequest": 0.00956,
+						"ability": 27,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 1046.0251046025103,
+						"costPerRequest": 0.00956,
+						"ability": 27,
+						"free": false
+					}
+				},
+				{
+					"key": "step37flash",
+					"name": "Step 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 4184.100418410041,
+						"costPerRequest": 0.00239,
+						"ability": 19.5,
+						"free": false
+					}
+				},
+				{
+					"key": "inklingsmall",
+					"name": "Inkling Small",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 1773.049645390071,
+						"costPerRequest": 0.00564,
+						"ability": 25.7,
+						"free": false
+					}
+				},
+				{
+					"key": "grok45",
+					"name": "Grok 4.5",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 359.71223021582733,
+						"costPerRequest": 0.0278,
+						"ability": 38.8,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen36plus",
+					"name": "Qwen 3.6 Plus",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 1666.6666666666667,
+						"costPerRequest": 0.006,
+						"ability": 27,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik27code",
+					"name": "Kimi K2.7 Code",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 5424.9547920434,
+						"costPerRequest": 0.01106,
+						"ability": 25.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 904.1591320072332,
+						"costPerRequest": 0.01106,
+						"ability": 25.8,
+						"free": false
+					}
+				},
+				{
+					"key": "glm5",
+					"name": "GLM-5",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 874.1258741258741,
+						"costPerRequest": 0.01144,
+						"ability": 27.9,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik25",
+					"name": "Kimi K2.5",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 1644.7368421052631,
+						"costPerRequest": 0.00608,
+						"ability": 23.5,
+						"free": false
+					}
+				},
+				{
+					"key": "nemotron3ultra",
+					"name": "Nemotron 3 Ultra",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 1436.7816091954023,
+						"costPerRequest": 0.00696,
+						"ability": 22.9,
+						"free": false
+					}
+				},
+				{
+					"key": "inkling",
+					"name": "Inkling",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 989.1196834817014,
+						"costPerRequest": 0.01011,
+						"ability": 25,
+						"free": false
+					}
+				},
+				{
+					"key": "glm52fast",
+					"name": "GLM-5.2 Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 339.5585738539898,
+						"costPerRequest": 0.02945,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen36maxpreview",
+					"name": "Qwen 3.6 Max Preview",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 641.0256410256411,
+						"costPerRequest": 0.0156,
+						"ability": 28.4,
+						"free": false
+					}
+				},
+				{
+					"key": "glm51",
+					"name": "GLM-5.1",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 666.6666666666667,
+						"costPerRequest": 0.015,
+						"ability": 26.1,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37max",
+					"name": "Qwen 3.7 Max",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 350.8771929824561,
+						"costPerRequest": 0.0285,
+						"ability": 29.5,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik27codehighspeed",
+					"name": "Kimi K2.7 Code HighSpeed",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 452.0795660036166,
+						"costPerRequest": 0.02212,
+						"ability": 25.8,
+						"free": false
+					}
+				},
+				{
+					"key": "hy4preview",
+					"name": "Tencent Hy4 Preview",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 9181.612291118321,
+						"costPerRequest": 0.0032673999999999997,
+						"ability": null,
+						"free": false
+					},
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 3060.5374303727735,
+						"costPerRequest": 0.0032673999999999997,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "spacebunny",
+					"name": "Space Bunny",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00174,
+						"ability": null,
+						"free": false
+					},
+					"cc": null
+				},
+				{
+					"key": "glyphcluster",
+					"name": "Glyph Cluster",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				},
+				{
+					"key": "qwen38omniflash",
+					"name": "Qwen 3.8 Omni Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 9861.932938856016,
+						"costPerRequest": 0.001014,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "ling30flashsante",
+					"name": "Ling 3.0 Flash Sante",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				},
+				{
+					"key": "qwen37flash",
+					"name": "Qwen 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 28571.428571428572,
+						"costPerRequest": 0.00035,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "lagunas21",
+					"name": "Laguna S 2.1",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				}
+			],
+			"tally": {
+				"headToHead": 26,
+				"ocWins": 1,
+				"ccWins": 25,
+				"ties": 0,
+				"ocOnly": 4,
+				"ccOnly": 28
+			}
+		},
+		"goat": {
+			"rows": [
+				{
+					"key": "musespark13contributor",
+					"name": "Muse Spark 1.3 Contributor",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 272727.2727272727,
+						"costPerRequest": 0.00022,
+						"ability": 48.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 90909.09090909091,
+						"costPerRequest": 0.00022,
+						"ability": 48.1,
+						"free": false
+					}
+				},
+				{
+					"key": "ling31flash",
+					"name": "Ling 3.1 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": 41.1,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				},
+				{
+					"key": "musespark12contributor",
+					"name": "Muse Spark 1.2 Contributor",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 272727.2727272727,
+						"costPerRequest": 0.00022,
+						"ability": 39.6,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 90909.09090909091,
+						"costPerRequest": 0.00022,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv41flash",
+					"name": "DeepSeek V4.1 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 153846.15384615384,
+						"costPerRequest": 0.00039,
+						"ability": 39.5,
+						"free": false
+					},
+					"cc": {
+						"allowance": 60,
+						"requestsPerMonth": 153846.15384615384,
+						"costPerRequest": 0.00039,
+						"ability": 39.5,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv41flashfast",
+					"name": "DeepSeek V4.1 Flash Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 60,
+						"requestsPerMonth": 57471.26436781609,
+						"costPerRequest": 0.001044,
+						"ability": 39.5,
+						"free": false
+					}
+				},
+				{
+					"key": "claudehaiku55",
+					"name": "Claude Haiku 5.5",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 22058.823529411762,
+						"costPerRequest": 0.00068,
+						"ability": 43.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 29411.76470588235,
+						"costPerRequest": 0.00068,
+						"ability": 43.4,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26flash",
+					"name": "MiMo V2.6 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 194805.1948051948,
+						"costPerRequest": 0.000308,
+						"ability": 37.9,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 64935.06493506493,
+						"costPerRequest": 0.000308,
+						"ability": 37.9,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flash",
+					"name": "DeepSeek V4 Flash",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00039,
+						"ability": 34.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 60,
+						"requestsPerMonth": 153846.15384615384,
+						"costPerRequest": 0.00039,
+						"ability": 34.3,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26pro",
+					"name": "MiMo V2.6 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 21329.54141485958,
+						"costPerRequest": 0.00070325,
+						"ability": 46.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 28490.02849002849,
+						"costPerRequest": 0.000702,
+						"ability": 46.3,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flashvisionexp",
+					"name": "DeepSeek V4 Flash Vision",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 38461.53846153846,
+						"costPerRequest": 0.00039,
+						"ability": 34.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 51282.05128205128,
+						"costPerRequest": 0.00039,
+						"ability": 34.8,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt6luna",
+					"name": "GPT-6 Luna",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 22058.823529411762,
+						"costPerRequest": 0.00068,
+						"ability": 38.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 29411.76470588235,
+						"costPerRequest": 0.00068,
+						"ability": 38.1,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53flash",
+					"name": "GLM-5.3 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 34883.72093023256,
+						"costPerRequest": 0.00172,
+						"ability": 41.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 60,
+						"requestsPerMonth": 34883.72093023256,
+						"costPerRequest": 0.00172,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "claudesonnet55",
+					"name": "Claude Sonnet 5.5",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 1162.7906976744187,
+						"costPerRequest": 0.0086,
+						"ability": 56,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38flash",
+					"name": "Qwen 3.8 Flash",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 29585.79881656805,
+						"costPerRequest": 0.001014,
+						"ability": 39.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 19569.471624266145,
+						"costPerRequest": 0.001022,
+						"ability": 39.8,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark13",
+					"name": "Muse Spark 1.3",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 2139.03743315508,
+						"costPerRequest": 0.00935,
+						"ability": 48.1,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt56luna",
+					"name": "GPT-5.6 Luna",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 10714.285714285714,
+						"costPerRequest": 0.0014,
+						"ability": 37.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 14285.714285714286,
+						"costPerRequest": 0.0014,
+						"ability": 37.3,
+						"free": false
+					}
+				},
+				{
+					"key": "step5preview",
+					"name": "Step 5 Preview",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 5208.333333333333,
+						"costPerRequest": 0.00384,
+						"ability": 43.7,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov25",
+					"name": "MiMo V2.5",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 194805.1948051948,
+						"costPerRequest": 0.000308,
+						"ability": 25.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 97402.5974025974,
+						"costPerRequest": 0.000308,
+						"ability": 25.2,
+						"free": false,
+						"deal": {
+							"badge": "-98%"
+						}
+					}
+				},
+				{
+					"key": "glm53flashx",
+					"name": "GLM-5.3 FlashX",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 4655.493482309124,
+						"costPerRequest": 0.004296,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4pro",
+					"name": "DeepSeek V4 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 7411.067193675889,
+						"costPerRequest": 0.002024,
+						"ability": 36,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 9881.422924901184,
+						"costPerRequest": 0.002024,
+						"ability": 36,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt56sol",
+					"name": "GPT-5.6 Sol",
+					"oc": null,
+					"cc": {
+						"allowance": 70,
+						"requestsPerMonth": 1999.9999999999998,
+						"costPerRequest": 0.035,
+						"ability": 47,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini38flash",
+					"name": "Gemini 3.8 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 40,
+						"requestsPerMonth": 3921.5686274509803,
+						"costPerRequest": 0.0102,
+						"ability": 40.9,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26proultraspeed",
+					"name": "MiMo V2.6 Pro UltraSpeed",
+					"oc": null,
+					"cc": {
+						"allowance": 10,
+						"requestsPerMonth": 1424.5014245014247,
+						"costPerRequest": 0.007019999999999999,
+						"ability": 46.3,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen3827b",
+					"name": "Qwen 3.8 27B",
+					"oc": null,
+					"cc": {
+						"allowance": 70,
+						"requestsPerMonth": 23972.60273972603,
+						"costPerRequest": 0.00292,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38max0902",
+					"name": "Qwen 3.8 Max 0902",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1307.1895424836603,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini37flash",
+					"name": "Gemini 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 40,
+						"requestsPerMonth": 3921.5686274509803,
+						"costPerRequest": 0.0102,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "mistrallarge4",
+					"name": "Mistral Large 4",
+					"oc": null,
+					"cc": {
+						"allowance": 40,
+						"requestsPerMonth": 4482.294935006724,
+						"costPerRequest": 0.008924,
+						"ability": 38.4,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flashfast",
+					"name": "DeepSeek V4 Flash Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 5213.764337851929,
+						"costPerRequest": 0.0038360000000000004,
+						"ability": 34.3,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53",
+					"name": "GLM-5.3",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 1000,
+						"costPerRequest": 0.015,
+						"ability": 44.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1333.3333333333335,
+						"costPerRequest": 0.015,
+						"ability": 44.8,
+						"free": false
+					}
+				},
+				{
+					"key": "longcat20",
+					"name": "LongCat 2.0",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00078,
+						"ability": 19.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 50,
+						"requestsPerMonth": 64102.5641025641,
+						"costPerRequest": 0.00078,
+						"ability": 19.1,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm3",
+					"name": "MiniMax M3",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00348,
+						"ability": 29.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 47,
+						"requestsPerMonth": 13505.747126436781,
+						"costPerRequest": 0.00348,
+						"ability": 29.2,
+						"free": false,
+						"deal": {
+							"badge": "-50%"
+						}
+					}
+				},
+				{
+					"key": "hy3",
+					"name": "Tencent Hy3",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 30333.670374115267,
+						"costPerRequest": 0.001978,
+						"ability": 25.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 70,
+						"requestsPerMonth": 35389.28210313448,
+						"costPerRequest": 0.001978,
+						"ability": 25.3,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark12",
+					"name": "Muse Spark 1.2",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 2139.03743315508,
+						"costPerRequest": 0.00935,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov25pro",
+					"name": "MiMo V2.5 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 21329.54141485958,
+						"costPerRequest": 0.00070325,
+						"ability": 26,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 28490.02849002849,
+						"costPerRequest": 0.000702,
+						"ability": 26,
+						"free": false,
+						"deal": {
+							"badge": "-99%"
+						}
+					}
+				},
+				{
+					"key": "grok46",
+					"name": "Grok 4.6",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 539.568345323741,
+						"costPerRequest": 0.0278,
+						"ability": 44.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 719.4244604316547,
+						"costPerRequest": 0.0278,
+						"ability": 44.3,
+						"free": false
+					}
+				},
+				{
+					"key": "grok47",
+					"name": "Grok 4.7",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 539.568345323741,
+						"costPerRequest": 0.0278,
+						"ability": 46.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 719.4244604316547,
+						"costPerRequest": 0.0278,
+						"ability": 46.4,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38max",
+					"name": "Qwen 3.8 Max",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 980.3921568627451,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1307.1895424836603,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					}
+				},
+				{
+					"key": "glm52",
+					"name": "GLM-5.2",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 4000,
+						"costPerRequest": 0.015,
+						"ability": 33.7,
+						"free": false
+					},
+					"cc": {
+						"allowance": 70,
+						"requestsPerMonth": 4666.666666666667,
+						"costPerRequest": 0.015,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37plus",
+					"name": "Qwen 3.7 Plus",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 22727.272727272728,
+						"costPerRequest": 0.00264,
+						"ability": 25.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 33,
+						"requestsPerMonth": 7112.068965517241,
+						"costPerRequest": 0.00464,
+						"ability": 25.2,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm27",
+					"name": "MiniMax M2.7",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00348,
+						"ability": 22.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 5747.126436781609,
+						"costPerRequest": 0.00348,
+						"ability": 22.8,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik3",
+					"name": "Kimi K3",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 735.2941176470588,
+						"costPerRequest": 0.0204,
+						"ability": 43.6,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 980.3921568627451,
+						"costPerRequest": 0.0204,
+						"ability": 43.6,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm25",
+					"name": "MiniMax M2.5",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 10101.0101010101,
+						"costPerRequest": 0.00198,
+						"ability": 22.8,
+						"free": false
+					}
+				},
+				{
+					"key": "grok45",
+					"name": "Grok 4.5",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 719.4244604316547,
+						"costPerRequest": 0.0278,
+						"ability": 38.8,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik26",
+					"name": "Kimi K2.6",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 6276.150627615062,
+						"costPerRequest": 0.00956,
+						"ability": 27,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 2092.0502092050206,
+						"costPerRequest": 0.00956,
+						"ability": 27,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen36plus",
+					"name": "Qwen 3.6 Plus",
+					"oc": null,
+					"cc": {
+						"allowance": 33,
+						"requestsPerMonth": 5500,
+						"costPerRequest": 0.006,
+						"ability": 27,
+						"free": false
+					}
+				},
+				{
+					"key": "step37flash",
+					"name": "Step 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 8368.200836820082,
+						"costPerRequest": 0.00239,
+						"ability": 19.5,
+						"free": false
+					}
+				},
+				{
+					"key": "step35flash",
+					"name": "Step 3.5 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 17667.844522968197,
+						"costPerRequest": 0.001132,
+						"ability": 17,
+						"free": false
+					}
+				},
+				{
+					"key": "inklingsmall",
+					"name": "Inkling Small",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 3546.099290780142,
+						"costPerRequest": 0.00564,
+						"ability": 25.7,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik27code",
+					"name": "Kimi K2.7 Code",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 5424.9547920434,
+						"costPerRequest": 0.01106,
+						"ability": 25.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 60,
+						"requestsPerMonth": 5424.9547920434,
+						"costPerRequest": 0.01106,
+						"ability": 25.8,
+						"free": false
+					}
+				},
+				{
+					"key": "glm5",
+					"name": "GLM-5",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1748.2517482517483,
+						"costPerRequest": 0.01144,
+						"ability": 27.9,
+						"free": false
+					}
+				},
+				{
+					"key": "glm52fast",
+					"name": "GLM-5.2 Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 679.1171477079796,
+						"costPerRequest": 0.02945,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "inkling",
+					"name": "Inkling",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1978.2393669634027,
+						"costPerRequest": 0.01011,
+						"ability": 25,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik25",
+					"name": "Kimi K2.5",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 3289.4736842105262,
+						"costPerRequest": 0.00608,
+						"ability": 23.5,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37max",
+					"name": "Qwen 3.7 Max",
+					"oc": null,
+					"cc": {
+						"allowance": 33,
+						"requestsPerMonth": 1157.8947368421052,
+						"costPerRequest": 0.0285,
+						"ability": 29.5,
+						"free": false
+					}
+				},
+				{
+					"key": "nemotron3ultra",
+					"name": "Nemotron 3 Ultra",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 2873.5632183908046,
+						"costPerRequest": 0.00696,
+						"ability": 22.9,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen36maxpreview",
+					"name": "Qwen 3.6 Max Preview",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1282.0512820512822,
+						"costPerRequest": 0.0156,
+						"ability": 28.4,
+						"free": false
+					}
+				},
+				{
+					"key": "glm51",
+					"name": "GLM-5.1",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1333.3333333333335,
+						"costPerRequest": 0.015,
+						"ability": 26.1,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik27codehighspeed",
+					"name": "Kimi K2.7 Code HighSpeed",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 904.1591320072332,
+						"costPerRequest": 0.02212,
+						"ability": 25.8,
+						"free": false
+					}
+				},
+				{
+					"key": "hy4preview",
+					"name": "Tencent Hy4 Preview",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 9181.612291118321,
+						"costPerRequest": 0.0032673999999999997,
+						"ability": null,
+						"free": false
+					},
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 6121.074860745547,
+						"costPerRequest": 0.0032673999999999997,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "spacebunny",
+					"name": "Space Bunny",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00174,
+						"ability": null,
+						"free": false
+					},
+					"cc": null
+				},
+				{
+					"key": "qwen38omniflash",
+					"name": "Qwen 3.8 Omni Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 19723.865877712033,
+						"costPerRequest": 0.001014,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "jev",
+					"name": "Jev",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 595238.0952380951,
+						"costPerRequest": 0.000033600000000000004,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "glyphcluster",
+					"name": "Glyph Cluster",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				},
+				{
+					"key": "ling30flashsante",
+					"name": "Ling 3.0 Flash Sante",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				},
+				{
+					"key": "qwen37flash",
+					"name": "Qwen 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 57142.857142857145,
+						"costPerRequest": 0.00035,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "lagunas21",
+					"name": "Laguna S 2.1",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				}
+			],
+			"tally": {
+				"headToHead": 29,
+				"ocWins": 11,
+				"ccWins": 15,
+				"ties": 3,
+				"ocOnly": 1,
+				"ccOnly": 36
+			}
+		},
+		"pro": {
+			"rows": [
+				{
+					"key": "musespark13contributor",
+					"name": "Muse Spark 1.3 Contributor",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 272727.2727272727,
+						"costPerRequest": 0.00022,
+						"ability": 48.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 136363.63636363635,
+						"costPerRequest": 0.00022,
+						"ability": 48.1,
+						"free": false
+					}
+				},
+				{
+					"key": "ling31flash",
+					"name": "Ling 3.1 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": 41.1,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				},
+				{
+					"key": "musespark12contributor",
+					"name": "Muse Spark 1.2 Contributor",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 272727.2727272727,
+						"costPerRequest": 0.00022,
+						"ability": 39.6,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 136363.63636363635,
+						"costPerRequest": 0.00022,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv41flash",
+					"name": "DeepSeek V4.1 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 153846.15384615384,
+						"costPerRequest": 0.00039,
+						"ability": 39.5,
+						"free": false
+					},
+					"cc": {
+						"allowance": 70,
+						"requestsPerMonth": 179487.1794871795,
+						"costPerRequest": 0.00039,
+						"ability": 39.5,
+						"free": false
+					}
+				},
+				{
+					"key": "claudehaiku55",
+					"name": "Claude Haiku 5.5",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 22058.823529411762,
+						"costPerRequest": 0.00068,
+						"ability": 43.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 44117.647058823524,
+						"costPerRequest": 0.00068,
+						"ability": 43.4,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv41flashfast",
+					"name": "DeepSeek V4.1 Flash Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 70,
+						"requestsPerMonth": 67049.80842911877,
+						"costPerRequest": 0.001044,
+						"ability": 39.5,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26flash",
+					"name": "MiMo V2.6 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 194805.1948051948,
+						"costPerRequest": 0.000308,
+						"ability": 37.9,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 97402.5974025974,
+						"costPerRequest": 0.000308,
+						"ability": 37.9,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26pro",
+					"name": "MiMo V2.6 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 21329.54141485958,
+						"costPerRequest": 0.00070325,
+						"ability": 46.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 42735.042735042734,
+						"costPerRequest": 0.000702,
+						"ability": 46.3,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flash",
+					"name": "DeepSeek V4 Flash",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00039,
+						"ability": 34.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 70,
+						"requestsPerMonth": 179487.1794871795,
+						"costPerRequest": 0.00039,
+						"ability": 34.3,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flashvisionexp",
+					"name": "DeepSeek V4 Flash Vision",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 38461.53846153846,
+						"costPerRequest": 0.00039,
+						"ability": 34.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00039,
+						"ability": 34.8,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt6luna",
+					"name": "GPT-6 Luna",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 22058.823529411762,
+						"costPerRequest": 0.00068,
+						"ability": 38.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 44117.647058823524,
+						"costPerRequest": 0.00068,
+						"ability": 38.1,
+						"free": false
+					}
+				},
+				{
+					"key": "claudesonnet55",
+					"name": "Claude Sonnet 5.5",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 2325.5813953488373,
+						"costPerRequest": 0.0086,
+						"ability": 56,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53flash",
+					"name": "GLM-5.3 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 34883.72093023256,
+						"costPerRequest": 0.00172,
+						"ability": 41.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 70,
+						"requestsPerMonth": 40697.67441860465,
+						"costPerRequest": 0.00172,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38flash",
+					"name": "Qwen 3.8 Flash",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 29585.79881656805,
+						"costPerRequest": 0.001014,
+						"ability": 39.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 29354.20743639922,
+						"costPerRequest": 0.001022,
+						"ability": 39.8,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark13",
+					"name": "Muse Spark 1.3",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 3208.5561497326203,
+						"costPerRequest": 0.00935,
+						"ability": 48.1,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt56luna",
+					"name": "GPT-5.6 Luna",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 10714.285714285714,
+						"costPerRequest": 0.0014,
+						"ability": 37.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 21428.571428571428,
+						"costPerRequest": 0.0014,
+						"ability": 37.3,
+						"free": false
+					}
+				},
+				{
+					"key": "step5preview",
+					"name": "Step 5 Preview",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 7812.5,
+						"costPerRequest": 0.00384,
+						"ability": 43.7,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53flashx",
+					"name": "GLM-5.3 FlashX",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 6983.240223463687,
+						"costPerRequest": 0.004296,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4pro",
+					"name": "DeepSeek V4 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 7411.067193675889,
+						"costPerRequest": 0.002024,
+						"ability": 36,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 14822.134387351778,
+						"costPerRequest": 0.002024,
+						"ability": 36,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26proultraspeed",
+					"name": "MiMo V2.6 Pro UltraSpeed",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 2849.0028490028494,
+						"costPerRequest": 0.007019999999999999,
+						"ability": 46.3,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov25",
+					"name": "MiMo V2.5",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 194805.1948051948,
+						"costPerRequest": 0.000308,
+						"ability": 25.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 40,
+						"requestsPerMonth": 129870.12987012987,
+						"costPerRequest": 0.000308,
+						"ability": 25.2,
+						"free": false,
+						"deal": {
+							"badge": "-98%"
+						}
+					}
+				},
+				{
+					"key": "gpt56sol",
+					"name": "GPT-5.6 Sol",
+					"oc": null,
+					"cc": {
+						"allowance": 80,
+						"requestsPerMonth": 2285.7142857142853,
+						"costPerRequest": 0.035,
+						"ability": 47,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini38flash",
+					"name": "Gemini 3.8 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 50,
+						"requestsPerMonth": 4901.9607843137255,
+						"costPerRequest": 0.0102,
+						"ability": 40.9,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt6sol",
+					"name": "GPT-6 Sol",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1470.5882352941178,
+						"costPerRequest": 0.0136,
+						"ability": 47.6,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38max0902",
+					"name": "Qwen 3.8 Max 0902",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 1960.7843137254902,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen3827b",
+					"name": "Qwen 3.8 27B",
+					"oc": null,
+					"cc": {
+						"allowance": 80,
+						"requestsPerMonth": 27397.260273972603,
+						"costPerRequest": 0.00292,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flashfast",
+					"name": "DeepSeek V4 Flash Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 7820.646506777893,
+						"costPerRequest": 0.0038360000000000004,
+						"ability": 34.3,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini37flash",
+					"name": "Gemini 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 50,
+						"requestsPerMonth": 4901.9607843137255,
+						"costPerRequest": 0.0102,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "mistrallarge4",
+					"name": "Mistral Large 4",
+					"oc": null,
+					"cc": {
+						"allowance": 50,
+						"requestsPerMonth": 5602.868668758405,
+						"costPerRequest": 0.008924,
+						"ability": 38.4,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53",
+					"name": "GLM-5.3",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 1000,
+						"costPerRequest": 0.015,
+						"ability": 44.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 2000,
+						"costPerRequest": 0.015,
+						"ability": 44.8,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov25pro",
+					"name": "MiMo V2.5 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 21329.54141485958,
+						"costPerRequest": 0.00070325,
+						"ability": 26,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 42735.042735042734,
+						"costPerRequest": 0.000702,
+						"ability": 26,
+						"free": false,
+						"deal": {
+							"badge": "-99%"
+						}
+					}
+				},
+				{
+					"key": "musespark12",
+					"name": "Muse Spark 1.2",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 3208.5561497326203,
+						"costPerRequest": 0.00935,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "hy3",
+					"name": "Tencent Hy3",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 30333.670374115267,
+						"costPerRequest": 0.001978,
+						"ability": 25.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 80,
+						"requestsPerMonth": 40444.893832153684,
+						"costPerRequest": 0.001978,
+						"ability": 25.3,
+						"free": false
+					}
+				},
+				{
+					"key": "longcat20",
+					"name": "LongCat 2.0",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00078,
+						"ability": 19.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 60,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00078,
+						"ability": 19.1,
+						"free": false
+					}
+				},
+				{
+					"key": "grok46",
+					"name": "Grok 4.6",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 539.568345323741,
+						"costPerRequest": 0.0278,
+						"ability": 44.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 1079.136690647482,
+						"costPerRequest": 0.0278,
+						"ability": 44.3,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm3",
+					"name": "MiniMax M3",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00348,
+						"ability": 29.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 57,
+						"requestsPerMonth": 16379.310344827587,
+						"costPerRequest": 0.00348,
+						"ability": 29.2,
+						"free": false,
+						"deal": {
+							"badge": "-50%"
+						}
+					}
+				},
+				{
+					"key": "grok47",
+					"name": "Grok 4.7",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 539.568345323741,
+						"costPerRequest": 0.0278,
+						"ability": 46.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 1079.136690647482,
+						"costPerRequest": 0.0278,
+						"ability": 46.4,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38max",
+					"name": "Qwen 3.8 Max",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 980.3921568627451,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 1960.7843137254902,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt56terra",
+					"name": "GPT-5.6 Terra",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1428.5714285714284,
+						"costPerRequest": 0.014,
+						"ability": 42.1,
+						"free": false
+					}
+				},
+				{
+					"key": "glm52",
+					"name": "GLM-5.2",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 4000,
+						"costPerRequest": 0.015,
+						"ability": 33.7,
+						"free": false
+					},
+					"cc": {
+						"allowance": 80,
+						"requestsPerMonth": 5333.333333333334,
+						"costPerRequest": 0.015,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini35flashlite",
+					"name": "Gemini 3.5 Flash Lite",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 8928.57142857143,
+						"costPerRequest": 0.00224,
+						"ability": 22.2,
+						"free": false
+					}
+				},
+				{
+					"key": "claudesonnet5",
+					"name": "Claude Sonnet 5",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1470.5882352941178,
+						"costPerRequest": 0.0136,
+						"ability": 38.2,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik3",
+					"name": "Kimi K3",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 735.2941176470588,
+						"costPerRequest": 0.0204,
+						"ability": 43.6,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 1470.5882352941176,
+						"costPerRequest": 0.0204,
+						"ability": 43.6,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37plus",
+					"name": "Qwen 3.7 Plus",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 22727.272727272728,
+						"costPerRequest": 0.00264,
+						"ability": 25.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 43,
+						"requestsPerMonth": 9267.241379310344,
+						"costPerRequest": 0.00464,
+						"ability": 25.2,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt54",
+					"name": "GPT-5.4",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1142.8571428571427,
+						"costPerRequest": 0.0175,
+						"ability": 39,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm25",
+					"name": "MiniMax M2.5",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 15151.515151515152,
+						"costPerRequest": 0.00198,
+						"ability": 22.8,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm27",
+					"name": "MiniMax M2.7",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00348,
+						"ability": 22.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 8620.689655172413,
+						"costPerRequest": 0.00348,
+						"ability": 22.8,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark11",
+					"name": "Muse Spark 1.1",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 2139.03743315508,
+						"costPerRequest": 0.00935,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "grok45",
+					"name": "Grok 4.5",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 1079.136690647482,
+						"costPerRequest": 0.0278,
+						"ability": 38.8,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen36plus",
+					"name": "Qwen 3.6 Plus",
+					"oc": null,
+					"cc": {
+						"allowance": 43,
+						"requestsPerMonth": 7166.666666666667,
+						"costPerRequest": 0.006,
+						"ability": 27,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini36flash",
+					"name": "Gemini 3.6 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1960.7843137254902,
+						"costPerRequest": 0.0102,
+						"ability": 34,
+						"free": false
+					}
+				},
+				{
+					"key": "step37flash",
+					"name": "Step 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 12552.301255230124,
+						"costPerRequest": 0.00239,
+						"ability": 19.5,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini35flash",
+					"name": "Gemini 3.5 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 1904.7619047619046,
+						"costPerRequest": 0.0105,
+						"ability": 33.6,
+						"free": false
+					}
+				},
+				{
+					"key": "step35flash",
+					"name": "Step 3.5 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 26501.7667844523,
+						"costPerRequest": 0.001132,
+						"ability": 17,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik26",
+					"name": "Kimi K2.6",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 6276.150627615062,
+						"costPerRequest": 0.00956,
+						"ability": 27,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 3138.075313807531,
+						"costPerRequest": 0.00956,
+						"ability": 27,
+						"free": false
+					}
+				},
+				{
+					"key": "inklingsmall",
+					"name": "Inkling Small",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 5319.148936170212,
+						"costPerRequest": 0.00564,
+						"ability": 25.7,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt55",
+					"name": "GPT-5.5",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 571.4285714285713,
+						"costPerRequest": 0.035,
+						"ability": 38.4,
+						"free": false
+					}
+				},
+				{
+					"key": "glm52fast",
+					"name": "GLM-5.2 Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 1018.6757215619695,
+						"costPerRequest": 0.02945,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "glm5",
+					"name": "GLM-5",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 2622.377622377622,
+						"costPerRequest": 0.01144,
+						"ability": 27.9,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik27code",
+					"name": "Kimi K2.7 Code",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 5424.9547920434,
+						"costPerRequest": 0.01106,
+						"ability": 25.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 70,
+						"requestsPerMonth": 6329.113924050633,
+						"costPerRequest": 0.01106,
+						"ability": 25.8,
+						"free": false
+					}
+				},
+				{
+					"key": "inkling",
+					"name": "Inkling",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 2967.359050445104,
+						"costPerRequest": 0.01011,
+						"ability": 25,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik25",
+					"name": "Kimi K2.5",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 4934.210526315789,
+						"costPerRequest": 0.00608,
+						"ability": 23.5,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt54mini",
+					"name": "GPT-5.4 Mini",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 3809.523809523809,
+						"costPerRequest": 0.00525,
+						"ability": 24.1,
+						"free": false
+					}
+				},
+				{
+					"key": "nemotron3ultra",
+					"name": "Nemotron 3 Ultra",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 4310.3448275862065,
+						"costPerRequest": 0.00696,
+						"ability": 22.9,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen36maxpreview",
+					"name": "Qwen 3.6 Max Preview",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 1923.076923076923,
+						"costPerRequest": 0.0156,
+						"ability": 28.4,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37max",
+					"name": "Qwen 3.7 Max",
+					"oc": null,
+					"cc": {
+						"allowance": 43,
+						"requestsPerMonth": 1508.7719298245613,
+						"costPerRequest": 0.0285,
+						"ability": 29.5,
+						"free": false
+					}
+				},
+				{
+					"key": "claudesonnet46",
+					"name": "Claude Sonnet 4.6",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 980.3921568627451,
+						"costPerRequest": 0.0204,
+						"ability": 30.1,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini31flashlite",
+					"name": "Gemini 3.1 Flash Lite",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 10000,
+						"costPerRequest": 0.002,
+						"ability": 15.6,
+						"free": false
+					}
+				},
+				{
+					"key": "glm51",
+					"name": "GLM-5.1",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 2000,
+						"costPerRequest": 0.015,
+						"ability": 26.1,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt53codex",
+					"name": "GPT-5.3 Codex",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 709.2198581560284,
+						"costPerRequest": 0.0282,
+						"ability": 32.5,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik27codehighspeed",
+					"name": "Kimi K2.7 Code HighSpeed",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 1356.23869801085,
+						"costPerRequest": 0.02212,
+						"ability": 25.8,
+						"free": false
+					}
+				},
+				{
+					"key": "claudehaiku45",
+					"name": "Claude Haiku 4.5",
+					"oc": null,
+					"cc": {
+						"allowance": 20,
+						"requestsPerMonth": 2941.1764705882356,
+						"costPerRequest": 0.0068,
+						"ability": 15.4,
+						"free": false
+					}
+				},
+				{
+					"key": "hy4preview",
+					"name": "Tencent Hy4 Preview",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 9181.612291118321,
+						"costPerRequest": 0.0032673999999999997,
+						"ability": null,
+						"free": false
+					},
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 9181.612291118321,
+						"costPerRequest": 0.0032673999999999997,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "spacebunny",
+					"name": "Space Bunny",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00174,
+						"ability": null,
+						"free": false
+					},
+					"cc": null
+				},
+				{
+					"key": "qwen38omniflash",
+					"name": "Qwen 3.8 Omni Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 29585.79881656805,
+						"costPerRequest": 0.001014,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "jev",
+					"name": "Jev",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 892857.1428571427,
+						"costPerRequest": 0.000033600000000000004,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "glyphcluster",
+					"name": "Glyph Cluster",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				},
+				{
+					"key": "ling30flashsante",
+					"name": "Ling 3.0 Flash Sante",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				},
+				{
+					"key": "qwen37flash",
+					"name": "Qwen 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": 85714.28571428571,
+						"costPerRequest": 0.00035,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "lagunas21",
+					"name": "Laguna S 2.1",
+					"oc": null,
+					"cc": {
+						"allowance": 30,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true,
+						"deal": {
+							"badge": "Free"
+						}
+					}
+				}
+			],
+			"tally": {
+				"headToHead": 29,
+				"ocWins": 16,
+				"ccWins": 3,
+				"ties": 10,
+				"ocOnly": 1,
+				"ccOnly": 50
+			}
+		},
+		"max10": {
+			"rows": [
+				{
+					"key": "musespark13contributor",
+					"name": "Muse Spark 1.3 Contributor",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 272727.2727272727,
+						"costPerRequest": 0.00022,
+						"ability": 48.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 681818.1818181818,
+						"costPerRequest": 0.00022,
+						"ability": 48.1,
+						"free": false
+					}
+				},
+				{
+					"key": "ling31flash",
+					"name": "Ling 3.1 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 0,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": 41.1,
+						"free": true
+					}
+				},
+				{
+					"key": "musespark12contributor",
+					"name": "Muse Spark 1.2 Contributor",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 272727.2727272727,
+						"costPerRequest": 0.00022,
+						"ability": 39.6,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 681818.1818181818,
+						"costPerRequest": 0.00022,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "claudehaiku55",
+					"name": "Claude Haiku 5.5",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 22058.823529411762,
+						"costPerRequest": 0.00068,
+						"ability": 43.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 220588.23529411762,
+						"costPerRequest": 0.00068,
+						"ability": 43.4,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv41flash",
+					"name": "DeepSeek V4.1 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 153846.15384615384,
+						"costPerRequest": 0.00039,
+						"ability": 39.5,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 384615.3846153846,
+						"costPerRequest": 0.00039,
+						"ability": 39.5,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv41flashfast",
+					"name": "DeepSeek V4.1 Flash Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 143678.16091954024,
+						"costPerRequest": 0.001044,
+						"ability": 39.5,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26pro",
+					"name": "MiMo V2.6 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 21329.54141485958,
+						"costPerRequest": 0.00070325,
+						"ability": 46.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 213675.21367521366,
+						"costPerRequest": 0.000702,
+						"ability": 46.3,
+						"free": false
+					}
+				},
+				{
+					"key": "claudesonnet55",
+					"name": "Claude Sonnet 5.5",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 17441.86046511628,
+						"costPerRequest": 0.0086,
+						"ability": 56,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flashvisionexp",
+					"name": "DeepSeek V4 Flash Vision",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 38461.53846153846,
+						"costPerRequest": 0.00039,
+						"ability": 34.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 384615.3846153846,
+						"costPerRequest": 0.00039,
+						"ability": 34.8,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26flash",
+					"name": "MiMo V2.6 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 194805.1948051948,
+						"costPerRequest": 0.000308,
+						"ability": 37.9,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 487012.987012987,
+						"costPerRequest": 0.000308,
+						"ability": 37.9,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt6luna",
+					"name": "GPT-6 Luna",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 22058.823529411762,
+						"costPerRequest": 0.00068,
+						"ability": 38.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 220588.23529411762,
+						"costPerRequest": 0.00068,
+						"ability": 38.1,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flash",
+					"name": "DeepSeek V4 Flash",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00039,
+						"ability": 34.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 384615.3846153846,
+						"costPerRequest": 0.00039,
+						"ability": 34.3,
+						"free": false
+					}
+				},
+				{
+					"key": "claudeopus55",
+					"name": "Claude Opus 5.5",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 5813.953488372093,
+						"costPerRequest": 0.0172,
+						"ability": 57.6,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark13",
+					"name": "Muse Spark 1.3",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 16042.7807486631,
+						"costPerRequest": 0.00935,
+						"ability": 48.1,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38flash",
+					"name": "Qwen 3.8 Flash",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 29585.79881656805,
+						"costPerRequest": 0.001014,
+						"ability": 39.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 146771.0371819961,
+						"costPerRequest": 0.001022,
+						"ability": 39.8,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53flash",
+					"name": "GLM-5.3 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 34883.72093023256,
+						"costPerRequest": 0.00172,
+						"ability": 41.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 87209.3023255814,
+						"costPerRequest": 0.00172,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt56luna",
+					"name": "GPT-5.6 Luna",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 10714.285714285714,
+						"costPerRequest": 0.0014,
+						"ability": 37.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 107142.85714285714,
+						"costPerRequest": 0.0014,
+						"ability": 37.3,
+						"free": false
+					}
+				},
+				{
+					"key": "step5preview",
+					"name": "Step 5 Preview",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 39062.5,
+						"costPerRequest": 0.00384,
+						"ability": 43.7,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt61sol",
+					"name": "GPT-6.1 Sol",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 11627.906976744185,
+						"costPerRequest": 0.0086,
+						"ability": 51.8,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26proultraspeed",
+					"name": "MiMo V2.6 Pro UltraSpeed",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 21367.52136752137,
+						"costPerRequest": 0.007019999999999999,
+						"ability": 46.3,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53flashx",
+					"name": "GLM-5.3 FlashX",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 34916.20111731844,
+						"costPerRequest": 0.004296,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4pro",
+					"name": "DeepSeek V4 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 7411.067193675889,
+						"costPerRequest": 0.002024,
+						"ability": 36,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 74110.67193675888,
+						"costPerRequest": 0.002024,
+						"ability": 36,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38max0902",
+					"name": "Qwen 3.8 Max 0902",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 9803.921568627451,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt6sol",
+					"name": "GPT-6 Sol",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 7352.941176470588,
+						"costPerRequest": 0.0136,
+						"ability": 47.6,
+						"free": false
+					}
+				},
+				{
+					"key": "claudefable51",
+					"name": "Claude Fable 5.1",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 3278.688524590164,
+						"costPerRequest": 0.0305,
+						"ability": 53.4,
+						"free": false
+					}
+				},
+				{
+					"key": "claudeopus5",
+					"name": "Claude Opus 5",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 2941.176470588235,
+						"costPerRequest": 0.034,
+						"ability": 50.8,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flashfast",
+					"name": "DeepSeek V4 Flash Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 39103.232533889466,
+						"costPerRequest": 0.0038360000000000004,
+						"ability": 34.3,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53",
+					"name": "GLM-5.3",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 1000,
+						"costPerRequest": 0.015,
+						"ability": 44.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 10000,
+						"costPerRequest": 0.015,
+						"ability": 44.8,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini38flash",
+					"name": "Gemini 3.8 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 14705.882352941175,
+						"costPerRequest": 0.0102,
+						"ability": 40.9,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark12",
+					"name": "Muse Spark 1.2",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 16042.7807486631,
+						"costPerRequest": 0.00935,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov25",
+					"name": "MiMo V2.5",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 194805.1948051948,
+						"costPerRequest": 0.000308,
+						"ability": 25.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 487012.987012987,
+						"costPerRequest": 0.000308,
+						"ability": 25.2,
+						"free": false
+					}
+				},
+				{
+					"key": "grok46",
+					"name": "Grok 4.6",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 539.568345323741,
+						"costPerRequest": 0.0278,
+						"ability": 44.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 5395.6834532374105,
+						"costPerRequest": 0.0278,
+						"ability": 44.3,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt56sol",
+					"name": "GPT-5.6 Sol",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 4285.714285714285,
+						"costPerRequest": 0.035,
+						"ability": 47,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini37flash",
+					"name": "Gemini 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 14705.882352941175,
+						"costPerRequest": 0.0102,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "grok47",
+					"name": "Grok 4.7",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 539.568345323741,
+						"costPerRequest": 0.0278,
+						"ability": 46.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 5395.6834532374105,
+						"costPerRequest": 0.0278,
+						"ability": 46.4,
+						"free": false
+					}
+				},
+				{
+					"key": "mistrallarge4",
+					"name": "Mistral Large 4",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 16808.606006275215,
+						"costPerRequest": 0.008924,
+						"ability": 38.4,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov25pro",
+					"name": "MiMo V2.5 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 21329.54141485958,
+						"costPerRequest": 0.00070325,
+						"ability": 26,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 213675.21367521366,
+						"costPerRequest": 0.000702,
+						"ability": 26,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt56terra",
+					"name": "GPT-5.6 Terra",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 7142.857142857143,
+						"costPerRequest": 0.014,
+						"ability": 42.1,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38max",
+					"name": "Qwen 3.8 Max",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 980.3921568627451,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 9803.921568627451,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen3827b",
+					"name": "Qwen 3.8 27B",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 51369.86301369863,
+						"costPerRequest": 0.00292,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "claudefable5",
+					"name": "Claude Fable 5",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 1470.5882352941176,
+						"costPerRequest": 0.068,
+						"ability": 49.6,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt6astra",
+					"name": "GPT-6 Astra",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 1470.5882352941176,
+						"costPerRequest": 0.068,
+						"ability": 52.7,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm3",
+					"name": "MiniMax M3",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00348,
+						"ability": 29.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 43103.448275862065,
+						"costPerRequest": 0.00348,
+						"ability": 29.2,
+						"free": false
+					}
+				},
+				{
+					"key": "claudesonnet5",
+					"name": "Claude Sonnet 5",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 7352.941176470588,
+						"costPerRequest": 0.0136,
+						"ability": 38.2,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini35flashlite",
+					"name": "Gemini 3.5 Flash Lite",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 44642.857142857145,
+						"costPerRequest": 0.00224,
+						"ability": 22.2,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik3",
+					"name": "Kimi K3",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 735.2941176470588,
+						"costPerRequest": 0.0204,
+						"ability": 43.6,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 7352.941176470587,
+						"costPerRequest": 0.0204,
+						"ability": 43.6,
+						"free": false
+					}
+				},
+				{
+					"key": "longcat20",
+					"name": "LongCat 2.0",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00078,
+						"ability": 19.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 192307.6923076923,
+						"costPerRequest": 0.00078,
+						"ability": 19.1,
+						"free": false
+					}
+				},
+				{
+					"key": "hy3",
+					"name": "Tencent Hy3",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 30333.670374115267,
+						"costPerRequest": 0.001978,
+						"ability": 25.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 75834.17593528816,
+						"costPerRequest": 0.001978,
+						"ability": 25.3,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt54",
+					"name": "GPT-5.4",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 5714.285714285714,
+						"costPerRequest": 0.0175,
+						"ability": 39,
+						"free": false
+					}
+				},
+				{
+					"key": "grok45",
+					"name": "Grok 4.5",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 5395.6834532374105,
+						"costPerRequest": 0.0278,
+						"ability": 38.8,
+						"free": false
+					}
+				},
+				{
+					"key": "claudeopus48",
+					"name": "Claude Opus 4.8",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 2941.176470588235,
+						"costPerRequest": 0.034,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark11",
+					"name": "Muse Spark 1.1",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 10695.1871657754,
+						"costPerRequest": 0.00935,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm25",
+					"name": "MiniMax M2.5",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 75757.57575757576,
+						"costPerRequest": 0.00198,
+						"ability": 22.8,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini36flash",
+					"name": "Gemini 3.6 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 9803.921568627451,
+						"costPerRequest": 0.0102,
+						"ability": 34,
+						"free": false
+					}
+				},
+				{
+					"key": "glm52",
+					"name": "GLM-5.2",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 4000,
+						"costPerRequest": 0.015,
+						"ability": 33.7,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 10000,
+						"costPerRequest": 0.015,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "claudeopus47",
+					"name": "Claude Opus 4.7",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 2941.176470588235,
+						"costPerRequest": 0.034,
+						"ability": 40.7,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini35flash",
+					"name": "Gemini 3.5 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 9523.809523809523,
+						"costPerRequest": 0.0105,
+						"ability": 33.6,
+						"free": false
+					}
+				},
+				{
+					"key": "step37flash",
+					"name": "Step 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 62761.50627615062,
+						"costPerRequest": 0.00239,
+						"ability": 19.5,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen36plus",
+					"name": "Qwen 3.6 Plus",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 25000,
+						"costPerRequest": 0.006,
+						"ability": 27,
+						"free": false
+					}
+				},
+				{
+					"key": "step35flash",
+					"name": "Step 3.5 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 132508.8339222615,
+						"costPerRequest": 0.001132,
+						"ability": 17,
+						"free": false
+					}
+				},
+				{
+					"key": "inklingsmall",
+					"name": "Inkling Small",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 26595.744680851065,
+						"costPerRequest": 0.00564,
+						"ability": 25.7,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt55",
+					"name": "GPT-5.5",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 2857.142857142857,
+						"costPerRequest": 0.035,
+						"ability": 38.4,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm27",
+					"name": "MiniMax M2.7",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00348,
+						"ability": 22.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 43103.448275862065,
+						"costPerRequest": 0.00348,
+						"ability": 22.8,
+						"free": false
+					}
+				},
+				{
+					"key": "glm52fast",
+					"name": "GLM-5.2 Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 5093.378607809847,
+						"costPerRequest": 0.02945,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik26",
+					"name": "Kimi K2.6",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 6276.150627615062,
+						"costPerRequest": 0.00956,
+						"ability": 27,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 15690.376569037655,
+						"costPerRequest": 0.00956,
+						"ability": 27,
+						"free": false
+					}
+				},
+				{
+					"key": "glm5",
+					"name": "GLM-5",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 13111.88811188811,
+						"costPerRequest": 0.01144,
+						"ability": 27.9,
+						"free": false
+					}
+				},
+				{
+					"key": "inkling",
+					"name": "Inkling",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 14836.79525222552,
+						"costPerRequest": 0.01011,
+						"ability": 25,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37plus",
+					"name": "Qwen 3.7 Plus",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 22727.272727272728,
+						"costPerRequest": 0.00264,
+						"ability": 25.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 32327.58620689655,
+						"costPerRequest": 0.00464,
+						"ability": 25.2,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik25",
+					"name": "Kimi K2.5",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 24671.052631578947,
+						"costPerRequest": 0.00608,
+						"ability": 23.5,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt54mini",
+					"name": "GPT-5.4 Mini",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 19047.619047619046,
+						"costPerRequest": 0.00525,
+						"ability": 24.1,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen36maxpreview",
+					"name": "Qwen 3.6 Max Preview",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 9615.384615384615,
+						"costPerRequest": 0.0156,
+						"ability": 28.4,
+						"free": false
+					}
+				},
+				{
+					"key": "nemotron3ultra",
+					"name": "Nemotron 3 Ultra",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 21551.724137931033,
+						"costPerRequest": 0.00696,
+						"ability": 22.9,
+						"free": false
+					}
+				},
+				{
+					"key": "glm51",
+					"name": "GLM-5.1",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 10000,
+						"costPerRequest": 0.015,
+						"ability": 26.1,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37max",
+					"name": "Qwen 3.7 Max",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 5263.157894736842,
+						"costPerRequest": 0.0285,
+						"ability": 29.5,
+						"free": false
+					}
+				},
+				{
+					"key": "claudesonnet46",
+					"name": "Claude Sonnet 4.6",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 4901.9607843137255,
+						"costPerRequest": 0.0204,
+						"ability": 30.1,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt53codex",
+					"name": "GPT-5.3 Codex",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 3546.099290780142,
+						"costPerRequest": 0.0282,
+						"ability": 32.5,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik27code",
+					"name": "Kimi K2.7 Code",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 5424.9547920434,
+						"costPerRequest": 0.01106,
+						"ability": 25.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 13562.386980108498,
+						"costPerRequest": 0.01106,
+						"ability": 25.8,
+						"free": false
+					}
+				},
+				{
+					"key": "claudeopus46",
+					"name": "Claude Opus 4.6",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 2941.176470588235,
+						"costPerRequest": 0.034,
+						"ability": 31.9,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini31flashlite",
+					"name": "Gemini 3.1 Flash Lite",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 50000,
+						"costPerRequest": 0.002,
+						"ability": 15.6,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik27codehighspeed",
+					"name": "Kimi K2.7 Code HighSpeed",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 6781.193490054249,
+						"costPerRequest": 0.02212,
+						"ability": 25.8,
+						"free": false
+					}
+				},
+				{
+					"key": "claudehaiku45",
+					"name": "Claude Haiku 4.5",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 14705.882352941177,
+						"costPerRequest": 0.0068,
+						"ability": 15.4,
+						"free": false
+					}
+				},
+				{
+					"key": "hy4preview",
+					"name": "Tencent Hy4 Preview",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 9181.612291118321,
+						"costPerRequest": 0.0032673999999999997,
+						"ability": null,
+						"free": false
+					},
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 45908.0614555916,
+						"costPerRequest": 0.0032673999999999997,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "spacebunny",
+					"name": "Space Bunny",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00174,
+						"ability": null,
+						"free": false
+					},
+					"cc": null
+				},
+				{
+					"key": "lagunas21",
+					"name": "Laguna S 2.1",
+					"oc": null,
+					"cc": {
+						"allowance": 0,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true
+					}
+				},
+				{
+					"key": "ling30flashsante",
+					"name": "Ling 3.0 Flash Sante",
+					"oc": null,
+					"cc": {
+						"allowance": 0,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true
+					}
+				},
+				{
+					"key": "glyphcluster",
+					"name": "Glyph Cluster",
+					"oc": null,
+					"cc": {
+						"allowance": 0,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true
+					}
+				},
+				{
+					"key": "qwen38omniflash",
+					"name": "Qwen 3.8 Omni Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 147928.99408284025,
+						"costPerRequest": 0.001014,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37flash",
+					"name": "Qwen 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 428571.4285714286,
+						"costPerRequest": 0.00035,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "fuguultra",
+					"name": "Fugu Ultra",
+					"oc": null,
+					"cc": {
+						"allowance": 100,
+						"requestsPerMonth": 2857.142857142857,
+						"costPerRequest": 0.035,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "jev",
+					"name": "Jev",
+					"oc": null,
+					"cc": {
+						"allowance": 150,
+						"requestsPerMonth": 4464285.714285714,
+						"costPerRequest": 0.000033600000000000004,
+						"ability": null,
+						"free": false
+					}
+				}
+			],
+			"tally": {
+				"headToHead": 29,
+				"ocWins": 18,
+				"ccWins": 3,
+				"ties": 8,
+				"ocOnly": 1,
+				"ccOnly": 60
+			}
+		},
+		"max20": {
+			"rows": [
+				{
+					"key": "musespark13contributor",
+					"name": "Muse Spark 1.3 Contributor",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 272727.2727272727,
+						"costPerRequest": 0.00022,
+						"ability": 48.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 1363636.3636363635,
+						"costPerRequest": 0.00022,
+						"ability": 48.1,
+						"free": false
+					}
+				},
+				{
+					"key": "ling31flash",
+					"name": "Ling 3.1 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 0,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": 41.1,
+						"free": true
+					}
+				},
+				{
+					"key": "claudehaiku55",
+					"name": "Claude Haiku 5.5",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 22058.823529411762,
+						"costPerRequest": 0.00068,
+						"ability": 43.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 441176.47058823524,
+						"costPerRequest": 0.00068,
+						"ability": 43.4,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark12contributor",
+					"name": "Muse Spark 1.2 Contributor",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 272727.2727272727,
+						"costPerRequest": 0.00022,
+						"ability": 39.6,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 1363636.3636363635,
+						"costPerRequest": 0.00022,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv41flash",
+					"name": "DeepSeek V4.1 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 153846.15384615384,
+						"costPerRequest": 0.00039,
+						"ability": 39.5,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 769230.7692307692,
+						"costPerRequest": 0.00039,
+						"ability": 39.5,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv41flashfast",
+					"name": "DeepSeek V4.1 Flash Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 287356.3218390805,
+						"costPerRequest": 0.001044,
+						"ability": 39.5,
+						"free": false
+					}
+				},
+				{
+					"key": "claudesonnet55",
+					"name": "Claude Sonnet 5.5",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 34883.72093023256,
+						"costPerRequest": 0.0086,
+						"ability": 56,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26pro",
+					"name": "MiMo V2.6 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 21329.54141485958,
+						"costPerRequest": 0.00070325,
+						"ability": 46.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 427350.4273504273,
+						"costPerRequest": 0.000702,
+						"ability": 46.3,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flashvisionexp",
+					"name": "DeepSeek V4 Flash Vision",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 38461.53846153846,
+						"costPerRequest": 0.00039,
+						"ability": 34.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 769230.7692307692,
+						"costPerRequest": 0.00039,
+						"ability": 34.8,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26flash",
+					"name": "MiMo V2.6 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 194805.1948051948,
+						"costPerRequest": 0.000308,
+						"ability": 37.9,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 974025.974025974,
+						"costPerRequest": 0.000308,
+						"ability": 37.9,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt6luna",
+					"name": "GPT-6 Luna",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 22058.823529411762,
+						"costPerRequest": 0.00068,
+						"ability": 38.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 441176.47058823524,
+						"costPerRequest": 0.00068,
+						"ability": 38.1,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flash",
+					"name": "DeepSeek V4 Flash",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00039,
+						"ability": 34.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 769230.7692307692,
+						"costPerRequest": 0.00039,
+						"ability": 34.3,
+						"free": false
+					}
+				},
+				{
+					"key": "claudeopus55",
+					"name": "Claude Opus 5.5",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 11627.906976744185,
+						"costPerRequest": 0.0172,
+						"ability": 57.6,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark13",
+					"name": "Muse Spark 1.3",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 32085.5614973262,
+						"costPerRequest": 0.00935,
+						"ability": 48.1,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38flash",
+					"name": "Qwen 3.8 Flash",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 29585.79881656805,
+						"costPerRequest": 0.001014,
+						"ability": 39.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 293542.0743639922,
+						"costPerRequest": 0.001022,
+						"ability": 39.8,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53flash",
+					"name": "GLM-5.3 Flash",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 34883.72093023256,
+						"costPerRequest": 0.00172,
+						"ability": 41.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 174418.6046511628,
+						"costPerRequest": 0.00172,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt56luna",
+					"name": "GPT-5.6 Luna",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 10714.285714285714,
+						"costPerRequest": 0.0014,
+						"ability": 37.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 214285.7142857143,
+						"costPerRequest": 0.0014,
+						"ability": 37.3,
+						"free": false
+					}
+				},
+				{
+					"key": "step5preview",
+					"name": "Step 5 Preview",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 78125,
+						"costPerRequest": 0.00384,
+						"ability": 43.7,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt61sol",
+					"name": "GPT-6.1 Sol",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 23255.81395348837,
+						"costPerRequest": 0.0086,
+						"ability": 51.8,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov26proultraspeed",
+					"name": "MiMo V2.6 Pro UltraSpeed",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 42735.04273504274,
+						"costPerRequest": 0.007019999999999999,
+						"ability": 46.3,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53flashx",
+					"name": "GLM-5.3 FlashX",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 69832.40223463687,
+						"costPerRequest": 0.004296,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4pro",
+					"name": "DeepSeek V4 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 7411.067193675889,
+						"costPerRequest": 0.002024,
+						"ability": 36,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 148221.34387351776,
+						"costPerRequest": 0.002024,
+						"ability": 36,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt6sol",
+					"name": "GPT-6 Sol",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 14705.882352941177,
+						"costPerRequest": 0.0136,
+						"ability": 47.6,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38max0902",
+					"name": "Qwen 3.8 Max 0902",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 19607.843137254902,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					}
+				},
+				{
+					"key": "claudefable51",
+					"name": "Claude Fable 5.1",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 6557.377049180328,
+						"costPerRequest": 0.0305,
+						"ability": 53.4,
+						"free": false
+					}
+				},
+				{
+					"key": "claudeopus5",
+					"name": "Claude Opus 5",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 5882.35294117647,
+						"costPerRequest": 0.034,
+						"ability": 50.8,
+						"free": false
+					}
+				},
+				{
+					"key": "glm53",
+					"name": "GLM-5.3",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 1000,
+						"costPerRequest": 0.015,
+						"ability": 44.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 20000,
+						"costPerRequest": 0.015,
+						"ability": 44.8,
+						"free": false
+					}
+				},
+				{
+					"key": "deepseekv4flashfast",
+					"name": "DeepSeek V4 Flash Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 78206.46506777893,
+						"costPerRequest": 0.0038360000000000004,
+						"ability": 34.3,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini38flash",
+					"name": "Gemini 3.8 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 29411.76470588235,
+						"costPerRequest": 0.0102,
+						"ability": 40.9,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark12",
+					"name": "Muse Spark 1.2",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 32085.5614973262,
+						"costPerRequest": 0.00935,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "grok46",
+					"name": "Grok 4.6",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 539.568345323741,
+						"costPerRequest": 0.0278,
+						"ability": 44.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 10791.366906474821,
+						"costPerRequest": 0.0278,
+						"ability": 44.3,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt56sol",
+					"name": "GPT-5.6 Sol",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 8571.42857142857,
+						"costPerRequest": 0.035,
+						"ability": 47,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini37flash",
+					"name": "Gemini 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 29411.76470588235,
+						"costPerRequest": 0.0102,
+						"ability": 39.6,
+						"free": false
+					}
+				},
+				{
+					"key": "grok47",
+					"name": "Grok 4.7",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 539.568345323741,
+						"costPerRequest": 0.0278,
+						"ability": 46.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 10791.366906474821,
+						"costPerRequest": 0.0278,
+						"ability": 46.4,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov25",
+					"name": "MiMo V2.5",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 194805.1948051948,
+						"costPerRequest": 0.000308,
+						"ability": 25.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 974025.974025974,
+						"costPerRequest": 0.000308,
+						"ability": 25.2,
+						"free": false
+					}
+				},
+				{
+					"key": "mistrallarge4",
+					"name": "Mistral Large 4",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 33617.21201255043,
+						"costPerRequest": 0.008924,
+						"ability": 38.4,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt56terra",
+					"name": "GPT-5.6 Terra",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 14285.714285714286,
+						"costPerRequest": 0.014,
+						"ability": 42.1,
+						"free": false
+					}
+				},
+				{
+					"key": "mimov25pro",
+					"name": "MiMo V2.5 Pro",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 21329.54141485958,
+						"costPerRequest": 0.00070325,
+						"ability": 26,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 427350.4273504273,
+						"costPerRequest": 0.000702,
+						"ability": 26,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen38max",
+					"name": "Qwen 3.8 Max",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 980.3921568627451,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 19607.843137254902,
+						"costPerRequest": 0.0153,
+						"ability": 45.4,
+						"free": false
+					}
+				},
+				{
+					"key": "claudefable5",
+					"name": "Claude Fable 5",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 2941.176470588235,
+						"costPerRequest": 0.068,
+						"ability": 49.6,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen3827b",
+					"name": "Qwen 3.8 27B",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 102739.72602739726,
+						"costPerRequest": 0.00292,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt6astra",
+					"name": "GPT-6 Astra",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 2941.176470588235,
+						"costPerRequest": 0.068,
+						"ability": 52.7,
+						"free": false
+					}
+				},
+				{
+					"key": "claudesonnet5",
+					"name": "Claude Sonnet 5",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 14705.882352941177,
+						"costPerRequest": 0.0136,
+						"ability": 38.2,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik3",
+					"name": "Kimi K3",
+					"oc": {
+						"allowance": 15,
+						"requestsPerMonth": 735.2941176470588,
+						"costPerRequest": 0.0204,
+						"ability": 43.6,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 14705.882352941175,
+						"costPerRequest": 0.0204,
+						"ability": 43.6,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm3",
+					"name": "MiniMax M3",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00348,
+						"ability": 29.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 86206.89655172413,
+						"costPerRequest": 0.00348,
+						"ability": 29.2,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt54",
+					"name": "GPT-5.4",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 11428.571428571428,
+						"costPerRequest": 0.0175,
+						"ability": 39,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini35flashlite",
+					"name": "Gemini 3.5 Flash Lite",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 89285.71428571429,
+						"costPerRequest": 0.00224,
+						"ability": 22.2,
+						"free": false
+					}
+				},
+				{
+					"key": "hy3",
+					"name": "Tencent Hy3",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 30333.670374115267,
+						"costPerRequest": 0.001978,
+						"ability": 25.3,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 151668.35187057633,
+						"costPerRequest": 0.001978,
+						"ability": 25.3,
+						"free": false
+					}
+				},
+				{
+					"key": "claudeopus48",
+					"name": "Claude Opus 4.8",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 5882.35294117647,
+						"costPerRequest": 0.034,
+						"ability": 41.8,
+						"free": false
+					}
+				},
+				{
+					"key": "grok45",
+					"name": "Grok 4.5",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 10791.366906474821,
+						"costPerRequest": 0.0278,
+						"ability": 38.8,
+						"free": false
+					}
+				},
+				{
+					"key": "longcat20",
+					"name": "LongCat 2.0",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 76923.07692307692,
+						"costPerRequest": 0.00078,
+						"ability": 19.1,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 384615.3846153846,
+						"costPerRequest": 0.00078,
+						"ability": 19.1,
+						"free": false
+					}
+				},
+				{
+					"key": "musespark11",
+					"name": "Muse Spark 1.1",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 21390.3743315508,
+						"costPerRequest": 0.00935,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "claudeopus47",
+					"name": "Claude Opus 4.7",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 5882.35294117647,
+						"costPerRequest": 0.034,
+						"ability": 40.7,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini36flash",
+					"name": "Gemini 3.6 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 19607.843137254902,
+						"costPerRequest": 0.0102,
+						"ability": 34,
+						"free": false
+					}
+				},
+				{
+					"key": "glm52",
+					"name": "GLM-5.2",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 4000,
+						"costPerRequest": 0.015,
+						"ability": 33.7,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 20000,
+						"costPerRequest": 0.015,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm25",
+					"name": "MiniMax M2.5",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 151515.15151515152,
+						"costPerRequest": 0.00198,
+						"ability": 22.8,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini35flash",
+					"name": "Gemini 3.5 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 19047.619047619046,
+						"costPerRequest": 0.0105,
+						"ability": 33.6,
+						"free": false
+					}
+				},
+				{
+					"key": "step37flash",
+					"name": "Step 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 125523.01255230124,
+						"costPerRequest": 0.00239,
+						"ability": 19.5,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen36plus",
+					"name": "Qwen 3.6 Plus",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 50000,
+						"costPerRequest": 0.006,
+						"ability": 27,
+						"free": false
+					}
+				},
+				{
+					"key": "step35flash",
+					"name": "Step 3.5 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 265017.667844523,
+						"costPerRequest": 0.001132,
+						"ability": 17,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt55",
+					"name": "GPT-5.5",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 5714.285714285714,
+						"costPerRequest": 0.035,
+						"ability": 38.4,
+						"free": false
+					}
+				},
+				{
+					"key": "inklingsmall",
+					"name": "Inkling Small",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 53191.48936170213,
+						"costPerRequest": 0.00564,
+						"ability": 25.7,
+						"free": false
+					}
+				},
+				{
+					"key": "minimaxm27",
+					"name": "MiniMax M2.7",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00348,
+						"ability": 22.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 86206.89655172413,
+						"costPerRequest": 0.00348,
+						"ability": 22.8,
+						"free": false
+					}
+				},
+				{
+					"key": "glm52fast",
+					"name": "GLM-5.2 Fast",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 10186.757215619695,
+						"costPerRequest": 0.02945,
+						"ability": 33.7,
+						"free": false
+					}
+				},
+				{
+					"key": "glm5",
+					"name": "GLM-5",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 26223.77622377622,
+						"costPerRequest": 0.01144,
+						"ability": 27.9,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik26",
+					"name": "Kimi K2.6",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 6276.150627615062,
+						"costPerRequest": 0.00956,
+						"ability": 27,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 31380.75313807531,
+						"costPerRequest": 0.00956,
+						"ability": 27,
+						"free": false
+					}
+				},
+				{
+					"key": "inkling",
+					"name": "Inkling",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 29673.59050445104,
+						"costPerRequest": 0.01011,
+						"ability": 25,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37plus",
+					"name": "Qwen 3.7 Plus",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 22727.272727272728,
+						"costPerRequest": 0.00264,
+						"ability": 25.2,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 64655.1724137931,
+						"costPerRequest": 0.00464,
+						"ability": 25.2,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik25",
+					"name": "Kimi K2.5",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 49342.10526315789,
+						"costPerRequest": 0.00608,
+						"ability": 23.5,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen36maxpreview",
+					"name": "Qwen 3.6 Max Preview",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 19230.76923076923,
+						"costPerRequest": 0.0156,
+						"ability": 28.4,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt54mini",
+					"name": "GPT-5.4 Mini",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 38095.23809523809,
+						"costPerRequest": 0.00525,
+						"ability": 24.1,
+						"free": false
+					}
+				},
+				{
+					"key": "nemotron3ultra",
+					"name": "Nemotron 3 Ultra",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 43103.448275862065,
+						"costPerRequest": 0.00696,
+						"ability": 22.9,
+						"free": false
+					}
+				},
+				{
+					"key": "glm51",
+					"name": "GLM-5.1",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 20000,
+						"costPerRequest": 0.015,
+						"ability": 26.1,
+						"free": false
+					}
+				},
+				{
+					"key": "claudesonnet46",
+					"name": "Claude Sonnet 4.6",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 9803.921568627451,
+						"costPerRequest": 0.0204,
+						"ability": 30.1,
+						"free": false
+					}
+				},
+				{
+					"key": "gpt53codex",
+					"name": "GPT-5.3 Codex",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 7092.198581560284,
+						"costPerRequest": 0.0282,
+						"ability": 32.5,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37max",
+					"name": "Qwen 3.7 Max",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 10526.315789473683,
+						"costPerRequest": 0.0285,
+						"ability": 29.5,
+						"free": false
+					}
+				},
+				{
+					"key": "claudeopus46",
+					"name": "Claude Opus 4.6",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 5882.35294117647,
+						"costPerRequest": 0.034,
+						"ability": 31.9,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik27code",
+					"name": "Kimi K2.7 Code",
+					"oc": {
+						"allowance": 60,
+						"requestsPerMonth": 5424.9547920434,
+						"costPerRequest": 0.01106,
+						"ability": 25.8,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 27124.773960216997,
+						"costPerRequest": 0.01106,
+						"ability": 25.8,
+						"free": false
+					}
+				},
+				{
+					"key": "gemini31flashlite",
+					"name": "Gemini 3.1 Flash Lite",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 100000,
+						"costPerRequest": 0.002,
+						"ability": 15.6,
+						"free": false
+					}
+				},
+				{
+					"key": "kimik27codehighspeed",
+					"name": "Kimi K2.7 Code HighSpeed",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 13562.386980108498,
+						"costPerRequest": 0.02212,
+						"ability": 25.8,
+						"free": false
+					}
+				},
+				{
+					"key": "claudehaiku45",
+					"name": "Claude Haiku 4.5",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 29411.764705882353,
+						"costPerRequest": 0.0068,
+						"ability": 15.4,
+						"free": false
+					}
+				},
+				{
+					"key": "hy4preview",
+					"name": "Tencent Hy4 Preview",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 9181.612291118321,
+						"costPerRequest": 0.0032673999999999997,
+						"ability": null,
+						"free": false
+					},
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 91816.1229111832,
+						"costPerRequest": 0.0032673999999999997,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "spacebunny",
+					"name": "Space Bunny",
+					"oc": {
+						"allowance": 30,
+						"requestsPerMonth": 17241.379310344826,
+						"costPerRequest": 0.00174,
+						"ability": null,
+						"free": false
+					},
+					"cc": null
+				},
+				{
+					"key": "lagunas21",
+					"name": "Laguna S 2.1",
+					"oc": null,
+					"cc": {
+						"allowance": 0,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true
+					}
+				},
+				{
+					"key": "ling30flashsante",
+					"name": "Ling 3.0 Flash Sante",
+					"oc": null,
+					"cc": {
+						"allowance": 0,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true
+					}
+				},
+				{
+					"key": "glyphcluster",
+					"name": "Glyph Cluster",
+					"oc": null,
+					"cc": {
+						"allowance": 0,
+						"requestsPerMonth": null,
+						"costPerRequest": 0,
+						"ability": null,
+						"free": true
+					}
+				},
+				{
+					"key": "qwen38omniflash",
+					"name": "Qwen 3.8 Omni Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 295857.9881656805,
+						"costPerRequest": 0.001014,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "qwen37flash",
+					"name": "Qwen 3.7 Flash",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 857142.8571428572,
+						"costPerRequest": 0.00035,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "fuguultra",
+					"name": "Fugu Ultra",
+					"oc": null,
+					"cc": {
+						"allowance": 200,
+						"requestsPerMonth": 5714.285714285714,
+						"costPerRequest": 0.035,
+						"ability": null,
+						"free": false
+					}
+				},
+				{
+					"key": "jev",
+					"name": "Jev",
+					"oc": null,
+					"cc": {
+						"allowance": 300,
+						"requestsPerMonth": 8928571.428571427,
+						"costPerRequest": 0.000033600000000000004,
+						"ability": null,
+						"free": false
+					}
+				}
+			],
+			"tally": {
+				"headToHead": 29,
+				"ocWins": 18,
+				"ccWins": 3,
+				"ties": 8,
+				"ocOnly": 1,
+				"ccOnly": 60
+			}
+		}
+	}
+}
