@@ -5,6 +5,7 @@
 		"build": "next build",
 		"postbuild": "pagefind --site out",
 		"check": "biome check",
+		"check:links": "bun scripts/check-links.ts",
 		"snapshot:mpc": "bun scripts/snapshot-mpc.ts",
 		"snapshot:releases": "bun scripts/snapshot-releases.ts",
 		"format": "biome format --write",
