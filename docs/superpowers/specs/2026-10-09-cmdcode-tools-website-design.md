@@ -51,7 +51,7 @@ website/
   biome.json              Biome (tabs, width 4)
   next.config.ts          output: "export", reactCompiler: true, images.unoptimized
   postcss.config.mjs      @tailwindcss/postcss
-  vercel.json             Vercel project config (Root Directory = website/)
+  vercel.json             optional: $schema + ignoreCommand (root dir is a Vercel project setting, not here)
   .gitignore              node_modules, .next, out, tsconfig.tsbuildinfo, .DS_Store
   public/
     fonts/satoshi/        Satoshi variable (woff2), committed
@@ -186,11 +186,11 @@ Next.js 16 App Router, React 19, TypeScript `^7` (native — matches the workspa
 
 - `website/package.json` scripts: `dev`, `build`, `check`/`format`/`lint` (Biome), `typecheck`, `snapshot:mpc`, `snapshot:releases`.
 - Root `.github/workflows/ci.yml`: add a job that runs in `website/` (`bun install && bun check && bun typecheck && bun build`), independent of the existing Rust/workspace jobs so it cannot destabilize them.
-- Vercel: a project with **Root Directory = `website/`**; `next.config.ts` uses `output: "export"`. No deploy/publish without explicit user go.
+- Vercel: a project with **Root Directory = `website/`** — a project setting, **not** expressible in `vercel.json`; Vercel auto-detects Next, `next.config.ts` uses `output: "export"`. `vercel.json` is optional and, if present, mirrors vobes: `$schema` + an `ignoreCommand` that skips builds when no `website/` path changed. No deploy/publish without explicit user go.
 
 ## Verification
 
-- `bun build` (static export) succeeds; `bun typecheck`; `biome check` clean.
+- `bun run build` (static export) succeeds; `bun typecheck` (after build — `next-env.d.ts` imports the generated, gitignored `.next/types`); `biome check` clean.
 - Docs render correctly for all six READMEs: tables, code blocks, TOC, rewritten links — checked in a real browser (`agent-browser`) against `bun dev`.
 - `scripts/check-links.ts` (phase 8): every internal route in the built output exists; every external link resolves.
 - Both color schemes render (dark default, light via `prefers-color-scheme`).

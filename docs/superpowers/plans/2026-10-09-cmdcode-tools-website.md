@@ -477,15 +477,15 @@ git commit -m "feat(website): client-side search with Pagefind"
 
 - [ ] **Step 1: Add the CI job**
 
-Append a job to the root `.github/workflows/ci.yml` that sets `working-directory: website` and runs `bun install --frozen-lockfile && bun check && bun typecheck && bun build`. It must not alter the existing Rust/workspace jobs.
+Append a job to the root `.github/workflows/ci.yml` that sets `working-directory: website` and runs `bun install --frozen-lockfile && bun run build && bun typecheck && bun check` (build first: `next-env.d.ts` imports the generated, gitignored `.next/types`, so `typecheck` fails on a clean checkout otherwise). It must not alter the existing Rust/workspace jobs.
 
 - [ ] **Step 2: Add Vercel config and the link checker**
 
-`vercel.json` sets the project's Root Directory expectation (`website/`) and an `ignoreCommand` only if desired. `scripts/check-links.ts` scans the built `out/**/*.html` for `href` values: internal links must resolve to a file in `out/`; external links are HEAD-checked and reported. Add `"check:links": "bun scripts/check-links.ts"`.
+`vercel.json` is **optional** — Vercel auto-detects Next, and the Root Directory (`website/`) is a Vercel project setting, not expressible in the file. If added, mirror vobes: `$schema` + an `ignoreCommand` that skips the build when no `website/` path changed. `scripts/check-links.ts` scans the built `out/**/*.html` for `href` values: internal links must resolve to a file in `out/`; external links are HEAD-checked and reported. Add `"check:links": "bun scripts/check-links.ts"`.
 
 - [ ] **Step 3: Full verification**
 
-Run from `website/`: `bun install && bun check && bun typecheck && bun build && bun check:links`. Expected: all exit 0; the six `/docs/<slug>` routes, `/guides/*`, `/compare`, `/changelog`, `sitemap.xml`, and `404.html` exist in `out/`. Preview the whole site once with `agent-browser` in both themes.
+Run from `website/`: `bun install && bun run build && bun typecheck && bun check && bun check:links`. Expected: all exit 0; the six `/docs/<slug>` routes, `/guides/*`, `/compare`, `/changelog`, `sitemap.xml`, and `404.html` exist in `out/`. Preview the whole site once with `agent-browser` in both themes.
 
 - [ ] **Step 4: Commit**
 
