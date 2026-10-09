@@ -1,0 +1,5 @@
+/*
+ * Family declarations live in `src/ui/fonts.ts` (Satoshi via
+ * next/font/local) and `variables.css` (system mono stack), so this file
+ * only carries the family fallback contract.
+ */

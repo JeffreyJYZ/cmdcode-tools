@@ -1,0 +1,19 @@
+.sep {
+	border: 0.5px solid var(--hairline);
+}
+
+.mono {
+	font-family: var(--font-mono);
+}
+
+.rail-frame {
+	border-inline: var(--rail-width) solid var(--hairline);
+}
+
+.ink-muted {
+	color: var(--muted);
+}
+
+.ink-fg {
+	color: var(--fg);
+}

@@ -1,0 +1,51 @@
+/*
+ * Three token layers: primitive (raw palette) -> semantic (roles) ->
+ * component (layout metrics). Only the semantic layer changes per colour
+ * scheme; dark is the default, light overrides it under
+ * `prefers-color-scheme: light`.
+ */
+:root {
+	/* primitive — raw palette, scheme-agnostic */
+	--neutral-50: #fafafa;
+	--neutral-100: #f5f5f5;
+	--neutral-200: #e5e5e5;
+	--neutral-300: #d4d4d4;
+	--neutral-400: #a3a3a3;
+	--neutral-500: #737373;
+	--neutral-600: #525252;
+	--neutral-700: #404040;
+	--neutral-800: #262626;
+	--neutral-900: #171717;
+	--neutral-950: #0a0a0a;
+	--white: #ffffff;
+	--lightblue: lightblue;
+	--royalblue: royalblue;
+	--blue-700: #1d4ed8;
+
+	/* semantic — dark (default) */
+	--bg: var(--neutral-900);
+	--fg: var(--white);
+	--muted: var(--neutral-400);
+	--surface: var(--neutral-800);
+	--hairline: var(--neutral-700);
+	--accent: var(--lightblue);
+	--accent-hover: var(--royalblue);
+
+	/* component — layout metrics */
+	--rail-width: 1px;
+	--page-max: 64rem;
+	--prose-max: 46rem;
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		/* semantic — light, overrides the semantic layer only */
+		--bg: var(--white);
+		--fg: var(--neutral-900);
+		--muted: var(--neutral-500);
+		--surface: var(--neutral-100);
+		--hairline: var(--neutral-300);
+		--accent: var(--royalblue);
+		--accent-hover: var(--blue-700);
+	}
+}

@@ -1,0 +1,11 @@
+/*
+ * Font families. `--font-sans` is set on <html> by next/font/local
+ * (`--font-sans` variable on `sans`); this appends the fallback chain.
+ * Mono is the system monospace stack — no self-hosted mono font.
+ */
+:root {
+	--font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
+	--font-mono:
+		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		"Liberation Mono", "Courier New", monospace;
+}
