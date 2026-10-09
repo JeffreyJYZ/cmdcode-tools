@@ -247,14 +247,14 @@ The default is `aa` when an AA key is available (`AA_API_KEY` or `--aa-key`), ot
 
 ## Model matching
 
-Names from the two catalogs are collapsed onto one canonical key (lowercase, vendor prefix stripped, punctuation removed, parenthetical qualifiers dropped), with a small alias table for branding differences (`Tencent Hy3` ↔ `hy3`, `…Vision (exp)` ↔ `…vision-exp`, `…Free` ↔ the base model). Models present on only one side still appear; the other column shows `—`.
+Names from the two catalogs are collapsed onto one canonical key (lowercase, vendor prefix stripped, punctuation removed, parenthetical qualifiers dropped), with a small alias table for branding differences (`Tencent Hy3` ↔ `hy3`, `…Vision (exp)` ↔ `…vision-exp`). A trailing `Free` marker is not a branding alias — it is stripped by a generic rule, since the docs append it to every free model. Models present on only one side still appear; the other column shows `—`.
 
 ## Notes and limits
 
 - CommandCode plans are read from their docs pages: `goat`, `pro` and the Max plans list explicit per-model credits; the **Go** ($1) plan publishes only a rate list, so every model draws on the plan's whole $10 credit pool.
 - Models CommandCode lists with rates but no explicit credits row (the "older models also available" set) use the documented standard allowance ($20 on GOAT, $30 on Pro).
 - OpenCode sells two Go plans — **Go** ($10/mo) and **Go Plus** ($40/mo) — with identical token rates but different per-model monthly limits; `--oc-plan` picks which. Go has no shared credit pool, so the plan's "credits" figure is the sum of the per-model limits (an upper bound, not a pool).
-- OpenCode Go's free models (`LongCat 2.5 Preview Free`, `Step 5 Preview Free`) publish an `Unlimited` monthly limit instead of a $ figure. They are included as free entries — `$0` rates, unbounded `req/mo` — and, since their allowance is meaningless at zero cost, they add nothing to the plan's summed credits. Their docs-only `… Free` suffix is aliased to the base key, so a variant merges onto the model's one row instead of appearing twice.
+- OpenCode Go's free models (`LongCat 2.5 Preview Free`, `Step 5 Preview Free`) publish an `Unlimited` monthly limit instead of a $ figure. They are included as free entries — `$0` rates, unbounded `req/mo` — and, since their allowance is meaningless at zero cost, they add nothing to the plan's summed credits. Their docs-only `… Free` suffix is stripped by that generic rule (the marker is systematic, never a per-model alias), so a variant merges onto the model's one row instead of appearing twice.
 - `$/1K` and `req/$` are plan-relative: they divide by the plan's own price, so a cheaper subscription can post a lower per-request cost while buying fewer requests. Compare `req/mo` for volume and `$/1K` for the effective rate.
 - Values reflect the docs at fetch time; active deals are picked up automatically.
 

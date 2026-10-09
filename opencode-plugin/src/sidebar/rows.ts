@@ -81,7 +81,7 @@ export interface ModelMeta {
 	/** Cheapest plan that serves the model, from the generated catalog. */
 	minPlan?: string | null;
 	allowance?: number;
-	/** Unbounded on the CommandCode side: `allowance` is 0 by convention. */
+	/** Unbounded on the CommandCode side: read `free`, not `allowance`, which may still carry a catalog figure. */
 	free?: boolean;
 	rates?: {
 		input: number;
@@ -161,9 +161,11 @@ export function money(value: number): string {
 
 /**
  * A monthly allowance as it appears on the panel. A free/unbounded model has no
- * budget to divide — mpc reports `free: true` and allowance 0 — so it reads `∞`
- * rather than the misleading `$0/mo` (0 is not a budget). Both sides call this,
- * so a free CommandCode model and a free OpenCode Go one render alike.
+ * budget to divide — mpc reports `free: true` — so it reads `∞` rather than the
+ * misleading `$0/mo` (0 is not a budget). `free` decides, so this holds whether
+ * the allowance is 0 (OpenCode Go's free rows) or a catalog figure
+ * (CommandCode's). Both sides call this, so a free CommandCode model and a free
+ * OpenCode Go one render alike.
  */
 export function allowanceLabel(limit: number, free?: boolean): string {
 	return free === true || limit <= 0 ? "∞" : `${money(limit)}/mo`;
