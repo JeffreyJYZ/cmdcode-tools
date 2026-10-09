@@ -303,7 +303,7 @@ git commit -m "feat(website): render READMEs as docs with sidebar and TOC"
 
 - [ ] **Step 2: Compose the landing page**
 
-`page.tsx`: a hero (repo name + one-line description), an `Install` section with `CopyBlock`s (`brew install JeffreyJYZ/tap/cmduse`, `cargo install cmd-usage`, `bun add -g @jeffreyjyz/mpc`), a grid of `ProjectCard`s, and links to `/docs`, `/guides`, `/compare`, `/changelog`.
+`page.tsx`: a hero (repo name + one-line description), an `Install` section with a single `CopyBlock` (`brew install JeffreyJYZ/tap/cmduse`) plus a line pointing at the per-package install commands on the docs pages, a grid of `ProjectCard`s, and links to `/docs`, `/guides`, `/compare`, `/changelog`.
 
 - [ ] **Step 3: Verify + commit**
 

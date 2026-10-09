@@ -11,11 +11,7 @@ export const metadata: Metadata = {
 		"Personal tooling for opencode and Command Code — usage dashboards, model comparison, and plugins, kept in one repo.",
 };
 
-const INSTALL_COMMANDS = [
-	"brew install JeffreyJYZ/tap/cmduse",
-	"cargo install cmd-usage",
-	"bun add -g @jeffreyjyz/mpc",
-] as const;
+const INSTALL_COMMAND = "brew install JeffreyJYZ/tap/cmduse";
 
 const BROWSE_LINKS = [
 	{
@@ -58,13 +54,12 @@ export default function Home() {
 			<section>
 				<h2 className={SECTION_LABEL}>Install</h2>
 				<div className="mt-5 flex flex-col gap-3 sm:items-start">
-					{INSTALL_COMMANDS.map((command) => (
-						<CopyBlock key={command} value={command} />
-					))}
+					<CopyBlock value={INSTALL_COMMAND} />
 				</div>
 				<p className="ink-muted mono mt-4 text-xs">
-					cargo binstall cmd-usage also works (prebuilt from the
-					release).
+					Everything else installs per package — the mpc and reqshape
+					CLIs and the opencode plugins each have their command on
+					their docs page.
 				</p>
 			</section>
 
