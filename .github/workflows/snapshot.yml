@@ -6,7 +6,8 @@ name: Snapshot mpc data
 # /compare page fetches the committed snapshot in the browser.
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    # Off the top of the hour on purpose: the scheduler piles up there and can drop runs.
+    - cron: "7,17,27,37,47,57 * * * *"
   workflow_dispatch:
 
 permissions:
