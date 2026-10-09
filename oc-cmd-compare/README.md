@@ -2,7 +2,7 @@
 
 Compare what the same model actually costs you on OpenCode Go vs CommandCode, using one fixed per-request workload.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/mpc?style=flat-square)](https://www.npmjs.com/package/mpc) [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/@jeffreyjyz/mpc?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/mpc) [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
 ## What it is
 
@@ -13,7 +13,7 @@ Both providers sell the same shape of thing: a monthly subscription that grants 
 Install the published CLI globally:
 
 ```sh
-bun add -g mpc
+bun add -g @jeffreyjyz/mpc
 ```
 
 Or run it from a checkout — Bun runs the TypeScript entry directly, or link the binary:
@@ -266,5 +266,5 @@ bun run check     # biome format + lint (write)
 ## Links
 
 - [Source (GitHub)](https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/oc-cmd-compare)
-- [npm: mpc](https://www.npmjs.com/package/mpc)
+- [npm: @jeffreyjyz/mpc](https://www.npmjs.com/package/@jeffreyjyz/mpc)
 - [MIT license](LICENSE)

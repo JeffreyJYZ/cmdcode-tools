@@ -94,7 +94,7 @@ for (const p of projects) {
 
 - [ ] **Step 2: Create the manifest and run the test — it must fail**
 
-Create `website/src/content/projects.ts` with the six projects in this order: `cmduse` (kind `crate`, repoPath `cmduse`, links: github `https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/cmduse`, crates `https://crates.io/crates/cmd-usage`), `mpc` (`npm-cli`, `oc-cmd-compare`, npm `https://www.npmjs.com/package/mpc`), `reqshape` (`npm-cli`, `reqshape`, npm omitted — not published), `opencode-context` (`npm-plugin`, `opencode-context`, npm `https://www.npmjs.com/package/@jeffreyjyz/opencode-context`), `opencode-shell-rc` (`npm-plugin`, `opencode-shell-rc`, npm `…/@jeffreyjyz/opencode-shell-rc`), `opencode-session-dir` (`npm-plugin`, `opencode-session-dir`, npm `…/@jeffreyjyz/opencode-session-dir`). Give each a one-line `tagline` (reuse the README's opening line) and `order` 0..5. `source` for every project: `https://github.com/JeffreyJYZ/cmdcode-tools`.
+Create `website/src/content/projects.ts` with the six projects in this order: `cmduse` (kind `crate`, repoPath `cmduse`, links: github `https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/cmduse`, crates `https://crates.io/crates/cmd-usage`), `mpc` (`npm-cli`, `oc-cmd-compare`, npm `https://www.npmjs.com/package/@jeffreyjyz/mpc`), `reqshape` (`npm-cli`, `reqshape`, npm `https://www.npmjs.com/package/@jeffreyjyz/reqshape`), `opencode-context` (`npm-plugin`, `opencode-context`, npm `https://www.npmjs.com/package/@jeffreyjyz/opencode-context`), `opencode-shell-rc` (`npm-plugin`, `opencode-shell-rc`, npm `…/@jeffreyjyz/opencode-shell-rc`), `opencode-session-dir` (`npm-plugin`, `opencode-session-dir`, npm `…/@jeffreyjyz/opencode-session-dir`). Give each a one-line `tagline` (reuse the README's opening line) and `order` 0..5. `source` for every project: `https://github.com/JeffreyJYZ/cmdcode-tools`.
 
 Run: `cd website && bun install && bun test test/readmes.test.ts` Expected: FAIL — existing READMEs lack `## What it is` / `## Links`.
 
@@ -303,7 +303,7 @@ git commit -m "feat(website): render READMEs as docs with sidebar and TOC"
 
 - [ ] **Step 2: Compose the landing page**
 
-`page.tsx`: a hero (repo name + one-line description), an `Install` section with `CopyBlock`s (`brew install JeffreyJYZ/tap/cmduse`, `cargo binstall cmd-usage`, `bun add -g mpc`), a grid of `ProjectCard`s, and links to `/docs`, `/guides`, `/compare`, `/changelog`.
+`page.tsx`: a hero (repo name + one-line description), an `Install` section with `CopyBlock`s (`brew install JeffreyJYZ/tap/cmduse`, `cargo install cmd-usage`, `bun add -g @jeffreyjyz/mpc`), a grid of `ProjectCard`s, and links to `/docs`, `/guides`, `/compare`, `/changelog`.
 
 - [ ] **Step 3: Verify + commit**
 

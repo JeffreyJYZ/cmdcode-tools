@@ -1,11 +1,18 @@
 {
-	"name": "mpc",
+	"name": "@jeffreyjyz/mpc",
 	"version": "0.1.0",
 	"description": "Compare model pricing across opencode Go and Command Code plans",
 	"license": "MIT",
 	"type": "module",
 	"bin": {
 		"mpc": "src/index.ts"
+	},
+	"files": [
+		"src",
+		"LICENSE"
+	],
+	"publishConfig": {
+		"access": "public"
 	},
 	"scripts": {
 		"start": "bun run src/index.ts",

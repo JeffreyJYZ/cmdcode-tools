@@ -6,7 +6,7 @@ import { ProjectCard } from "@/ui/components/project-card";
 const INSTALL_COMMANDS = [
 	"brew install JeffreyJYZ/tap/cmduse",
 	"cargo install cmd-usage",
-	"bun add -g mpc",
+	"bun add -g @jeffreyjyz/mpc",
 ] as const;
 
 const BROWSE_LINKS = [

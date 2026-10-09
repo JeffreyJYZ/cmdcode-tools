@@ -2,7 +2,7 @@
 
 Measure the shape of your requests from opencode's own history, then price that shape against any model.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml) [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/@jeffreyjyz/reqshape?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/reqshape) [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
 ## What it is
 
@@ -14,10 +14,17 @@ A **req** is one model call — the same unit the opencode sidebar counts: a sin
 
 ## Install
 
-Not published to npm — run it from a checkout and link the binary:
+Install the published CLI globally:
+
+```sh
+bun add -g @jeffreyjyz/reqshape
+```
+
+Or run it from a checkout — Bun runs the TypeScript entry directly, or link the binary:
 
 ```sh
 bun install
+bun run src/index.ts --help
 bun link
 ```
 
@@ -139,4 +146,5 @@ Runs take about 20 seconds: both `mpc` and `cmduse` go to the network.
 ## Links
 
 - [Source (GitHub)](https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/reqshape)
+- [npm: @jeffreyjyz/reqshape](https://www.npmjs.com/package/@jeffreyjyz/reqshape)
 - [MIT license](LICENSE)

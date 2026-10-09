@@ -40,7 +40,7 @@ export const projects: Project[] = [
 		repoPath: "oc-cmd-compare",
 		links: {
 			github: githubTree("oc-cmd-compare"),
-			npm: "https://www.npmjs.com/package/mpc",
+			npm: "https://www.npmjs.com/package/@jeffreyjyz/mpc",
 			source: REPO,
 		},
 		order: 1,
@@ -54,6 +54,7 @@ export const projects: Project[] = [
 		repoPath: "reqshape",
 		links: {
 			github: githubTree("reqshape"),
+			npm: "https://www.npmjs.com/package/@jeffreyjyz/reqshape",
 			source: REPO,
 		},
 		order: 2,
