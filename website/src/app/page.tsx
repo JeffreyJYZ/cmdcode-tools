@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { projects } from "@/content/projects";
+import { SITE_NAME } from "@/lib/consts";
 import { CopyBlock } from "@/ui/components/copy-block";
 import { ProjectCard } from "@/ui/components/project-card";
+
+export const metadata: Metadata = {
+	title: { absolute: SITE_NAME },
+	description:
+		"Personal tooling for opencode and Command Code — usage dashboards, model comparison, and plugins, kept in one repo.",
+};
 
 const INSTALL_COMMANDS = [
 	"brew install JeffreyJYZ/tap/cmduse",
@@ -40,7 +48,7 @@ export default function Home() {
 	return (
 		<div className="flex flex-col gap-16">
 			<section>
-				<h1>cmdcode-tools</h1>
+				<h1>{SITE_NAME}</h1>
 				<p className="ink-muted mt-4 max-w-[var(--prose-max)] text-lg">
 					Personal tooling for opencode and Command Code — usage
 					dashboards, model comparison, and plugins, kept in one repo.

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath, URL } from "node:url";
 import { type Project, projects } from "@/content/projects";
+import { REPO_URL } from "@/lib/consts";
 import {
 	deriveDescription,
 	deriveTitle,
@@ -18,7 +19,6 @@ export type ProjectDoc = {
 	toc: TocEntry[];
 };
 
-export const REPO_URL = "https://github.com/JeffreyJYZ/cmdcode-tools";
 export const DOCS_REF = "main";
 
 const H1_RE = /^# .+$/;

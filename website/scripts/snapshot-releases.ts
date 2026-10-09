@@ -21,6 +21,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { RELEASES_URL } from "@/lib/consts";
 import type {
 	CrateRelease,
 	GitHubRelease,
@@ -29,7 +30,7 @@ import type {
 } from "@/lib/releases";
 
 const GITHUB_REPO = "JeffreyJYZ/cmdcode-tools";
-const GITHUB_API = `https://api.github.com/repos/${GITHUB_REPO}/releases`;
+const GITHUB_API = RELEASES_URL;
 const REGISTRY = "https://registry.npmjs.org";
 const CRATES_API = "https://crates.io/api/v1/crates";
 

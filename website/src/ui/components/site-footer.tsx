@@ -1,6 +1,16 @@
 import { projects } from "@/content/projects";
+import {
+	NPM_ORG_URL,
+	RELEASES_PAGE_URL,
+	REPO_URL,
+	SITE_NAME,
+} from "@/lib/consts";
 
-const SOURCE_URL = "https://github.com/JeffreyJYZ/cmdcode-tools";
+const ELSEWHERE_LINKS = [
+	{ href: REPO_URL, label: "GitHub" },
+	{ href: NPM_ORG_URL, label: "npm" },
+	{ href: RELEASES_PAGE_URL, label: "Releases" },
+] as const;
 
 export function SiteFooter() {
 	return (
@@ -23,16 +33,24 @@ export function SiteFooter() {
 			</nav>
 			<div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
 				<p className="ink-muted text-xs uppercase tracking-widest">
-					Documentation for the cmdcode-tools packages
+					Documentation for the {SITE_NAME} packages
 				</p>
-				<a
-					href={SOURCE_URL}
-					target="_blank"
-					rel="noreferrer"
-					className="ink-muted mono text-xs no-underline"
+				<nav
+					aria-label="Elsewhere"
+					className="flex flex-wrap gap-x-6 gap-y-2"
 				>
-					github.com/JeffreyJYZ/cmdcode-tools
-				</a>
+					{ELSEWHERE_LINKS.map((link) => (
+						<a
+							key={link.label}
+							href={link.href}
+							target="_blank"
+							rel="noreferrer"
+							className="ink-muted mono text-xs no-underline"
+						>
+							{link.label}
+						</a>
+					))}
+				</nav>
 			</div>
 		</footer>
 	);

@@ -1,18 +1,11 @@
 import Link from "next/link";
-
-const NAV_LINKS = [
-	{ href: "/", label: "Home" },
-	{ href: "/docs", label: "Docs" },
-	{ href: "/guides", label: "Guides" },
-	{ href: "/compare", label: "Compare" },
-	{ href: "/changelog", label: "Changelog" },
-] as const;
+import { NAV_LINKS, SITE_NAME } from "@/lib/consts";
 
 export function SiteNav() {
 	return (
 		<header className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-b border-b-[var(--hairline)] py-6">
 			<Link href="/" className="ink-fg text-sm font-bold no-underline">
-				cmdcode-tools
+				{SITE_NAME}
 			</Link>
 			<nav
 				aria-label="Primary"

@@ -9,13 +9,30 @@ import "@/ui/styles/headings.css";
 import "@/ui/styles/links.css";
 import "./globals.css";
 import "@/ui/styles/prose.css";
+import { SITE_NAME, SITE_URL } from "@/lib/consts";
 import { SiteFooter } from "@/ui/components/site-footer";
 import { SiteNav } from "@/ui/components/site-nav";
 import { sans } from "@/ui/fonts";
 
+const DESCRIPTION =
+	"Documentation for the cmdtools packages — Command Code usage dashboards, model comparison, and opencode plugins.";
+
 export const metadata: Metadata = {
-	title: "cmdcode-tools",
-	description: "Documentation for the cmdcode-tools packages",
+	// Absolute URLs for OG/canonical tags; every path in this metadata is
+	// resolved against the deployment origin.
+	metadataBase: new URL(SITE_URL),
+	title: {
+		default: SITE_NAME,
+		template: `%s · ${SITE_NAME}`,
+	},
+	description: DESCRIPTION,
+	openGraph: {
+		type: "website",
+		siteName: SITE_NAME,
+	},
+	twitter: {
+		card: "summary_large_image",
+	},
 };
 
 export default function RootLayout({

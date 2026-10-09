@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SITE_NAME } from "@/lib/consts";
 import { listGuides } from "@/lib/guides";
 
 export const metadata: Metadata = {
 	title: "Guides",
-	description:
-		"Task-oriented walkthroughs for wiring the cmdcode-tools together.",
+	description: `Task-oriented walkthroughs for wiring the ${SITE_NAME} together.`,
 };
 
 export default function GuidesIndex() {

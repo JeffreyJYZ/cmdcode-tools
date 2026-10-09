@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import snapshotJson from "@/data/releases.json";
+import { SITE_NAME } from "@/lib/consts";
 import type { ReleasesSnapshot } from "@/lib/releases";
 import { ReleaseTimeline } from "@/ui/components/release-timeline";
 
 export const metadata: Metadata = {
 	title: "Changelog",
-	description:
-		"Every cmdcode-tools release, from the GitHub Releases API, npm and crates.io — captured as a build-time snapshot.",
+	description: `Every ${SITE_NAME} release, from the GitHub Releases API, npm and crates.io — captured as a build-time snapshot.`,
 };
 
 // The snapshot is committed and regenerated with `bun snapshot:releases`; the

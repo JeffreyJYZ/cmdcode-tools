@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { projects } from "@/content/projects";
+import { SITE_NAME } from "@/lib/consts";
 
 export const metadata: Metadata = {
 	title: "Docs",
-	description: "READMEs for every cmdcode-tools package, rendered as docs.",
+	description: `READMEs for every ${SITE_NAME} package, rendered as docs.`,
 };
 
 export default function DocsIndex() {

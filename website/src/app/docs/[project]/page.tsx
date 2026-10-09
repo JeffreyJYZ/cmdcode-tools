@@ -20,7 +20,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
 	const project = projectBySlug((await params).project);
 	if (!project) return {};
-	return { title: project.name, description: project.tagline };
+	const doc = await loadProjectDoc(project);
+	return { title: doc.title, description: doc.description };
 }
 
 export default async function ProjectDocPage({
