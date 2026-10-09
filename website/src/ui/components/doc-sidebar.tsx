@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Project } from "@/content/projects";
 import type { TocEntry } from "@/lib/toc";
+import { Search } from "@/ui/components/search";
 
 /**
  * Scrollspy: observe every rendered heading id and mark the topmost one that is
@@ -77,6 +78,7 @@ export function DocSidebar({
 			aria-label="Docs"
 			className="w-full shrink-0 lg:sticky lg:top-8 lg:h-fit lg:w-64"
 		>
+			<Search />
 			<ul className="flex flex-col gap-1">
 				{projects.map((project) => {
 					const isActive = project.slug === activeSlug;

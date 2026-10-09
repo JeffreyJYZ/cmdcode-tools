@@ -9,6 +9,7 @@ import "@/ui/styles/headings.css";
 import "@/ui/styles/links.css";
 import "./globals.css";
 import "@/ui/styles/prose.css";
+import "@/ui/styles/search.css";
 import { SITE_NAME, SITE_URL } from "@/lib/consts";
 import { SiteFooter } from "@/ui/components/site-footer";
 import { SiteNav } from "@/ui/components/site-nav";

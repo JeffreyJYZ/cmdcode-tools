@@ -1,0 +1,27 @@
+/*
+ * Pagefind search in the docs sidebar. Pagefind ships its own bundle CSS
+ * (loaded at runtime from /pagefind/pagefind-ui.css), which themes itself
+ * through `--pagefind-ui-*` variables set on `:root`. Declaring them on
+ * `.doc-search` — a nearer ancestor — wins over those `:root` defaults and
+ * maps the widget onto the site's tokens, so both colour schemes ship.
+ */
+.doc-search {
+	--pagefind-ui-primary: var(--fg);
+	--pagefind-ui-text: var(--fg);
+	--pagefind-ui-background: var(--surface);
+	--pagefind-ui-border: var(--hairline);
+	--pagefind-ui-tag: var(--surface);
+	--pagefind-ui-font: var(--font-sans);
+	--pagefind-ui-border-radius: 0;
+	--pagefind-ui-border-width: 1px;
+	/* The default UI is sized for a page width; scale it down for a 16rem rail. */
+	--pagefind-ui-scale: 0.7;
+}
+
+.doc-search .pagefind-ui__search-input {
+	font-weight: 500;
+}
+
+.doc-search .pagefind-ui__result-title a {
+	color: var(--fg);
+}

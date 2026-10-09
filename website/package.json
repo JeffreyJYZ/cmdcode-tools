@@ -3,6 +3,7 @@
 	"scripts": {
 		"dev": "next dev",
 		"build": "next build",
+		"postbuild": "pagefind --site out",
 		"check": "biome check",
 		"snapshot:mpc": "bun scripts/snapshot-mpc.ts",
 		"snapshot:releases": "bun scripts/snapshot-releases.ts",
@@ -32,6 +33,7 @@
 	},
 	"devDependencies": {
 		"@tailwindcss/postcss": "^4.3.3",
-		"@types/bun": "^1.4.2"
+		"@types/bun": "^1.4.2",
+		"pagefind": "^1.5.2"
 	}
 }

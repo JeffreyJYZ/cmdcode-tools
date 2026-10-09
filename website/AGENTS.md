@@ -12,6 +12,7 @@
 - **MDX pipeline lives in `src/lib/mdx-options.ts`** — import it in every MDX render; never re-declare the remark/rehype lists, or docs and guides drift apart silently.
 - **Resolve a content *directory* from the module path** — `new URL(dir, import.meta.url)` makes Turbopack const-fold and bundle the directory as a module (build fails); use `join(fileURLToPath(import.meta.url), …)`. `new URL` is correct for a single file (`src/lib/load.ts`).
 - **Regenerate `src/data/*` with `bun snapshot:mpc` / `bun snapshot:releases`** — never hand-edit snapshot output.
+- **Search = Pagefind, indexed in `postbuild`** (`scripts` `build` → `next build`, `postbuild` → `pagefind --site out`; Bun runs `post` lifecycle scripts, verified). Index lands in `out/pagefind/`; `out/` is gitignored so it never enters the repo. `Search` (`src/ui/components/search.tsx`) loads the Default UI (`window.PagefindUI`) as a runtime `<script>`/`<link>` from `/pagefind/` (a static import would fail — files exist only after build), gated on `fetch("/pagefind/pagefind-entry.json")`; absent (dev / pre-build) → renders `hidden`, no error. Theme via `--pagefind-ui-*` vars declared on `.doc-search` in `src/ui/styles/search.css` (nearer ancestor beats Pagefind's `:root` defaults; maps to tokens, both schemes). `processResult` strips `.html` from result URLs (Pagefind indexes exported files; routes are extensionless).
 
 ## Layout
 
