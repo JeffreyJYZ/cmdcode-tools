@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // Links the working-copy dev twins onto PATH — never the installed names.
 //
-//   bun run dev:link                 # link into ${XDG_BIN_HOME:-~/.local/bin}
+//   bun run dev:link                 # link into ~/dev/bin
 //   bun run dev:link -- --dir <dir>  # override the link directory
 //
 // Builds the Rust bins (`cargo build -p cmd-usage`, debug), then symlinks ONLY
@@ -34,13 +34,11 @@ const DEV_COMMANDS: DevCommand[] = [
 	{ name: "reqshapedev", target: join(ROOT, "reqshape/src/index.ts") },
 ]
 
-/** `--dir <path>` override, else `${XDG_BIN_HOME:-$HOME/.local/bin}` with `~` expanded. */
+/** `--dir <path>` override, else `$HOME/dev/bin` with `~` expanded. */
 function linkDir(argv: string[]): string {
 	const i = argv.indexOf("--dir")
 	if (i !== -1 && argv[i + 1]) return expandTilde(argv[i + 1])
-	const home = process.env.XDG_BIN_HOME
-	if (home) return expandTilde(home)
-	return join(homedir(), ".local", "bin")
+	return join(homedir(), "dev", "bin")
 }
 
 function expandTilde(path: string): string {
