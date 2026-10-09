@@ -360,7 +360,7 @@ git commit -m "feat(website): guides section"
 
 - [ ] **Step 2: Implement the snapshot script and transform**
 
-`snapshot-mpc.ts` resolves the binary (`MPC_BIN` env → `mpc` → `~/.bun/bin/mpc` → `/opt/homebrew/bin/mpc`), runs `mpc --json --shape off` once per supported CommandCode plan (`go`, `pro`, `max`, `goat`), and writes `src/data/mpc.json` as `{ generatedAt, plans, byPlan }`. `mpc.ts` exposes `compareRows` + types. Add `"snapshot:mpc": "bun scripts/snapshot-mpc.ts"` to `package.json`. Run it once to produce the committed snapshot (if no binary is present locally, seed the file from a captured `mpc --json --shape off` and note it).
+`snapshot-mpc.ts` resolves the binary (`MPC_BIN` env → `mpc` → `~/.bun/bin/mpc` → `/opt/homebrew/bin/mpc`), runs `mpc --json --shape off` once per supported CommandCode plan (the real ids `--cc-plan` accepts: `go`, `goat`, `pro`, `max10`, `max20` — there is **no** `max`), and writes `src/data/mpc.json` as `{ generatedAt, plans, byPlan }`. `mpc.ts` exposes `compareRows` + types. Add `"snapshot:mpc": "bun scripts/snapshot-mpc.ts"` to `package.json`. Run it once to produce the committed snapshot (if no binary is present locally, seed the file from a captured `mpc --json --shape off` and note it).
 
 - [ ] **Step 3: Build the table and page**
 
