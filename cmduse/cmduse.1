@@ -1,6 +1,8 @@
-.TH CMDUSE 1 "2026-10" "cmd-usage 0.7.7" "User Commands"
+.TH CMDUSE 1 "2026-10" "cmd-usage 0.7.8" "User Commands"
 .SH NAME
 cmduse \- live Command Code (commandcode.ai) usage dashboard and reporter
+.br
+ocuse \- OpenCode Go/Zen usage from local opencode data
 .SH SYNOPSIS
 .B cmduse
 [\fIOPTIONS\fR]
@@ -39,6 +41,9 @@ cmduse \- live Command Code (commandcode.ai) usage dashboard and reporter
 .B cmduse \-V
 .br
 .B cmduse \-h
+.br
+.B ocuse
+[\fIOPTIONS\fR]
 .SH DESCRIPTION
 .B cmduse
 is a terminal client for the Command Code (commandcode.ai) metered AI API.  It
@@ -46,7 +51,12 @@ fetches the account's plan, remaining monthly credits, and the 5\-hour and
 weekly rolling spending windows, and renders them as a live in\-place
 dashboard.  It also produces account\-wide usage reports (all harnesses, via
 the usage API), offline reports from local CLI logs, a template\-driven
-statusline for prompts, and a listing of live models.
+statusline for prompts, and a listing of live models.  The same crate also
+ships a second binary,
+.BR ocuse ,
+which tracks OpenCode Go and OpenCode Zen from local data instead of the
+Command Code API; it shares this manual's presentation and is documented under
+.BR OCUSE .
 .PP
 Authentication is read from
 .IR ~/.commandcode/auth.json ,
@@ -554,6 +564,176 @@ midnight boundary splits across two day rows.
 If the API returns a plan id not in the local plan table, the dashboard labels
 it "Free" with no monthly cap and prints a one\-time warning to stderr; update
 \fIcore/plans.json\fR to teach it the new plan.
+.SH OCUSE
+The same crate also ships a second binary,
+.BR ocuse ,
+which tracks OpenCode Go (the Go subscription) and OpenCode Zen
+(pay\-as\-you\-go) with the same CLI shape as \fBcmduse\fR.  OpenCode publishes
+no usage API (its one route,
+.IR /zen/go/v1/usage ,
+answers an entitlement error for a key without a Go subscription), so
+.B ocuse
+reports what actually ran on this machine from opencode's own store, priced by
+opencode itself, against the token rates and per\-model limits the OpenCode
+docs publish (the generated catalogue
+.IR core/zen.json ).
+.PP
+Go meters per model: each model has a monthly dollar limit, and its 5\-hour,
+weekly, and monthly windows are fixed shares of that limit (20%, 50%, and
+100%).  Go ships as two plans that share one token price list but grant
+different per\-model limits: Go and Go Plus.  Nothing local records which plan
+the account is on, so the plan is explicit (\fB\-\-plan\fR) and defaults to
+.BR go .
+.SS ocuse synopsis
+.B ocuse
+[\fIOPTIONS\fR]
+.br
+.B ocuse \-1
+[\fB\-\-json\fR] [\fIOPTIONS\fR]
+.br
+.B ocuse model
+[\fIid\fR] [\fIOPTIONS\fR]
+.br
+.B ocuse daily
+[\fIOPTIONS\fR]
+.br
+.B ocuse hourly
+[\fIOPTIONS\fR]
+.br
+.B ocuse session
+.br
+.B ocuse plans
+.br
+.B ocuse statusline
+[\fIOPTIONS\fR]
+.br
+.B ocuse mcp
+.br
+.B ocuse \-V
+.br
+.B ocuse \-h
+.SS ocuse commands
+.TP
+.B (no command)
+Run the live dashboard in watch mode: a frame redrawn in place every 10
+seconds (colour, severity gauges, and the spend\-burst sparkline) until
+Ctrl\-C.  The frame and countdown reuse \fBcmduse\fR's in\-place redraw
+contract, so a shrinking frame never scrolls.
+.TP
+.B \-1, \-\-once
+Fetch once, print, exit.  With \fB\-\-json\fR it prints the JSON projection
+instead of the text dashboard.
+.TP
+.B \-\-json
+Machine\-readable projection (one object): \fIsource\fR, \fIgeneratedAt\fR,
+\fIperiodStart\fR, \fIperiodInferred\fR, \fItotals\fR (each of month, fiveHour,
+weekly carrying cost, requests, and tokens), and the per\-model breakdown
+\fImodels\fR.  A bare \fB\-\-json\fR also leaves the watch loop, so it prints
+and exits rather than redrawing.
+.TP
+.B model [\fIid\fR]
+Local usage grouped by model.  With no \fIid\fR, the full model table; with an
+\fIid\fR, that model's limit, its month/5\-hour/weekly spend, and its share of
+period spend.  An unused model prints that it has no usage in the period.
+.TP
+.B daily
+Spend per day (oldest first) over the read window (\fB\-\-days\fR), bucketed in
+the display timezone (\fB\-\-tz\fR).
+.TP
+.B hourly
+Spend per hour, same window and bucketing as \fBdaily\fR.
+.TP
+.B session
+Spend per session, newest first (top 20).
+.TP
+.B plans
+Print the Go/Zen catalogue: both Go plans (label, price, and each model's
+monthly limit) beside the shared token rates, then a line for the Zen
+pay\-as\-you\-go models.  Needs no database; works offline.
+.TP
+.B statusline
+Print one compact line: month spend, 5\-hour spend, and the top model.
+.TP
+.B mcp
+Run an MCP stdio server; see \fBocuse mcp server\fR below.
+.TP
+.B \-V, \-\-version
+Print \fBocuse <version>\fR and exit 0.
+.TP
+.B \-h, \-\-help
+Print usage and exit 0.
+.SS ocuse options
+.TP
+.B \-\-db \fIpath\fR
+opencode store path.  Default \fBOPENCODE_DB\fR, else
+.IR ~/.local/share/opencode/opencode.db .
+Opened read\-only, so a running opencode is unaffected; a missing or
+unreadable store exits 1 with a hint.
+.TP
+.B \-\-plan \fIid\fR
+Which Go plan to measure against: \fBgo\fR (default) or \fBgo-plus\fR.  There
+is deliberately no auto\-detection: there is no usage API, and the local store
+records no subscription, so the plan must be given.  An unknown id exits 2 and
+lists the known ids.
+.TP
+.B \-\-days \fIn\fR
+Days of history to read (default 120).  Bounds the \fBdaily\fR/\fBhourly\fR
+window and the range the MCP tools scan.
+.TP
+.B \-\-window \fIw\fR
+Reporting window for the dashboard and statusline: \fBmonth\fR (default, the
+calendar month in UTC), \fBall\fR, or \fI<n>d\fR.  Anything else exits 2.
+.TP
+.B \-\-period-start \fIYYYY\-MM\-DD\fR
+Pin the period start (midnight UTC) instead of deriving it from
+\fB\-\-window\fR.
+.TP
+.B \-\-infer\-anniversary
+Infer the period start from the first Go request ever seen, instead of the
+calendar month.  Opt\-in, because sparse history infers badly; ignored when
+\fB\-\-period-start\fR is given.  The JSON's \fIperiodInferred\fR reports which
+was used.
+.TP
+.B \-\-rows \fIn\fR
+Table rows to print (default 15).
+.TP
+.B \-\-plain
+No colour and no gauges.  Colour is also dropped automatically on a
+non\-terminal stdout or when \fBNO_COLOR\fR is set.
+.TP
+.B \-\-tz \fI\(+-HH:MM\fR
+Display timezone for the \fBdaily\fR/\fBhourly\fR buckets.  Accepts
+.IR +05:30 ", " -08:00 ", " +0530 .
+Anything else exits 2.
+.SS ocuse data and windows
+The header's window lines and each model's table row compare 5\-hour and weekly
+spend against the model's monthly limit times 20% and 50% (the docs' shares).
+The monthly period has no local record, so it defaults to the calendar month;
+\fB\-\-period\-start\fR pins the real anniversary and
+\fB\-\-infer\-anniversary\fR guesses it from history.  A model whose spend
+crosses its limit is flagged \fILIMIT EXCEEDED\fR.  Limits and rates come from
+.IR core/zen.json ,
+regenerated from OpenCode's own docs sources with
+.BR "bun scripts/extract\-zen.ts" .
+.SS ocuse mcp server
+\fBocuse mcp\fR runs an MCP stdio server (newline\-delimited JSON\-RPC on
+stdin/stdout, diagnostics on stderr) exposing six tools \( \fIusage\fR,
+\fIplans\fR, \fIdaily\fR, \fIhourly\fR, \fIsession\fR, \fImodel\fR \) whose
+output matches the corresponding subcommands.  Tool execution errors are
+returned as results with \fIisError\fR true, never as JSON\-RPC errors.  stdout
+carries protocol traffic only.
+.SS ocuse files
+.TP
+.I ~/.local/share/opencode/opencode.db
+Read\-only; opencode's own message store (v1 \fBmessage\fR, or v2
+\fBsession_message\fR after the migration), the only per\-model cost source.
+.TP
+.I $OPENCODE_DB
+Overrides the store path (equivalently, \fB\-\-db\fR).
 .SH SEE ALSO
 .BR cmd (1),
 the Command Code CLI for login and authentication.
+.br
+.BR ocuse ,
+this crate's OpenCode Go/Zen twin, documented above under
+.BR OCUSE .

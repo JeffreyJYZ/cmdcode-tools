@@ -1,6 +1,6 @@
 {
 	"name": "@jeffreyjyz/mpc",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "Compare model pricing across opencode Go and Command Code plans",
 	"license": "MIT",
 	"type": "module",
