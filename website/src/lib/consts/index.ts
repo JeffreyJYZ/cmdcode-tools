@@ -27,7 +27,7 @@ export const RELEASES_PAGE_URL = `${REPO_URL}/releases`;
 /** npm organisation that owns every scoped package in this repo. */
 export const NPM_ORG_URL = "https://www.npmjs.com/org/jeffreyjyz";
 
-/** Primary navigation, shared by the header and the sitemap. */
+/** Primary navigation, shared by the header and the footer. */
 export const NAV_LINKS = [
 	{ href: "/", label: "Home" },
 	{ href: "/docs", label: "Docs" },

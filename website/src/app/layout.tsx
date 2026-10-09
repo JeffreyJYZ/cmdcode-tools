@@ -14,8 +14,7 @@ import { SiteFooter } from "@/ui/components/site-footer";
 import { SiteNav } from "@/ui/components/site-nav";
 import { sans } from "@/ui/fonts";
 
-const DESCRIPTION =
-	"Documentation for the cmdtools packages — Command Code usage dashboards, model comparison, and opencode plugins.";
+const DESCRIPTION = `Documentation for the ${SITE_NAME} packages — Command Code usage dashboards, model comparison, and opencode plugins.`;
 
 export const metadata: Metadata = {
 	// Absolute URLs for OG/canonical tags; every path in this metadata is
@@ -26,12 +25,35 @@ export const metadata: Metadata = {
 		template: `%s · ${SITE_NAME}`,
 	},
 	description: DESCRIPTION,
+	// A committed PNG, not the `opengraph-image.tsx` convention: under
+	// `output: "export"` that convention emits an extensionless file which a
+	// static host serves as `application/octet-stream`, breaking social cards
+	// (vercel/next.js#82177). A real asset keeps the `image/png` type.
 	openGraph: {
 		type: "website",
 		siteName: SITE_NAME,
+		description: DESCRIPTION,
+		images: [
+			{
+				url: "/media/og.png",
+				width: 1200,
+				height: 630,
+				type: "image/png",
+				alt: `${SITE_NAME} — docs for the cmdcode-tools packages`,
+			},
+		],
 	},
 	twitter: {
 		card: "summary_large_image",
+		description: DESCRIPTION,
+		images: [
+			{
+				url: "/media/og.png",
+				width: 1200,
+				height: 630,
+				alt: `${SITE_NAME} — docs for the cmdcode-tools packages`,
+			},
+		],
 	},
 };
 
