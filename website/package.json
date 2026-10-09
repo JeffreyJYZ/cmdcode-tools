@@ -5,6 +5,7 @@
 		"build": "next build",
 		"check": "biome check",
 		"snapshot:mpc": "bun scripts/snapshot-mpc.ts",
+		"snapshot:releases": "bun scripts/snapshot-releases.ts",
 		"format": "biome format --write",
 		"lint": "biome lint",
 		"typecheck": "tsc --noEmit"
