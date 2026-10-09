@@ -23,6 +23,12 @@ import {
 	rowWin,
 	windowLabel,
 } from "@/lib/mpc";
+import {
+	type MpcCandidate,
+	type MpcRunner,
+	type RawRun,
+	selectSnapshot,
+} from "../scripts/snapshot-mpc";
 
 /** A priced, bounded side; override any field per test. */
 function side(overrides: Partial<MpcSide> = {}): MpcSide {
@@ -51,6 +57,53 @@ function side(overrides: Partial<MpcSide> = {}): MpcSide {
 	};
 }
 
+/** A raw mpc `--json` payload for the fall-through tests (no network). */
+function rawRun(ccKey: string, ocKey: string): RawRun {
+	return {
+		plans: {
+			"oc-go": {
+				id: ocKey,
+				label: ocKey === "go" ? "Go" : "Go Plus",
+				price: ocKey === "go" ? 10 : 40,
+				credits: ocKey === "go" ? 100 : 200,
+				fiveHour: null,
+				weekly: null,
+			},
+			cc: {
+				id: ccKey,
+				label: ccKey,
+				price: 10,
+				credits: 70,
+				fiveHour: 14,
+				weekly: 35,
+			},
+		},
+		rows: [{ key: "gamma", name: "Gamma", oc: side(), cc: side() }],
+		tally: {
+			headToHead: 1,
+			ocWins: 0,
+			ccWins: 1,
+			ties: 0,
+			ocOnly: 0,
+			ccOnly: 0,
+		},
+	};
+}
+
+const ROWS: MpcSnapshot["byPlan"][string][string]["rows"] = [
+	// Unpriced on the CommandCode side: the whole `cc` side is null.
+	{ key: "alpha", name: "Alpha", oc: side(), cc: null },
+	// Free/unbounded on the CommandCode side: `requestsPerMonth` null.
+	{
+		key: "beta",
+		name: "Beta",
+		oc: side(),
+		cc: side({ requestsPerMonth: null, free: true }),
+	},
+	// Fully priced on both sides.
+	{ key: "gamma", name: "Gamma", oc: side(), cc: side() },
+];
+
 const snapshot: MpcSnapshot = {
 	generatedAt: "2026-10-09T00:00:00.000Z",
 	plans: [
@@ -63,42 +116,35 @@ const snapshot: MpcSnapshot = {
 			weekly: 35,
 		},
 	],
+	ocPlans: [
+		{ key: "go", label: "Go", price: 10, credits: 20 },
+		{ key: "go-plus", label: "Go Plus", price: 40, credits: 3690 },
+	],
 	byPlan: {
 		goat: {
-			rows: [
-				// Unpriced on the CommandCode side: the whole `cc` side is null.
-				{ key: "alpha", name: "Alpha", oc: side(), cc: null },
-				// Free/unbounded on the CommandCode side: `requestsPerMonth` null.
-				{
-					key: "beta",
-					name: "Beta",
-					oc: side(),
-					cc: side({ requestsPerMonth: null, free: true }),
-				},
-				// Fully priced on both sides.
-				{ key: "gamma", name: "Gamma", oc: side(), cc: side() },
-			],
+			go: { rows: ROWS },
+			"go-plus": { rows: ROWS },
 		},
 	},
 };
 
 describe("compareRows — Review Focus 4", () => {
 	test("a null side renders the placeholder, not NaN/undefined", () => {
-		const [alpha] = compareRows(snapshot, "goat");
+		const [alpha] = compareRows(snapshot, "goat", "go");
 		expect(alpha.cc).toBeNull();
 		expect(alpha.ccLabel).toBe(DASH);
 		expect(alpha.ccLabel).toBe("—");
 	});
 
 	test("a null requestsPerMonth renders as ∞, not 0/NaN", () => {
-		const [, beta] = compareRows(snapshot, "goat");
+		const [, beta] = compareRows(snapshot, "goat", "go");
 		expect(beta.cc?.requestsPerMonth).toBeNull();
 		expect(beta.ccLabel).toBe(INFINITY);
 		expect(beta.ccLabel).toBe("∞");
 	});
 
 	test("never emits NaN or undefined in any label", () => {
-		for (const row of compareRows(snapshot, "goat")) {
+		for (const row of compareRows(snapshot, "goat", "go")) {
 			for (const label of [row.ocLabel, row.ccLabel]) {
 				expect(typeof label).toBe("string");
 				expect(label).not.toBe("undefined");
@@ -109,13 +155,15 @@ describe("compareRows — Review Focus 4", () => {
 	});
 
 	test("a bounded side renders its count in mpc's K notation", () => {
-		const [, , gamma] = compareRows(snapshot, "goat");
+		const [, , gamma] = compareRows(snapshot, "goat", "go");
 		expect(gamma.ccLabel).toBe("1.0K");
 		expect(gamma.ocLabel).toBe("1.0K");
 	});
 
-	test("an unknown plan key yields an empty list", () => {
-		expect(compareRows(snapshot, "nope")).toEqual([]);
+	test("the OC plan selects the row set; an unknown pair is empty", () => {
+		expect(compareRows(snapshot, "goat", "go-plus")).toHaveLength(3);
+		expect(compareRows(snapshot, "nope", "go")).toEqual([]);
+		expect(compareRows(snapshot, "goat", "nope")).toEqual([]);
 	});
 });
 
@@ -289,7 +337,7 @@ describe("isMpcSnapshot — client adoption gate", () => {
 		expect(isMpcSnapshot(committed)).toBe(true);
 	});
 
-	test("rejects a slim-shaped side (the previous snapshot shape)", () => {
+	test("rejects a slim-shaped side (the earlier snapshot shape)", () => {
 		// The old side carried only these five fields; the widened formatters
 		// read pricing/payPerRequest/index/…, so this must be refused rather
 		// than adopted and rendered as `$NaN`/`∞`.
@@ -303,13 +351,43 @@ describe("isMpcSnapshot — client adoption gate", () => {
 		const slim = {
 			generatedAt: "2026-10-09T00:00:00.000Z",
 			plans: [{ key: "goat", label: "GOAT" }],
+			ocPlans: [],
 			byPlan: {
 				goat: {
-					rows: [{ key: "x", name: "X", oc: slimSide, cc: null }],
+					go: {
+						rows: [{ key: "x", name: "X", oc: slimSide, cc: null }],
+					},
 				},
 			},
 		};
 		expect(isMpcSnapshot(slim)).toBe(false);
+	});
+
+	test("rejects the previous flat shape (byPlan[cc] was a run)", () => {
+		// A raw-CDN copy can still serve the flat snapshot for ~5 min after a
+		// push. It carries `ocPlans` and a widened side but no nesting, so the
+		// OC-plan switch would read `undefined` on every cell — refuse it.
+		const flat = {
+			generatedAt: "2026-10-09T00:00:00.000Z",
+			plans: [{ key: "goat", label: "GOAT" }],
+			ocPlans: [{ key: "go", label: "Go" }],
+			byPlan: {
+				goat: {
+					rows: [{ key: "x", name: "X", oc: side(), cc: null }],
+				},
+			},
+		};
+		expect(isMpcSnapshot(flat)).toBe(false);
+	});
+
+	test("rejects a snapshot without the ocPlans dimension", () => {
+		expect(
+			isMpcSnapshot({
+				generatedAt: "2026-10-09T00:00:00.000Z",
+				plans: [],
+				byPlan: { goat: { go: { rows: [] } } },
+			}),
+		).toBe(false);
 	});
 
 	test("rejects a side missing only the widened fields", () => {
@@ -318,9 +396,12 @@ describe("isMpcSnapshot — client adoption gate", () => {
 		const bad = {
 			generatedAt: "2026-10-09T00:00:00.000Z",
 			plans: [],
+			ocPlans: [],
 			byPlan: {
 				goat: {
-					rows: [{ key: "x", name: "X", oc: stripped, cc: null }],
+					go: {
+						rows: [{ key: "x", name: "X", oc: stripped, cc: null }],
+					},
 				},
 			},
 		};
@@ -331,11 +412,133 @@ describe("isMpcSnapshot — client adoption gate", () => {
 		const ok = {
 			generatedAt: "2026-10-09T00:00:00.000Z",
 			plans: [],
+			ocPlans: [{ key: "go", label: "Go" }],
 			byPlan: {
-				goat: { rows: [{ key: "x", name: "X", oc: null, cc: null }] },
+				goat: {
+					go: { rows: [{ key: "x", name: "X", oc: null, cc: null }] },
+				},
 			},
 		};
 		expect(isMpcSnapshot(ok)).toBe(true);
+	});
+});
+
+describe("snapshot plan dimensions", () => {
+	const committed = mpcJson as MpcSnapshot;
+
+	test("carries both OpenCode Go plans", () => {
+		const keys = committed.ocPlans.map((p) => p.key);
+		expect(keys).toContain("go");
+		expect(keys).toContain("go-plus");
+	});
+
+	test("carries all 10 CommandCode × OpenCode Go pairs", () => {
+		let pairs = 0;
+		for (const cc of committed.plans) {
+			for (const oc of committed.ocPlans) {
+				const run = committed.byPlan[cc.key]?.[oc.key];
+				expect(Array.isArray(run?.rows)).toBe(true);
+				expect(run?.rows.length ?? 0).toBeGreaterThan(0);
+				pairs += 1;
+			}
+		}
+		expect(pairs).toBe(10);
+	});
+});
+
+describe("snapshot-mpc — candidate fall-through", () => {
+	test("falls through an auto candidate that fails to run", () => {
+		const seen: string[] = [];
+		const options: MpcCandidate[] = [
+			{
+				command: "/nope/broken",
+				prefixArgs: [],
+				label: "broken",
+				explicit: false,
+			},
+			{
+				command: "/nope/good",
+				prefixArgs: [],
+				label: "good",
+				explicit: false,
+			},
+		];
+		const run: MpcRunner = (candidate, ccKey, ocKey) => {
+			seen.push(candidate.label);
+			if (candidate.label === "broken") {
+				throw new Error("unknown option '--oc-plan'");
+			}
+			return rawRun(ccKey, ocKey);
+		};
+		const { mpc, snapshot: built } = selectSnapshot(
+			options,
+			(candidate) => candidate,
+			run,
+		);
+		expect(mpc.label).toBe("good");
+		expect(seen).toContain("good");
+		expect(built.byPlan.goat["go-plus"]?.rows).toHaveLength(1);
+	});
+
+	test("skips an auto candidate that does not resolve", () => {
+		const options: MpcCandidate[] = [
+			{
+				command: "/nope/missing",
+				prefixArgs: [],
+				label: "missing",
+				explicit: false,
+			},
+			{
+				command: "/nope/good",
+				prefixArgs: [],
+				label: "good",
+				explicit: false,
+			},
+		];
+		const { mpc } = selectSnapshot(
+			options,
+			(candidate) => (candidate.label === "missing" ? null : candidate),
+			(_candidate, ccKey, ocKey) => rawRun(ccKey, ocKey),
+		);
+		expect(mpc.label).toBe("good");
+	});
+
+	test("an explicit MPC_BIN that fails to run stays fatal", () => {
+		const options: MpcCandidate[] = [
+			{
+				command: "/nope/bin",
+				prefixArgs: [],
+				label: "MPC_BIN",
+				explicit: true,
+			},
+			{
+				command: "/nope/good",
+				prefixArgs: [],
+				label: "good",
+				explicit: false,
+			},
+		];
+		expect(() =>
+			selectSnapshot(
+				options,
+				(candidate) => candidate,
+				() => {
+					throw new Error("boom");
+				},
+			),
+		).toThrow(/boom/);
+	});
+
+	test("an explicit MPC_BIN that does not resolve stays fatal", () => {
+		const options: MpcCandidate[] = [
+			{
+				command: "/nope/bin",
+				prefixArgs: [],
+				label: "MPC_BIN",
+				explicit: true,
+			},
+		];
+		expect(() => selectSnapshot(options, () => null)).toThrow(/MPC_BIN/);
 	});
 });
 
@@ -355,9 +558,16 @@ describe("committed snapshot — every cell renders cleanly", () => {
 		];
 	}
 
+	/** Every run in the nested snapshot, regardless of pair. */
+	function allRuns() {
+		return Object.values(snapshot.byPlan).flatMap((runs) =>
+			Object.values(runs),
+		);
+	}
+
 	test("no plan, row, side or meta cell emits NaN/undefined", () => {
 		let checked = 0;
-		for (const run of Object.values(snapshot.byPlan)) {
+		for (const run of allRuns()) {
 			for (const row of run.rows) {
 				const cells = [
 					...cellsFor(row.oc),
@@ -382,7 +592,7 @@ describe("committed snapshot — every cell renders cleanly", () => {
 
 	test("counts read in mpc's K/M notation, free models as ∞", () => {
 		const labels = new Set<string>();
-		for (const run of Object.values(snapshot.byPlan)) {
+		for (const run of allRuns()) {
 			for (const row of run.rows) {
 				for (const s of [row.oc, row.cc]) {
 					if (!s) continue;
@@ -399,5 +609,16 @@ describe("committed snapshot — every cell renders cleanly", () => {
 			if (label.endsWith("K") || label.endsWith("M")) sawShort = true;
 		}
 		expect(sawShort).toBe(true);
+	});
+
+	test("the OC free models render their unbounded side as ∞", () => {
+		for (const run of allRuns()) {
+			for (const row of run.rows) {
+				if (row.oc?.free) {
+					expect(row.oc.requestsPerMonth).toBeNull();
+					expect(requestsLabel(row.oc)).toBe(INFINITY);
+				}
+			}
+		}
 	});
 });

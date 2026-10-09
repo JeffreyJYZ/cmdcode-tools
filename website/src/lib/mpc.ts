@@ -80,16 +80,34 @@ export type MpcPlanInfo = {
 	weekly: number | null;
 };
 
+/** A switchable OpenCode Go plan, lifted out of an mpc run's `plans["oc-go"]`. */
+export type MpcOcPlanInfo = {
+	key: string;
+	label: string;
+	price: number;
+	credits: number;
+};
+
 export type MpcRun = {
 	rows: MpcRow[];
 	tally?: MpcTally;
 };
 
-/** The committed snapshot: one mpc run per CommandCode plan. */
+/** One CommandCode plan's runs, keyed by OpenCode Go plan. */
+export type MpcOcRuns = Record<string, MpcRun>;
+
+/**
+ * The committed snapshot: an mpc run for every CommandCode × OpenCode Go plan
+ * pair (`byPlan[ccPlanKey][ocPlanKey]`). Both Go plans share token rates but
+ * grant different per-model limits, so the OpenCode side is a real dimension.
+ */
 export type MpcSnapshot = {
 	generatedAt: string;
+	/** The CommandCode plans. */
 	plans: MpcPlanInfo[];
-	byPlan: Record<string, MpcRun>;
+	/** The OpenCode Go plans. */
+	ocPlans: MpcOcPlanInfo[];
+	byPlan: Record<string, MpcOcRuns>;
 };
 
 /** A row flattened for the comparison table — labels always defined. */
@@ -134,12 +152,32 @@ function isMpcSide(value: unknown): boolean {
 	);
 }
 
+/** True for a single mpc run: a `rows` array of valid rows. */
+function isMpcRun(value: unknown): boolean {
+	if (typeof value !== "object" || value === null) return false;
+	const rows = (value as Record<string, unknown>).rows;
+	if (!Array.isArray(rows)) return false;
+	for (const row of rows) {
+		if (typeof row !== "object" || row === null) return false;
+		const r = row as Record<string, unknown>;
+		if (r.oc != null && !isMpcSide(r.oc)) return false;
+		if (r.cc != null && !isMpcSide(r.cc)) return false;
+	}
+	return true;
+}
+
 /**
- * True only for a snapshot whose every present side carries the widened fields
- * the UI consumes. A `null` side (unpriced) is valid. Anything else — notably
- * the previous slim snapshot a cached raw-CDN copy can still serve — is
- * rejected, so the client keeps the committed snapshot instead of rendering
- * `$NaN`/`∞` from missing fields.
+ * True only for a nested snapshot whose every present side carries the widened
+ * fields the UI consumes, and whose `byPlan` is keyed CommandCode → OpenCode Go.
+ * A `null` side (unpriced) is valid. Anything else is rejected, so the client
+ * keeps the committed snapshot instead of rendering `$NaN`/`∞` from missing
+ * fields. Two flat shapes are refused by name:
+ *
+ * - the **slim** snapshot (sides without `pricing`/`payPerRequest`/…), and
+ * - the **previous flat** snapshot whose `byPlan[cc]` was a run itself rather
+ *   than `{ go, go-plus }`. A cached raw-CDN copy can still serve that shape for
+ *   ~5 min after a push, so it must not be adopted: the OC-plan switch would
+ *   read `undefined` on every cell.
  */
 export function isMpcSnapshot(value: unknown): value is MpcSnapshot {
 	if (typeof value !== "object" || value === null) return false;
@@ -147,16 +185,15 @@ export function isMpcSnapshot(value: unknown): value is MpcSnapshot {
 	if (typeof v.generatedAt !== "string" || !Array.isArray(v.plans)) {
 		return false;
 	}
+	if (!Array.isArray(v.ocPlans)) return false;
 	if (typeof v.byPlan !== "object" || v.byPlan === null) return false;
-	for (const run of Object.values(v.byPlan)) {
-		if (typeof run !== "object" || run === null) return false;
-		const rows = (run as Record<string, unknown>).rows;
-		if (!Array.isArray(rows)) return false;
-		for (const row of rows) {
-			if (typeof row !== "object" || row === null) return false;
-			const r = row as Record<string, unknown>;
-			if (r.oc != null && !isMpcSide(r.oc)) return false;
-			if (r.cc != null && !isMpcSide(r.cc)) return false;
+	for (const cc of Object.values(v.byPlan)) {
+		if (typeof cc !== "object" || cc === null) return false;
+		const runs = cc as Record<string, unknown>;
+		// Reject the previous flat shape: `byPlan[cc]` used to be a run itself.
+		if ("rows" in runs) return false;
+		for (const run of Object.values(runs)) {
+			if (!isMpcRun(run)) return false;
 		}
 	}
 	return true;
@@ -306,15 +343,16 @@ export function rowValue(row: Sides): number | null {
 }
 
 /**
- * Every model in the chosen plan's run, flattened for the table. Unknown plan
- * keys yield an empty list — the page always has at least one plan, so this is
- * a guard, not a normal path.
+ * Every model in the chosen plan pair's run, flattened for the table. Unknown
+ * keys yield an empty list — the page always has at least one of each plan, so
+ * this is a guard, not a normal path.
  */
 export function compareRows(
 	snapshot: MpcSnapshot,
-	planKey: string,
+	ccPlanKey: string,
+	ocPlanKey: string,
 ): CompareRow[] {
-	const run = snapshot.byPlan[planKey];
+	const run = snapshot.byPlan[ccPlanKey]?.[ocPlanKey];
 	if (!run) return [];
 	return run.rows.map((row) => ({
 		key: row.key,

@@ -77,6 +77,8 @@ const METRICS: {
 const DEFAULT_METRIC: Metric = "req";
 /** mpc's own default plan — a sensible landing view. */
 const PREFERRED_PLAN = "goat";
+/** mpc's own default OpenCode Go plan. */
+const PREFERRED_OC_PLAN = "go";
 
 const LABEL = "ink-muted text-xs uppercase tracking-widest";
 const PILL =
@@ -335,7 +337,13 @@ export function CompareTable({
 		? PREFERRED_PLAN
 		: (planKeys[0] ?? "");
 
+	const ocPlanKeys = snapshot.ocPlans.map((p) => p.key);
+	const initialOcPlan = ocPlanKeys.includes(PREFERRED_OC_PLAN)
+		? PREFERRED_OC_PLAN
+		: (ocPlanKeys[0] ?? "");
+
 	const [planKey, setPlanKey] = useState(initialPlan);
+	const [ocPlanKey, setOcPlanKey] = useState(initialOcPlan);
 	const [query, setQuery] = useState("");
 	const [metric, setMetric] = useState<Metric>(DEFAULT_METRIC);
 	const [asc, setAsc] = useState(false);
@@ -366,13 +374,21 @@ export function CompareTable({
 		}
 	}, [snapshot, planKey]);
 
+	// Same fall-back for the OpenCode Go plan dimension.
+	useEffect(() => {
+		if (!snapshot.ocPlans.some((p) => p.key === ocPlanKey)) {
+			setOcPlanKey(snapshot.ocPlans[0]?.key ?? "");
+		}
+	}, [snapshot, ocPlanKey]);
+
 	const active = METRICS.find((m) => m.id === metric) ?? METRICS[0];
 	const plan = snapshot.plans.find((p) => p.key === planKey);
-	const tally = snapshot.byPlan[planKey]?.tally;
+	const ocPlan = snapshot.ocPlans.find((p) => p.key === ocPlanKey);
+	const tally = snapshot.byPlan[planKey]?.[ocPlanKey]?.tally;
 
 	const rows = useMemo(
-		() => compareRows(snapshot, planKey),
-		[snapshot, planKey],
+		() => compareRows(snapshot, planKey, ocPlanKey),
+		[snapshot, planKey, ocPlanKey],
 	);
 
 	const visible = useMemo(() => {
@@ -413,12 +429,13 @@ export function CompareTable({
 
 	const colSpan = mode === "full" ? 1 + SIDE_COLUMNS.length * 2 + 6 : 4;
 	const planLabel = plan?.label ?? planKey;
+	const ocPlanLabel = ocPlan?.label ?? ocPlanKey;
 
 	return (
 		<>
 			<div className="mt-8 flex flex-col gap-5">
 				<div className="flex flex-wrap items-center gap-x-2 gap-y-3">
-					<span className={LABEL}>Plan</span>
+					<span className={LABEL}>CommandCode</span>
 					{snapshot.plans.map((p) => (
 						<button
 							key={p.key}
@@ -426,6 +443,18 @@ export function CompareTable({
 							aria-pressed={p.key === planKey}
 							onClick={() => setPlanKey(p.key)}
 							className={`${PILL} ${p.key === planKey ? PILL_ON : PILL_OFF}`}
+						>
+							{p.label}
+						</button>
+					))}
+					<span className={`${LABEL} ml-2`}>OpenCode</span>
+					{snapshot.ocPlans.map((p) => (
+						<button
+							key={p.key}
+							type="button"
+							aria-pressed={p.key === ocPlanKey}
+							onClick={() => setOcPlanKey(p.key)}
+							className={`${PILL} ${p.key === ocPlanKey ? PILL_ON : PILL_OFF}`}
 						>
 							{p.label}
 						</button>
@@ -501,7 +530,7 @@ export function CompareTable({
 											colSpan={SIDE_COLUMNS.length}
 											className={TH_GROUP}
 										>
-											OpenCode Go
+											{`OpenCode ${ocPlanLabel}`}
 										</th>
 										<th
 											scope="colgroup"
@@ -548,7 +577,7 @@ export function CompareTable({
 										Model
 									</th>
 									<th scope="col" className={TH}>
-										OpenCode Go
+										{`OpenCode ${ocPlanLabel}`}
 									</th>
 									<th scope="col" className={TH}>
 										{`CommandCode ${planLabel}`}
