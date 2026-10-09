@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-10-09T10:40:46.564Z",
+	"generatedAt": "2026-10-09T11:19:46.749Z",
 	"github": [
 		{
 			"tag": "cmduse-v0.7.7",
@@ -17,6 +17,42 @@
 		}
 	],
 	"npm": [
+		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.0.0-stage",
+			"date": "2026-10-09T10:49:32.727Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.0.0-stage"
+		},
+		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.0",
+			"date": "2026-10-09T10:50:29.371Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.0"
+		},
+		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.1",
+			"date": "2026-10-09T10:55:33.233Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.1"
+		},
+		{
+			"package": "@jeffreyjyz/reqshape",
+			"version": "0.0.0-stage",
+			"date": "2026-10-09T10:49:39.433Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.0.0-stage"
+		},
+		{
+			"package": "@jeffreyjyz/reqshape",
+			"version": "0.1.0",
+			"date": "2026-10-09T10:50:40.200Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.1.0"
+		},
+		{
+			"package": "@jeffreyjyz/reqshape",
+			"version": "0.1.1",
+			"date": "2026-10-09T10:54:40.603Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.1.1"
+		},
 		{
 			"package": "@jeffreyjyz/opencode-command-code",
 			"version": "0.1.0",

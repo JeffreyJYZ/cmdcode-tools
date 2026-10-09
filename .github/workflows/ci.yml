@@ -58,4 +58,5 @@ jobs:
       - run: bun run build      # build before typecheck: next-env.d.ts imports the generated, gitignored .next/types
       - run: bun typecheck
       - run: bun check
+      - run: bun test
       - run: bun check:links

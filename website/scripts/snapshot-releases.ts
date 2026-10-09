@@ -11,11 +11,11 @@
  * still produces a usable snapshot. If *every* source fails, the run throws —
  * a snapshot with no data at all is worse than no write.
  *
- * npm identity guard: the plain `mpc` name on npm belongs to an unrelated
- * package ("Multi-Part Components Parser", maintainer `emilis`), and `reqshape`
- * is unpublished. The registry packument is only accepted when it is maintained
- * by `jeffreyjyz`, so this repo's timeline can never misattribute a foreign
- * package's versions.
+ * npm identity guard: every package here is published under the `@jeffreyjyz`
+ * scope (the bare `mpc` name on npm belongs to an unrelated package,
+ * "Multi-Part Components Parser", maintainer `emilis`). The registry packument
+ * is only accepted when it is maintained by `jeffreyjyz`, so this repo's
+ * timeline can never misattribute a foreign package's versions.
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -34,10 +34,10 @@ const GITHUB_API = RELEASES_URL;
 const REGISTRY = "https://registry.npmjs.org";
 const CRATES_API = "https://crates.io/api/v1/crates";
 
-/** npm package names this repo publishes (the two bare names are unpublished). */
+/** npm package names this repo publishes (all under the `@jeffreyjyz` scope). */
 const NPM_PACKAGES = [
-	"mpc",
-	"reqshape",
+	"@jeffreyjyz/mpc",
+	"@jeffreyjyz/reqshape",
 	"@jeffreyjyz/opencode-command-code",
 	"@jeffreyjyz/opencode-context",
 	"@jeffreyjyz/opencode-shell-rc",
