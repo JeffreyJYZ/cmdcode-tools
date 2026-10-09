@@ -1,15 +1,18 @@
 # @jeffreyjyz/opencode-shell-rc
 
+Make the opencode agent shell load your zsh aliases and functions.
+
 [![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@jeffreyjyz/opencode-shell-rc?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
-Make the opencode agent shell load your **zsh aliases and functions**. The shell
-tool runs `/bin/zsh -c …` in a *non-interactive* shell, which never reads
-`~/.zshrc`, so an alias like `gp='git push'` fails in agent shells. This plugin
-points every zsh the agent spawns at a `.zshenv` shim that sources the aliases and
-functions your interactive shell defines — without paying for oh-my-zsh,
-`compinit`, autosuggestions or syntax-highlighting on every command.
+## What it is
+
+The shell tool runs `/bin/zsh -c …` in a *non-interactive* shell, which never
+reads `~/.zshrc`, so an alias like `gp='git push'` fails in agent shells. This
+plugin points every zsh the agent spawns at a `.zshenv` shim that sources the
+aliases and functions your interactive shell defines — without paying for
+oh-my-zsh, `compinit`, autosuggestions or syntax-highlighting on every command.
 
 ## Install
 
@@ -32,6 +35,15 @@ as a local plugin):
 ```
 
 After `bun run build` the root `index.js` shim loads `dist/`.
+
+## Usage
+
+Nothing to call — once installed, every non-interactive zsh the agent spawns
+sources your aliases and functions. Alias and function edits are picked up on the
+next command with no restart; a `PATH` change needs an opencode restart.
+
+Drop agent-only zsh into `~/.config/opencode/shell.zsh`, sourced alongside the
+generated state.
 
 ## How it works
 
@@ -77,3 +89,9 @@ bun test
 bun run typecheck
 bun run build
 ```
+
+## Links
+
+- [Source (GitHub)](https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/opencode-shell-rc)
+- [npm: @jeffreyjyz/opencode-shell-rc](https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc)
+- [MIT license](LICENSE)

@@ -1,17 +1,42 @@
 # reqshape
 
+Measure the shape of your requests from opencode's own history, then price that shape against any model.
+
 [![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
-Measure the shape of your requests from opencode's own history, then price that
-shape against any model — so "how many requests does a $60 allowance actually buy
-me?" stops being a guess.
+## What it is
+
+A **req** is one model call — the same unit the opencode sidebar counts: a single
+`assistant` row in opencode's store. An agentic ask is many reqs, because the
+model is called again after every tool result.
+
+`reqshape` reads that history, drops the requests that ask for nothing, averages
+the rest, and hands you the answer as a token vector: *one of my requests is
+8.2K input, 309 output, 139 reasoning, 248K cache read*. Then it prices that
+vector on every model OpenCode Go and CommandCode sell, and divides each plan's
+allowance and window caps by the result.
+
+`mpc` answers the same question with a fixed assumption (800 in / 50K cache / 200
+out). This answers it with your actual traffic — and usually disagrees, because
+context is re-read on every call and yours is deep.
+
+## Install
+
+Not published to npm — run it from a checkout and link the binary:
+
+```sh
+bun install
+bun link
+```
+
+## Usage
 
 ```sh
 reqshape
 ```
 
-```
+```text
 reqshape  7.3K reqs · every req weighted equally
 measured from the opencode v2 store · priced by mpc
 
@@ -48,22 +73,6 @@ Grok 4.6                    OC Go             $0.1431         105          21   
 
 CC account  1,898 reqs this period · GOAT · ends 2026-10-27
 ```
-
-## What it does
-
-A **req** is one model call — the same unit the opencode sidebar counts: a single
-`assistant` row in opencode's store. An agentic ask is many reqs, because the
-model is called again after every tool result.
-
-`reqshape` reads that history, drops the requests that ask for nothing, averages
-the rest, and hands you the answer as a token vector: *one of my requests is
-8.2K input, 309 output, 139 reasoning, 248K cache read*. Then it prices that
-vector on every model OpenCode Go and CommandCode sell, and divides each plan's
-allowance and window caps by the result.
-
-`mpc` answers the same question with a fixed assumption (800 in / 50K cache / 200
-out). This answers it with your actual traffic — and usually disagrees, because
-context is re-read on every call and yours is deep.
 
 ## Why "cache read" is the whole story
 
@@ -164,3 +173,8 @@ payload and prices each plan on its side's shape, so its estimated `req/mo` is
 200-out assumption.
 
 Runs take about 20 seconds: both `mpc` and `cmduse` go to the network.
+
+## Links
+
+- [Source (GitHub)](https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/reqshape)
+- [MIT license](LICENSE)

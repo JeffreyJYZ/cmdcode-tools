@@ -1,11 +1,12 @@
 # @jeffreyjyz/opencode-session-dir
 
+Bind extra working directories to one opencode session — durably, across restarts. Other sessions never see them.
+
 [![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@jeffreyjyz/opencode-session-dir?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/opencode-session-dir)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
-Bind extra working directories to **one** opencode session — durably, across
-restarts. Other sessions never see them.
+## What it is
 
 The agent already works in the session's own directory; anything outside it
 needs `external_directory` approval. This plugin lets a session declare the
@@ -87,3 +88,9 @@ bun test
 bun run typecheck
 bun run build
 ```
+
+## Links
+
+- [Source (GitHub)](https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/opencode-session-dir)
+- [npm: @jeffreyjyz/opencode-session-dir](https://www.npmjs.com/package/@jeffreyjyz/opencode-session-dir)
+- [MIT license](LICENSE)

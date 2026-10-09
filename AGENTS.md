@@ -183,6 +183,33 @@ opencode-plugin/   @jeffreyjyz/opencode-command-code TS plugin (dual opencode
   CI + version (npm/crates) + license. Add npm badges only for packages actually
   published (`reqshape` is not → no npm badge).
 
+## Documentation conventions
+
+- **Each package README is its canonical docs page** — rendered by GitHub and by
+  `website/`. Never fork prose into the site; fix the README.
+- **Skeleton, every README:** `# Title` (H1 = title only) → one-sentence tagline
+  → shields badge line (`?style=flat-square`, first lines) → H2 sections.
+  **Required H2s:** `## What it is`, `## Install`, `## Usage` or `## Commands`,
+  `## Links`. Optional: `## Quick start`, `## Configuration`, `## How it works`,
+  `## Notes`. Every opening code fence language-tagged (`sh`/`json`/`rust`/`ts`/`text`) —
+  an untagged fence fails the structure test. Keep the existing badges.
+- **No hardcoded version in prose** — name the constant or point at the registry;
+  the badge carries the version. Every existing command, table and code block
+  survives a restructure — reorganise and tag, never delete.
+- **Site derives title/description from H1 + first paragraph, strips badges, and
+  rewrites relative links** (`LICENSE` etc.) to repo URLs. Changing a README's H1
+  or opening paragraph changes the site.
+- **Manifest = `website/src/content/projects.ts`** (`Project` = slug, name,
+  tagline, kind, repoPath, links, order) — single source of which READMEs the
+  site ships; `tagline` is the README's opening one-liner. Structure pinned by
+  `website/test/readmes.test.ts` (`cd website && bun test test/readmes.test.ts`),
+  which reads each `repoPath/README.md` from repo root.
+- **Snapshot data → `bun snapshot:mpc` / `bun snapshot:releases`** (run from
+  `website/`), written under `website/src/data/`.
+- `website/` is a **standalone Next.js project, NOT a workspace member**, with its
+  own `bun.lock` and Biome config (tabs, width 4) — root `bun install` never
+  touches it.
+
 ## Consumers (in-repo package `oc-cmd-compare`)
 
 `mpc` (`~/dev/cmdcode-tools/oc-cmd-compare`) reads this workspace: shells out to `cmduse`, takes

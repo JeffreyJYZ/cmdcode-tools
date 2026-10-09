@@ -1,14 +1,25 @@
 # cmduse
 
+Live Command Code usage dashboard for your terminal.
+
 [![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
 [![crates.io](https://img.shields.io/crates/v/cmd-usage?style=flat-square)](https://crates.io/crates/cmd-usage)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE-MIT)
 
-Live [Command Code](https://commandcode.ai) usage dashboard for your terminal.
+## What it is
 
 Plan dashboard, account-wide usage reports (all harnesses), offline local reports, and a customisable statusline.
 
+## Install
+
+```sh
+brew install JeffreyJYZ/tap/cmduse   # macOS (Homebrew)
+cargo install cmd-usage              # any platform with Rust
 ```
+
+## Quick start
+
+```text
 Command Code Usage · GOAT · active
 Period ends 2026-09-27
 
@@ -21,13 +32,6 @@ Usage windows
 
 This billing period
  Requests 856 · Cost $10.69 · Tokens 89.5M in / 265.7K out · Success 100%
-```
-
-## Install
-
-```sh
-brew install JeffreyJYZ/tap/cmduse   # macOS (Homebrew)
-cargo install cmd-usage              # any platform with Rust
 ```
 
 ## Usage
@@ -184,7 +188,7 @@ reminder persists until you upgrade. Dismiss or disable:
 ```sh
 cmduse --dismiss-update              # hide this version until a newer one
 cmduse config set update_check=false # never check
-cmduse config set dismissed_update=0.6.8
+cmduse config set dismissed_update=<ver>
 ```
 
 ## Data sources
@@ -196,7 +200,9 @@ cmduse config set dismissed_update=0.6.8
 
 Logged-in [Command Code CLI](https://commandcode.ai) — reads your API key from `~/.commandcode/auth.json` (run `cmd login` if missing), or set `CMD_API_KEY`.
 
-## ocuse — OpenCode Go/Zen (same crate, second binary)
+## How it works
+
+### ocuse — OpenCode Go/Zen (same crate, second binary)
 
 The same crate ships `ocuse`, which tracks **OpenCode Go** (the $10/mo subscription) and
 **OpenCode Zen** (pay-as-you-go) with the same CLI shape:
@@ -239,3 +245,9 @@ escape-free.
 - Spend-burst sparkline appears in watch mode after 2 refreshes (bars = $ spent between refreshes, ~3 min of history at 5s interval, capped at 40 samples; tall = burst, flat = idle).
 - `ocuse`'s watch frame uses the same three pieces: `redraw_frame` parks the cursor on the frame's last line (its status/countdown line), the sparkline tracks 5-hour spend deltas at 10s samples (capped at 60), and `Ink` carries `cmduse`'s palette as empty strings when colour is off.
 - On Monthly caps: monthly pool is the plan total (e.g. $70 on GOAT). Docs describe per-model allowances, but the CLI and API meter one shared pool — verified empirically.
+
+## Links
+
+- [Source (GitHub)](https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/cmduse)
+- [crates.io: cmd-usage](https://crates.io/crates/cmd-usage)
+- [MIT license](LICENSE-MIT)

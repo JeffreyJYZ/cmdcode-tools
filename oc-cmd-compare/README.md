@@ -1,16 +1,34 @@
 # mpc — model price compare
 
+Compare what the same model actually costs you on OpenCode Go vs CommandCode, using one fixed per-request workload.
+
 [![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/mpc?style=flat-square)](https://www.npmjs.com/package/mpc)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
-Compare what the same model actually costs you on **OpenCode Go** vs **CommandCode**
-(GOAT / Pro / Max), using one fixed per-request workload.
+## What it is
 
 Both providers sell the same shape of thing: a monthly subscription that grants a pool of
 usage credits, with a per-model allowance priced at API token rates. `mpc` normalises both
 onto one table so you can see, per model, how many requests a month each plan buys and what
 each request really costs you.
+
+## Install
+
+Install the published CLI globally:
+
+```sh
+bun add -g mpc
+```
+
+Or run it from a checkout — Bun runs the TypeScript entry directly, or link the binary:
+
+```sh
+bun install
+bun run src/index.ts --help
+bun link
+mpc --help
+```
 
 ## Usage
 
@@ -33,13 +51,6 @@ mpc --check                           # validate live sources and report drift
 Flags are parsed with [cac](https://github.com/cacjs/cac); `--help` and `--version` come from it.
 Unknown flags and out-of-range values are rejected.
 
-Run it directly with Bun (`bun run src/index.ts ...`) or link the binary:
-
-```sh
-bun link
-mpc --help
-```
-
 ## Your real usage (`--usage`)
 
 Project what you actually ran onto both plans, from the local CommandCode session logs
@@ -60,7 +71,7 @@ Sources, merged when more than one is present:
 | --- | --- |
 | **opencode's message store** (`~/.local/share/opencode/opencode.db`, `--usage-db`, `OPENCODE_DB`) | every request opencode ran, for every provider — complete and backfilled |
 | external per-request log (`--usage-log`, `MPC_USAGE_LOG`, default `$XDG_CACHE_HOME/mpc/usage.jsonl`) | any harness that writes one JSON line per request; consulted only when the DB is absent |
-| `cmduse model --json --since <ISO>` (cmduse 0.6.x+) | CommandCode CLI sessions on this machine |
+| `cmduse model --json --since <ISO>` (windowed model reports) | CommandCode CLI sessions on this machine |
 | session-log scan (`~/.commandcode/projects`) | fallback when cmduse lacks the window |
 | `--usage-file` | anything else you have |
 
@@ -73,7 +84,7 @@ usage, and Studio's API surface is the same endpoint. The report prints a covera
 (`local usage N of M account requests (x%)`) and warns below 90%, so a partial mix is visible
 rather than silently wrong.
 
-```
+```text
 MODEL          your req    your $    CC $/req  CC $/mo    OC $/req  OC $/mo  cheaper
 GLM-5.2             142  $15.7237     $0.0158  $2.2462     $0.0185  $2.6206  CC
 GLM-5.3 Flash        29   $0.7203  $0.0062091  $0.1801  $0.0041394    $0.12  OC
@@ -114,7 +125,7 @@ flag names, negations are plain booleans:
 
 `plugins` (or `--plugin a,b`) layer config fragments between the defaults and your config:
 
-```
+```text
 defaults  <  plugins (listed order)  <  user config  <  CLI flags
 ```
 
@@ -211,7 +222,7 @@ The footer keeps a running **win tally** over head-to-head models (`oc-go N · c
 
 For a fixed workload of `IN` input, `CACHE` cache-read, `OUT` output, `RSN` reasoning and `CW` cache-write tokens:
 
-```
+```text
 costPerRequest   = (IN*input + CACHE*cacheRead + (OUT+RSN)*output + CW*cacheWrite) / 1e6   # USD, list rates
 requestsPerMonth = allowance / costPerRequest
 payPerRequest    = planPrice * costPerRequest / allowance            # what you really pay
@@ -238,7 +249,7 @@ failure: mpc keeps the fixed workload and carries on.
 
 The **index** behind `COST` is a 0-100 volume score across every model-provider entry:
 
-```
+```text
 index = 100 * volume
 ```
 
@@ -250,7 +261,7 @@ Free models get `∞` requests and `index = 100`.
 
 `VAL` adds a benchmark term alongside the same volume/price terms:
 
-```
+```text
 COST = 100 - 100·volume                                     # inverted: 0 is best
 VAL = 100 * (0.35*ability + 0.10*tps + 0.25*volume + 0.15*cache + 0.15*output)
 ```
@@ -308,3 +319,9 @@ bun test          # unit tests (parsers, normalisation, metrics)
 bun run typecheck # tsc --noEmit
 bun run check     # biome format + lint (write)
 ```
+
+## Links
+
+- [Source (GitHub)](https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/oc-cmd-compare)
+- [npm: mpc](https://www.npmjs.com/package/mpc)
+- [MIT license](LICENSE)

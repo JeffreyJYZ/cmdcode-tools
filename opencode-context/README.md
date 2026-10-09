@@ -1,8 +1,12 @@
 # @jeffreyjyz/opencode-context
 
+Context-window breakdown for opencode: where the window went, with a stacked bar and a measured used / limit header.
+
 [![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@jeffreyjyz/opencode-context?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/opencode-context)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+
+## What it is
 
 Context-window breakdown for opencode. `/context` opens a dialog showing where
 the window went — system prompt, tool definitions, thinking, tool inputs and
@@ -34,7 +38,7 @@ as a local plugin:
 A symlink under `~/.config/opencode/plugins/` is also picked up. After `bun run
 build` in the checkout, the root `index.js` / `tui.js` shims load `dist/`.
 
-## Use
+## Usage
 
 - **`/context`** — opens the breakdown for the current session.
 - **`context_breakdown`** — the model calls it and gets the breakdown as
@@ -77,3 +81,9 @@ bun run build
 - Only sizes are cached, never prompt or tool text.
 - The install cache for a published version can lag npm; see the ecosystem notes
   in `AGENTS.md` before publishing.
+
+## Links
+
+- [Source (GitHub)](https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/opencode-context)
+- [npm: @jeffreyjyz/opencode-context](https://www.npmjs.com/package/@jeffreyjyz/opencode-context)
+- [MIT license](LICENSE)
