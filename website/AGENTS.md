@@ -9,6 +9,8 @@
 - **Never push/deploy without explicit go** (same as repo root).
 - **Docs come from root READMEs — never duplicate prose here.** Site reads each package `README.md` (manifest `src/content/projects.ts`); edit the README, not a copy. Title/description from H1 + first paragraph, badges stripped, relative links rewritten.
 - **Design tokens live in `src/ui/styles`** — import, never inline hex/px.
+- **MDX pipeline lives in `src/lib/mdx-options.ts`** — import it in every MDX render; never re-declare the remark/rehype lists, or docs and guides drift apart silently.
+- **Resolve a content *directory* from the module path** — `new URL(dir, import.meta.url)` makes Turbopack const-fold and bundle the directory as a module (build fails); use `join(fileURLToPath(import.meta.url), …)`. `new URL` is correct for a single file (`src/lib/load.ts`).
 - **Regenerate `src/data/*` with `bun snapshot:mpc` / `bun snapshot:releases`** — never hand-edit snapshot output.
 
 ## Layout
@@ -24,11 +26,11 @@ test/          bun:test (readmes.test.ts pins README skeleton)
 ## Commands
 
 ```sh
-bun dev        # next dev
-bun build      # next build
-bun test       # bun:test
-bun typecheck  # tsc --noEmit
-bun check      # biome check
+bun dev         # next dev
+bun run build   # next build — `bun build` is Bun's own bundler, so always `bun run`
+bun test        # bun:test
+bun typecheck   # tsc --noEmit
+bun check       # biome check
 ```
 
 <!-- BEGIN:nextjs-agent-rules -->

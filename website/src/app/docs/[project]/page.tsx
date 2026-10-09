@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
-import rehypePrettyCode from "rehype-pretty-code";
-import rehypeSlug from "rehype-slug";
-import remarkGfm from "remark-gfm";
 import { projectBySlug, projects } from "@/content/projects";
 import { loadProjectDoc } from "@/lib/load";
+import { mdxOptions } from "@/lib/mdx-options";
 import { DocSidebar } from "@/ui/components/doc-sidebar";
 import { mdxComponents } from "@/ui/components/mdx-components";
 
@@ -51,30 +48,7 @@ export default async function ProjectDocPage({
 				<MDXRemote
 					source={doc.body}
 					components={mdxComponents}
-					options={{
-						mdxOptions: {
-							remarkPlugins: [remarkGfm],
-							rehypePlugins: [
-								rehypeSlug,
-								[
-									rehypeAutolinkHeadings,
-									{
-										behavior: "append",
-										properties: {
-											className: ["heading-anchor"],
-											ariaHidden: true,
-											tabIndex: -1,
-										},
-										content: { type: "text", value: "#" },
-									},
-								],
-								[
-									rehypePrettyCode,
-									{ theme: "github-dark-default" },
-								],
-							],
-						},
-					}}
+					options={{ mdxOptions }}
 				/>
 			</article>
 		</div>

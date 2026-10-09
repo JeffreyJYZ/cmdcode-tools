@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
-import rehypePrettyCode from "rehype-pretty-code";
-import rehypeSlug from "rehype-slug";
-import remarkGfm from "remark-gfm";
 import { listGuides, loadGuide } from "@/lib/guides";
+import { mdxOptions } from "@/lib/mdx-options";
 import { mdxComponents } from "@/ui/components/mdx-components";
 
 type Params = { slug: string };
@@ -41,30 +38,7 @@ export default async function GuidePage({
 			<MDXRemote
 				source={guide.body}
 				components={mdxComponents}
-				options={{
-					mdxOptions: {
-						remarkPlugins: [remarkGfm],
-						rehypePlugins: [
-							rehypeSlug,
-							[
-								rehypeAutolinkHeadings,
-								{
-									behavior: "append",
-									properties: {
-										className: ["heading-anchor"],
-										ariaHidden: true,
-										tabIndex: -1,
-									},
-									content: { type: "text", value: "#" },
-								},
-							],
-							[
-								rehypePrettyCode,
-								{ theme: "github-dark-default" },
-							],
-						],
-					},
-				}}
+				options={{ mdxOptions }}
 			/>
 		</article>
 	);

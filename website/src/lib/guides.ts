@@ -47,10 +47,14 @@ export function parseGuide(slug: string, source: string): Guide {
 	};
 }
 
-/** Ascending `order`, then title A→Z. A total order: no `undefined`, no ties. */
+/**
+ * Ascending `order`, then title A→Z, then slug — a total order, so two guides
+ * sharing both `order` and `title` still sort the same on every machine (the
+ * slug tiebreak removes the filesystem/`readdir` dependence).
+ */
 export function compareGuides(a: GuideMeta, b: GuideMeta): number {
 	if (a.order !== b.order) return a.order - b.order;
-	return a.title.localeCompare(b.title);
+	return a.title.localeCompare(b.title) || a.slug.localeCompare(b.slug);
 }
 
 function guideSlugs(): string[] {
