@@ -264,8 +264,7 @@ git commit -m "feat(website): docs transforms (title, description, badges, links
 ### Task 5: Docs pages — MDX rendering, sidebar, TOC
 
 **Files:**
-- Create: `website/src/lib/load.ts`, `website/src/ui/components/{mdx-components,doc-sidebar,doc-toc}.tsx`, `website/src/app/docs/page.tsx`, `website/src/app/docs/[project]/page.tsx`
-- Create: `website/src/test/` fixtures not needed here (uses real READMEs)
+- Create: `website/src/lib/load.ts`, `website/src/ui/components/{mdx-components,doc-sidebar}.tsx`, `website/src/app/docs/page.tsx`, `website/src/app/docs/[project]/page.tsx`
 
 **Interfaces:**
 - Consumes: `deriveTitle`/`deriveDescription`/`stripBadgeBlock`/`rewriteLinks`/`extractToc` (Task 4), `projects`/`projectBySlug` (Task 1).
@@ -277,7 +276,9 @@ git commit -m "feat(website): docs transforms (title, description, badges, links
 
 - [ ] **Step 2: Render it**
 
-`mdx-components.tsx` exports an MDX component map: headings with `id` + an anchor link (`rehype-slug`, `rehype-autolink-headings`), `table`/`th`/`td` styled to tokens, `pre`/`code` through `rehype-pretty-code` (shiki, dark theme) with a copy button, and `a` (internal `next/link` vs external). `docs/[project]/page.tsx` is a server component with `export function generateStaticParams()` from `projects`, uses `<MDXRemote source={body} components={…} options={{ mdxOptions: { remarkPlugins: [remarkGfm], rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings, [rehypePrettyCode, …]] } }} />`, and lays out `DocSidebar` (project list, sections from `toc`) + article + right-rail `DocToc`. `docs/page.tsx` lists all projects and guides. Add `notFound()` for an unknown slug.
+`mdx-components.tsx` exports an MDX component map: headings with `id` + an anchor link (`rehype-slug`, `rehype-autolink-headings`), `table`/`th`/`td` styled to tokens, `pre`/`code` through `rehype-pretty-code` (shiki, dark theme) with a copy button, and `a` (internal `next/link` vs external). `docs/[project]/page.tsx` is a server component with `export function generateStaticParams()` from `projects`, uses `<MDXRemote source={body} components={…} options={{ mdxOptions: { remarkPlugins: [remarkGfm], rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings, [rehypePrettyCode, …]] } }} />`, and lays out `DocSidebar` + article (no right-rail TOC).
+
+**Sidebar carries the sections** (the user's requirement — "section links in the sidebar"): `DocSidebar` lists every project, and the active project expands to its sections from `toc` — H2 entries as links to `#<id>`, H3 entries nested and indented — so each project "has its part" and its parts are navigable. Highlight the section currently in view with an `IntersectionObserver` scrollspy; the anchor hrefs use the same `github-slugger` ids `rehype-slug` emits, so the jump lands. `docs/page.tsx` lists all projects and guides. Add `notFound()` for an unknown slug.
 
 - [ ] **Step 3: Verify build + browser**
 

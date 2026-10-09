@@ -137,8 +137,11 @@ frontmatter (`title`, `description`, `order`).
 5. Render through an MDX `components` map styled to the design tokens (headings
    with anchors, tables, code blocks with `CopyBlock`, links, blockquotes).
 
-READMEs are one long page per project with a sticky right-rail TOC and a
-section-list sidebar. Splitting per-H2 is deferred unless it earns its place.
+READMEs render as one page per project. The sidebar is the docs tree: it lists
+every project, and the active project's sections (H2, nested H3) appear as anchor
+links with a scrollspy highlight. There is no separate right-rail TOC — the
+sections live in the sidebar. Splitting per-H2 into sub-routes is deferred unless
+it earns its place.
 
 ## Routes
 
@@ -146,7 +149,7 @@ section-list sidebar. Splitting per-H2 is deferred unless it earns its place.
 | --- | --- |
 | `/` | Landing: what the repo is, project grid, install one-liners |
 | `/docs` | Docs index (all projects + guides) |
-| `/docs/[project]` | README-rendered project docs + TOC + prev/next |
+| `/docs/[project]` | README-rendered project docs; sidebar shows its sections as anchors; prev/next |
 | `/guides` | Guides index |
 | `/guides/[slug]` | Authored MDX guide |
 | `/compare` | Interactive mpc comparison (build-time snapshot) |
@@ -191,8 +194,10 @@ tokens are the vobes palette and a light variant is added, honouring
 - **Look**: neutral-900 canvas, `text-white`, centered left/right hairline rails
   (`border-x`), uppercase `tracking-widest` section labels, `.sep` 0.5px hairline,
   `a { color: lightblue } → hover royalblue`, mono copy-to-clipboard blocks.
-- **Docs layout**: the rail shell widens and left-aligns; sidebar (section list) +
-  article + right-rail TOC. Prose measure capped for readability.
+- **Docs layout**: the rail shell widens and left-aligns; a sidebar listing every
+  project, with the active project's sections (H2 + nested H3) as anchor links
+  (scrollspy-highlighted), beside the article. No separate right-rail TOC —
+  sections live in the sidebar. Prose measure capped for readability.
 - **Fonts**: Satoshi variable (self-hosted from `~/dev/fonts/satoshi`, wired with
   `next/font/local`, variable `--font-sans`) for UI; mono = system stack
   (`ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`)
