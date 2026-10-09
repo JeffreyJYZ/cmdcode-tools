@@ -53,6 +53,12 @@ describe("deriveDescription", () => {
 			"fb",
 		);
 	});
+
+	test("does not read prose from inside a section (preamble only)", () => {
+		expect(
+			deriveDescription("# T\n\n## What it is\n\nReal prose here.", "fb"),
+		).toBe("fb");
+	});
 });
 
 describe("stripLeadParagraph", () => {
@@ -76,6 +82,11 @@ describe("stripLeadParagraph", () => {
 		expect(stripLeadParagraph(md, "real lead")).toBe(
 			"# T\n\n```sh\nx\n```\n\n## X",
 		);
+	});
+
+	test("leaves a section's first paragraph alone when there is no tagline", () => {
+		const md = "# T\n\n## What it is\n\nReal prose here.";
+		expect(stripLeadParagraph(md, "fb")).toBe(md);
 	});
 });
 

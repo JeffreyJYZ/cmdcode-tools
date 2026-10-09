@@ -10,6 +10,7 @@ export type LinkContext = {
 const TITLE_RE = /^# (.+)$/m;
 const FENCE_RE = /^(`{3,}|~{3,})/;
 const HEADING_RE = /^#{1,6}\s/;
+const SECTION_RE = /^#{2,}\s/;
 const STRUCTURAL_RE = /^([-*+>|]|\d+\.)\s?/;
 const BADGE_RE = /\[!\[[^\]]*\]\(https?:\/\/img\.shields\.io\//;
 
@@ -22,7 +23,10 @@ export function deriveTitle(md: string, fallback: string): string {
 /**
  * Index of the first plain-prose line (a tagline), or -1.
  *
- * Skips fences (whole block), headings, list/table/blockquote starts and badge
+ * Only the preamble counts — the title's own H1 and the tagline that follows,
+ * before the first `##` section. A `##`+ heading ends the search (returns -1),
+ * so a README with no tagline never has a section paragraph mistaken for one.
+ * Skips fences (whole block), the H1, list/table/blockquote starts and badge
  * lines, so a README that opens with code or structure yields no prose line.
  * Shared by `deriveDescription` and `stripLeadParagraph` so both agree on which
  * line is the tagline.
@@ -36,6 +40,7 @@ function findFirstProseLine(lines: string[]): number {
 			continue;
 		}
 		if (inFence || line === "") continue;
+		if (SECTION_RE.test(line)) return -1;
 		if (HEADING_RE.test(line)) continue;
 		if (STRUCTURAL_RE.test(line)) continue;
 		if (BADGE_RE.test(line)) continue;
