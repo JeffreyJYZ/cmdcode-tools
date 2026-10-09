@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconCheck } from "@/ui/components/icon-check";
 import { IconCopy } from "@/ui/components/icon-copy";
 
@@ -11,6 +11,10 @@ import { IconCopy } from "@/ui/components/icon-copy";
  */
 export function CopyBlock({ value }: { value: string }) {
 	const [copied, setCopied] = useState(false);
+	const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+	// Clear any pending reset on unmount so it can't fire on a gone component.
+	useEffect(() => () => clearTimeout(timer.current), []);
 
 	const copy = async () => {
 		try {
@@ -21,7 +25,8 @@ export function CopyBlock({ value }: { value: string }) {
 			return;
 		}
 		setCopied(true);
-		setTimeout(() => setCopied(false), 1200);
+		clearTimeout(timer.current);
+		timer.current = setTimeout(() => setCopied(false), 1200);
 	};
 
 	return (
