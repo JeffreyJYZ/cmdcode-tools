@@ -414,7 +414,7 @@ git commit -m "feat(website): changelog from release/registry snapshots"
 
 **Files:**
 - Create: `website/src/app/not-found.tsx`, `website/src/app/sitemap.ts`, `website/src/lib/consts/index.ts`, `website/src/app/opengraph-image.tsx` (or a static OG asset)
-- Modify: `website/src/app/layout.tsx`, `website/src/app/docs/[project]/page.tsx`
+- Modify: `website/src/app/layout.tsx`, `website/src/app/page.tsx`, `website/src/app/docs/[project]/page.tsx`
 
 **Interfaces:**
 - Consumes: `projects` (Task 1).
@@ -422,7 +422,7 @@ git commit -m "feat(website): changelog from release/registry snapshots"
 
 - [ ] **Step 1: Add constants and per-route metadata**
 
-`src/lib/consts/index.ts`: `REPO_URL`, `SITE_URL`, `RELEASES_URL`, `NPM_ORG_URL`, and re-export the project links. Add `generateMetadata` to the docs route (title/description from the loader) and static `metadata` to layout/landing/guides/compare/changelog using `SITE_URL`.
+`src/lib/consts/index.ts`: `REPO_URL`, `SITE_URL = "https://octools.jyz.land"`, `RELEASES_URL`, `NPM_ORG_URL`, and re-export the project links. **Brand name is `octools`**: set it as the layout `title`/`openGraph.siteName`, the landing page `<h1>`, and the browser-title template (currently `cmdcode-tools` — rename). Add `generateMetadata` to the docs route (title/description from the loader) and static `metadata` to layout/landing/guides/compare/changelog using `SITE_URL`.
 
 - [ ] **Step 2: Add 404, sitemap, OG**
 
@@ -430,7 +430,7 @@ git commit -m "feat(website): changelog from release/registry snapshots"
 
 - [ ] **Step 3: Verify + commit**
 
-Run: `bun build && bun typecheck && bun check`; confirm `out/sitemap.xml` and `out/404.html` exist.
+Run: `bun run build && bun typecheck && bun check`; confirm `out/sitemap.xml` and `out/404.html` exist.
 
 ```bash
 git add website/src
