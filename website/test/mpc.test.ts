@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import mpcJson from "@/data/mpc.json";
 import {
 	compareRows,
 	DASH,
@@ -9,6 +10,8 @@ import {
 	formatPerThousand,
 	formatRate,
 	formatRates,
+	INFINITY,
+	isMpcSnapshot,
 	type MpcSide,
 	type MpcSnapshot,
 	requestsLabel,
@@ -18,7 +21,6 @@ import {
 	rowTps,
 	rowValue,
 	rowWin,
-	UNBOUNDED,
 	windowLabel,
 } from "@/lib/mpc";
 
@@ -88,11 +90,11 @@ describe("compareRows — Review Focus 4", () => {
 		expect(alpha.ccLabel).toBe("—");
 	});
 
-	test("a null requestsPerMonth renders as unbounded, not 0/NaN", () => {
+	test("a null requestsPerMonth renders as ∞, not 0/NaN", () => {
 		const [, beta] = compareRows(snapshot, "goat");
 		expect(beta.cc?.requestsPerMonth).toBeNull();
-		expect(beta.ccLabel).toBe(UNBOUNDED);
-		expect(beta.ccLabel).toBe("unbounded");
+		expect(beta.ccLabel).toBe(INFINITY);
+		expect(beta.ccLabel).toBe("∞");
 	});
 
 	test("never emits NaN or undefined in any label", () => {
@@ -106,10 +108,10 @@ describe("compareRows — Review Focus 4", () => {
 		}
 	});
 
-	test("a bounded side renders its count", () => {
+	test("a bounded side renders its count in mpc's K notation", () => {
 		const [, , gamma] = compareRows(snapshot, "goat");
-		expect(gamma.ccLabel).toBe("1,000");
-		expect(gamma.ocLabel).toBe("1,000");
+		expect(gamma.ccLabel).toBe("1.0K");
+		expect(gamma.ocLabel).toBe("1.0K");
 	});
 
 	test("an unknown plan key yields an empty list", () => {
@@ -123,10 +125,9 @@ describe("requestsLabel", () => {
 		expect(requestsLabel(undefined)).toBe("—");
 	});
 
-	test("free side is unbounded", () => {
-		expect(requestsLabel(side({ requestsPerMonth: null }))).toBe(
-			"unbounded",
-		);
+	test("free side is ∞", () => {
+		expect(requestsLabel(side({ requestsPerMonth: null }))).toBe(INFINITY);
+		expect(requestsLabel(side({ requestsPerMonth: null }))).toBe("∞");
 	});
 });
 
@@ -169,8 +170,9 @@ describe("mpc per-side columns", () => {
 	test("window label distinguishes unpriced, free and bounded", () => {
 		expect(windowLabel(null, 200)).toBe(DASH);
 		expect(windowLabel(side(), null)).toBe(DASH);
-		expect(windowLabel(side({ free: true }), null)).toBe(UNBOUNDED);
+		expect(windowLabel(side({ free: true }), null)).toBe(INFINITY);
 		expect(windowLabel(side(), 200)).toBe("200");
+		expect(windowLabel(side(), 54545.45)).toBe("54.5K");
 	});
 
 	test("$/1K is the pay-per-request figure scaled up", () => {
@@ -277,5 +279,125 @@ describe("mpc row-level columns", () => {
 			expect(cell).not.toContain("NaN");
 			expect(cell).not.toBe("undefined");
 		}
+	});
+});
+
+describe("isMpcSnapshot — client adoption gate", () => {
+	const committed = mpcJson as MpcSnapshot;
+
+	test("accepts the committed snapshot", () => {
+		expect(isMpcSnapshot(committed)).toBe(true);
+	});
+
+	test("rejects a slim-shaped side (the previous snapshot shape)", () => {
+		// The old side carried only these five fields; the widened formatters
+		// read pricing/payPerRequest/index/…, so this must be refused rather
+		// than adopted and rendered as `$NaN`/`∞`.
+		const slimSide = {
+			allowance: 20,
+			requestsPerMonth: 1000,
+			costPerRequest: 0.004,
+			ability: 40,
+			free: false,
+		};
+		const slim = {
+			generatedAt: "2026-10-09T00:00:00.000Z",
+			plans: [{ key: "goat", label: "GOAT" }],
+			byPlan: {
+				goat: {
+					rows: [{ key: "x", name: "X", oc: slimSide, cc: null }],
+				},
+			},
+		};
+		expect(isMpcSnapshot(slim)).toBe(false);
+	});
+
+	test("rejects a side missing only the widened fields", () => {
+		const stripped = { ...side() } as Record<string, unknown>;
+		delete stripped.payPerRequest;
+		const bad = {
+			generatedAt: "2026-10-09T00:00:00.000Z",
+			plans: [],
+			byPlan: {
+				goat: {
+					rows: [{ key: "x", name: "X", oc: stripped, cc: null }],
+				},
+			},
+		};
+		expect(isMpcSnapshot(bad)).toBe(false);
+	});
+
+	test("still accepts rows with a null side", () => {
+		const ok = {
+			generatedAt: "2026-10-09T00:00:00.000Z",
+			plans: [],
+			byPlan: {
+				goat: { rows: [{ key: "x", name: "X", oc: null, cc: null }] },
+			},
+		};
+		expect(isMpcSnapshot(ok)).toBe(true);
+	});
+});
+
+describe("committed snapshot — every cell renders cleanly", () => {
+	const snapshot = mpcJson as MpcSnapshot;
+
+	/** The per-side string cells the Full view builds, plus the meta cells. */
+	function cellsFor(s: MpcSide | null): string[] {
+		return [
+			formatRates(s),
+			formatAllowance(s),
+			windowLabel(s, s?.requestsPerFiveHour),
+			windowLabel(s, s?.requestsPerWeek),
+			requestsLabel(s),
+			formatPerThousand(s),
+			formatPerDollar(s),
+		];
+	}
+
+	test("no plan, row, side or meta cell emits NaN/undefined", () => {
+		let checked = 0;
+		for (const run of Object.values(snapshot.byPlan)) {
+			for (const row of run.rows) {
+				const cells = [
+					...cellsFor(row.oc),
+					...cellsFor(row.cc),
+					rowAbility(row),
+					rowTps(row),
+					rowDeal(row),
+					rowWin(row),
+					rowCost(row).toString(),
+					rowValue(row)?.toString() ?? DASH,
+				];
+				for (const cell of cells) {
+					expect(cell).not.toContain("NaN");
+					expect(cell).not.toBe("undefined");
+					expect(cell.length).toBeGreaterThan(0);
+					checked += 1;
+				}
+			}
+		}
+		expect(checked).toBeGreaterThan(0);
+	});
+
+	test("counts read in mpc's K/M notation, free models as ∞", () => {
+		const labels = new Set<string>();
+		for (const run of Object.values(snapshot.byPlan)) {
+			for (const row of run.rows) {
+				for (const s of [row.oc, row.cc]) {
+					if (!s) continue;
+					labels.add(requestsLabel(s));
+					labels.add(windowLabel(s, s.requestsPerFiveHour));
+				}
+			}
+		}
+		let sawShort = false;
+		for (const label of labels) {
+			// Never the old locale-grouped form; only dash, ∞, or K/M/plain.
+			expect(label).not.toContain(",");
+			expect(label).toMatch(/^(—|∞|\d+(\.\d+)?[KM]?)$/);
+			if (label.endsWith("K") || label.endsWith("M")) sawShort = true;
+		}
+		expect(sawShort).toBe(true);
 	});
 });

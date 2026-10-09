@@ -30,6 +30,7 @@ import {
 	formatPerThousand,
 	formatRates,
 	INFINITY,
+	isMpcSnapshot,
 	type MpcSide,
 	type MpcSnapshot,
 	requestsLabel,
@@ -121,18 +122,6 @@ const SIDE_COLUMNS: SideColumn[] = [
 
 /** The two rate columns whose cell is tinted for the cheaper side. */
 const WIN_TINTED = new Set(["$/1K", "req/$"]);
-
-/** Build-time snapshot passes `generatedAt`; anything unmatching is rejected. */
-function isMpcSnapshot(value: unknown): value is MpcSnapshot {
-	if (typeof value !== "object" || value === null) return false;
-	const v = value as Record<string, unknown>;
-	return (
-		typeof v.generatedAt === "string" &&
-		Array.isArray(v.plans) &&
-		typeof v.byPlan === "object" &&
-		v.byPlan !== null
-	);
-}
 
 /**
  * Fetch the committed snapshot, or `null` when unreachable or malformed. Any
@@ -686,7 +675,7 @@ export function CompareTable({
 				</div>
 
 				<p className="mono ink-muted text-xs">
-					{`${visible.length} of ${rows.length} models · sorted by ${active.label}, ${asc ? "ascending" : "descending"} · WIN = cheaper per request · ${DASH} unpriced · “unbounded”/“${INFINITY}” = free`}
+					{`${visible.length} of ${rows.length} models · sorted by ${active.label}, ${asc ? "ascending" : "descending"} · WIN = cheaper per request · ${DASH} unpriced · ${INFINITY} = free`}
 				</p>
 				{mode === "full" && tally && (
 					<p className="mono ink-muted text-xs">

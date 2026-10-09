@@ -11,8 +11,9 @@
  * `tps`, `DEAL`, `WIN`, `COST`, `VAL`. A side is `null` when the model is
  * unpriced in that plan, and a side's `requestsPerMonth` is `null` when the
  * model is free (unbounded requests) — never "missing". `requestsLabel` renders
- * those as `—` and `unbounded`, and every formatter falls back to `—`, so the
- * UI can never show `NaN`/`undefined`.
+ * those as `—` and `∞` (mpc's own convention), and every formatter falls back
+ * to `—`, so the UI can never show `NaN`/`undefined` for a shape that passes
+ * `isMpcSnapshot` (the client adoption gate).
  */
 
 export type MpcDeal = { badge: string };
@@ -97,28 +98,77 @@ export type CompareRow = {
 	name: string;
 	oc: MpcSide | null;
 	cc: MpcSide | null;
-	/** OpenCode requests/month display: number, `unbounded`, or `—`. */
+	/** OpenCode requests/month display: number, `∞`, or `—`. */
 	ocLabel: string;
-	/** CommandCode requests/month display: number, `unbounded`, or `—`. */
+	/** CommandCode requests/month display: number, `∞`, or `—`. */
 	ccLabel: string;
 };
 
 /** The pair of sides a row-level helper reads. */
 export type Sides = Pick<CompareRow, "oc" | "cc">;
 
-export const DASH = "\u2014";
-export const UNBOUNDED = "unbounded";
-/** mpc's symbol for "one dollar buys unlimited requests" (a free model). */
-export const INFINITY = "\u221E";
-
-/** Thousands-separated whole requests, e.g. `272,727`. */
-export function formatCount(n: number): string {
-	return Math.round(n).toLocaleString("en-US");
+/**
+ * True when a side carries every field the full-column formatters dereference
+ * (`pricing`, `payPerRequest`, `index`, …). The old slim side had only
+ * `allowance`/`requestsPerMonth`/`costPerRequest`/`ability`/`free`, so it fails
+ * this and is rejected rather than rendered as `$NaN`. `null` is a valid value
+ * for the bounded/unbounded fields; the key must still be present.
+ */
+function isMpcSide(value: unknown): boolean {
+	if (typeof value !== "object" || value === null) return false;
+	const s = value as Record<string, unknown>;
+	return (
+		typeof s.free === "boolean" &&
+		typeof s.allowance === "number" &&
+		typeof s.costPerRequest === "number" &&
+		typeof s.payPerRequest === "number" &&
+		typeof s.index === "number" &&
+		typeof s.pricing === "object" &&
+		s.pricing !== null &&
+		"requestsPerMonth" in s &&
+		"requestsPerFiveHour" in s &&
+		"requestsPerWeek" in s &&
+		"ability" in s &&
+		"tps" in s &&
+		"valueIndex" in s
+	);
 }
 
 /**
+ * True only for a snapshot whose every present side carries the widened fields
+ * the UI consumes. A `null` side (unpriced) is valid. Anything else — notably
+ * the previous slim snapshot a cached raw-CDN copy can still serve — is
+ * rejected, so the client keeps the committed snapshot instead of rendering
+ * `$NaN`/`∞` from missing fields.
+ */
+export function isMpcSnapshot(value: unknown): value is MpcSnapshot {
+	if (typeof value !== "object" || value === null) return false;
+	const v = value as Record<string, unknown>;
+	if (typeof v.generatedAt !== "string" || !Array.isArray(v.plans)) {
+		return false;
+	}
+	if (typeof v.byPlan !== "object" || v.byPlan === null) return false;
+	for (const run of Object.values(v.byPlan)) {
+		if (typeof run !== "object" || run === null) return false;
+		const rows = (run as Record<string, unknown>).rows;
+		if (!Array.isArray(rows)) return false;
+		for (const row of rows) {
+			if (typeof row !== "object" || row === null) return false;
+			const r = row as Record<string, unknown>;
+			if (r.oc != null && !isMpcSide(r.oc)) return false;
+			if (r.cc != null && !isMpcSide(r.cc)) return false;
+		}
+	}
+	return true;
+}
+
+export const DASH = "\u2014";
+/** mpc's symbol for "unbounded requests" (a free model) and "unlimited req/$". */
+export const INFINITY = "\u221E";
+
+/**
  * Requests a rolling window allows for one side: `—` when the model is
- * unpriced there, `unbounded` when it is free, otherwise the grouped number.
+ * unpriced there, `∞` when it is free (unbounded), otherwise mpc's K/M count.
  */
 export function windowLabel(
 	side: MpcSide | null | undefined,
@@ -126,20 +176,20 @@ export function windowLabel(
 ): string {
 	if (!side) return DASH;
 	if (value === null || value === undefined) {
-		return side.free ? UNBOUNDED : DASH;
+		return side.free ? INFINITY : DASH;
 	}
-	return formatCount(value);
+	return formatShortCount(value);
 }
 
 /**
  * Requests/month display for one side: `—` when the model is unpriced there,
- * `unbounded` when it is free, otherwise the grouped number.
+ * `∞` when it is free (unbounded), otherwise mpc's K/M count.
  */
 export function requestsLabel(side: MpcSide | null | undefined): string {
 	if (!side) return DASH;
 	const value = side.requestsPerMonth;
-	if (value === null || value === undefined) return UNBOUNDED;
-	return formatCount(value);
+	if (value === null || value === undefined) return INFINITY;
+	return formatShortCount(value);
 }
 
 function trimZeros(s: string): string {
