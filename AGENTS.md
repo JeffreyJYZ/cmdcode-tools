@@ -212,8 +212,10 @@ cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo package -p cmduse-core --allow-dirty   # core ships plans.json+gating.json
 printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | cargo run -p cmd-usage -- mcp   # MCP smoke
-cd opencode && bun test && bun run typecheck
+cd opencode-plugin && bun test && bun run typecheck
 ```
+
+**`typecheck` → `bun check` once Bun's type checker is in stable** (canary-only as of Bun 1.4.2, Oct 2026; ships in the next release — decided to wait). Then change each package's `typecheck` script from `tsc --noEmit` to `bun check`; all tsconfigs are already TS7-clean (no `baseUrl`, `moduleResolution: "bundler"`, `types: ["bun"]`, `./`-relative `paths`). **Keep `tsc -p tsconfig.build.json` in every `build` script** — `bun check` never emits, so `.d.ts` still comes from `tsc`. Pin CI's `setup-bun` to canary in the same change, or the matrix's `typecheck` step fails on stable.
 
 **After repo move, `target/` can carry build script baked with old absolute
 `CARGO_MANIFEST_DIR`.** `core/build.rs` reads `plans.json` relative to that
@@ -536,7 +538,7 @@ committing: `cargo fmt --all -- --check`, `cargo test --all-targets`,
   2FA). Only `approve` commits version, so **version not live until that step** —
   verify afterward, never treat stage or `202` as published.
 - **Every npm publish/approve step needing 2FA fails from agent shell** (`EOTP`,
-  prints auth URL). Build first (`cd opencode && bun run build`) so `dist/`
+  prints auth URL). Build first (`cd opencode-plugin && bun run build`) so `dist/`
   current. Never treat `EOTP` as published — verify `npm view
   @jeffreyjyz/opencode-command-code version`.
 - **Verify release with `bun scripts/verify-release.ts <version> [--expected
@@ -549,7 +551,7 @@ committing: `cargo fmt --all -- --check`, `cargo test --all-targets`,
   needs no copy-paste), polls up to `--tries N` (default 40) at 20s intervals,
   exits non-zero until tarball really served. Wrapping it in another loop that
   re-fetches packument duplicates checks it exists to own, duplicate then drifts.
-  Pin flip = only extra step, must wait for this to pass: `(cd opencode && bun
+  Pin flip = only extra step, must wait for this to pass: `(cd opencode-plugin && bun
   scripts/verify-release.ts 0.3.8) && <edit the pin in
   ~/.config/opencode/opencode.json>`.
 - **Successful publish asynchronous, two visible stages.** CLI returns `PUT 202`
