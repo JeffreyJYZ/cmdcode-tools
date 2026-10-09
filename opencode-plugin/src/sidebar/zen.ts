@@ -11,6 +11,7 @@
 // a usage panel is worse than none. Spend and caps are real, so those are shown.
 import { GO_WINDOW_SHARE } from "../constants/sidebar";
 import {
+	allowanceLabel,
 	clip,
 	count,
 	type ModelMeta,
@@ -191,7 +192,9 @@ export function zenRows(
 	}
 	if (!meta) return rows;
 	if (typeof limit === "number") {
-		rows.push(["Allowance", `${money(limit)}/mo`, "base"]);
+		// A free/unbounded model reads `∞`, not `$0/mo` (allowance 0 is the
+		// convention for free, not an empty budget).
+		rows.push(["Allowance", allowanceLabel(limit, oc?.free), "base"]);
 	}
 	if (oc?.rates) {
 		const cache = [`cache read ${rate(oc.rates.cacheRead)}`];

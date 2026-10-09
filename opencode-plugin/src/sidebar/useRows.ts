@@ -12,6 +12,7 @@ import {
 } from "../constants/providers";
 import { POLL_MS } from "../constants/timing";
 import { loadMeta, loadUsage, loadZen } from "./data";
+import { loadPrefs } from "./prefs";
 import {
 	type ModelMeta,
 	type ModelUsage,
@@ -172,7 +173,9 @@ export function useRows(
 	 * waiting for the client to be restarted.
 	 */
 	const refreshMeta = (): void => {
-		void loadMeta()
+		// The Go plan selects which per-model allowance mpc bakes in, and the
+		// cache is per plan, so it is read fresh each poll (prefs are cached).
+		void loadMeta(loadPrefs().ocPlan)
 			.then((next) => {
 				rememberMeta(next);
 				if (next.size > 0) setMeta(next);
@@ -215,7 +218,7 @@ export function useRows(
 				setUsage(usageRows(snapshot));
 				refreshModelUsage(activeModelId());
 			} else if (kind === "go" || kind === "zen") {
-				setZen(await loadZen());
+				setZen(await loadZen(loadPrefs().ocPlan));
 			}
 		} catch {
 			// the CLI is missing, offline, or returned its errored defaults: keep

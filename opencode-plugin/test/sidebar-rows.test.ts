@@ -202,6 +202,22 @@ describe("modelRows", () => {
 		expect(rows[5]).toEqual(["Intelligence", "39.5", "base"]);
 		expect(rows[6]).toEqual(["Tok/s", "247", "base"]);
 	});
+	test("a free model reads `∞`, not `$0/mo`", () => {
+		// A free/unbounded CommandCode row carries allowance 0 with `free: true`;
+		// rendering the zero as a budget is the bug this guards.
+		const rows = modelRows({
+			key: "ling31flash",
+			name: "Ling 3.1 Flash",
+			allowance: 0,
+			free: true,
+		});
+		expect(rows.find((row) => row[0] === "Allowance")).toEqual([
+			"Allowance",
+			"∞",
+			"base",
+		]);
+	});
+
 	test("adds cache write only when the model has one", () => {
 		const claude = modelRows({
 			key: "claudesonnet5",

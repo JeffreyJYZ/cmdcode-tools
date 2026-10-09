@@ -149,6 +149,63 @@ describe("zenRows", () => {
 		expect(find("Allowance")).toEqual(["Allowance", "$60/mo", "base"]);
 	});
 
+	test("a free model reads `∞`, not `$0/mo`", () => {
+		// OpenCode Go's free models publish an Unlimited limit: mpc carries
+		// allowance 0 with `free: true` and all-zero rates, which the panel used
+		// to print as `Allowance $0/mo`.
+		const rows = zenRows(parseZenJson(sample), {
+			key: "step5preview",
+			name: "Step 5 Preview",
+			oc: {
+				provider: "oc-go",
+				plan: "Go",
+				allowance: 0,
+				free: true,
+				rates: { input: 0, output: 0, cacheRead: 0 },
+				ability: 44,
+			},
+		});
+		const find = (label: string) => rows.find((row) => row[0] === label);
+		expect(find("Allowance")).toEqual(["Allowance", "∞", "base"]);
+		// No cap to divide: the windows degrade to spend only, like Zen.
+		expect(find("5-hour")).toEqual(["5-hour", "$0.50 · 1 req", "base"]);
+	});
+
+	test("a zero allowance alone reads `∞` too", () => {
+		const rows = zenRows(parseZenJson(sample), {
+			key: "step5preview",
+			name: "Step 5 Preview",
+			oc: { plan: "Go", allowance: 0 },
+		});
+		expect(rows.find((row) => row[0] === "Allowance")).toEqual([
+			"Allowance",
+			"∞",
+			"base",
+		]);
+	});
+
+	test("the Plan row names the selected plan", () => {
+		const rows = zenRows(parseZenJson(sample), {
+			key: "glm53flash",
+			name: "GLM 5.3 Flash",
+			oc: {
+				provider: "oc-go",
+				plan: "Go Plus",
+				allowance: 120,
+				rates: { input: 0.1, output: 0.2, cacheRead: 0.002 },
+			},
+		});
+		expect(rows.find((row) => row[0] === "Plan")?.[1]).toBe(
+			"Go Plus · limits per model",
+		);
+		// The allowance follows the plan's limit.
+		expect(rows.find((row) => row[0] === "Allowance")).toEqual([
+			"Allowance",
+			"$120/mo",
+			"base",
+		]);
+	});
+
 	test("no snapshot yields no rows at all", () => {
 		expect(zenRows(undefined, meta)).toEqual([]);
 	});

@@ -91,7 +91,7 @@ While a session uses a `command-code*` model — or an OpenCode Go/Zen one — t
 - the active model's own period usage — requests, plus spend and its share of the session when the harness records them (new in 0.2.9, spend share in 0.3.15; labelled `Usage (this model)`)
 - a running promotion on the active model (`Deal`: badge plus expiry, new in 0.3.14)
 - this session's own totals (`Session`), so mid-conversation you see what the conversation has cost rather than only the period-to-date figure (new in 0.3.12)
-- on OpenCode Go/Zen sessions: the same shape from `ocuse`, the only local source for those providers — spend against each window's share of the model's per-model allowance (5h 20%, weekly 50%, monthly 100%), plus rates and benchmarks from mpc's OpenCode side (new in 0.3.12). Deliberately no reset countdowns there: Go has no usage API, so the only local figure is an approximation.
+- on OpenCode Go/Zen sessions: the same shape from `ocuse`, the only local source for those providers — spend against each window's share of the model's per-model allowance (5h 20%, weekly 50%, monthly 100%), plus rates and benchmarks from mpc's OpenCode side (new in 0.3.12). The allowance shown is the **selected Go plan**'s limit: Go and Go Plus share token prices but grant different per-model limits, and nothing local records which you have, so set it (below). A free/unbounded model reads `Allowance: ∞` rather than a money figure. Deliberately no reset countdowns there: Go has no usage API, so the only local figure is an approximation.
 
 Usage comes from the `cmduse` CLI (polled every 5s); the model catalog comes from `mpc --json`, cached for 1h and re-read on every poll, so a new model or promotion reaches a running panel — install it with `bun link` in the `oc-cmd-compare` package, or the section keeps the model name and the store-backed rows and simply omits the catalog rows (tier, rates, allowance). The model's own usage is read from opencode's message store (`~/.local/share/opencode/opencode.db`, read-only); CommandCode is subscription-billed, so spend appears only when the harness priced the turns (a free or unpriced model keeps requests only). Non-CommandCode models show nothing.
 
@@ -100,10 +100,10 @@ Both blocks remember their last reading, so a remount or a session switch repain
 The section is plain text unless you ask for colour. To turn it on, write `~/.config/opencode/command-code.json`:
 
 ```json
-{ "colors": true }
+{ "colors": true, "ocPlan": "go-plus" }
 ```
 
-`CMD_COLORS=1` (or `0`) overrides the file for a single run. The file is re-read every few seconds, so flipping it lands on the next poll without a restart.
+`CMD_COLORS=1` (or `0`) overrides colour for a single run; `ocPlan` is the OpenCode Go plan the panel reads per-model limits from — `go` (default) or `go-plus`, since the two share token prices but grant different limits and nothing local records which one you have (`CMD_OC_PLAN=go|go-plus` overrides it per run). An unknown plan falls back to `go` with a warning. The file is re-read every few seconds, so flipping it lands on the next poll without a restart.
 
 opencode is told each model's published $/1M rates, so its own cost display (and any accounting built on it) works for CommandCode models instead of showing $0.
 

@@ -5,9 +5,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SPAWN_OPTIONS } from "../src/constants/cli";
 import {
+	metaArgs,
 	parseMpcJson,
 	parseUsageJson,
 	requireSnapshot,
+	zenArgs,
 } from "../src/sidebar/data";
 import {
 	loadModelUsage,
@@ -146,6 +148,64 @@ describe("parseMpcJson", () => {
 		expect(meta.get("someocmodel")?.oc?.allowance).toBe(60);
 		expect(meta.get("someocmodel")?.allowance).toBeUndefined();
 		expect(names).not.toContain("Neither Side");
+	});
+
+	test("keeps the `free` flag on both sides so a zero allowance is read as unbounded", () => {
+		// mpc marks a free/unbounded row free and gives it allowance 0; without
+		// the flag the panel cannot tell that from an empty $0 budget.
+		const meta = parseMpcJson(
+			JSON.stringify({
+				rows: [
+					{
+						key: "step5preview",
+						name: "Step 5 Preview",
+						cc: { allowance: 20, free: false },
+						oc: { allowance: 0, free: true },
+					},
+					{
+						key: "ccfree",
+						name: "CC Free",
+						cc: { allowance: 0, free: true },
+						oc: { allowance: 60, free: false },
+					},
+				],
+			}),
+		);
+		expect(meta.get("step5preview")?.free).toBeUndefined();
+		expect(meta.get("step5preview")?.oc?.free).toBe(true);
+		expect(meta.get("ccfree")?.free).toBe(true);
+		expect(meta.get("ccfree")?.oc?.free).toBeUndefined();
+	});
+});
+
+describe("CLI args", () => {
+	test("ocuse is asked for the selected Go plan", () => {
+		expect(zenArgs("go")).toEqual(["-1", "--json", "--plan", "go"]);
+		expect(zenArgs("go-plus")).toEqual([
+			"-1",
+			"--json",
+			"--plan",
+			"go-plus",
+		]);
+	});
+
+	test("mpc keeps `--shape off` and takes the plan", () => {
+		// `--shape off` is the recursion break (mpc -> reqshape -> mpc); it must
+		// survive alongside the plan flag.
+		expect(metaArgs("go")).toEqual([
+			"--json",
+			"--shape",
+			"off",
+			"--oc-plan",
+			"go",
+		]);
+		expect(metaArgs("go-plus")).toEqual([
+			"--json",
+			"--shape",
+			"off",
+			"--oc-plan",
+			"go-plus",
+		]);
 	});
 });
 

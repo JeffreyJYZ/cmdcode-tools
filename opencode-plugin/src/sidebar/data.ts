@@ -13,7 +13,8 @@ import {
 	OCUSE_BIN_CANDIDATES,
 } from "../constants/binaries";
 import { SPAWN_OPTIONS } from "../constants/cli";
-import { CACHE_DIR, CC_CATALOG_FILE } from "../constants/paths";
+import { CACHE_DIR, ccCatalogFile } from "../constants/paths";
+import { OC_PLAN_DEFAULT, type OcPlan } from "../constants/sidebar";
 import { CATALOG_CACHE_TTL_MS, CHILD_TIMEOUT_MS } from "../constants/timing";
 import { type ModelMeta, modelKey, type Usage } from "./rows";
 import { parseZenJson, type ZenUsage } from "./zen";
@@ -155,6 +156,8 @@ interface MpcRow {
 		tps?: number | null;
 		/** CommandCode promotion on the row: badge text plus its expiry line. */
 		deal?: { badge?: string; ends?: string };
+		/** CommandCode side is unconstrained (no monthly budget to divide). */
+		free?: boolean;
 	};
 	oc?: {
 		provider?: string;
@@ -168,6 +171,7 @@ interface MpcRow {
 		};
 		ability?: number | null;
 		tps?: number | null;
+		/** OpenCode Go side is free/unbounded: its allowance is 0 by convention. */
 		free?: boolean;
 	};
 }
@@ -188,6 +192,9 @@ export function parseMpcJson(text: string): Map<string, ModelMeta> {
 			key: row.key ?? modelKey(row.name),
 			name: row.name,
 			allowance: cc?.allowance,
+			// `free` is the only signal that a zero allowance means unbounded
+			// rather than "$0/mo"; without it the panel prints a bogus budget.
+			free: cc?.free === true ? true : undefined,
 			rates: cc?.pricing,
 			intelligence: cc?.ability ?? undefined,
 			tps: cc?.tps ?? undefined,
@@ -200,6 +207,7 @@ export function parseMpcJson(text: string): Map<string, ModelMeta> {
 						provider: oc.provider,
 						plan: oc.plan,
 						allowance: oc.allowance,
+						free: oc.free === true ? true : undefined,
 						rates: oc.pricing,
 						ability: oc.ability ?? undefined,
 						tps: oc.tps ?? undefined,
@@ -214,15 +222,32 @@ export function parseMpcJson(text: string): Map<string, ModelMeta> {
 	return meta;
 }
 
-function cachePath(): string {
+function cachePath(plan: OcPlan): string {
 	const base = process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache");
-	return join(base, CACHE_DIR, CC_CATALOG_FILE);
+	return join(base, CACHE_DIR, ccCatalogFile(plan));
 }
 
-/** mpc's catalog, cached on disk: it scrapes live docs over the network. */
-export async function loadMeta(): Promise<Map<string, ModelMeta>> {
+/**
+ * mpc's args for the per-model catalog. `--shape off` is the recursion break
+ * (mpc's default `--shape auto` spawns reqshape, which spawns mpc back), never
+ * dropped; `--oc-plan` selects which Go plan's per-model allowance is baked in.
+ */
+export function metaArgs(plan: OcPlan): string[] {
+	return ["--json", "--shape", "off", "--oc-plan", plan];
+}
+
+/** ocuse's args: `--plan` selects the Go plan's per-model limits. */
+export function zenArgs(plan: OcPlan): string[] {
+	return ["-1", "--json", "--plan", plan];
+}
+
+/** mpc's catalog, cached on disk: it scrapes live docs over the network. The
+ * cache is per plan, since mpc bakes that plan's per-model allowance into it. */
+export async function loadMeta(
+	plan: OcPlan = OC_PLAN_DEFAULT,
+): Promise<Map<string, ModelMeta>> {
 	try {
-		const cached = JSON.parse(await readFile(cachePath(), "utf8")) as {
+		const cached = JSON.parse(await readFile(cachePath(plan), "utf8")) as {
 			fetchedAt?: number;
 			rows?: [string, ModelMeta][];
 		};
@@ -235,14 +260,9 @@ export async function loadMeta(): Promise<Map<string, ModelMeta>> {
 	} catch {
 		// no cache yet
 	}
-	// `--shape off`: the sidebar wants only mpc's catalog (allowance, rates,
-	// benchmarks), not a workload — mpc's default `--shape auto` would spawn
-	// reqshape on every cache miss otherwise.
-	const meta = parseMpcJson(
-		await runFirst(MPC, ["--json", "--shape", "off"]),
-	);
+	const meta = parseMpcJson(await runFirst(MPC, metaArgs(plan)));
 	try {
-		const path = cachePath();
+		const path = cachePath(plan);
 		await mkdir(dirname(path), { recursive: true });
 		await writeFile(
 			path,
@@ -268,6 +288,8 @@ export async function loadUsage(): Promise<Usage> {
  * (those providers have no usage API). Throws when ocuse is missing or fails,
  * and the caller then omits the panel.
  */
-export async function loadZen(): Promise<ZenUsage> {
-	return parseZenJson(await runFirst(OCUSE, ["-1", "--json"]));
+export async function loadZen(
+	plan: OcPlan = OC_PLAN_DEFAULT,
+): Promise<ZenUsage> {
+	return parseZenJson(await runFirst(OCUSE, zenArgs(plan)));
 }

@@ -81,6 +81,8 @@ export interface ModelMeta {
 	/** Cheapest plan that serves the model, from the generated catalog. */
 	minPlan?: string | null;
 	allowance?: number;
+	/** Unbounded on the CommandCode side: `allowance` is 0 by convention. */
+	free?: boolean;
 	rates?: {
 		input: number;
 		output: number;
@@ -102,6 +104,8 @@ export interface ModelMeta {
 		provider?: string;
 		plan?: string;
 		allowance?: number;
+		/** Unbounded on the OpenCode Go side: its allowance is 0 by convention. */
+		free?: boolean;
 		rates?: {
 			input: number;
 			output: number;
@@ -153,6 +157,16 @@ export interface Usage {
 export function money(value: number): string {
 	const rounded = Math.round(value * 100) / 100;
 	return `$${Number.isInteger(rounded) ? rounded : rounded.toFixed(2)}`;
+}
+
+/**
+ * A monthly allowance as it appears on the panel. A free/unbounded model has no
+ * budget to divide — mpc reports `free: true` and allowance 0 — so it reads `∞`
+ * rather than the misleading `$0/mo` (0 is not a budget). Both sides call this,
+ * so a free CommandCode model and a free OpenCode Go one render alike.
+ */
+export function allowanceLabel(limit: number, free?: boolean): string {
+	return free === true || limit <= 0 ? "∞" : `${money(limit)}/mo`;
 }
 
 /** Rate scale needs more precision than credit scale ($0.0036). */
@@ -342,7 +356,11 @@ export function modelRows(
 	// tier for, and showing both read as redundant once gating could refresh.
 	else if (meta.minPlan) rows.push(["Min plan", meta.minPlan, "base"]);
 	if (typeof meta.allowance === "number")
-		rows.push(["Allowance", `${money(meta.allowance)}/mo`, "base"]);
+		rows.push([
+			"Allowance",
+			allowanceLabel(meta.allowance, meta.free),
+			"base",
+		]);
 	if (meta.deal) {
 		// The badge is the news; the expiry is compacted to fit ("Sep 30" rather
 		// than "Ends September 30, 2026"), because the sidebar has 37 columns.

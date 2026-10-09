@@ -7,6 +7,7 @@ import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
 import { hostColors, mono, Panel } from "../src/sidebar/panel";
 import { type SidebarRow, separator } from "../src/sidebar/rows";
+import { parseZenJson, zenRows } from "../src/sidebar/zen";
 
 const hex = (c: RGBA) =>
 	`#${[c.r, c.g, c.b]
@@ -86,6 +87,61 @@ describe("rendered panel", () => {
 		// Continuations and the rule stay dim.
 		expect(hex(find("99% elapsed")?.fg as RGBA)).toBe(hex(colors.muted));
 		expect(hex(find("───")?.fg as RGBA)).toBe(hex(colors.muted));
+	});
+
+	test("a Go Plus free model renders `Go Plus` and `∞`, not `$0/mo`", async () => {
+		// The plan setting reaches the panel as `Go Plus` on the Plan row and the
+		// free model's allowance as `∞` (never a money figure for a zero budget).
+		const zen = zenRows(
+			parseZenJson(
+				JSON.stringify({
+					totals: {
+						fiveHour: { requests: 0, cost: 0 },
+						weekly: { requests: 0, cost: 0 },
+						month: { requests: 3, cost: 0 },
+					},
+					models: [
+						{
+							id: "step5preview",
+							provider: "opencode-go",
+							limit: null,
+							fiveHour: { requests: 0, cost: 0 },
+							weekly: { requests: 0, cost: 0 },
+							month: { requests: 3, cost: 0 },
+						},
+					],
+				}),
+			),
+			{
+				key: "step5preview",
+				name: "Step 5 Preview",
+				oc: {
+					provider: "oc-go",
+					plan: "Go Plus",
+					allowance: 0,
+					free: true,
+					rates: { input: 0, output: 0, cacheRead: 0 },
+				},
+			},
+		);
+		const setup = await testRender(
+			() => (
+				<Panel
+					title={() => "OpenCode Go"}
+					rows={() => zen}
+					colors={() => mono(colors)}
+				/>
+			),
+			{ width: 42, height: 16 },
+		);
+		await setup.renderOnce();
+		const text = setup
+			.captureSpans()
+			.lines.flatMap((line) => line.spans.map((span) => span.text))
+			.join("");
+		expect(text).toContain("Go Plus · limits per model");
+		expect(text).toContain("∞");
+		expect(text).not.toContain("$0/mo");
 	});
 
 	test("colours off: nothing chromatic reaches the frame", async () => {
