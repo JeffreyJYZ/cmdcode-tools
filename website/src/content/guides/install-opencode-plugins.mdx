@@ -1,0 +1,69 @@
+---
+title: Install the opencode plugins
+description: Add the published opencode plugins to your config and see what each one gives you.
+order: 1
+---
+
+opencode loads the plugins listed in the `plugins` array of
+`~/.config/opencode/opencode.json`. This workspace publishes three of them; they
+install the same way and can be enabled together.
+
+## Add the plugins
+
+Open `~/.config/opencode/opencode.json` and list the packages you want:
+
+```json
+{
+	"plugins": [
+		"@jeffreyjyz/opencode-context",
+		"@jeffreyjyz/opencode-shell-rc",
+		"@jeffreyjyz/opencode-session-dir"
+	]
+}
+```
+
+opencode resolves each entry from npm on start. Then reload the running session
+with `/reload`, or restart `opencode`.
+
+## What each plugin gives you
+
+| Plugin | Adds |
+| --- | --- |
+| `@jeffreyjyz/opencode-context` | A `/context` dialog showing where the session's context window went, plus a `context_breakdown` tool the model can call. |
+| `@jeffreyjyz/opencode-shell-rc` | Makes the agent shell load your interactive zsh aliases and functions. |
+| `@jeffreyjyz/opencode-session-dir` | Binds extra working directories to one session, durably, via `/session-dir`. |
+
+Each plugin's own docs page covers its commands and how it works:
+
+- [opencode-context](/docs/opencode-context)
+- [opencode-shell-rc](/docs/opencode-shell-rc)
+- [opencode-session-dir](/docs/opencode-session-dir)
+
+## Develop a plugin from a checkout
+
+An absolute path in `plugins` is treated as a local plugin, so you can point at a
+checkout instead of the published package:
+
+```json
+{
+	"plugins": ["/Users/you/dev/cmdcode-tools/opencode-shell-rc"]
+}
+```
+
+Run `bun install` and `bun run build` in the checkout first — the root
+`index.js` shim loads the built `dist/`. Local-directory plugins resolve `index`
+beside the package root, not through the `exports` map, which is what the shim
+is for.
+
+## If a plugin seems not to load
+
+The install cache opencode keeps per package can lag npm after a release. Clear
+it and restart:
+
+```sh
+npm cache clean --force
+rm -rf ~/.cache/opencode/npm/@jeffreyjyz/opencode-context@latest
+```
+
+Pinning the entry to an exact version (`@jeffreyjyz/opencode-context@1.2.3`)
+also stops opencode re-resolving `@latest` on every start.

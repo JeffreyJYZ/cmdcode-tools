@@ -1,0 +1,66 @@
+---
+title: Set up Command Code
+description: Install the Command Code CLI and cmduse, authenticate, and take your first usage reading.
+order: 2
+---
+
+Command Code is the subscription `cmduse` reports on. Two pieces are involved:
+the Command Code CLI (which holds your API key) and the `cmduse` binary (which
+reads it).
+
+## 1. Log in to the Command Code CLI
+
+`cmduse` reads your key from `~/.commandcode/auth.json`. If that file is missing,
+install the Command Code CLI and sign in:
+
+```sh
+cmd login
+```
+
+If you would rather not touch the stored key, export one for the shell instead:
+
+```sh
+export CMD_API_KEY=...
+```
+
+`CMD_API_KEY` takes precedence over the file, so it works for a one-off run or a
+second account.
+
+## 2. Install cmduse
+
+```sh
+brew install JeffreyJYZ/tap/cmduse   # macOS
+cargo install cmd-usage              # any platform with Rust
+```
+
+`cargo binstall cmd-usage` also works and skips the compile — the release
+publishes prebuilt binaries.
+
+## 3. Take a reading
+
+Print one frame and exit:
+
+```sh
+cmduse -1
+```
+
+Drop the `-1` for the live dashboard, which redraws in place. When stdout is a
+pipe or `NO_COLOR` is set, colour is dropped automatically, so it is safe to call
+from a script.
+
+## OpenCode Go and Zen
+
+The same crate ships `ocuse`, which tracks OpenCode's Go subscription and Zen
+pay-as-you-go usage with the same CLI shape:
+
+```sh
+ocuse -1
+ocuse model
+```
+
+It reads opencode's own local store rather than an account API, since OpenCode
+publishes none. Point either binary at a different build with `CMDUSE_BIN` /
+`OCUSE_BIN`.
+
+The [cmduse docs page](/docs/cmduse) is the full reference: every subcommand,
+the MCP server, the statusline, and the config file.

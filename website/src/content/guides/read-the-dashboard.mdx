@@ -1,0 +1,48 @@
+---
+title: Read the dashboard
+description: What each line of the cmduse dashboard is telling you, and which number to act on first.
+---
+
+`cmduse` prints one frame and redraws it in place. Every line answers a different
+question, and the order is deliberate: the account first, then the windows that
+can actually stop you.
+
+## Plan and period
+
+The header names the plan and its state, then the date the billing period ends.
+The credits line is your remaining allowance for that period against the plan's
+cap, with any purchased and free credits called out separately.
+
+## The three usage windows
+
+Command Code meters a monthly pool with a rolling 5-hour limit and a rolling
+weekly limit on top. Each window gets a row with the same shape:
+
+- **used / cap** — dollars spent against that window's cap, and the percentage.
+- **resets in …** — time until the window rolls over.
+- **window N% elapsed** — how far through the window you are.
+- **`$X by now`** — on the monthly row only: what an even burn would have spent
+  by this point. Compare it against `used` to see if you are ahead of or behind
+  budget. It is shown on the monthly row alone because the 5-hour and weekly caps
+  are throttles, where a pro-rata figure would read as a spend target.
+
+The bar is coloured by severity: green below 70%, amber to 90%, red at or above
+it. A window that has actually overflowed is flagged **LIMIT EXCEEDED**.
+
+## Pace
+
+When a window is at least 10% elapsed, its row adds `on pace to hit cap in …`.
+That is a flat-rate projection of the current spend — bursty sessions shift it,
+so read it as an early warning, not a promise.
+
+## Statusline
+
+For a prompt or tmux bar, `cmduse statusline` prints one configurable line
+instead of the frame. The template and its placeholders live in the
+[cmduse docs](/docs/cmduse).
+
+## Plain and machine-readable output
+
+The live dashboard's spinner goes straight to the terminal, so it only runs when
+stdout is a TTY. `cmduse -p -1` forces plain text, and `-1 --json` emits a single
+dashboard object for a script to parse.
