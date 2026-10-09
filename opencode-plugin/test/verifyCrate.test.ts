@@ -1,9 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import {
+	assetLine,
 	type CrateFacts,
+	compareAssets,
 	formulaPin,
+	formulaShape,
 	manifestVersion,
+	parseSums,
 	sha256Hex,
+	sumsUrl,
 	verdict,
 } from "../scripts/verify-crate";
 
@@ -15,6 +20,34 @@ class Cmduse < Formula
   license "MIT"
 end
 `;
+
+/** The real tap shape: four release assets, one url+sha256 per platform. */
+const RELEASE_FORMULA = `
+class Cmduse < Formula
+  on_macos do
+    on_arm do
+      url "https://github.com/o/r/releases/download/cmduse-v0.7.8/cmduse-0.7.8-aarch64-apple-darwin.tar.gz"
+      sha256 "${"a".repeat(64)}"
+    end
+    on_intel do
+      url "https://github.com/o/r/releases/download/cmduse-v0.7.8/cmduse-0.7.8-x86_64-apple-darwin.tar.gz"
+      sha256 "${"b".repeat(64)}"
+    end
+  end
+  on_linux do
+    on_arm do
+      url "https://github.com/o/r/releases/download/cmduse-v0.7.8/cmduse-0.7.8-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "${"c".repeat(64)}"
+    end
+  end
+end
+`;
+
+const SUMS = [
+	`${"a".repeat(64)}  cmduse-0.7.8-aarch64-apple-darwin.tar.gz`,
+	`${"b".repeat(64)}  cmduse-0.7.8-x86_64-apple-darwin.tar.gz`,
+	`${"c".repeat(64)}  cmduse-0.7.8-aarch64-unknown-linux-musl.tar.gz`,
+].join("\n");
 
 describe("verify-crate helpers", () => {
 	test("reads the version the formula pins, from the crate url", () => {
@@ -70,5 +103,85 @@ describe("verify-crate helpers", () => {
 		expect(
 			verdict("0.7.5", indexed, 200, "a".repeat(64), "b".repeat(64)),
 		).toContain("MISMATCH");
+	});
+});
+
+describe("verify-crate release-asset formulas", () => {
+	test("detects the shape from the url set", () => {
+		expect(
+			formulaShape([
+				"https://github.com/o/r/releases/download/cmduse-v0.7.8/cmduse-0.7.8-aarch64-apple-darwin.tar.gz",
+			]),
+		).toBe("release");
+		expect(formulaShape(["https://x/cmd-usage-0.7.4.crate"])).toBe("crate");
+		expect(formulaShape(["https://x/x-1.2.3.tar.gz"])).toBe("unknown");
+	});
+
+	test("parses every url + its following sha256", () => {
+		const pin = formulaPin(RELEASE_FORMULA, "Formula/cmduse.rb");
+		expect(pin.shape).toBe("release");
+		expect(pin.assets).toHaveLength(3);
+		expect(pin.assets.map((a) => a.file)).toEqual([
+			"cmduse-0.7.8-aarch64-apple-darwin.tar.gz",
+			"cmduse-0.7.8-x86_64-apple-darwin.tar.gz",
+			"cmduse-0.7.8-aarch64-unknown-linux-musl.tar.gz",
+		]);
+		expect(pin.assets.every((a) => a.version === "0.7.8")).toBe(true);
+		expect(pin.assets[0]?.sha256).toBe("a".repeat(64));
+	});
+
+	test("derives the SHA256SUMS url from the asset url", () => {
+		expect(
+			sumsUrl(
+				"https://github.com/o/r/releases/download/cmduse-v0.7.8/cmduse-0.7.8-x86_64-apple-darwin.tar.gz",
+			),
+		).toBe(
+			"https://github.com/o/r/releases/download/cmduse-v0.7.8/SHA256SUMS",
+		);
+		expect(sumsUrl("https://static.crates.io/x.crate")).toBeUndefined();
+	});
+
+	test("parses SHA256SUMS tolerating ./ and * markers", () => {
+		const sums = parseSums(
+			`${"a".repeat(64)}  ./a.tar.gz\n${"b".repeat(64)} *b.tar.gz\n`,
+		);
+		expect(sums["a.tar.gz"]).toBe("a".repeat(64));
+		expect(sums["b.tar.gz"]).toBe("b".repeat(64));
+	});
+
+	test("every formula pin must match its sums entry", () => {
+		const pin = formulaPin(RELEASE_FORMULA);
+		const verdicts = compareAssets(pin.assets, parseSums(SUMS));
+		expect(verdicts.every((v) => v.status === "MATCH")).toBe(true);
+	});
+
+	test("a corrupted pin is reported as MISMATCH naming the asset", () => {
+		const pin = formulaPin(
+			RELEASE_FORMULA.replace(
+				`sha256 "${"a".repeat(64)}"`,
+				`sha256 "${"f".repeat(64)}"`,
+			),
+		);
+		const verdicts = compareAssets(pin.assets, parseSums(SUMS));
+		const bad = verdicts.filter((v) => v.status !== "MATCH");
+		expect(bad).toHaveLength(1);
+		expect(bad.map(assetLine).join("\n")).toContain(
+			"cmduse-0.7.8-aarch64-apple-darwin.tar.gz MISMATCH",
+		);
+		expect(bad[0]?.sums).toBe("a".repeat(64));
+	});
+
+	test("an asset missing from SHA256SUMS is a finding", () => {
+		const pin = formulaPin(RELEASE_FORMULA);
+		const short = parseSums(
+			`${"a".repeat(64)}  cmduse-0.7.8-aarch64-apple-darwin.tar.gz`,
+		);
+		const verdicts = compareAssets(pin.assets, short);
+		expect(
+			verdicts.filter((v) => v.status === "no-sums").map((v) => v.file),
+		).toEqual([
+			"cmduse-0.7.8-x86_64-apple-darwin.tar.gz",
+			"cmduse-0.7.8-aarch64-unknown-linux-musl.tar.gz",
+		]);
 	});
 });
