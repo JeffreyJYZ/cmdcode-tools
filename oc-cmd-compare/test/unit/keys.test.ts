@@ -34,9 +34,9 @@ describe("normalizeKey", () => {
 			normalizeKey("Qwen 3.8 Flash"),
 		);
 	});
-	test("aliases free Go variants onto their base key", () => {
-		// OpenCode's docs append "Free" to the free Go models; CommandCode names
-		// them without it, so both must collapse to one key.
+	test("strips one trailing Free marker generically", () => {
+		// The docs append "Free" to every free model; the other catalog omits
+		// it. A generic rule collapses them — no per-model alias.
 		expect(normalizeKey("Step 5 Preview Free")).toBe(
 			normalizeKey("Step 5 Preview"),
 		);
@@ -44,6 +44,14 @@ describe("normalizeKey", () => {
 			"longcat25preview",
 		);
 		expect(normalizeKey("step-5-preview-free")).toBe("step5preview");
+		expect(normalizeKey("Foo Bar Free")).toBe("foobar");
+		expect(normalizeKey("foo-bar-free")).toBe("foobar");
+		expect(normalizeKey("QWEN-FREE")).toBe("qwen");
+	});
+	test("keeps a non-trailing free token", () => {
+		// "Free" only drops when it is the trailing marker.
+		expect(normalizeKey("Freestyle")).toBe("freestyle");
+		expect(normalizeKey("Free Tier X")).toBe("freetierx");
 	});
 	test("keeps speed variants distinct", () => {
 		expect(normalizeKey("GLM-5.2 Fast")).not.toBe(normalizeKey("GLM-5.2"));

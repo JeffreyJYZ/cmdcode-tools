@@ -21,10 +21,6 @@ export const ALIASES: Record<string, string> = {
 	// Analysis has no plain "Flash" one. Without this the row has no ability or
 	// speed at all, since neither index scores it under the marketing name.
 	qwen38flashnext: "qwen38flash",
-	// OpenCode's free Go variants carry a "Free" suffix the other catalog
-	// omits, so without this the same model would split into two rows.
-	step5previewfree: "step5preview",
-	longcat25previewfree: "longcat25preview",
 };
 
 /** The monthly-limit cell of a free model: "Unlimited", often with a note. */

@@ -14,6 +14,12 @@ export function normalizeKey(name: string): string {
 	// Drop a vendor prefix like "deepseek/", "z-ai/", "opencode-go/".
 	const parts = s.split("/");
 	s = parts[parts.length - 1] ?? s;
+	// OpenCode's docs append a "Free" marker to every free model ("Step 5
+	// Preview Free"); the other catalog omits it. That marker is systematic, not
+	// per-model branding, so strip one trailing occurrence here — never add
+	// per-model ALIASES entries for it. Trailing only: "Freestyle" or "Free Tier
+	// X" keeps its token.
+	s = s.replace(/[\s_-]+free\s*$/i, " ");
 	s = s.replace(/[^a-z0-9]+/g, "");
 	return ALIASES[s] ?? s;
 }
