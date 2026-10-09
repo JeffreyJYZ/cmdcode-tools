@@ -1,6 +1,6 @@
 {
 	"name": "@jeffreyjyz/reqshape",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Measure the shape of your requests from opencode's own history, then price it against any model",
 	"license": "MIT",
 	"type": "module",
