@@ -22,7 +22,6 @@ jobs:
     # Only the canonical repo: a fork's schedule would push into a mirror.
     if: github.repository == 'JeffreyJYZ/cmdcode-tools'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
@@ -31,13 +30,8 @@ jobs:
       - run: bun run --cwd website snapshot:mpc
       - name: Commit on material change
         run: |
-          # `generatedAt` churns every run, so compare the data with that key
-          # removed — a jq-normalised compare, not a line diff, so the gate
-          # cannot be silently defeated by how the JSON is formatted (a
-          # one-line file would make an ignore-pattern match every hunk).
-          new=$(jq -S 'del(.generatedAt)' website/src/data/mpc.json)
-          old=$(git show HEAD:website/src/data/mpc.json | jq -S 'del(.generatedAt)')
-          if [ "$new" = "$old" ]; then
+          # `generatedAt` churns every run; ignore it when deciding.
+          if git diff --ignore-matching-lines='"generatedAt"' --quiet -- website/src/data/mpc.json; then
             echo "no material change"
             exit 0
           fi
