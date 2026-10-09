@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { buildRows } from "#~/cli/engine/index.ts";
+import { normalizeKey } from "#~/keys.ts";
 import { ccPlan, entry, ocPlan, workloads } from "../fixtures.ts";
 
 describe("buildRows", () => {
@@ -29,6 +30,28 @@ describe("buildRows", () => {
 		const solo = rows.find((r) => r.key === "solo");
 		expect(solo?.oc).toBeUndefined();
 		expect(solo?.cc).toBeDefined();
+	});
+
+	test("a free '… Free' variant merges with its base-keyed counterpart", () => {
+		// The OC docs name it "Step 5 Preview Free", CommandCode "Step 5 Preview";
+		// normalizeKey must collapse them so this is one row, not two.
+		const oc = entry({
+			provider: "oc-go",
+			plan: "Go",
+			key: normalizeKey("Step 5 Preview Free"),
+			name: "Step 5 Preview Free",
+			pricing: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+			allowance: 0,
+		});
+		const cc = entry({
+			key: normalizeKey("Step 5 Preview"),
+			name: "Step 5 Preview",
+		});
+		const rows = buildRows([oc], [cc], ocPlan, ccPlan, workloads);
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.key).toBe("step5preview");
+		expect(rows[0]?.oc?.free).toBe(true);
+		expect(rows[0]?.cc).toBeDefined();
 	});
 
 	test("each side is priced on its own workload", () => {

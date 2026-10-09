@@ -34,6 +34,17 @@ describe("normalizeKey", () => {
 			normalizeKey("Qwen 3.8 Flash"),
 		);
 	});
+	test("aliases free Go variants onto their base key", () => {
+		// OpenCode's docs append "Free" to the free Go models; CommandCode names
+		// them without it, so both must collapse to one key.
+		expect(normalizeKey("Step 5 Preview Free")).toBe(
+			normalizeKey("Step 5 Preview"),
+		);
+		expect(normalizeKey("LongCat 2.5 Preview Free")).toBe(
+			"longcat25preview",
+		);
+		expect(normalizeKey("step-5-preview-free")).toBe("step5preview");
+	});
 	test("keeps speed variants distinct", () => {
 		expect(normalizeKey("GLM-5.2 Fast")).not.toBe(normalizeKey("GLM-5.2"));
 		expect(normalizeKey("Qwen 3.8 Max 0902")).not.toBe(

@@ -1,3 +1,4 @@
+import { UNLIMITED } from "#~/constants/data.ts";
 import {
 	cellText,
 	headerIndex,
@@ -71,12 +72,26 @@ export function extractCatalog(
 			const rawName = nameCell(cells[0] ?? "");
 			const deal = dealIn(cells[0] ?? "");
 			if (!rawName) continue;
+			// A free model's limit cell reads "Unlimited", not a $ figure, so
+			// parseMoney returns null and the row used to be dropped entirely.
+			// Its allowance is meaningless (cost is 0), so record 0 — that keeps
+			// it out of the plan's summed credits and marks it free for --check.
+			const creditCell = cells[creditCol] ?? "";
+			const unlimited = creditHeader
+				? UNLIMITED.test(cellText(creditCell))
+				: false;
 			const allowance = creditHeader
-				? parseMoney(cells[creditCol] ?? "")
+				? (parseMoney(creditCell) ?? (unlimited ? 0 : null))
 				: (defaultAllowance ?? 0);
 			if (allowance === null) continue;
 			const key = normalizeKey(rawName);
 			if (!key) continue;
+
+			const pricing = pricingOf(cells, cols);
+			// The free cells read "Free" (already 0) but the cache-write cell is
+			// "-", which parseMoney reads as "no rate". On a free model the
+			// truthful rate is 0, not unpriced.
+			if (unlimited) pricing.cacheWrite = 0;
 
 			const score = variantScore(rawName, peak);
 			const existing = best.get(key);
@@ -88,7 +103,7 @@ export function extractCatalog(
 					plan,
 					key,
 					name: displayName(rawName),
-					pricing: pricingOf(cells, cols),
+					pricing,
 					allowance,
 					...(deal ? { deal } : {}),
 				},
