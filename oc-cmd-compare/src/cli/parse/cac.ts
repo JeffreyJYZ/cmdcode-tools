@@ -67,7 +67,6 @@ export function parseFlags(argv: string[]): Bag {
 		.option("--bench-name <label>", "footer label for the source")
 		.option("--aa-key <key>", "Artificial Analysis key (else AA_API_KEY)")
 		.option("--no-fallback", "do not fill misses from other sources")
-		.option("--refresh", "ignore the aa-web cache")
 		.option("--no-ability", "hide ability and VAL")
 		.option("--peak", "peak-rate rows (OpenCode DeepSeek)")
 		.option("--asc", "flip the default sort direction")

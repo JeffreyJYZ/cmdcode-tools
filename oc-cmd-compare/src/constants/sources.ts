@@ -88,6 +88,3 @@ export const PAGES = [
 	"https://commandcode.ai/docs/plans/pro",
 ];
 export const TPS_HEADER = /tok\s*\/?\s*s|tokens?\s*per\s*sec/i;
-
-/** How long a cached benchmark result is considered fresh, in milliseconds. */
-export const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;

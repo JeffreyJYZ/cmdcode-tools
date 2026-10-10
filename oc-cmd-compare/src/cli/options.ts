@@ -37,7 +37,6 @@ export interface Options {
 	benchName?: string;
 	aaKey?: string;
 	noFallback: boolean;
-	refresh: boolean;
 	noAbility: boolean;
 	peak: boolean;
 	asc: boolean;

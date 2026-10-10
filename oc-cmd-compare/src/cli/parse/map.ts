@@ -93,7 +93,6 @@ export function toOptions(bag: Bag): Options {
 			bag.benchName === undefined ? undefined : String(bag.benchName),
 		aaKey: bag.aaKey === undefined ? undefined : String(bag.aaKey),
 		noFallback: bag.fallback === false,
-		refresh: bag.refresh === true,
 		noAbility: bag.ability === false,
 		peak: bag.peak === true,
 		asc: bag.asc === true,

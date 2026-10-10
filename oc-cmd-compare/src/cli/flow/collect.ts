@@ -50,7 +50,6 @@ export async function collect(options: Options) {
 				key: options.aaKey,
 				keys,
 				fallback: !options.noFallback,
-				refresh: options.refresh,
 			});
 	const ocPlanInfo = ocGoPlan(ocEntries, options.ocPlan);
 	const rows = buildRows(

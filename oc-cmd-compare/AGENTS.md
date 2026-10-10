@@ -24,7 +24,7 @@ Contracts mustn't drift silently: cmduse JSON shapes (`plans`, `-1`, `model`) an
 src/index.ts                 entry
 src/types.ts                 shared types
 src/keys.ts                  canonical model key + branding aliases
-src/constants/               module-level data constants: sources.ts (URLs, CC_PLANS, TTL),
+src/constants/               module-level data constants: sources.ts (URLs, CC_PLANS, OC_PLANS),
                              scoring.ts (PER_MILLION, SPEED_*), view.ts (frame, columns,
                              LEGEND, CSV_HEADER, HEADERS, COLUMN_HELP), cli.ts (DEFAULTS
                              pairs, flag sets, METRICS/FORMATS/TIERS/SETS), data.ts (BOUNDARY,
@@ -35,7 +35,7 @@ src/cli/parse/               cac.ts (declarations), map.ts (bag -> Options), fie
 src/cli/flow/                collect.ts, sort.ts, check.ts, columns.ts
 src/cli/engine/              cost.ts, rows.ts, score.ts, ability.ts, scale.ts, index.ts
 src/data/sources/            opencode.ts + cc/ (plans, cmduse, catalog) + aa/ (web, api, parse)
-src/data/bench/              index.ts (loadAbility), resolve.ts, cc.ts, store.ts, types.ts
+src/data/bench/              index.ts (loadAbility), resolve.ts, cc.ts, types.ts
 src/data/scrape/             index.ts, tables.ts, tabs.ts, roleRows.ts; catalog/ (catalog, numeric, variant)
 src/data/usage/              index.ts (loadUsage), parse.ts (UsageEntry), log.ts (JSONL + merge),
                              logs.ts (session scan), opencodeDb.ts (opencode store, both
@@ -163,11 +163,11 @@ Everything below was a real bug. Keep them in mind when touching `src/html.ts`.
 ## Ability scores
 
 - `data/bench/` (`index.ts`/`resolve.ts`) resolves benchmark scores; `--bench` picks scheme. `constants/cli.ts`'s `BENCH_DEFAULT` makes default **contextual: `aa` when AA key present (`AA_API_KEY` or `--aa-key`), else `cc`**. Explicit `--bench` always wins — a key only chooses default, upgrades API path.
-- **Fill order after lead: same benchmark's keyless `aa-web` scrape, then CommandCode (last resort).** `aa` primary merges `aa-web` then `cc`; `cc` primary merges AA (API when keyed, else `aa-web`); `aa-web`/`file`/`url` fall back to `cc`. `cc`-primary path re-merges `loadCc()` (no-op — primary already loaded it) before AA; CC's pages dropped `Tok/s`, so `cc` primary usually still needs AA fill for speed. `--no-fallback` disables fills entirely.
-- `data/sources/aa/` parses `{label, intelligenceIndex, detailsUrl}` dataset embedded in AA flight JSON. Page only embeds its chart top-N, so `aa-web` **partial**; full coverage needs `AA_API_KEY` (`--bench aa`), **paginated** (`pagination.has_more`, page_size 200) — follow every page or most models silently miss. API row shape `{name, slug, evaluations.artificial_analysis_intelligence_index, performance.median_output_tokens_per_second}`, one row per reasoning variant, so keep best per key. AA slugs normalize cleanly via `normalizeKey` (`qwen3-8-max-0902` -> `qwen38max0902`); slug keys win over label keys to keep variant suffixes.
-- `aa-web` caches to `$XDG_CACHE_HOME/mpc/ability-aa-web.json` (7d TTL, `--refresh` busts).
-- CC's `Intelligence` and AA's index are *same* benchmark (agree to ~2dp), so `cc` primary with its own throughput returns early without AA round-trip; otherwise it, and every non-`cc` primary, fills from `aa-web` then CC per order above.
-- Ability and speed come from one source: CC's `Intelligence` and `Tok/s` columns (`BenchData`). Model with no speed figure gets neutral 0.5 in VAL, not penalty.
+- **Fill order after lead: same benchmark's keyless `aa-web` scrape, then CommandCode (last resort).** `aa` primary merges `aa-web` (index + speed) then `cc`; `cc` primary merges AA (API when keyed, else `aa-web`) — CC's pages dropped `Tok/s` (Sep 2026), so this is where a `cc` primary gets its speed; `aa-web`/`file`/`url` fall back to `cc`. `--no-fallback` disables fills entirely.
+- `data/sources/aa/web.ts` is keyless and **live**: the models page embeds its chart top-N in the Next.js RSC flight payload (`self.__next_f.push([1,"…"])`), decoded and bracket-matched at the `"initialModels"` array. Each record carries `slug`/`name`/`intelligenceIndex` and a median output speed under `timescaleData.medianOutputSpeed`, so the scrape supplies **both** index and tps. Only that embedded top-N is covered, so `aa-web` is **partial**; full coverage needs `AA_API_KEY` (`--bench aa`), **paginated** (`pagination.has_more`, page_size 200) — follow every page or most models silently miss. API row shape `{name, slug, evaluations.artificial_analysis_intelligence_index, performance.median_output_tokens_per_second}`, one row per reasoning variant, so keep best per key. AA slugs normalize cleanly via `normalizeKey` (`glm-5-3-flash` -> `glm53flash`); slug keys win over label keys. `parseAaWeb` stays a pure parser over input text (fixture-pinned, no network in tests).
+- **No cache anywhere in mpc — the benchmark layer is fetched live every run.** (Was: `$XDG_CACHE_HOME/mpc/ability-aa-web.json`, 7d TTL, plus a whole-result `mpc/ability.json` cache and the `--refresh` flag that existed only to bust them. A run that parsed 0 scores persisted the empty set, so every run inside the TTL inherited it — a transient page problem became silent, week-long data loss. Files, TTL const, flag all removed.)
+- CC's `Intelligence` and AA's index are *same* benchmark (agree to ~2dp). CC publishes no `Tok/s`, so a `cc` primary always fills speed from AA; a keyed `aa` primary that already has both returns without a `cc` round-trip.
+- Ability and speed ride one `BenchData` (`{intelligence, tps}`): `cc` covers ability only, `aa-web`/`aa` cover both. A model with no speed figure gets neutral 0.5 in VAL, not a penalty.
 - `VAL` uses `abilityWeight` (default 0.35) and `tpsWeight` (default 0.10); remaining weight splits volume/cache/output 50/25/25. Unscored models get `valueIndex = null`; never coerce missing score to zero.
 - `lookupAbility` makes speed variants (`...Fast`, `...HighSpeed`, `...UltraSpeed`) inherit base model's ability, since weights same. `...FlashX` exception: faster tier of `...Flash`, so inherits `...Flash`, not base. `lookupTps` gives a variant with no throughput of its own the base's ×`SPEED_TPS_FACTOR`: serving differs, but leaving it `null` scored a Fast model at neutral 0.5 — as if mid-pack — which ranked DeepSeek V4.1 Flash Fast below its slower base. Add suffix to `SPEED_SUFFIXES` in `constants/scoring.ts` only when weights really shared.
 
@@ -184,6 +184,6 @@ Everything below was a real bug. Keep them in mind when touching `src/html.ts`.
 
 ## Sources and drift
 
-Live, per run — no cache. `mpc --check` reports parse counts, unmatched model keys, OpenCode Go live model id count. Docs page changes shape → parsers throw with URL; fix the parser, don't silently fall back.
+Live, per run — **no cache, in any layer** (the benchmark sources included; see "Ability scores"). `mpc --check` reports parse counts, unmatched model keys, OpenCode Go live model id count. Docs page changes shape → parsers throw with URL; fix the parser, don't silently fall back.
 
 - **OpenCode Go has two plans; `--oc-plan go|go-plus` picks which** (default `go`, `OC_PLANS` in `constants/sources.ts`). They share one token price list and differ only in per-model monthly limits, so on the docs page the two priced tables have **identical headers** — `creditHeader: /monthly limit/i` matches both, and first-table-wins would silently pin every run to Go. The **tab label** is the discriminator: `parseTabTables` tags each `<table>` with the label of the `role="tabpanel"` it sits in (via the `a[role="tab"]` anchors), and `loadOcGoCatalog` keeps only tables whose label equals the plan's. A **second, equally-synced tab block lists request-count estimates** with no rates; its tables carry no Input/Output columns, so `extractCatalog` rejects them — never re-add a "first table wins" shortcut. `ocGoPlan(entries, planId)` sets `id`/`label`/`price` from the plan. Default (`go`) output must stay byte-identical; `planTitle` replaces the old hardcoded summary string. Fixture tests: `test/unit/scrape.test.ts`.

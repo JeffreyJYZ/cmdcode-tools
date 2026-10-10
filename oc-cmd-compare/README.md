@@ -139,7 +139,6 @@ Relative paths resolve against the config file's directory. A plugin is a `.json
 | `--bench-name <label>` | source | footer label for the ability source |
 | `--aa-key <key>` | `AA_API_KEY` | Artificial Analysis API key |
 | `--no-fallback` | off | skip filling ability misses from the other sources |
-| `--refresh` | off | ignore the `aa-web` cache |
 | `--no-ability` | off | hide `ability` and `VAL` |
 | `--preset <name>` | — | named column set from `presets` in config |
 | `--val-weights <a,b,c,d,e>` | see above | VAL weights (ability, tps, volume, cache, output) |
@@ -243,7 +242,7 @@ VAL = 100 * (0.35*ability + 0.10*tps + 0.25*volume + 0.15*cache + 0.15*output)
 | `cc` | CommandCode's `Intelligence` column | every matched model |
 | `file:<path>` / `url:<url>` | your JSON, `{ "model": score }` or `[{ model, score }]` | whatever you supply |
 
-The default is `aa` when an AA key is available (`AA_API_KEY` or `--aa-key`), otherwise `cc`; an explicit `--bench` always wins. After the lead source, misses are filled from the same benchmark's keyless page scrape (`aa-web`) and then from CommandCode, the last resort — `--no-fallback` disables the fills. Because CC's `Intelligence` column and AA publish the same index, a `cc`-led run asks AA only when it still lacks throughput (CC's plan pages no longer publish `Tok/s`). The `aa-web` result is cached under `$XDG_CACHE_HOME/mpc/` (or `~/.cache/mpc/`) for 7 days; `--refresh` busts it.
+The default is `aa` when an AA key is available (`AA_API_KEY` or `--aa-key`), otherwise `cc`; an explicit `--bench` always wins. After the lead source, misses are filled from the same benchmark's keyless page scrape (`aa-web`) and then from CommandCode, the last resort — `--no-fallback` disables the fills. Because CC's `Intelligence` column and AA publish the same index, a `cc`-led run asks AA only when it still lacks throughput (CC's plan pages no longer publish `Tok/s`). Everything is fetched live, every run — **`mpc` writes no cache**: `aa-web` reads the index and speed straight out of the models page's embedded React Server Components payload, so a source that is down costs only the columns it alone supplies, never a stale value.
 
 ## Model matching
 

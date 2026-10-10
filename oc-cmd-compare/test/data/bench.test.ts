@@ -1,21 +1,31 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { parseAaApi } from "#~/data/sources/aa/parse.ts";
 import { parseAaWeb } from "#~/data/sources/aa/web.ts";
 
-// Mirrors the shape Artificial Analysis embeds in its models page flight data.
-const AA_FIXTURE = `<script>{"citation":"Artificial Analysis (2025). LLM benchmarks dataset.","data":[{"label":"Claude Opus 5.5 (max with fallback)","intelligenceIndex":57.62,"detailsUrl":"/models/claude-opus-5-5"},{"label":"GLM-5.3-Flash","intelligenceIndex":30.5,"detailsUrl":"/models/glm-5-3-flash"},{"label":"Qwen3.8 Max (0902)","intelligenceIndex":41.1,"detailsUrl":"/models/qwen3-8-max-0902"}]}</script>`;
+// A trimmed but shape-faithful slice of the live page: the `initialModels`
+// array sits in the Next.js RSC flight payload, so its quotes are escaped.
+const AA_FIXTURE = readFileSync(join(import.meta.dir, "aa-web.html"), "utf8");
 
 describe("parseAaWeb", () => {
-	test("maps slugs and labels onto canonical keys", () => {
-		const scores = parseAaWeb(AA_FIXTURE);
-		expect(scores.get("claudeopus55")).toBeCloseTo(57.62, 2);
-		expect(scores.get("glm53flash")).toBeCloseTo(30.5, 2);
-		// Variant suffix in the label must not leak; slug keeps the 0902 variant.
-		expect(scores.get("qwen38max0902")).toBeCloseTo(41.1, 2);
+	test("reads index and speed from the escaped flight payload", () => {
+		const { intelligence, tps } = parseAaWeb(AA_FIXTURE);
+		expect(intelligence.get("step5preview")).toBeCloseTo(43.73, 2);
+		expect(intelligence.get("glm53flash")).toBeCloseTo(41.81, 2);
+		expect(tps.get("step5preview")).toBeCloseTo(88.0, 1);
+		expect(tps.get("glm53flash")).toBeCloseTo(57.5, 1);
+		// The slug key resolves too (both the slug and the label are indexed).
+		expect(intelligence.get("step5")).toBeCloseTo(43.73, 2);
+		// A model with no published speed keeps its index but no tps.
+		expect(intelligence.get("mistrallarge4")).toBeCloseTo(38.38, 2);
+		expect(tps.has("mistrallarge4")).toBe(false);
 	});
 
 	test("empty when no dataset present", () => {
-		expect(parseAaWeb("<html></html>").size).toBe(0);
+		const { intelligence, tps } = parseAaWeb("<html></html>");
+		expect(intelligence.size).toBe(0);
+		expect(tps.size).toBe(0);
 	});
 });
 

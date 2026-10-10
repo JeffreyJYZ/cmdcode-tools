@@ -20,7 +20,6 @@ export interface AbilityOptions {
 	keys?: Set<string>;
 	/** Fill models the primary source misses from the other sources. */
 	fallback?: boolean;
-	refresh?: boolean;
 }
 
 export interface Resolved {

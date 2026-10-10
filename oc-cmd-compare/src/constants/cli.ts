@@ -69,7 +69,6 @@ export const KNOWN = new Set([
 	"benchName",
 	"aaKey",
 	"fallback",
-	"refresh",
 	"ability",
 	"peak",
 	"asc",

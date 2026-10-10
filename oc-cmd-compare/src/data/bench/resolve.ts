@@ -1,12 +1,44 @@
+import { fetchText } from "#~/data/scrape/index.ts";
 import { loadAaApi } from "#~/data/sources/aa/api.ts";
+import { loadAaWeb } from "#~/data/sources/aa/web.ts";
+import { normalizeKey } from "#~/keys.ts";
 import { loadCc } from "./cc.ts";
-import { loadAaWebCached, loadFile, loadUrl } from "./store.ts";
-import {
-	type AbilityOptions,
-	type BenchData,
-	emptyData,
-	type Resolved,
-} from "./types.ts";
+import type { AbilityOptions, BenchData, Resolved } from "./types.ts";
+
+/** Parse `{ model: score }` or `[{ model|name, score|value }]` JSON. */
+function parseJsonScores(text: string): Map<string, number> {
+	const body = JSON.parse(text) as unknown;
+	const scores = new Map<string, number>();
+	const add = (name: unknown, score: unknown): void => {
+		const key = typeof name === "string" ? normalizeKey(name) : "";
+		const value = Number(score);
+		if (key && Number.isFinite(value)) scores.set(key, value);
+	};
+	if (Array.isArray(body)) {
+		for (const row of body) {
+			const record = (row ?? {}) as Record<string, unknown>;
+			add(record.model ?? record.name, record.score ?? record.value);
+		}
+	} else if (body && typeof body === "object") {
+		for (const [name, score] of Object.entries(
+			body as Record<string, unknown>,
+		)) {
+			add(name, score);
+		}
+	}
+	return scores;
+}
+
+async function loadFile(path: string): Promise<Map<string, number>> {
+	const file = Bun.file(path);
+	if (!(await file.exists()))
+		throw new Error(`bench file not found: ${path}`);
+	return parseJsonScores(await file.text());
+}
+
+async function loadUrl(url: string): Promise<Map<string, number>> {
+	return parseJsonScores(await fetchText(url));
+}
 
 export async function resolvePrimary(opts: AbilityOptions): Promise<Resolved> {
 	const [scheme, arg] = opts.source.includes(":")
@@ -23,15 +55,12 @@ export async function resolvePrimary(opts: AbilityOptions): Promise<Resolved> {
 				data: await loadCc(),
 				label: "CommandCode Intelligence",
 			};
-		case "aa-web": {
-			const data = emptyData();
-			data.intelligence = await loadAaWebCached(Boolean(opts.refresh));
+		case "aa-web":
 			return {
 				scheme: "aa-web",
-				data,
+				data: await loadAaWeb(),
 				label: "Artificial Analysis (web, partial)",
 			};
-		}
 		case "aa": {
 			const key = opts.key ?? process.env.AA_API_KEY;
 			if (!key) {
@@ -73,15 +102,6 @@ export async function resolvePrimary(opts: AbilityOptions): Promise<Resolved> {
 }
 
 /**
- * Keyless Artificial Analysis page scrape (partial — only the models AA embeds).
- */
-export async function loadAaWeb(opts: AbilityOptions): Promise<BenchData> {
-	const data = emptyData();
-	data.intelligence = await loadAaWebCached(Boolean(opts.refresh));
-	return data;
-}
-
-/**
  * Artificial Analysis as a gap filler: the full API when a key is available,
  * otherwise the keyless page scrape (partial).
  */
@@ -96,7 +116,7 @@ export async function loadAaFallback(
 			// fall through to the scrape
 		}
 	}
-	return { data: await loadAaWeb(opts), how: "AA web scrape" };
+	return { data: await loadAaWeb(), how: "AA web scrape" };
 }
 
 export type {
