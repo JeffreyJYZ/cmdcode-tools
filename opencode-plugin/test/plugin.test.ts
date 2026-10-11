@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -13,12 +13,17 @@ import {
 import { isClaude, splitModels } from "../src/models";
 import { commandCodeV2 } from "../src/v2";
 
-// Neither plugin half may touch the network or the auth store
-// from a test: the key resolver is mocked before the v1 half is
-// (dynamically) imported, so its config hook stays offline.
-mock.module("../src/key", () => ({
-	resolveKey: async () => undefined,
-}));
+// Neither plugin half may touch the network or the auth store from a test.
+// `CMD_API_KEY` is `resolveKey`'s own first choice, so setting it keeps the v1
+// half's config hook offline without patching a module. It must not be a
+// `mock.module`: Bun module mocks are process-wide, and the one this replaced
+// leaked into v2.test.ts and made its no-connection fallback return undefined
+// (green locally, red in CI).
+process.env.CMD_API_KEY = "test-key";
+
+afterAll(() => {
+	delete process.env.CMD_API_KEY;
+});
 
 // money/compact/relTime/parseIsoUtc and the plan name/cap table left the TS
 // port with the cmduse-CLI delegation (src/usage.ts removed) — the Rust core
