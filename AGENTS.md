@@ -103,6 +103,8 @@ opencode-plugin/   @jeffreyjyz/opencode-command-code TS plugin (dual opencode
 
 Changing any of those shapes means updating mpc in same effort; `CMDUSE_BIN` lets mpc test a `cmdusedev` build. Local commits only — never publish or push without explicit go.
 
+**The plugin also hands mpc to agents as the `mpc_prices` tool** (`opencode-plugin/src/cli.ts`'s `runMpc`, registered in both halves beside `cmd_usage`): `MPC_BIN` wins then `MPC_BIN_CANDIDATES`, args pass through `splitCliArgs`, and **no arg means `--minimal`** so a default call cannot dump a wide table into a model's context. It inherits mpc's default `--shape auto`, which shells out to `reqshape` — that carries its own `--shape off`, so the tool does not recurse, and the measured shape is precisely what makes its per-request cost meaningful; pass `--shape off` when only the catalog is wanted.
+
 **Sidebar's `mpc` spawn must keep `--shape off`.** mpc's default `--shape auto` shells out to `reqshape`, which itself runs `mpc --json` — so bare `mpc --json` recurses (mpc -> reqshape -> mpc -> ...). Sidebar only wants mpc's catalog, never workload, so flag is cycle break, not optimisation. (`reqshape`'s own `loadMpc` carries same flag for same reason.)
 
 ## Build & test

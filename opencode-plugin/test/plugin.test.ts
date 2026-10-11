@@ -1,7 +1,24 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { z } from "zod";
 import { canonicalizeModelId, evaluateModelAccess } from "../src/access";
 import { MODEL_CATEGORIES, PLAN_RULES } from "../src/constants/gating";
+import {
+	MPC_TOOL_ARG_DESCRIPTION,
+	MPC_TOOL_DESCRIPTION,
+	TOOL_DESCRIPTION,
+} from "../src/constants/providers";
 import { isClaude, splitModels } from "../src/models";
+import { commandCodeV2 } from "../src/v2";
+
+// Neither plugin half may touch the network or the auth store
+// from a test: the key resolver is mocked before the v1 half is
+// (dynamically) imported, so its config hook stays offline.
+mock.module("../src/key", () => ({
+	resolveKey: async () => undefined,
+}));
 
 // money/compact/relTime/parseIsoUtc and the plan name/cap table left the TS
 // port with the cmduse-CLI delegation (src/usage.ts removed) — the Rust core
@@ -106,5 +123,77 @@ describe("wire split", () => {
 		]);
 		expect(claude.map((m) => m.id)).toEqual(["claude-sonnet-5"]);
 		expect(open.map((m) => m.id)).toEqual(["gpt-5.5"]);
+	});
+});
+
+describe("tool registrations", () => {
+	test("v1 registers mpc_prices beside cmd_usage", async () => {
+		const { CommandCodePlugin } = await import("../src/index");
+		type ToolEntry = { description: string; args: z.ZodRawShape };
+		const plugin = await (
+			CommandCodePlugin as unknown as (input: unknown) => Promise<{
+				tool: Record<"cmd_usage" | "mpc_prices", ToolEntry>;
+			}>
+		)({});
+		expect(Object.keys(plugin.tool).sort()).toEqual([
+			"cmd_usage",
+			"mpc_prices",
+		]);
+		expect(plugin.tool.cmd_usage.description).toBe(TOOL_DESCRIPTION);
+		expect(plugin.tool.mpc_prices.description).toBe(MPC_TOOL_DESCRIPTION);
+		const schema = z.object(plugin.tool.mpc_prices.args);
+		expect(schema.parse({})).toEqual({});
+		expect(schema.parse({ arg: "--json" })).toEqual({ arg: "--json" });
+		expect(() => schema.parse({ arg: 1 })).toThrow();
+	});
+	test("v2 registers mpc_prices in the tool transform", async () => {
+		process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), "cc-plugin-"));
+		const added: Array<{
+			name: string;
+			description: string;
+			input: { properties: { arg: { description: string } } };
+		}> = [];
+		const editor = {
+			update: () => {},
+			models: { set: () => {} },
+			method: { update: () => {} },
+			add: (tool: (typeof added)[number]) => added.push(tool),
+		};
+		const ctx = {
+			integration: {
+				transform: async (fn: (e: unknown) => void) => fn(editor),
+				connection: {
+					active: async () => undefined,
+					resolve: async () => undefined,
+				},
+			},
+			aisdk: { hook: async () => {} },
+			provider: {
+				transform: async (fn: (e: unknown) => void) => fn(editor),
+			},
+			tool: {
+				transform: async (fn: (e: unknown) => void) => fn(editor),
+			},
+		};
+		const stop = (await commandCodeV2.setup(ctx as never)) as () => void;
+		stop();
+		expect(added.map((t) => t.name)).toEqual(["cmd_usage", "mpc_prices"]);
+		const mpc = added.find((t) => t.name === "mpc_prices");
+		expect(mpc?.description).toBe(MPC_TOOL_DESCRIPTION);
+		expect(mpc?.input.properties.arg.description).toBe(
+			MPC_TOOL_ARG_DESCRIPTION,
+		);
+	});
+	test("mpc_prices description answers cost per request and per month", () => {
+		expect(MPC_TOOL_DESCRIPTION).toContain("per request");
+		expect(MPC_TOOL_DESCRIPTION).toContain("per month");
+		expect(MPC_TOOL_ARG_DESCRIPTION).toContain("--model <regex>");
+		expect(MPC_TOOL_ARG_DESCRIPTION).toContain("--minimal");
+		expect(MPC_TOOL_ARG_DESCRIPTION).toContain("--medium");
+		expect(MPC_TOOL_ARG_DESCRIPTION).toContain("--detail");
+		expect(MPC_TOOL_ARG_DESCRIPTION).toContain("--json");
+		expect(MPC_TOOL_ARG_DESCRIPTION).toContain("--cc-plan");
+		expect(MPC_TOOL_ARG_DESCRIPTION).toContain("--oc-plan");
+		expect(MPC_TOOL_ARG_DESCRIPTION).toContain("--usage");
 	});
 });

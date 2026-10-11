@@ -17,7 +17,7 @@
 // window math and formatting (see ./cli.ts).
 import type { Plugin as PluginNs } from "@opencode/plugin";
 import { inputModalities, modelCost, reasoningVariants } from "./catalog";
-import { runCmduse } from "./cli";
+import { runCmduse, runMpc } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import { KNOWN_MODELS } from "./constants/gating";
 import {
@@ -29,6 +29,8 @@ import {
 	INTEGRATION_NAME,
 	LANES,
 	type Lane,
+	MPC_TOOL_ARG_DESCRIPTION,
+	MPC_TOOL_DESCRIPTION,
 	PLUGIN_ID,
 	TOOL_DESCRIPTION,
 } from "./constants/providers";
@@ -330,6 +332,35 @@ export const commandCodeV2: PluginNs.Plugin = {
 					const key = await credentialKey(ctx);
 					return {
 						content: await runCmduse(arg, {
+							env: key ? { CMD_API_KEY: key } : undefined,
+						}),
+					};
+				},
+			} as never);
+			// mpc_prices: the same thin-spawn pattern — mpc owns
+			// the comparison table and its rendering, so the tool
+			// returns its text (or --json) verbatim.
+			editor.add({
+				name: "mpc_prices",
+				description: MPC_TOOL_DESCRIPTION,
+				input: {
+					type: "object",
+					properties: {
+						arg: {
+							type: "string",
+							description: MPC_TOOL_ARG_DESCRIPTION,
+						},
+					},
+					additionalProperties: false,
+				},
+				async execute(input: unknown) {
+					const arg =
+						typeof (input as { arg?: unknown })?.arg === "string"
+							? (input as { arg: string }).arg
+							: "";
+					const key = await credentialKey(ctx);
+					return {
+						content: await runMpc(arg, {
 							env: key ? { CMD_API_KEY: key } : undefined,
 						}),
 					};

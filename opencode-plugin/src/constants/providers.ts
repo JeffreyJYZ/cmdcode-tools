@@ -26,6 +26,14 @@ export const TUI_ID = "command-code.tui";
 export const TOOL_DESCRIPTION =
 	"Fetch live Command Code plan/usage: plan name, monthly credits, 5-hour & weekly windows, billing-period summary. Pass arg='plans' for the plan comparison table only, or extra cmduse flags (e.g. '--tz +05:30 daily').";
 
+/** The mpc_prices tool description, shared by the v1 and v2 halves. */
+export const MPC_TOOL_DESCRIPTION =
+	"Per-model price comparison: what a model costs per request ($/1M input, output and cache rates) and per month (request allowance) on each Command Code (cc) and OpenCode Go (oc) plan side, plus ability, Tok/s, the cheaper-side verdict and running deals. Pass '--model <regex>' to filter rows, '--minimal' | '--medium' | '--detail' for table width, '--json' for the full structured rows, '--cc-plan' / '--oc-plan' to pick a plan, or '--usage' to project real usage.";
+
+/** The mpc_prices `arg` description, shared by the v1 and v2 halves. */
+export const MPC_TOOL_ARG_DESCRIPTION =
+	"Optional mpc flags: '--model <regex>' filters rows, '--minimal' | '--medium' | '--detail' set table width, '--json' for full structured rows, '--cc-plan'/'--oc-plan' pick a plan, '--usage' projects real usage";
+
 export type Lane = {
 	id: "command-code-anthropic" | "command-code-openai";
 	name: string;

@@ -5,8 +5,11 @@
 // verbatim as tool content or post as a synthetic message.
 
 import { spawn } from "node:child_process";
-import { CMDUSE_BIN_CANDIDATES } from "./constants/binaries";
-import { DEFAULT_ARGS, SUBCOMMANDS } from "./constants/cli";
+import {
+	CMDUSE_BIN_CANDIDATES,
+	MPC_BIN_CANDIDATES,
+} from "./constants/binaries";
+import { DEFAULT_ARGS, MPC_DEFAULT_ARGS, SUBCOMMANDS } from "./constants/cli";
 
 /** Fallback lookup paths: the opencode background service's PATH often lacks
  * the homebrew prefix, so the bare name alone is not enough. `CMDUSE_BIN` wins
@@ -19,6 +22,18 @@ export function cmduseCandidates(
 }
 
 const CANDIDATES = cmduseCandidates();
+
+/** Same lookup for mpc, the per-model price comparison: `MPC_BIN`
+ * wins when set (the `bun link` dev hook oc-cmd-compare installs),
+ * then the bun/homebrew fallbacks. */
+export function mpcCandidates(
+	env: Record<string, string | undefined> = process.env,
+): string[] {
+	const candidates = [env.MPC_BIN, ...MPC_BIN_CANDIDATES];
+	return candidates.filter((bin): bin is string => Boolean(bin));
+}
+
+const MPC_CANDIDATES = mpcCandidates();
 
 /** Shell-words split: whitespace-separated, with single/double quoting and
  * backslash escapes ("--tz +05:30", arg='a b'). Unterminated quotes close at
@@ -71,6 +86,15 @@ export function buildCmduseArgs(arg: string): string[] {
 	return [...DEFAULT_ARGS, ...tokens];
 }
 
+/** argv for an mpc invocation: mpc has no subcommands, so the arg
+ * string is split and passed straight through; an empty arg means
+ * the fewest-columns view (see MPC_DEFAULT_ARGS). */
+export function buildMpcArgs(arg: string): string[] {
+	const tokens = splitCliArgs(arg);
+	if (!tokens.length) return [...MPC_DEFAULT_ARGS];
+	return tokens;
+}
+
 export type RunOptions = {
 	signal?: AbortSignal;
 	/** Extra env for the child (CMD_API_KEY when the plugin resolved one). */
@@ -88,6 +112,7 @@ function runOnce(
 	bin: string,
 	args: string[],
 	opts: RunOptions,
+	name = "cmduse",
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const child = spawn(bin, args, {
@@ -108,7 +133,7 @@ function runOnce(
 			opts.signal?.removeEventListener("abort", onAbort);
 			const stdout = Buffer.concat(out).toString("utf8");
 			if (opts.signal?.aborted) {
-				reject(new Error("cmduse invocation aborted"));
+				reject(new Error(`${name} invocation aborted`));
 			} else if (code === 0) {
 				resolve(stdout);
 			} else {
@@ -116,7 +141,7 @@ function runOnce(
 				const tail = stderrTail(Buffer.concat(err).toString("utf8"));
 				reject(
 					new Error(
-						`cmduse ${args.join(" ")}: ${why}${tail ? `\n${tail}` : ""}`,
+						`${name} ${args.join(" ")}: ${why}${tail ? `\n${tail}` : ""}`,
 					),
 				);
 			}
@@ -144,6 +169,32 @@ export async function runCmduse(
 	}
 	throw new Error(
 		`cmduse binary not found (install: brew install JeffreyJYZ/tap/cmduse)${last instanceof Error && last.message !== last.name ? ` — ${last.message}` : ""}`,
+		{ cause: last },
+	);
+}
+
+/** Run mpc and return its plain-text stdout (the per-model price
+ * comparison). Same contract as runCmduse: `MPC_BIN` wins, then the
+ * fallback paths; every candidate failing with ENOENT yields a
+ * single install-hint error, and any other failure (a non-zero exit
+ * included) surfaces immediately with mpc's last stderr lines. */
+export async function runMpc(
+	arg: string,
+	opts: RunOptions = {},
+): Promise<string> {
+	const args = buildMpcArgs(arg);
+	const candidates = opts.candidates ?? MPC_CANDIDATES;
+	let last: unknown;
+	for (const bin of candidates) {
+		try {
+			return await runOnce(bin, args, opts, "mpc");
+		} catch (e) {
+			last = e;
+			if ((e as NodeJS.ErrnoException)?.code !== "ENOENT") throw e;
+		}
+	}
+	throw new Error(
+		`mpc binary not found (install: bun add -g @jeffreyjyz/mpc)${last instanceof Error && last.message !== last.name ? ` — ${last.message}` : ""}`,
 		{ cause: last },
 	);
 }

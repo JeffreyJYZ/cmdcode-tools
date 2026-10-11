@@ -1,11 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import {
 	buildCmduseArgs,
+	buildMpcArgs,
 	cmduseCandidates,
+	mpcCandidates,
 	runCmduse,
+	runMpc,
 	splitCliArgs,
 } from "../src/cli";
-import { CMDUSE_BIN_CANDIDATES } from "../src/constants/binaries";
+import {
+	CMDUSE_BIN_CANDIDATES,
+	MPC_BIN_CANDIDATES,
+} from "../src/constants/binaries";
 
 describe("splitCliArgs", () => {
 	test("whitespace split", () => {
@@ -111,5 +117,60 @@ describe("cmduseCandidates", () => {
 		);
 		expect(cmduseCandidates({})).toEqual([...CMDUSE_BIN_CANDIDATES]);
 		expect(cmduseCandidates({ CMDUSE_BIN: "" })).not.toContain("");
+	});
+});
+
+describe("buildMpcArgs", () => {
+	test("default is the fewest-columns view", () => {
+		expect(buildMpcArgs("")).toEqual(["--minimal"]);
+		expect(buildMpcArgs("   ")).toEqual(["--minimal"]);
+	});
+	test("flags pass straight through (mpc has no subcommands)", () => {
+		expect(buildMpcArgs("--json")).toEqual(["--json"]);
+		expect(buildMpcArgs("--model deepseek --detail")).toEqual([
+			"--model",
+			"deepseek",
+			"--detail",
+		]);
+		expect(buildMpcArgs('--model "gpt 5.5" --json')).toEqual([
+			"--model",
+			"gpt 5.5",
+			"--json",
+		]);
+	});
+});
+
+describe("runMpc", () => {
+	test("ENOENT across all candidates yields install hint", async () => {
+		try {
+			await runMpc("", {
+				candidates: ["definitely-not-mpc-xyz", "/no/such/mpc"],
+			});
+			throw new Error("expected runMpc to reject");
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			expect(msg).toContain("mpc binary not found");
+			expect(msg).toContain("bun add -g @jeffreyjyz/mpc");
+		}
+	});
+	test("non-ENOENT errors surface immediately", async () => {
+		try {
+			// /dev/null exists but is not executable → EACCES, not ENOENT.
+			await runMpc("--minimal", { candidates: ["/dev/null"] });
+			throw new Error("expected runMpc to reject");
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			expect(msg).not.toContain("mpc binary not found");
+		}
+	});
+});
+
+describe("mpcCandidates", () => {
+	test("MPC_BIN leads, the bun/homebrew paths remain as fallbacks", () => {
+		expect(mpcCandidates({ MPC_BIN: "/tmp/mpcdev" })[0]).toBe(
+			"/tmp/mpcdev",
+		);
+		expect(mpcCandidates({})).toEqual([...MPC_BIN_CANDIDATES]);
+		expect(mpcCandidates({ MPC_BIN: "" })).not.toContain("");
 	});
 });

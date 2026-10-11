@@ -9,14 +9,18 @@ import { z } from "zod";
 import pkg from "../package.json";
 import { whoami } from "./api";
 import { modelCost, supportsImage } from "./catalog";
-import { runCmduse } from "./cli";
+import { runCmduse, runMpc } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import {
 	DEFAULT_CONTEXT_LENGTH,
 	DEFAULT_OUTPUT_TOKENS,
 	MODEL_CAPABILITIES,
 } from "./constants/models";
-import { TOOL_DESCRIPTION } from "./constants/providers";
+import {
+	MPC_TOOL_ARG_DESCRIPTION,
+	MPC_TOOL_DESCRIPTION,
+	TOOL_DESCRIPTION,
+} from "./constants/providers";
 import { resolveKey } from "./key";
 import { loadModels } from "./models";
 import { commandCodeV2 } from "./v2";
@@ -335,6 +339,23 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 				async execute(args) {
 					const key = await resolveKey();
 					return runCmduse(args.arg ?? "", {
+						env: { CMD_API_KEY: key },
+					});
+				},
+			}),
+			mpc_prices: tool({
+				description: MPC_TOOL_DESCRIPTION,
+				args: {
+					arg: z
+						.string()
+						.optional()
+						.describe(MPC_TOOL_ARG_DESCRIPTION),
+				},
+				// Rendering lives in the mpc binary; this is a thin
+				// spawn wrapper, same as cmd_usage above.
+				async execute(args) {
+					const key = await resolveKey();
+					return runMpc(args.arg ?? "", {
 						env: { CMD_API_KEY: key },
 					});
 				},
