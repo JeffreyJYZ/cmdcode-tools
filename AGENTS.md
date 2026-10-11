@@ -118,6 +118,8 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | cargo run -p cm
 cd opencode-plugin && bun test && bun run typecheck
 ```
 
+- **Bun module mocks (`mock.module`) are process-wide and leak into other test files — never mock a module whose behaviour another file's test relies on; drive the real seam instead** (e.g. `CMD_API_KEY`, which `resolveKey` reads first). This cost a red CI that was green locally: `mock.module("../src/key", …)` in `plugin.test.ts` made `v2.test.ts`'s no-connection fallback resolve through the mock and expect `undefined`. If a module mock is genuinely necessary, restore it in `afterAll` and assume any file running between is affected.
+
 **TypeScript: every package pins `typescript: ^7` (the native/Go port) — fast `tsc` is the default here; never pin `^5` (the slow JS line).** `bun check` (Bun's own checker) is optional: canary-only as of Bun 1.4.2 (Oct 2026), ships stable next — decided to wait. If adopted, change each package's `typecheck` from `tsc --noEmit` to `bun check` (tsconfigs are already TS7-clean), keep `tsc -p tsconfig.build.json` in every `build` (it emits `.d.ts`; `bun check` never emits), and pin CI's `setup-bun` to canary in the same change.
 
 **After repo move, `target/` can carry build script baked with old absolute `CARGO_MANIFEST_DIR`.** `core/build.rs` reads `plans.json` relative to that constant, so stale `target/debug/build/cmduse-core-*/build-script-build` fails with "read plans.json: No such file or directory" pointing at *old* path (`~/dev/plugins/command-code-zed/...`). Fix with `cargo clean -p cmduse-core` (full clean not needed) before concluding build broken.
