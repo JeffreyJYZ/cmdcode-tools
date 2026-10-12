@@ -33,41 +33,38 @@ describe("parseRoleRows (div grid model lists)", () => {
 	});
 });
 
-// Both Go plans render the same priced table (identical headers and rates)
-// behind a `<Tabs syncKey="go-plan">`, so the tab label is the only
-// discriminator. A second, equally-synced tab block lists request-count
-// estimates with no rates; it must never be selected.
+// The v2 console page renders both Go plans' identical priced tables behind
+// synced `[role="tab"]` buttons, so the tab label is the only discriminator.
+// Each tab names its panel via `aria-controls`, not an `href` anchor. A second,
+// equally-synced tablist lists request-count estimates with no rates; it must
+// never be selected.
 const TABS_FIXTURE = `
-<starlight-tabs data-sync-key="go-plan">
-	<ul role="tablist">
-		<li role="presentation"><a role="tab" href="#tab-panel-0" aria-selected="true">Go</a></li>
-		<li role="presentation"><a role="tab" href="#tab-panel-1" aria-selected="false">Go Plus</a></li>
-	</ul>
-	<div id="tab-panel-0" role="tabpanel">
+<div role="tablist" aria-label="Go plan">
+	<button type="button" role="tab" id="go-pricing-tab-go" aria-controls="go-pricing-panel-go" aria-selected="true">Go</button>
+	<button type="button" role="tab" id="go-pricing-tab-go-plus" aria-controls="go-pricing-panel-go-plus" aria-selected="false">Go Plus</button>
+	<div role="tabpanel" id="go-pricing-panel-go" aria-labelledby="go-pricing-tab-go" data-plan-panel="go">
 		<table>
 			<tr><th>Model</th><th>Input</th><th>Output</th><th>Cached Read</th><th>Cached Write</th><th>Monthly limit</th></tr>
 			<tr><td>GLM-5.3-Flash</td><td>$0.15</td><td>$0.50</td><td>$0.03</td><td>-</td><td><strong>$60</strong></td></tr>
 		</table>
 	</div>
-	<div id="tab-panel-1" role="tabpanel" hidden>
+	<div role="tabpanel" id="go-pricing-panel-go-plus" aria-labelledby="go-pricing-tab-go-plus" hidden data-plan-panel="go-plus">
 		<table>
 			<tr><th>Model</th><th>Input</th><th>Output</th><th>Cached Read</th><th>Cached Write</th><th>Monthly limit</th></tr>
 			<tr><td>GLM-5.3-Flash</td><td>$0.15</td><td>$0.50</td><td>$0.03</td><td>-</td><td><strong>$180</strong></td></tr>
 		</table>
 	</div>
-</starlight-tabs>
-<starlight-tabs data-sync-key="go-plan">
-	<ul role="tablist">
-		<li role="presentation"><a role="tab" href="#tab-panel-2" aria-selected="true">Go</a></li>
-		<li role="presentation"><a role="tab" href="#tab-panel-3" aria-selected="false">Go Plus</a></li>
-	</ul>
-	<div id="tab-panel-2" role="tabpanel">
+</div>
+<div role="tablist" aria-label="Go plan">
+	<button type="button" role="tab" id="go-requests-tab-go" aria-controls="go-requests-panel-go" aria-selected="true">Go</button>
+	<button type="button" role="tab" id="go-requests-tab-go-plus" aria-controls="go-requests-panel-go-plus" aria-selected="false">Go Plus</button>
+	<div role="tabpanel" id="go-requests-panel-go" aria-labelledby="go-requests-tab-go" data-plan-panel="go">
 		<table>
 			<tr><th>Model</th><th>Requests per 5 hours</th><th>Requests per week</th><th>Requests per month</th></tr>
 			<tr><td>GLM-5.3-Flash</td><td>120</td><td>600</td><td>1200</td></tr>
 		</table>
 	</div>
-</starlight-tabs>`;
+</div>`;
 
 /** Pull a plan's priced table by tab label, exactly as `loadOcGoCatalog` does. */
 function select(tables: TabTable[], label: string) {

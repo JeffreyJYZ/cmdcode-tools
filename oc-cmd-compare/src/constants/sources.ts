@@ -76,7 +76,7 @@ export const OC_PLANS: Record<string, OcPlanDef> = {
 /** The Go plan used when `--oc-plan` is not given. */
 export const DEFAULT_OC_PLAN = "go";
 
-export const DOC_URL = "https://opencode.ai/docs/go/";
+export const DOC_URL = "https://opencode.ai/v2/docs/console/go/";
 export const OC_MODELS_URL = "https://opencode.ai/zen/go/v1/models";
 
 export const API_URL = "https://artificialanalysis.ai/api/v2/data/llms/models";

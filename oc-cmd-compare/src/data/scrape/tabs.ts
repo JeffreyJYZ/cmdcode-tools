@@ -14,14 +14,16 @@ export interface TabTable {
  * told apart — the Go and Go Plus catalogs share headers and token rates, and
  * differ only in the monthly-limit values.
  *
- * Labels come from the `<a role="tab" href="#tab-panel-N">` anchors, which the
- * document places before the panels: the anchor end-tag fills the map, then the
- * matching panel's table inherits its label.
+ * Labels come from the `[role="tab"]` control, which the document places before
+ * the panels: its end-tag fills the map, then the matching panel's table
+ * inherits its label. The tab names its panel either through `href="#id"`
+ * (Starlight's `<a role="tab">`) or `aria-controls="id"` (the v2 console page's
+ * `<button role="tab">`), so read whichever is present.
  */
 export async function parseTabTables(html: string): Promise<TabTable[]> {
 	const labels = new Map<string, string>();
 	const tables: TabTable[] = [];
-	let anchorHref: string | null = null;
+	let panelId: string | null = null;
 	let anchorText = "";
 	let label: string | null = null;
 	let table: Table | null = null;
@@ -29,14 +31,16 @@ export async function parseTabTables(html: string): Promise<TabTable[]> {
 	let cell: string | null = null;
 
 	const rewriter = new HTMLRewriter()
-		.on('a[role="tab"]', {
+		.on('[role="tab"]', {
 			element(el) {
-				anchorHref = el.getAttribute("href");
+				const href = el.getAttribute("href");
+				panelId = href
+					? href.replace(/^#/, "")
+					: el.getAttribute("aria-controls");
 				anchorText = "";
 				el.onEndTag(() => {
-					const id = (anchorHref ?? "").replace(/^#/, "");
-					if (id) labels.set(id, anchorText.trim());
-					anchorHref = null;
+					if (panelId) labels.set(panelId, anchorText.trim());
+					panelId = null;
 				});
 			},
 			text(chunk) {
