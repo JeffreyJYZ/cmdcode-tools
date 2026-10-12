@@ -12,7 +12,7 @@ describe("renderText", () => {
 		expect(text).toContain("every req weighted equally");
 		expect(text).toContain("1,084 asks");
 		expect(text).toContain("2026-07-10 → 2026-09-29");
-		expect(text).toContain("trivial prompt 137");
+		expect(text).toContain("system prompt 137");
 		expect(text).toContain("cache read 248.0K");
 		expect(text).toContain(
 			"one vote per conversation instead: cache read 64.0K",
@@ -45,10 +45,10 @@ describe("renderText", () => {
 
 	test("--explain lists every reason, the default trims to six", () => {
 		const drops: DropCount[] = [
-			{ reason: "trivial prompt", asks: 137, reqs: 140 },
+			{ reason: "before --since", asks: 137, reqs: 140 },
 			{ reason: "synthetic prompt", asks: 258, reqs: 900 },
 			{ reason: "system prompt", asks: 129, reqs: 0 },
-			{ reason: "empty prompt", asks: 14, reqs: 14 },
+			{ reason: "no model call", asks: 14, reqs: 14 },
 			{ reason: "compaction prompt", asks: 9, reqs: 0 },
 			{ reason: "shell prompt", asks: 7, reqs: 0 },
 			{ reason: "orphan prompt", asks: 3, reqs: 3 },

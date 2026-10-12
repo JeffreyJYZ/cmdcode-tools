@@ -20,19 +20,18 @@ Siblings:
 ```
 src/index.ts             entry
 src/types.ts             Req (one model call), Ask, Profile, Shape, Stats
-src/constants/keywords.ts  DEFAULT_KEYWORDS + FILLER (noise filtering)
 src/constants/providers.ts CC_PREFIXES (CommandCode provider ids)
 src/constants/asks.ts    BOUNDARY (row kind -> AskKind)
 src/constants/layout.ts  LABEL + table column widths
 src/constants/ansi.ts    ESC + ANSI
 src/cli/options.ts       Options, defaultOptions
-src/cli/flags.ts         flag readers: str, number, oneOf, sinceOf, keywordList, customOf
+src/cli/flags.ts         flag readers: str, number, oneOf, sinceOf, customOf
 src/cli/parse.ts         cac declarations -> Options
 src/cli/run.ts           orchestration
 src/measure/rows.ts      store rows -> RawMessage (v2 + legacy layouts)
 src/measure/store.ts     readStore: layout detection, session metadata merge
 src/measure/asks.ts      messages -> asks, with each req's position in its session
-src/measure/filter.ts    keep/drop decisions, normalisation, the keyword rule
+src/measure/filter.ts    keep/drop decisions (structural drops only)
 src/measure/stats.ts     FIELDS + reqProfile + mean + percentiles (one place a field is read)
 src/measure/profile.ts   buildShape: per-req, per-conversation and per-side vectors, buckets
 src/measure/sides.ts     sideOf + sideProfiles: provider id -> oc / cc
@@ -83,6 +82,7 @@ bun link                       # exposes the `reqshape` binary
 - Tests must not touch network: unit tests build fixtures; live `mpc`/`cmduse` by hand, never `bun test`.
 - Size limits: ~100 lines/file, hard cap 150; ≤6 entries per dir. Check `wc -l $(rg --files -g '*.ts' src test)` + per-dir count. `test/` split `cli/`, `measure/`, `market/`, `view/`.
 - No re-export-only barrels; import the owning module.
+- **No prompt-noise filtering — every `user` ask is profiled, however short.** Removed 2026-10-12 (user's call): the greeting/ack/emoji keyword list, `normalizePrompt`/`trivialReason`, and the `--keywords`/`--min-chars`/`--min-output`/`--keep-trivial` flags are gone; `filterAsks` drops only structural rows (`synthetic`/`system`/`compaction`/`shell`, `no model call`, `before --since`, `other project`, `subagent session`). Do not reintroduce a content filter.
 
 ## Traps (each of these was a real bug)
 

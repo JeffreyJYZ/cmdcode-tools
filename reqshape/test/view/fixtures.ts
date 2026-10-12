@@ -105,7 +105,7 @@ export function shape(overrides: Partial<Shape> = {}): Shape {
 }
 
 export const DROPS: DropCount[] = [
-	{ reason: "trivial prompt", asks: 137, reqs: 140 },
+	{ reason: "system prompt", asks: 137, reqs: 140 },
 ];
 
 export function report(overrides: Partial<Report> = {}): Report {

@@ -75,10 +75,6 @@ export async function run(argv: string[]): Promise<number> {
 	const asks = buildAsks(store.messages, store.sessions);
 	const { kept, drops } = filterAsks(asks, {
 		sessions: options.sessions,
-		keywords: new Set(options.keywords),
-		minChars: options.minChars,
-		minOutput: options.minOutput,
-		keepTrivial: options.keepTrivial,
 		since: options.since,
 		project: options.project,
 	});

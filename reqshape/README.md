@@ -8,7 +8,7 @@ Measure the shape of your requests from opencode's own history, then price that 
 
 A **req** is one model call — the same unit the opencode sidebar counts: a single `assistant` row in opencode's store. An agentic ask is many reqs, because the model is called again after every tool result.
 
-`reqshape` reads that history, drops the requests that ask for nothing, averages the rest, and hands you the answer as a token vector: *one of my requests is 8.2K input, 309 output, 139 reasoning, 248K cache read*. Then it prices that vector on every model OpenCode Go and CommandCode sell, and divides each plan's allowance and window caps by the result.
+`reqshape` reads that history, averages it, and hands you the answer as a token vector: *one of my requests is 8.2K input, 309 output, 139 reasoning, 248K cache read*. Then it prices that vector on every model OpenCode Go and CommandCode sell, and divides each plan's allowance and window caps by the result. Every prompt you typed counts, however short; only generated rows are excluded.
 
 `mpc` answers the same question with a fixed assumption (800 in / 50K cache / 200 out). This answers it with your actual traffic — and usually disagrees, because context is re-read on every call and yours is deep.
 
@@ -39,7 +39,7 @@ reqshape  7.3K reqs · every req weighted equally
 measured from the opencode v2 store · priced by mpc
 
 MEASURED  1,084 asks · 38 sessions · 12 projects · 2026-07-10 → 2026-09-29
-DROPPED   synthetic prompt 260 · trivial prompt 138 · system prompt 130 · empty prompt 14 · compaction prompt 9 · shell prompt 7
+DROPPED   synthetic prompt 260 · system prompt 130 · compaction prompt 9 · shell prompt 7
 
 PER REQ   input 8.2K · output 309 · reasoning 139 · cache read 248.0K · cache write 8.1
           p10/p90  input 67/9.2K · output 46/701 · cache read 1.9K/648.7K
@@ -90,15 +90,9 @@ The first request of a conversation is essentially free to re-send; the hundredt
 
 A model with no published cache-read rate is billed for that context at its **input** rate, and flagged with `*`. This is the single biggest swing in the table: a model with no caching support is not slightly more expensive for this traffic, it is unusable.
 
-## Noise filtering
+## Structural noise
 
-"hi", "thanks", "ok", "continue" are real requests but say nothing about the work you do. `reqshape` drops an ask — the prompt *and* every req it drove — when:
-
-- its prompt normalises to a keyword (`hi`, `hey there`, `thanks`, `great`, `lgtm`, `continue please`, …) — edit the list with `--keywords`
-- its prompt is nothing but emoji or punctuation (`--min-chars` adds a length floor)
-- it produced almost no output (`--min-output N`)
-
-Structural noise is always dropped: auto-generated `synthetic` prompts, the `compaction` summary turn, `shell` commands, and `system` rows are not requests you made. `--keep-trivial` turns off the prompt filters and keeps everything else the same, and `--explain` prints every reason with its count — nothing is silently discarded.
+Not every row is a request you made. Auto-generated `synthetic` prompts, the `compaction` summary turn, `shell` commands and `system` rows are dropped, as is an ask whose model was never called. Every prompt *you* typed — however short or offhand — is profiled. `--explain` prints every drop reason with its count, so nothing is silently discarded.
 
 ## Options
 
@@ -106,10 +100,6 @@ Structural noise is always dropped: auto-generated `synthetic` prompts, the `com
 | --- | --- | --- |
 | `--weight <mode>` | `turn` | `turn` (every req equal) or `session` (one vote per conversation) |
 | `--sessions <mode>` | `all` | `all` includes subagent sessions; `user` drops them |
-| `--keywords <list>` | built-in list | comma-separated prompts to treat as noise (replaces the list) |
-| `--min-chars <n>` | `0` | also drop prompts shorter than this |
-| `--min-output <n>` | `0` | also drop asks that produced fewer output tokens |
-| `--keep-trivial` | off | keep every prompt; only structural noise is dropped |
 | `--since <date>` | all time | only asks on or after this date |
 | `--project <dir>` | all | only sessions whose directory contains this |
 | `--model <text>` | all | only model rows whose name contains this |

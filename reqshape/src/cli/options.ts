@@ -1,4 +1,3 @@
-import { DEFAULT_KEYWORDS } from "#~/constants/keywords.ts";
 import type { CustomRates } from "#~/market/rates.ts";
 import { defaultStorePath } from "#~/measure/store.ts";
 
@@ -7,10 +6,6 @@ export interface Options {
 	sessions: "user" | "all";
 	/** Which mean the projection prices: the per-req mean, or one vote per conversation. */
 	weight: "turn" | "session";
-	keepTrivial: boolean;
-	keywords: string[];
-	minChars: number;
-	minOutput: number;
 	/** Epoch ms floor; 0 keeps everything. */
 	since: number;
 	project: string;
@@ -33,10 +28,6 @@ export function defaultOptions(): Options {
 	return {
 		sessions: "all",
 		weight: "turn",
-		keepTrivial: false,
-		keywords: [...DEFAULT_KEYWORDS],
-		minChars: 0,
-		minOutput: 0,
 		since: 0,
 		project: "",
 		model: "",

@@ -1,14 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { DEFAULT_KEYWORDS } from "#~/constants/keywords.ts";
 import { type FilterOptions, filterAsks } from "#~/measure/filter.ts";
 import type { Ask, Req } from "#~/types.ts";
 
 const OPTIONS: FilterOptions = {
 	sessions: "all",
-	keywords: new Set(DEFAULT_KEYWORDS),
-	minChars: 0,
-	minOutput: 0,
-	keepTrivial: false,
 	since: 0,
 	project: "",
 };
@@ -55,23 +50,18 @@ describe("filterAsks", () => {
 			{ ...OPTIONS, project: "/dev/one" },
 		);
 
-		// Subagents are usage, so they are kept unless asked otherwise.
-		expect(kept).toHaveLength(2);
+		// Subagents are usage, and a one-word prompt is still work: both kept.
+		expect(kept).toHaveLength(3);
 		expect(kept.some((entry) => entry.child)).toBe(true);
 
 		const reasons = Object.fromEntries(
 			drops.map((drop) => [drop.reason, drop.asks]),
 		);
-		expect(reasons["trivial prompt"]).toBe(1);
 		expect(reasons["synthetic prompt"]).toBe(1);
 		expect(reasons["compaction prompt"]).toBe(1);
 		expect(reasons["no model call"]).toBe(1);
 		expect(reasons["other project"]).toBe(1);
 		expect(reasons["subagent session"]).toBeUndefined();
-		// Dropped asks carry the reqs they would have contributed.
-		expect(
-			drops.find((drop) => drop.reason === "trivial prompt")?.reqs,
-		).toBe(2);
 	});
 
 	test("--sessions user drops subagent sessions", () => {
@@ -95,29 +85,6 @@ describe("filterAsks", () => {
 			project: "/dev/one",
 		});
 		expect(scoped.kept.map((entry) => entry.sessionID)).toEqual(["ses_1"]);
-	});
-
-	test("--keep-trivial profiles everything, noise included", () => {
-		const { kept, drops } = filterAsks(
-			[
-				ask({ text: "hi" }),
-				ask({ sessionID: "b", kind: "synthetic" }),
-				ask({ sessionID: "c", child: true }),
-			],
-			{ ...OPTIONS, keepTrivial: true },
-		);
-		// Only the structural drops survive: noise is kept, non-asks are not.
-		expect(kept).toHaveLength(2);
-		expect(drops.map((drop) => drop.reason)).toEqual(["synthetic prompt"]);
-	});
-
-	test("--min-output drops asks that produced almost nothing", () => {
-		const { kept, drops } = filterAsks(
-			[ask({ reqs: [req(5), req(5)] }), ask({ sessionID: "b" })],
-			{ ...OPTIONS, minOutput: 50 },
-		);
-		expect(kept).toHaveLength(1);
-		expect(drops[0]?.reason).toBe("under --min-output");
 	});
 
 	test("a dropped ask reports the reqs it held, and drops are ranked", () => {

@@ -1,13 +1,8 @@
-import { FILLER } from "#~/constants/keywords.ts";
 import type { Ask, DropCount } from "#~/types.ts";
 
 export interface FilterOptions {
 	/** `user` keeps only the prompts you typed, dropping subagent sessions. */
 	sessions: "user" | "all";
-	keywords: Set<string>;
-	minChars: number;
-	minOutput: number;
-	keepTrivial: boolean;
 	/** Epoch ms floor; 0 keeps everything. */
 	since: number;
 	/** Substring matched against the session's directory; "" keeps everything. */
@@ -19,45 +14,6 @@ export interface FilterResult {
 	drops: DropCount[];
 }
 
-/** Lowercase, punctuation-free, single-spaced — so `Hi!` and `hi` are the same prompt. */
-export function normalizePrompt(text: string): string {
-	return text
-		.toLowerCase()
-		.replace(/[^\p{L}\p{N}\s]+/gu, " ")
-		.replace(/\s+/g, " ")
-		.trim();
-}
-
-/**
- * Why this prompt is noise, or null when it is worth profiling. A prompt made
- * only of emoji normalises away to nothing, which is its own answer.
- */
-export function trivialReason(
-	text: string,
-	keywords: Set<string>,
-	minChars: number,
-): string | null {
-	const normalized = normalizePrompt(text);
-	if (!normalized) return "empty prompt";
-	if (keywords.has(normalized)) return "trivial prompt";
-	const words = normalized.split(" ");
-	if (
-		words.length > 1 &&
-		words.some((word) => keywords.has(word)) &&
-		words.every((word) => keywords.has(word) || FILLER.has(word))
-	) {
-		return "trivial prompt";
-	}
-	if (minChars > 0 && normalized.length < minChars) return "short prompt";
-	return null;
-}
-
-function outputOf(ask: Ask): number {
-	let total = 0;
-	for (const req of ask.reqs) total += req.output;
-	return total;
-}
-
 function dropOf(ask: Ask, reason: string, seen: Map<string, DropCount>): void {
 	const entry = seen.get(reason) ?? { reason, asks: 0, reqs: 0 };
 	entry.asks += 1;
@@ -66,8 +22,10 @@ function dropOf(ask: Ask, reason: string, seen: Map<string, DropCount>): void {
 }
 
 /**
- * Decide which asks describe real work. Every rejection is counted, so the
- * numbers stay auditable rather than quietly cleaned.
+ * Decide which asks describe real work. Only structural noise is dropped —
+ * generated rows and asks with no model call — so every prompt you typed is
+ * profiled, however short. Every rejection is counted, so the numbers stay
+ * auditable rather than quietly cleaned.
  */
 export function filterAsks(asks: Ask[], options: FilterOptions): FilterResult {
 	const kept: Ask[] = [];
@@ -93,21 +51,6 @@ export function filterAsks(asks: Ask[], options: FilterOptions): FilterResult {
 		if (ask.reqs.length === 0) {
 			dropOf(ask, "no model call", drops);
 			continue;
-		}
-		if (!options.keepTrivial) {
-			const reason = trivialReason(
-				ask.text,
-				options.keywords,
-				options.minChars,
-			);
-			if (reason) {
-				dropOf(ask, reason, drops);
-				continue;
-			}
-			if (options.minOutput > 0 && outputOf(ask) < options.minOutput) {
-				dropOf(ask, "under --min-output", drops);
-				continue;
-			}
 		}
 		kept.push(ask);
 	}

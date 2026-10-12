@@ -3,7 +3,6 @@ import pkg from "../../package.json" with { type: "json" };
 import {
 	answeredByCac,
 	customOf,
-	keywordList,
 	number,
 	oneOf,
 	sinceOf,
@@ -17,19 +16,6 @@ export function parseArgs(argv: string[]): Options {
 		.option(
 			"--weight <mode>",
 			"turn | session — which mean the projection prices",
-		)
-		.option("--keep-trivial", "profile every prompt, noise included")
-		.option(
-			"--keywords <list>",
-			"comma-separated prompts counted as noise (replaces the default list)",
-		)
-		.option(
-			"--min-chars <n>",
-			"also drop prompts shorter than this (0 = off)",
-		)
-		.option(
-			"--min-output <n>",
-			"also drop asks producing fewer output tokens (0 = off)",
 		)
 		.option("--since <date>", "only asks on or after this date")
 		.option("--project <dir>", "only sessions under this directory")
@@ -81,10 +67,6 @@ export function parseArgs(argv: string[]): Options {
 			: (oneOf(raw.color, ["auto", "always", "never"], "color") ??
 				options.color);
 
-	options.keepTrivial = raw.keepTrivial === true;
-	options.keywords = keywordList(raw.keywords) ?? options.keywords;
-	options.minChars = number(raw.minChars, "min-chars");
-	options.minOutput = number(raw.minOutput, "min-output");
 	options.limit = number(raw.limit, "limit");
 	options.since = sinceOf(raw.since);
 	options.project = str(raw.project) ?? "";

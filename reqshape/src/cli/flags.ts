@@ -64,16 +64,6 @@ export function sinceOf(value: unknown): number {
 	return parsed;
 }
 
-/** `--keywords ""` and a bare `--keywords` both mean "no keyword list at all". */
-export function keywordList(value: unknown): string[] | undefined {
-	if (value === undefined || value === null) return undefined;
-	if (value === true || value === 0 || value === "") return [];
-	return String(value)
-		.split(",")
-		.map((word) => word.trim().toLowerCase())
-		.filter(Boolean);
-}
-
 /** Custom rates only make sense with something to price them against. */
 export function customOf(flags: Record<string, unknown>): CustomRates | null {
 	// Any custom-model flag counts as "this run is about a custom model". The
