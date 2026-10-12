@@ -56,6 +56,10 @@ describe("shimContent", () => {
 		expect(content).toContain('source "$ZDOTDIR/state.zsh"');
 		expect(content).toContain('source "$HOME/.config/opencode/shell.zsh"');
 	});
+
+	test("guards the generated state behind a non-interactive check", () => {
+		expect(shimContent()).toContain("! -o interactive");
+	});
 });
 
 describe("isZsh", () => {
@@ -115,6 +119,27 @@ describe("prepare", () => {
 				encoding: "utf8",
 			});
 			expect(output.trim()).toBe("FAKE_PUSH");
+		},
+	);
+
+	test.skipIf(!hasZsh)(
+		"a shimmed interactive zsh does NOT source the captured state",
+		() => {
+			writeFileSync(join(dir, ".zshrc"), "alias gp='echo FAKE_PUSH'\n");
+			prepare();
+			// Replace the captured state with a bare marker. Drop the `.zwc` too:
+			// it is compiled in the same mtime second, and zsh prefers it when it
+			// is not older, which would hide the marker.
+			rmSync(`${stateFile()}.zwc`, { force: true });
+			writeFileSync(stateFile(), "SHELL_RC_STATE_SOURCED=1\n");
+			const run = (flag: string): string =>
+				execFileSync("zsh", [flag, 'print -r -- "$SHELL_RC_STATE_SOURCED"'], {
+					env: { ...process.env, ZDOTDIR: stateDir(), HOME: dir },
+					encoding: "utf8",
+					stdio: ["ignore", "pipe", "ignore"],
+				}).trim();
+			expect(run("-ic")).toBe("");
+			expect(run("-c")).toBe("1");
 		},
 	);
 });
