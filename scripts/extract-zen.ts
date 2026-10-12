@@ -16,17 +16,17 @@
 // Rate variants (peak/off-peak, context tiers) are kept as separate entries
 // keyed by variant label, so a caller can pick the right one later.
 //
-// The two Go plans sit in `<Tabs syncKey="go-plan">` -> `<TabItem label="…">`:
+// The two Go plans sit in `<PlanTabs syncKey="go-plan">` -> `<div slot="go|go-plus">`:
 // the pricing tables carry a `Monthly limit` column that differs per plan, while
-// Input/Output/Cached columns repeat verbatim. We parse each priced tab, take
-// the first for the shared rates, and record every tab's limits under its plan.
+// Input/Output/Cached columns repeat verbatim. We parse each priced slot, take
+// the first for the shared rates, and record every slot's limits under its plan.
 import { writeFile } from "node:fs/promises"
 
 // The docs pages are rendered HTML; their source is markdown with pipe tables,
 // so scrape the .mdx the pages themselves link ("Edit page"). More stable than
 // HTML tables and identical to what readers see.
-const GO_URL = "https://raw.githubusercontent.com/anomalyco/opencode/dev/packages/web/src/content/docs/go.mdx"
-const ZEN_URL = "https://raw.githubusercontent.com/anomalyco/opencode/dev/packages/web/src/content/docs/zen.mdx"
+const GO_URL = "https://raw.githubusercontent.com/anomalyco/opencode/dev/services/www/src/docs/content/console/go.mdx"
+const ZEN_URL = "https://raw.githubusercontent.com/anomalyco/opencode/dev/services/www/src/docs/content/console/models.mdx"
 const OUT = new URL("../core/zen.json", import.meta.url).pathname
 
 /** The documented window split for Go, as fractions of a model's monthly limit. */
@@ -144,7 +144,9 @@ export function parseEndpoints(markdown: string): Map<string, string> {
 		const id = cells[1] ?? ""
 		// Model ids are bare slugs; skip headers and anything with spaces.
 		if (!/^[a-z0-9][a-z0-9._-]*$/.test(id)) continue
-		if (!cells[2]?.includes("/zen/")) continue
+		// The endpoint column carries the request URL; it is what separates a
+		// data row from any other table on the page.
+		if (!/^https?:\/\//.test(cells[2] ?? "")) continue
 		const name = (cells[0] ?? "").replace(/\[[^\]]*\]\([^)]*\)/g, "").replace(/\s+/g, " ").trim()
 		if (!name) continue
 		map.set(name, id)
@@ -164,12 +166,21 @@ export function parsePlanPrices(markdown: string): Map<string, number> {
 	return prices
 }
 
-/** Every `<TabItem label="…">body</TabItem>`, in document order. */
-export function tabItems(markdown: string): Array<{ label: string; body: string }> {
-	const out: Array<{ label: string; body: string }> = []
-	const re = /<TabItem\s+label="([^"]+)"\s*>([\s\S]*?)<\/TabItem>/g
+/** "go-plus" -> "Go Plus", for a plan's display label. */
+export function humanize(id: string): string {
+	return id
+		.split(/[-_]+/)
+		.filter(Boolean)
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(" ")
+}
+
+/** Every `<div slot="go|go-plus">body</div>` inside a `<PlanTabs>`, in order. */
+export function planSlots(markdown: string): Array<{ id: string; body: string }> {
+	const out: Array<{ id: string; body: string }> = []
+	const re = /<div\s+slot="([^"]+)"\s*>([\s\S]*?)<\/div>/g
 	for (let match = re.exec(markdown); match; match = re.exec(markdown)) {
-		out.push({ label: match[1], body: match[2] })
+		out.push({ id: match[1], body: match[2] })
 	}
 	return out
 }
@@ -266,32 +277,34 @@ if (import.meta.main) {
 	const goIndex = endpointIndex(goEndpoints)
 	const prices = parsePlanPrices(goMd)
 
-	// Priced tabs only: the doc carries a second `<Tabs syncKey="go-plan">` whose
-	// tabs are request-count estimates (no rates), so an empty parse rejects them.
-	const planTabs = tabItems(goMd)
-		.map((tab) => ({ ...tab, slug: slugify(tab.label), rates: parseRates(tab.body, true) }))
-		.filter((tab) => tab.rates.length > 0)
+	// Priced slots only: the doc carries a second `<PlanTabs syncKey="go-plan">`
+	// whose slots are request-count estimates (no rates), so an empty parse
+	// rejects them.
+	const planTabs = planSlots(goMd)
+		.map((slot) => ({ ...slot, slug: slugify(slot.id), rates: parseRates(slot.body, true) }))
+		.filter((slot) => slot.rates.length > 0)
 	if (planTabs.length < 2) {
-		throw new Error(`go.mdx: expected one priced <TabItem> per plan, found ${planTabs.length} — docs layout changed`)
+		throw new Error(`go.mdx: expected one priced plan slot per plan, found ${planTabs.length} — docs layout changed`)
 	}
 
 	const goModels = assemble(goIndex, planTabs[0].rates)
 	const knownIds = new Set(goModels.map((model) => model.id))
 	const plans: Record<string, GoPlan> = {}
 	for (const tab of planTabs) {
+		const label = humanize(tab.id)
 		const priceUsd = prices.get(tab.slug)
-		if (priceUsd === undefined) throw new Error(`go.mdx: no $/month price for plan "${tab.label}" — docs layout changed`)
+		if (priceUsd === undefined) throw new Error(`go.mdx: no $/month price for plan "${label}" — docs layout changed`)
 		const allowanceByModel = allowances(goIndex, tab.rates)
 		if (Object.keys(allowanceByModel).length === 0) {
-			throw new Error(`go.mdx: plan "${tab.label}" listed no per-model limits — docs layout changed`)
+			throw new Error(`go.mdx: plan "${label}" listed no per-model limits — docs layout changed`)
 		}
-		plans[tab.slug] = { label: tab.label, priceUsd, allowanceByModel }
+		plans[tab.slug] = { label, priceUsd, allowanceByModel }
 		// Rates are shared: every plan must price the same model set.
 		const tabIds = new Set(
 			tab.rates.map((rate) => goIndex.get(normalize(rate.name))?.id).filter((id): id is string => id !== undefined),
 		)
 		for (const id of knownIds) {
-			if (!tabIds.has(id)) console.warn(`warning: plan "${tab.label}" lists no row for ${id}`)
+			if (!tabIds.has(id)) console.warn(`warning: plan "${label}" lists no row for ${id}`)
 		}
 	}
 

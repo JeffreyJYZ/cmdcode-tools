@@ -1,5 +1,5 @@
 {
-	"extractedAt": "2026-10-09T12:07:23.192Z",
+	"extractedAt": "2026-10-12T12:54:26.459Z",
 	"go": {
 		"windowShare": {
 			"fiveHour": 0.2,
@@ -601,7 +601,7 @@
 					"qwen3.8-max": 15,
 					"qwen3.8-flash": 30,
 					"qwen3.7-plus": 60,
-					"deepseek-v4.1-flash": 60,
+					"deepseek-v4.1-flash": 80,
 					"deepseek-v4-pro": 15,
 					"deepseek-v4-flash": 30,
 					"deepseek-v4-flash-vision-exp": 15,
@@ -637,7 +637,7 @@
 					"qwen3.8-max": 60,
 					"qwen3.8-flash": 90,
 					"qwen3.7-plus": 180,
-					"deepseek-v4.1-flash": 120,
+					"deepseek-v4.1-flash": 160,
 					"deepseek-v4-pro": 60,
 					"deepseek-v4-flash": 120,
 					"deepseek-v4-flash-vision-exp": 60,
@@ -1589,7 +1589,7 @@
 						"tierMinTokens": null,
 						"input": 2,
 						"output": 10,
-						"cacheRead": 0.1,
+						"cacheRead": 0.2,
 						"cacheWrite": 2.5
 					},
 					{
@@ -1598,7 +1598,7 @@
 						"tierMinTokens": 272000,
 						"input": 4,
 						"output": 15,
-						"cacheRead": 0.2,
+						"cacheRead": 0.4,
 						"cacheWrite": 5
 					}
 				]
