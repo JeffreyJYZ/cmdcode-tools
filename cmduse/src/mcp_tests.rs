@@ -1,6 +1,7 @@
 // Protocol-level tests for the MCP server: pure dispatch over `handle()`.
-// Tool bodies (usage/plans/models/daily/hourly) are the shared CLI helpers
-// and are covered by the CLI tests; here we pin the JSON-RPC contract.
+// Tool bodies (usage/plans/models/daily/hourly/session/model) are the shared
+// CLI helpers and are covered by the CLI tests; here we pin the JSON-RPC
+// contract.
 
 use crate::mcp::handle;
 use serde_json::{json, Value};
@@ -48,11 +49,16 @@ fn ping_returns_empty_result() {
 }
 
 #[test]
-fn tools_list_exposes_five_tools() {
+fn tools_list_exposes_seven_tools() {
     let r = call("tools/list", json!({}), 4);
     let tools = r["result"]["tools"].as_array().expect("tools array");
-    let names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
-    assert_eq!(names, ["usage", "plans", "models", "daily", "hourly"]);
+    // Sorted set: fails if either MCP server's tool list drifts.
+    let mut names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
+    names.sort_unstable();
+    assert_eq!(
+        names,
+        ["daily", "hourly", "model", "models", "plans", "session", "usage"]
+    );
     for t in tools {
         assert_eq!(t["inputSchema"]["type"], "object");
     }

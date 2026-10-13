@@ -7,16 +7,19 @@
 // own limit; that distinction is the whole point of the Go plan.
 use crate::ocuse::window::{ModelUsage, Report, Totals};
 use crate::ocuse::zen;
+use crate::report_render::Fmt;
 use cmduse_core::{compact, duration, money, pct};
 
-/// Gauge width for the window bars. cmduse makes this configurable; ocuse keeps
-/// one width so the frame does not reflow between refreshes.
-const BAR_WIDTH: usize = 20;
+/// Gauge width for the window bars when neither config nor `--bar-width` says
+/// otherwise — cmduse's own default.
+pub const DEFAULT_BAR_WIDTH: usize = 20;
 
 /// ANSI styles — cmduse's palette, or empty strings when colour is off, so a
 /// piped run never leaks SGR escapes.
 pub struct Ink {
     pub colour: bool,
+    /// Gauge width for the window bars (config / `--bar-width`).
+    pub bar_width: usize,
     pub bold: &'static str,
     pub dim: &'static str,
     pub reset: &'static str,
@@ -31,6 +34,7 @@ impl Ink {
         if colour {
             Self {
                 colour,
+                bar_width: DEFAULT_BAR_WIDTH,
                 bold: crate::render::BOLD,
                 dim: crate::render::DIM,
                 reset: crate::render::RESET,
@@ -42,6 +46,7 @@ impl Ink {
         } else {
             Self {
                 colour,
+                bar_width: DEFAULT_BAR_WIDTH,
                 bold: "",
                 dim: "",
                 reset: "",
@@ -51,6 +56,12 @@ impl Ink {
                 red: "",
             }
         }
+    }
+
+    /// Override the gauge width (config / `--bar-width`); chains after `new`.
+    pub fn width(mut self, width: usize) -> Self {
+        self.bar_width = width;
+        self
     }
 
     /// Colour a value without disturbing the caller's column padding: pad the
@@ -85,7 +96,7 @@ impl Ink {
     /// the plain frame keeps its script-friendly column layout.
     fn bar(&self, used: f64, cap: f64) -> String {
         if self.colour {
-            crate::render::bar(used, cap, BAR_WIDTH)
+            crate::render::bar(used, cap, self.bar_width)
         } else {
             String::new()
         }
@@ -165,14 +176,9 @@ fn aggregate_cap(report: &Report, share: f64) -> Option<f64> {
 
 /// Is any of this model's windows over its share of the limit? Go meters per
 /// model *and* per window, so being over the 5-hour cap counts like being over
-/// the month.
+/// the month. One verdict, shared with the watch loop's cap notification.
 fn exceeded(model: &ModelUsage) -> bool {
-    let Some(limit) = model.limit.filter(|limit| *limit > 0.0) else {
-        return false;
-    };
-    model.month.cost > limit
-        || model.five_hour.cost > limit * 0.20
-        || model.weekly.cost > limit * 0.50
+    crate::ocuse::window::over_window(model).is_some()
 }
 
 fn model_row(ink: &Ink, model: &ModelUsage, total_cost: f64) -> String {
@@ -238,8 +244,14 @@ fn window_cell(ink: &Ink, model: &ModelUsage, cost: f64, share: f64) -> String {
 }
 
 /// `limit` rows to show; `usize::MAX` for all.
-pub fn render_text(report: &Report, db_path: &str, rows: usize, colour: bool) -> String {
-    let ink = Ink::new(colour);
+pub fn render_text(
+    report: &Report,
+    db_path: &str,
+    rows: usize,
+    colour: bool,
+    bar_width: usize,
+) -> String {
+    let ink = Ink::new(colour).width(bar_width);
     let c = |text: String| ink.cyan_on(text);
     let shares = &zen::catalog().go.window_share;
     let mut out = String::new();
@@ -329,9 +341,10 @@ pub fn watch_frame(
     colour: bool,
     history: &[f64],
     interval_secs: u64,
+    bar_width: usize,
 ) -> String {
     let ink = Ink::new(colour);
-    let mut out = render_text(report, db_path, rows, colour);
+    let mut out = render_text(report, db_path, rows, colour, bar_width);
     if history.len() >= 2 && history.iter().any(|v| *v > 0.0) {
         out.push_str(&format!(
             "{}spend bursts ({}s samples){} {}\n",
@@ -344,23 +357,108 @@ pub fn watch_frame(
     out.trim_end_matches('\n').to_string()
 }
 
-/// Compact single line for a status bar.
-pub fn status_line(report: &Report, colour: bool) -> String {
+/// Minimal one-line dashboard for terminals too small for the full frame:
+/// period spend, rolling windows, and the burst sparkline inlined when active.
+/// No trailing newline — the caller appends its own status line, exactly like
+/// `watch_frame`.
+pub fn compact_line(report: &Report, history: &[f64], colour: bool) -> String {
     let ink = Ink::new(colour);
-    match report.models.first() {
-        Some(top) => format!(
-            "oc {} month · {} 5h · top {} {}",
-            ink.cyan_on(money(report.month.cost)),
-            ink.cyan_on(money(report.five_hour.cost)),
-            top.id,
-            ink.cyan_on(money(top.month.cost)),
-        ),
-        None => format!(
-            "oc {} month · {} 5h",
-            ink.cyan_on(money(report.month.cost)),
-            ink.cyan_on(money(report.five_hour.cost)),
-        ),
-    }
+    let spark = if history.len() >= 2 && history.iter().any(|v| *v > 0.0) {
+        format!(
+            " {}{}{}",
+            ink.dim,
+            crate::render::sparkline(history),
+            ink.reset
+        )
+    } else {
+        String::new()
+    };
+    format!(
+        "{}oc{} {} month · 5h {}{spark}",
+        ink.bold,
+        ink.reset,
+        ink.cyan_on(money(report.month.cost)),
+        ink.cyan_on(money(report.five_hour.cost)),
+    )
+}
+
+/// ocuse's statusline: cmduse's `{key}` template engine (`report_render::
+/// render_template`) resolved against this report's own placeholders, so both
+/// binaries are driven by `statusline_template` in their config.
+///
+/// Placeholders (case-insensitive):
+///   {plan} {period}                plan id / period label
+///   {month} {month_pct} {month_bar}
+///   {five_hour} {five_hour_pct} {five_hour_bar}   (aliases {5h} {5h_pct} {5h_bar})
+///   {weekly} {weekly_pct} {weekly_bar}            (aliases {wk} {wk_pct} {wk_bar})
+///   {models}                       top model by period spend
+///   | or newline                    literal separators
+/// Unknown placeholders are dropped. Percentages are one decimal; money reuses
+/// `cmduse_core::money`; bars reuse `report_render::bar` (ascii/colour aware).
+pub fn statusline_template(
+    report: &Report,
+    plan_id: &str,
+    tpl: &str,
+    colours: bool,
+    ascii: bool,
+    bar_width: usize,
+) -> String {
+    let ink = Ink::new(colours);
+    let shares = &zen::catalog().go.window_share;
+    let month_cap = aggregate_cap(report, shares.monthly);
+    let five_cap = aggregate_cap(report, shares.five_hour);
+    let week_cap = aggregate_cap(report, shares.weekly);
+    let cash = |v: f64| ink.cyan_on(money(v));
+    let pct_of = |used: f64, cap: Option<f64>| match cap {
+        Some(cap) => pct(used, cap),
+        None => "—".into(),
+    };
+    let bar_of = |used: f64, cap: Option<f64>| match cap.filter(|c| *c > 0.0) {
+        Some(cap) => crate::report_render::bar(used / cap * 100.0, bar_width, ascii, colours),
+        None => String::new(),
+    };
+    let top_model = || {
+        report
+            .models
+            .first()
+            .map(|m| m.id.clone())
+            .unwrap_or_else(|| "—".into())
+    };
+    crate::report_render::render_template(tpl, |key| match key {
+        "plan" => plan_id.to_string(),
+        "period" => report.period_label.clone(),
+        "month" => cash(report.month.cost),
+        "month_pct" => pct_of(report.month.cost, month_cap),
+        "month_bar" => bar_of(report.month.cost, month_cap),
+        "five_hour" | "5h" => cash(report.five_hour.cost),
+        "five_hour_pct" | "5h_pct" => pct_of(report.five_hour.cost, five_cap),
+        "five_hour_bar" | "5h_bar" => bar_of(report.five_hour.cost, five_cap),
+        "weekly" | "wk" => cash(report.weekly.cost),
+        "weekly_pct" | "wk_pct" => pct_of(report.weekly.cost, week_cap),
+        "weekly_bar" | "wk_bar" => bar_of(report.weekly.cost, week_cap),
+        "models" => top_model(),
+        _ => String::new(),
+    })
+}
+
+/// `ocuse statusline --json`: the same numbers the template resolves, in one
+/// object — plan and period label, period/month spend, the two rolling windows,
+/// and the top model. Caps are the aggregate ceilings `aggregate_cap` uses for
+/// the template's `{…_pct}`/`{…_bar}` placeholders (null when nothing is capped).
+pub fn statusline_json(report: &Report, plan_id: &str) -> String {
+    let shares = &zen::catalog().go.window_share;
+    serde_json::json!({
+        "plan": plan_id,
+        "period": report.period_label,
+        "monthSpent": report.month.cost,
+        "monthCap": aggregate_cap(report, shares.monthly),
+        "fiveHourSpent": report.five_hour.cost,
+        "fiveHourCap": aggregate_cap(report, shares.five_hour),
+        "weeklySpent": report.weekly.cost,
+        "weeklyCap": aggregate_cap(report, shares.weekly),
+        "model": report.models.first().map(|m| m.id.clone()),
+    })
+    .to_string()
 }
 
 /// Machine-readable projection: totals plus the per-model breakdown.
@@ -470,6 +568,164 @@ pub fn plans_text(colour: bool) -> String {
     out
 }
 
+/// The Go/Zen catalogue as one JSON object — the machine twin of `plans_text`:
+/// both plans (label, price, per-model monthly allowances), the shared window
+/// shares, and the Go and Zen rate tables.
+pub fn plans_json() -> String {
+    let catalog = crate::ocuse::zen::catalog();
+    let plans: Vec<serde_json::Value> = catalog
+        .go
+        .plans
+        .iter()
+        .map(|(id, plan)| {
+            serde_json::json!({
+                "id": id,
+                "label": plan.label,
+                "priceUsd": plan.price_usd,
+                "allowanceByModel": &plan.allowance_by_model,
+            })
+        })
+        .collect();
+    serde_json::json!({
+        "extractedAt": catalog.extracted_at,
+        "windows": {
+            "fiveHour": catalog.go.window_share.five_hour,
+            "weekly": catalog.go.window_share.weekly,
+            "monthly": catalog.go.window_share.monthly,
+        },
+        "plans": plans,
+        "models": catalog.go.models.iter().map(rate_json).collect::<Vec<_>>(),
+        "zen": catalog.zen.models.iter().map(rate_json).collect::<Vec<_>>(),
+    })
+    .to_string()
+}
+
+/// One catalogue row's shared `$`/1M rates, taken from its base (first) variant.
+fn rate_json(model: &zen::Model) -> serde_json::Value {
+    let rate = model.variants.first();
+    serde_json::json!({
+        "id": model.id,
+        "name": model.name,
+        "input": rate.map(|r| r.input),
+        "output": rate.map(|r| r.output),
+        "cacheRead": rate.map(|r| r.cache_read),
+        "cacheWrite": rate.map(|r| r.cache_write),
+    })
+}
+
+/// One `ocuse models` row: a catalogued Go model, its rates, and the selected
+/// plan's monthly limit (`None` = the plan does not grant it).
+struct ModelRow {
+    id: String,
+    name: String,
+    input: Option<f64>,
+    output: Option<f64>,
+    cache_read: Option<f64>,
+    limit: Option<f64>,
+}
+
+/// The Go catalogue joined with the plan's allowances; `gated` keeps only the
+/// models the plan grants (present in `allowanceByModel`).
+fn model_rows(plan_id: &str, gated: bool) -> Vec<ModelRow> {
+    let catalog = crate::ocuse::zen::catalog();
+    let plan = catalog.plan(plan_id);
+    let mut rows: Vec<ModelRow> = catalog
+        .go
+        .models
+        .iter()
+        .map(|m| {
+            let rate = m.variants.first();
+            ModelRow {
+                id: m.id.clone(),
+                name: m.name.clone(),
+                input: rate.map(|r| r.input),
+                output: rate.map(|r| r.output),
+                cache_read: rate.map(|r| r.cache_read),
+                limit: plan.and_then(|p| p.allowance_by_model.get(&m.id).copied()),
+            }
+        })
+        .collect();
+    if gated {
+        rows.retain(|r| r.limit.is_some());
+    }
+    rows
+}
+
+/// `ocuse models`: the Go catalogue for one plan — name, id, `$`/1M in / out /
+/// cache-read, and that plan's monthly limit. Without `gated`, every catalogued
+/// model is listed and the `GRANTED` column marks which the plan allows.
+pub fn models_text(plan_id: &str, gated: bool, colour: bool) -> String {
+    let ink = Ink::new(colour);
+    let catalog = crate::ocuse::zen::catalog();
+    let label = catalog
+        .plan(plan_id)
+        .map(|p| p.label.clone())
+        .unwrap_or_else(|| plan_id.to_string());
+    let granted = catalog
+        .plan(plan_id)
+        .map(|p| p.allowance_by_model.len())
+        .unwrap_or(0);
+    let rows = model_rows(plan_id, gated);
+    let mut out = format!(
+        "{}{label} models{} {}\n",
+        ink.bold,
+        ink.reset,
+        ink.dim_on(format!(
+            "(plan {plan_id} · {granted}/{} granted)",
+            catalog.go.models.len()
+        )),
+    );
+    out.push_str(&format!(
+        "{}{:<30} {:<28} {:>7} {:>7} {:>7} {:>8} {:>7}{}\n",
+        ink.bold, "MODEL", "ID", "IN", "OUT", "CACHE", "LIMIT", "GRANTED", ink.reset
+    ));
+    let rate_cell = |v: Option<f64>| match v {
+        Some(v) => ink.cyan_on(format!("{:>7}", format!("${v}"))),
+        None => ink.dim_on(format!("{:>7}", "—")),
+    };
+    for r in &rows {
+        let limit = match r.limit {
+            Some(l) => ink.cyan_on(format!("{:>8}", cmduse_core::money(l))),
+            None => ink.dim_on(format!("{:>8}", "—")),
+        };
+        let granted = if r.limit.is_some() { "yes" } else { "no" };
+        out.push_str(&format!(
+            "{:<30} {:<28} {} {} {} {} {:>7}\n",
+            r.name,
+            r.id,
+            rate_cell(r.input),
+            rate_cell(r.output),
+            rate_cell(r.cache_read),
+            limit,
+            granted,
+        ));
+    }
+    out
+}
+
+/// `ocuse models --json`: one JSON object per line (matching cmduse's
+/// `models --json`), each model's id, name, `$`/1M rates, plan limit (null
+/// when not granted) and the `granted` verdict.
+pub fn models_json(plan_id: &str, gated: bool) -> String {
+    let mut out = String::new();
+    for r in model_rows(plan_id, gated) {
+        out.push_str(
+            &serde_json::json!({
+                "id": r.id,
+                "name": r.name,
+                "input": r.input,
+                "output": r.output,
+                "cacheRead": r.cache_read,
+                "limit": r.limit,
+                "granted": r.limit.is_some(),
+            })
+            .to_string(),
+        );
+        out.push('\n');
+    }
+    out
+}
+
 pub fn model_text(report: &Report, id: &str, colour: bool) -> String {
     let ink = Ink::new(colour);
     let Some(model) = report.models.iter().find(|m| m.id == id) else {
@@ -517,99 +773,331 @@ pub fn model_text(report: &Report, id: &str, colour: bool) -> String {
     out
 }
 
+/// Per-key JSON totals — the same field vocabulary cmduse's
+/// `report_render::totals_json` uses. `cacheWrite` is deliberately absent:
+/// ocuse's `window::Totals` carries no cache-write (the store's rows do, but
+/// nothing aggregates them into a report), so no column is invented for it.
+fn totals_json(
+    cost: f64,
+    requests: u64,
+    input: u64,
+    output: u64,
+    cache_read: u64,
+) -> serde_json::Value {
+    serde_json::json!({
+        "requests": requests,
+        "tokensIn": input,
+        "tokensOut": output,
+        "cacheRead": cache_read,
+        "costUsd": cost,
+    })
+}
+
+/// One day/hour bucket's totals, kept apart per column so the CSV/JSON forms do
+/// not have to re-derive them from a packed tuple.
+#[derive(Default, Clone, Copy)]
+struct Bucket {
+    cost: f64,
+    requests: u64,
+    input: u64,
+    output: u64,
+    cache_read: u64,
+}
+
+impl Bucket {
+    fn add(&mut self, row: &crate::ocuse::db::Row) {
+        self.cost += row.cost_usd;
+        self.requests += 1;
+        self.input += row.input;
+        self.output += row.output;
+        self.cache_read += row.cache_read;
+    }
+
+    fn json(&self) -> serde_json::Value {
+        totals_json(
+            self.cost,
+            self.requests,
+            self.input,
+            self.output,
+            self.cache_read,
+        )
+    }
+}
+
+/// Per-model report — `ocuse model` on the whole period (or one id). The
+/// machine formats project the report's models: `Json` mirrors cmduse's
+/// `model --json` envelope (`{source, sinceMs, models:{id: totals}}`, with the
+/// Go limit added), `Csv` is one row per model
+/// (`model,requests,tokens_in,tokens_out,cache_read,cost_usd`). The `Table` form
+/// is the caller's — the dashboard (no id) or the single-model detail (with an
+/// id) — which needs the db path and row cap, so it is rendered there.
+pub fn model_report(report: &Report, id: Option<&str>, fmt: Fmt) -> String {
+    let models: Vec<&ModelUsage> = report
+        .models
+        .iter()
+        .filter(|m| id.is_none_or(|want| m.id == want))
+        .collect();
+    match fmt {
+        Fmt::Json => {
+            let map: serde_json::Map<String, serde_json::Value> = models
+                .iter()
+                .map(|m| {
+                    let mut body = totals_json(
+                        m.month.cost,
+                        m.month.requests,
+                        m.month.input,
+                        m.month.output,
+                        m.month.cache_read,
+                    );
+                    body["limit"] = serde_json::json!(m.limit);
+                    (m.id.clone(), body)
+                })
+                .collect();
+            serde_json::json!({
+                "scope": "local",
+                "source": "opencode",
+                "sinceMs": report.since_ms,
+                "models": map,
+            })
+            .to_string()
+        }
+        Fmt::Csv => {
+            let mut out = String::from("model,requests,tokens_in,tokens_out,cache_read,cost_usd\n");
+            for m in models {
+                out.push_str(&format!(
+                    "{},{},{},{},{},{:.2}\n",
+                    crate::report_render::csv_field(&m.id),
+                    m.month.requests,
+                    m.month.input,
+                    m.month.output,
+                    m.month.cache_read,
+                    m.month.cost,
+                ));
+            }
+            out
+        }
+        Fmt::Table => String::new(), // the caller renders the table form
+    }
+}
+
 /// Spend per bucket (day or hour), oldest first — `cmduse daily`/`hourly`.
+/// `lookback_ms` is the read window and `size_ms` the bucket width (which also
+/// names the first CSV/JSON column: `day` for a ≥24h bucket, else `hour`). The
+/// `Csv` columns are that key plus the store's numeric fields
+/// (`…,requests,tokens_in,tokens_out,cache_read,cost_usd`; no cache-write), the
+/// `Json` form `{scope,source,total,days|hours}`, and `Table` is the original
+/// framing but for `Ink`'s colour. `Json`/`Csv` are never coloured.
 pub fn bucket_text(
     rows: &[crate::ocuse::db::Row],
     now_ms: i64,
-    days: i64,
+    lookback_ms: i64,
     size_ms: i64,
-    label: &str,
     tz_secs: i64,
     colour: bool,
+    fmt: Fmt,
 ) -> String {
-    let ink = Ink::new(colour);
     // Buckets are cut in the display timezone: shift, bucket, then label.
     let shift = tz_secs * 1000;
-    let mut buckets: std::collections::BTreeMap<i64, (f64, u64, u64)> = Default::default();
+    let mut buckets: std::collections::BTreeMap<i64, Bucket> = Default::default();
     for row in rows {
         let bucket = (row.at_ms + shift).div_euclid(size_ms);
-        let entry = buckets.entry(bucket).or_insert((0.0, 0, 0));
-        entry.0 += row.cost_usd;
-        entry.1 += 1;
-        entry.2 += row.input + row.output + row.cache_read;
+        buckets.entry(bucket).or_default().add(row);
     }
-    let start = (now_ms + shift - days * 86_400_000).div_euclid(size_ms);
-    let mut out = format!(
-        "{}{label:<12} spend     requests   tokens{}\n",
-        ink.bold, ink.reset
-    );
-    for (bucket, (cost, requests, tokens)) in buckets.range(start..) {
-        let stamp = if size_ms >= 86_400_000 {
-            date_of(*bucket)
+    let start = (now_ms + shift - lookback_ms).div_euclid(size_ms);
+    let daily = size_ms >= 86_400_000;
+    let label = if daily { "day" } else { "hour" };
+    let stamp = |bucket: i64| {
+        if daily {
+            date_of(bucket)
         } else {
             format!(
                 "{} {:02}h",
                 date_of(bucket.div_euclid(24)),
                 bucket.rem_euclid(24)
             )
-        };
-        out.push_str(&format!(
-            "{stamp:<12} {} {} {}\n",
-            ink.cyan_on(format!("{:>9}", cmduse_core::money(*cost))),
-            ink.cyan_on(format!("{:>12}", cmduse_core::compact(*requests))),
-            ink.cyan_on(format!("{:>9}", cmduse_core::compact(*tokens))),
-        ));
+        }
+    };
+    let window: Vec<(i64, Bucket)> = buckets
+        .range(start..)
+        .map(|(bucket, b)| (*bucket, *b))
+        .collect();
+
+    match fmt {
+        Fmt::Json => {
+            let mut keyed = serde_json::Map::new();
+            let mut total = Bucket::default();
+            for (bucket, b) in &window {
+                keyed.insert(stamp(*bucket), b.json());
+                total.add_bucket(b);
+            }
+            let key = if daily { "days" } else { "hours" };
+            serde_json::json!({
+                "scope": "local",
+                "source": "opencode",
+                "total": total.json(),
+                key: keyed,
+            })
+            .to_string()
+        }
+        Fmt::Csv => {
+            let head = if daily { "day" } else { "hour" };
+            let mut out = format!("{head},requests,tokens_in,tokens_out,cache_read,cost_usd\n");
+            let mut total = Bucket::default();
+            for (bucket, b) in &window {
+                out.push_str(&format!(
+                    "{},{},{},{},{},{:.2}\n",
+                    crate::report_render::csv_field(&stamp(*bucket)),
+                    b.requests,
+                    b.input,
+                    b.output,
+                    b.cache_read,
+                    b.cost,
+                ));
+                total.add_bucket(b);
+            }
+            out.push_str(&format!(
+                "total,{},{},{},{},{:.2}\n",
+                total.requests, total.input, total.output, total.cache_read, total.cost,
+            ));
+            out
+        }
+        Fmt::Table => {
+            let ink = Ink::new(colour);
+            let mut out = format!(
+                "{}{label:<12} spend     requests   tokens{}\n",
+                ink.bold, ink.reset
+            );
+            for (bucket, b) in &window {
+                out.push_str(&format!(
+                    "{:<12} {} {} {}\n",
+                    stamp(*bucket),
+                    ink.cyan_on(format!("{:>9}", cmduse_core::money(b.cost))),
+                    ink.cyan_on(format!("{:>12}", cmduse_core::compact(b.requests))),
+                    ink.cyan_on(format!(
+                        "{:>9}",
+                        cmduse_core::compact(b.input + b.output + b.cache_read)
+                    )),
+                ));
+            }
+            if out.lines().count() == 1 {
+                out.push_str(&format!(
+                    "{}\n",
+                    ink.dim_on("(no OpenCode usage in the window)".into())
+                ));
+            }
+            out
+        }
     }
-    if out.lines().count() == 1 {
-        out.push_str(&format!(
-            "{}\n",
-            ink.dim_on("(no OpenCode usage in the window)".into())
-        ));
-    }
-    out
 }
 
-/// Spend per session, newest first.
-pub fn session_text(rows: &[crate::ocuse::db::Row], limit: usize, colour: bool) -> String {
-    let ink = Ink::new(colour);
-    let mut by_session: std::collections::BTreeMap<
-        &str,
-        (f64, u64, i64, std::collections::BTreeSet<&str>),
-    > = Default::default();
+/// One session's accumulating totals: `(cost, requests, tokens_in, tokens_out,
+/// cache_read, last_ms, distinct models)`.
+type SessionTotals<'a> = (
+    f64,
+    u64,
+    u64,
+    u64,
+    u64,
+    i64,
+    std::collections::BTreeSet<&'a str>,
+);
+
+/// Spend per session, newest first. The `Csv` form is one row per session
+/// (`session,requests,tokens_in,tokens_out,cache_read,cost_usd`), `Json` a
+/// `{scope,source,sessions}` object whose entries add the last-used instant and
+/// the distinct-model count; `Table` keeps its own (last, models) columns.
+pub fn session_text(
+    rows: &[crate::ocuse::db::Row],
+    limit: usize,
+    colour: bool,
+    fmt: Fmt,
+) -> String {
+    let mut by_session: std::collections::BTreeMap<&str, SessionTotals> = Default::default();
     for row in rows {
-        let entry =
-            by_session
-                .entry(row.session.as_str())
-                .or_insert((0.0, 0, 0, Default::default()));
+        let entry = by_session
+            .entry(row.session.as_str())
+            .or_insert_with(|| (0.0, 0, 0, 0, 0, 0, Default::default()));
         entry.0 += row.cost_usd;
         entry.1 += 1;
-        entry.2 = entry.2.max(row.at_ms);
-        entry.3.insert(row.model.as_str());
+        entry.2 += row.input;
+        entry.3 += row.output;
+        entry.4 += row.cache_read;
+        entry.5 = entry.5.max(row.at_ms);
+        entry.6.insert(row.model.as_str());
     }
     let mut sessions: Vec<_> = by_session.into_iter().collect();
-    sessions.sort_by_key(|(_, (_, _, last, _))| std::cmp::Reverse(*last));
-    let mut out = format!(
-        "{}session                          last        models   spend     req{}\n",
-        ink.bold, ink.reset
-    );
-    for (id, (cost, requests, last, models)) in sessions.into_iter().take(limit) {
-        let short = id.rsplit('_').next().unwrap_or(id);
-        out.push_str(&format!(
-            "{:<32} {:<11} {:>6} {} {:>6}\n",
-            short,
-            ink.dim_on(format!("{:<11}", date_of(last.div_euclid(86_400_000)))),
-            models.len(),
-            ink.cyan_on(format!("{:>9}", cmduse_core::money(cost))),
-            requests,
-        ));
+    sessions.sort_by_key(|(_, (_, _, _, _, _, last, _))| std::cmp::Reverse(*last));
+    sessions.truncate(limit);
+
+    match fmt {
+        Fmt::Json => {
+            let mut keyed = serde_json::Map::new();
+            for (id, (cost, requests, input, output, cache_read, last, models)) in &sessions {
+                let mut body = totals_json(*cost, *requests, *input, *output, *cache_read);
+                body["lastMs"] = serde_json::json!(*last);
+                body["models"] = serde_json::json!(models.len());
+                keyed.insert((*id).to_string(), body);
+            }
+            serde_json::json!({
+                "scope": "local",
+                "source": "opencode",
+                "sessions": keyed,
+            })
+            .to_string()
+        }
+        Fmt::Csv => {
+            let mut out =
+                String::from("session,requests,tokens_in,tokens_out,cache_read,cost_usd\n");
+            for (id, (cost, requests, input, output, cache_read, _, _)) in &sessions {
+                out.push_str(&format!(
+                    "{},{},{},{},{},{:.2}\n",
+                    crate::report_render::csv_field(id),
+                    requests,
+                    input,
+                    output,
+                    cache_read,
+                    cost,
+                ));
+            }
+            out
+        }
+        Fmt::Table => {
+            let ink = Ink::new(colour);
+            let mut out = format!(
+                "{}session                          last        models   spend     req{}\n",
+                ink.bold, ink.reset
+            );
+            for (id, (cost, requests, _, _, _, last, models)) in sessions {
+                let short = id.rsplit('_').next().unwrap_or(id);
+                out.push_str(&format!(
+                    "{:<32} {:<11} {:>6} {} {:>6}\n",
+                    short,
+                    ink.dim_on(format!("{:<11}", date_of(last.div_euclid(86_400_000)))),
+                    models.len(),
+                    ink.cyan_on(format!("{:>9}", cmduse_core::money(cost))),
+                    requests,
+                ));
+            }
+            if out.lines().count() == 1 {
+                out.push_str(&format!(
+                    "{}\n",
+                    ink.dim_on("(no sessions in the window)".into())
+                ));
+            }
+            out
+        }
     }
-    if out.lines().count() == 1 {
-        out.push_str(&format!(
-            "{}\n",
-            ink.dim_on("(no sessions in the window)".into())
-        ));
+}
+
+impl Bucket {
+    /// Fold another bucket's totals in (for the report's `total` row/entry).
+    fn add_bucket(&mut self, other: &Bucket) {
+        self.cost += other.cost;
+        self.requests += other.requests;
+        self.input += other.input;
+        self.output += other.output;
+        self.cache_read += other.cache_read;
     }
-    out
 }
 
 /// `YYYY-MM-DD` for a Unix day number (civil-from-days, same helper family as
@@ -647,19 +1135,20 @@ mod tests {
 
     #[test]
     fn text_shows_the_model_against_its_limit() {
-        let text = render_text(&report(), "/tmp/opencode.db", 10, false);
+        let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         assert!(text.contains("glm-5.3-flash"), "{text}");
         assert!(text.contains("$60"), "the model's monthly limit: {text}");
         assert!(text.contains("50%"), "30 of 60 is half: {text}");
     }
 
     #[test]
-    fn json_and_status_line_carry_the_totals() {
+    fn json_and_statusline_carry_the_totals() {
         let json = render_json(&report());
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed["totals"]["month"]["cost"], 30.0);
         assert_eq!(parsed["models"][0]["id"], "glm-5.3-flash");
-        assert!(status_line(&report(), false).contains("glm-5.3-flash"));
+        let line = statusline_template(&report(), "go", "{plan} {models}", false, false, 20);
+        assert_eq!(line, "go glm-5.3-flash");
     }
 
     /// Every renderer, both ways round: piped/non-tty output must stay free of
@@ -683,13 +1172,32 @@ mod tests {
         let cases: Vec<(&str, String, String)> = vec![
             (
                 "render_text",
-                render_text(&report, "/tmp/oc.db", 10, false),
-                render_text(&report, "/tmp/oc.db", 10, true),
+                render_text(&report, "/tmp/oc.db", 10, false, DEFAULT_BAR_WIDTH),
+                render_text(&report, "/tmp/oc.db", 10, true, DEFAULT_BAR_WIDTH),
             ),
             (
-                "status_line",
-                status_line(&report, false),
-                status_line(&report, true),
+                "statusline_template",
+                statusline_template(
+                    &report,
+                    "go",
+                    "{period} {month} {month_pct}",
+                    false,
+                    false,
+                    20,
+                ),
+                statusline_template(
+                    &report,
+                    "go",
+                    "{period} {month} {month_pct}",
+                    true,
+                    false,
+                    20,
+                ),
+            ),
+            (
+                "compact_line",
+                compact_line(&report, &[], false),
+                compact_line(&report, &[], true),
             ),
             ("plans_text", plans_text(false), plans_text(true)),
             (
@@ -699,18 +1207,23 @@ mod tests {
             ),
             (
                 "bucket_text/day",
-                bucket_text(&rows, now, 7, 86_400_000, "day", 0, false),
-                bucket_text(&rows, now, 7, 86_400_000, "day", 0, true),
+                bucket_text(&rows, now, 7 * 86_400_000, 86_400_000, 0, false, Fmt::Table),
+                bucket_text(&rows, now, 7 * 86_400_000, 86_400_000, 0, true, Fmt::Table),
             ),
             (
                 "bucket_text/hour",
-                bucket_text(&rows, now, 1, 3_600_000, "hour", 0, false),
-                bucket_text(&rows, now, 1, 3_600_000, "hour", 0, true),
+                bucket_text(&rows, now, 3_600_000, 3_600_000, 0, false, Fmt::Table),
+                bucket_text(&rows, now, 3_600_000, 3_600_000, 0, true, Fmt::Table),
             ),
             (
                 "session_text",
-                session_text(&rows, 20, false),
-                session_text(&rows, 20, true),
+                session_text(&rows, 20, false, Fmt::Table),
+                session_text(&rows, 20, true, Fmt::Table),
+            ),
+            (
+                "models_text",
+                models_text("go", false, false),
+                models_text("go", false, true),
             ),
         ];
 
@@ -724,11 +1237,202 @@ mod tests {
                 "{name} rendered nothing coloured when on: {coloured}"
             );
         }
+
+        // Machine formats must ignore the colour flag entirely: no escapes
+        // whether it is off or on.
+        let flagged: Vec<(&str, String, String)> = vec![
+            (
+                "bucket_text/day csv",
+                bucket_text(&rows, now, 7 * 86_400_000, 86_400_000, 0, false, Fmt::Csv),
+                bucket_text(&rows, now, 7 * 86_400_000, 86_400_000, 0, true, Fmt::Csv),
+            ),
+            (
+                "bucket_text/hour json",
+                bucket_text(&rows, now, 3_600_000, 3_600_000, 0, false, Fmt::Json),
+                bucket_text(&rows, now, 3_600_000, 3_600_000, 0, true, Fmt::Json),
+            ),
+            (
+                "session_text csv",
+                session_text(&rows, 20, false, Fmt::Csv),
+                session_text(&rows, 20, true, Fmt::Csv),
+            ),
+            (
+                "session_text json",
+                session_text(&rows, 20, false, Fmt::Json),
+                session_text(&rows, 20, true, Fmt::Json),
+            ),
+        ];
+        for (name, off, on) in flagged {
+            assert!(
+                !off.contains('\x1b'),
+                "{name} leaked escapes with colour off: {off}"
+            );
+            assert!(
+                !on.contains('\x1b'),
+                "{name} must stay uncoloured with colour on: {on}"
+            );
+        }
+        for (name, out) in [
+            ("model_report json", model_report(&report, None, Fmt::Json)),
+            ("model_report csv", model_report(&report, None, Fmt::Csv)),
+            ("plans_json", plans_json()),
+            ("statusline_json", statusline_json(&report, "go")),
+            ("models_json", models_json("go", false)),
+        ] {
+            assert!(
+                !out.contains('\x1b'),
+                "{name} must never be coloured: {out}"
+            );
+        }
+    }
+
+    #[test]
+    fn bucket_reports_carry_the_documented_columns() {
+        let now = 1_800_000_000_000;
+        let rows = vec![Row {
+            at_ms: now - 60_000,
+            provider: "opencode-go".into(),
+            model: "glm-5.3-flash".into(),
+            cost_usd: 1.5,
+            input: 10,
+            output: 20,
+            cache_read: 30,
+            cache_write: 40,
+            ..Default::default()
+        }];
+        let csv = bucket_text(&rows, now, 7 * 86_400_000, 86_400_000, 0, false, Fmt::Csv);
+        assert!(
+            csv.starts_with("day,requests,tokens_in,tokens_out,cache_read,cost_usd\n"),
+            "{csv}"
+        );
+        // cache-write is absent from the columns by design; the total row closes.
+        assert!(!csv.contains("cache_write"), "{csv}");
+        assert!(csv.contains(",10,20,30,1.50\n"), "{csv}");
+        assert!(csv.trim_end().ends_with("total,1,10,20,30,1.50"), "{csv}");
+
+        let json: serde_json::Value = serde_json::from_str(&bucket_text(
+            &rows,
+            now,
+            7 * 86_400_000,
+            86_400_000,
+            0,
+            false,
+            Fmt::Json,
+        ))
+        .unwrap();
+        assert_eq!(json["total"]["requests"], 1);
+        assert_eq!(json["total"]["cacheRead"], 30);
+        assert_eq!(json["days"].as_object().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn session_report_json_and_csv_agree_with_the_store() {
+        let now = 1_800_000_000_000;
+        let rows = vec![
+            Row {
+                at_ms: now - 60_000,
+                session: "ses_first".into(),
+                model: "glm-5.3-flash".into(),
+                cost_usd: 2.0,
+                input: 5,
+                output: 6,
+                cache_read: 7,
+                ..Default::default()
+            },
+            Row {
+                at_ms: now - 30_000,
+                session: "ses_second".into(),
+                model: "kimi-k3".into(),
+                cost_usd: 1.0,
+                ..Default::default()
+            },
+        ];
+        let json: serde_json::Value =
+            serde_json::from_str(&session_text(&rows, 20, false, Fmt::Json)).unwrap();
+        assert_eq!(json["sessions"]["ses_first"]["tokensIn"], 5);
+        assert_eq!(json["sessions"]["ses_first"]["models"], 1);
+        assert_eq!(json["sessions"]["ses_second"]["costUsd"], 1.0);
+        let csv = session_text(&rows, 20, false, Fmt::Csv);
+        assert!(
+            csv.starts_with("session,requests,tokens_in,tokens_out,cache_read,cost_usd\n"),
+            "{csv}"
+        );
+        assert!(csv.contains("ses_second,1,0,0,0,1.00\n"), "{csv}");
+    }
+
+    #[test]
+    fn model_report_projects_the_report_models() {
+        let json: serde_json::Value =
+            serde_json::from_str(&model_report(&report(), None, Fmt::Json)).unwrap();
+        assert_eq!(json["source"], "opencode");
+        assert_eq!(json["models"]["glm-5.3-flash"]["costUsd"], 30.0);
+        assert_eq!(json["models"]["glm-5.3-flash"]["limit"], 60.0);
+        let csv = model_report(&report(), None, Fmt::Csv);
+        assert!(csv.contains("glm-5.3-flash,1,0,0,0,30.00\n"), "{csv}");
+        // An id that never ran yields just the header, not a stray row.
+        assert_eq!(
+            model_report(&report(), Some("nope"), Fmt::Csv),
+            "model,requests,tokens_in,tokens_out,cache_read,cost_usd\n"
+        );
+    }
+
+    #[test]
+    fn catalogue_json_carries_both_plans_and_windows() {
+        let json: serde_json::Value = serde_json::from_str(&plans_json()).unwrap();
+        assert_eq!(json["windows"]["fiveHour"], 0.2);
+        assert_eq!(json["windows"]["monthly"], 1.0);
+        assert_eq!(json["plans"][0]["id"], "go");
+        assert_eq!(json["plans"][0]["allowanceByModel"]["glm-5.3-flash"], 60.0);
+        assert_eq!(json["plans"][1]["priceUsd"], 40.0);
+        assert!(!json["models"].as_array().unwrap().is_empty());
+        assert!(!json["zen"].as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn models_lists_the_plan_and_marks_granted() {
+        // The ungated table lists every catalogued model and marks the granted.
+        let all = models_text("go", false, false);
+        assert!(all.contains("glm-5.3-flash"), "{all}");
+        assert!(all.contains("GRANTED"), "{all}");
+        // The gated list keeps only what the plan grants.
+        let gated = models_text("go", true, false);
+        for line in gated.lines().skip(2) {
+            assert!(
+                line.trim_end().ends_with("yes"),
+                "ungranted row kept: {line}"
+            );
+        }
+        // JSON: one object per line, and gated drops the ungranted.
+        let every: Vec<serde_json::Value> = models_json("go", false)
+            .lines()
+            .map(|l| serde_json::from_str(l).unwrap())
+            .collect();
+        assert!(every.iter().any(|m| m["granted"] == false));
+        assert!(every
+            .iter()
+            .any(|m| m["id"] == "glm-5.3-flash" && m["limit"] == 60.0));
+        let only: Vec<serde_json::Value> = models_json("go", true)
+            .lines()
+            .map(|l| serde_json::from_str(l).unwrap())
+            .collect();
+        assert!(!only.is_empty());
+        assert!(only.iter().all(|m| m["granted"] == true));
+    }
+
+    #[test]
+    fn statusline_json_mirrors_the_template_numbers() {
+        let json: serde_json::Value =
+            serde_json::from_str(&statusline_json(&report(), "go")).unwrap();
+        assert_eq!(json["plan"], "go");
+        assert_eq!(json["period"], "calendar month");
+        assert_eq!(json["monthSpent"], 30.0);
+        assert_eq!(json["monthCap"], 60.0);
+        assert_eq!(json["model"], "glm-5.3-flash");
     }
 
     #[test]
     fn plain_frames_carry_no_escapes() {
-        let text = render_text(&report(), "/tmp/opencode.db", 10, false);
+        let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         assert!(
             !text.contains('\x1b'),
             "piped output must stay plain: {text}"
@@ -740,9 +1444,9 @@ mod tests {
     #[test]
     fn an_over_cap_window_is_flagged_in_both_modes() {
         // 30 spent against a 5-hour cap of 20% of the $60 limit = $12.
-        let plain = render_text(&report(), "/tmp/opencode.db", 10, false);
+        let plain = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         assert!(plain.contains("LIMIT EXCEEDED"), "{plain}");
-        let coloured = render_text(&report(), "/tmp/opencode.db", 10, true);
+        let coloured = render_text(&report(), "/tmp/opencode.db", 10, true, DEFAULT_BAR_WIDTH);
         assert!(coloured.contains("LIMIT EXCEEDED"), "{coloured}");
         assert!(
             coloured.contains(crate::render::RED),
@@ -754,7 +1458,7 @@ mod tests {
     fn a_model_over_any_of_its_own_windows_is_flagged() {
         // The fixture is at 50% of the month but over the 5-hour share, and Go
         // meters per model per window: the row must say so, not just glow red.
-        let plain = render_text(&report(), "/tmp/opencode.db", 10, false);
+        let plain = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         let row = plain
             .lines()
             .find(|line| line.starts_with("glm-5.3-flash"))
@@ -778,7 +1482,7 @@ mod tests {
         let report =
             crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None);
         for colour in [false, true] {
-            let text = render_text(&report, "/tmp/opencode.db", 10, colour);
+            let text = render_text(&report, "/tmp/opencode.db", 10, colour, DEFAULT_BAR_WIDTH);
             assert!(!text.contains("LIMIT EXCEEDED"), "colour={colour}: {text}");
         }
     }
@@ -800,7 +1504,7 @@ mod tests {
 
     #[test]
     fn colour_frames_get_the_palette_and_a_gauge() {
-        let text = render_text(&report(), "/tmp/opencode.db", 10, true);
+        let text = render_text(&report(), "/tmp/opencode.db", 10, true, DEFAULT_BAR_WIDTH);
         assert!(text.contains(crate::render::BOLD), "{text}");
         assert!(text.contains(crate::render::CYAN), "{text}");
         assert!(
@@ -827,6 +1531,7 @@ mod tests {
             true,
             &[0.0, 1.5, 0.0],
             10,
+            DEFAULT_BAR_WIDTH,
         );
         assert!(
             !frame.ends_with('\n'),
@@ -841,9 +1546,88 @@ mod tests {
 
     #[test]
     fn idle_history_omits_the_sparkline() {
-        let all_idle = watch_frame(&report(), "/tmp/opencode.db", 10, true, &[0.0, 0.0], 10);
+        let all_idle = watch_frame(
+            &report(),
+            "/tmp/opencode.db",
+            10,
+            true,
+            &[0.0, 0.0],
+            10,
+            DEFAULT_BAR_WIDTH,
+        );
         assert!(!all_idle.contains("spend bursts"), "{all_idle}");
-        let first_frame = watch_frame(&report(), "/tmp/opencode.db", 10, true, &[], 10);
+        let first_frame = watch_frame(
+            &report(),
+            "/tmp/opencode.db",
+            10,
+            true,
+            &[],
+            10,
+            DEFAULT_BAR_WIDTH,
+        );
         assert!(!first_frame.contains("spend bursts"), "{first_frame}");
+    }
+
+    /// Every statusline placeholder resolves, unknown ones are dropped, and
+    /// colours off means no SGR at all. The default template is the one the
+    /// config ships, so it must render end to end.
+    #[test]
+    fn statusline_resolves_every_placeholder() {
+        let r = report();
+        let line = |tpl: &str| statusline_template(&r, "go", tpl, false, false, 20);
+
+        // {plan} {period} are plain text
+        assert_eq!(line("{plan}"), "go");
+        assert_eq!(line("{period}"), "calendar month");
+        // money placeholders reuse cmduse_core::money
+        assert_eq!(line("{month}"), "$30.00");
+        assert_eq!(line("{five_hour}"), "$30.00");
+        assert_eq!(line("{weekly}"), "$30.00");
+        // {models} is the top model by spend
+        assert_eq!(line("{models}"), "glm-5.3-flash");
+        // percentages are one decimal; the fixture is 50% of its $60 limit
+        assert_eq!(line("{month_pct}"), "50.0%");
+        // bars render at the requested width (non-ascii default gauge glyphs)
+        let bar = line("{month_bar}");
+        assert!(bar.contains("50.0%") && bar.contains('━'), "{bar}");
+
+        // the default template resolves as a whole
+        let default = line("{period} {month} · 5h {five_hour} · wk {weekly}");
+        assert_eq!(default, "calendar month $30.00 · 5h $30.00 · wk $30.00");
+
+        // unknown placeholders drop; text and separators pass through
+        assert_eq!(line("{plan} {bogus} | tail"), "go  | tail");
+        // unclosed brace is emitted verbatim
+        assert_eq!(line("{plan} {oops"), "go {oops");
+        // with colours off there is no escape anywhere
+        assert!(!line("{plan} {month} {month_pct} {month_bar}").contains('\x1b'));
+    }
+
+    /// A period with no spend has no aggregate cap to divide by, so the pct
+    /// placeholders degrade to the money-less dash instead of NaN.
+    #[test]
+    fn statusline_without_caps_degrades_gracefully() {
+        let empty = crate::ocuse::window::build(
+            &[],
+            &zen::catalog(),
+            zen::DEFAULT_PLAN,
+            1_800_000_000_000,
+            None,
+        );
+        let line = statusline_template(&empty, "go", "{month_pct} {models}", false, false, 20);
+        assert_eq!(line, "— —");
+    }
+
+    /// The one-line compact frame is a single line and inlines the sparkline.
+    #[test]
+    fn compact_line_is_one_line_with_inline_sparkline() {
+        let plain = compact_line(&report(), &[], true);
+        assert_eq!(plain.lines().count(), 1, "{plain}");
+        assert!(!plain.ends_with('\n'), "{plain}");
+        let bursty = compact_line(&report(), &[0.0, 1.5], true);
+        assert!(bursty.contains('█'), "nonzero delta shows: {bursty}");
+        // colour off ⇒ no escapes; colour on ⇒ the palette appears
+        assert!(!compact_line(&report(), &[], false).contains('\x1b'));
+        assert!(compact_line(&report(), &[], true).contains(crate::render::BOLD));
     }
 }

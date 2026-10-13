@@ -117,6 +117,20 @@ fn tool_call(msg: &Value) -> Result<Value, (i64, String)> {
                 crate::report_render::Fmt::Table,
             )
         }
+        "session" => Ok(crate::session_output(
+            get("since").and_then(|v| v.as_str()),
+            opt_usize("days"),
+            opt_tz("tz")?,
+            crate::report_render::Fmt::Table,
+            false,
+        )),
+        "model" => Ok(crate::model_output(
+            get("since").and_then(|v| v.as_str()),
+            opt_usize("days"),
+            opt_tz("tz")?,
+            crate::report_render::Fmt::Table,
+            false,
+        )),
         _ => {
             return Ok(json!({
                 "content": [{ "type": "text", "text": format!("unknown tool: {name}") }],
@@ -172,6 +186,32 @@ fn tools() -> Value {
                 "hours": { "type": "integer", "description": "Hours back (default 24, max 168)" },
                 "tz": { "type": "string", "description": "UTC offset for hour buckets, e.g. -08:00" },
                 "local": { "type": "boolean", "description": "Use local CLI logs only (skip the account API)" },
+            },
+            "additionalProperties": false,
+        },
+    },
+    {
+        "name": "session",
+        "description": "Command Code local usage by project/session from the CLI logs in ~/.commandcode/projects, windowed by since or days.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "since": { "type": "string", "description": "ISO-8601 instant to count from, e.g. 2026-08-27T00:00:00Z" },
+                "days": { "type": "integer", "description": "Days back (used when since is absent)" },
+                "tz": { "type": "string", "description": "UTC offset for the local buckets, e.g. +05:30" },
+            },
+            "additionalProperties": false,
+        },
+    },
+    {
+        "name": "model",
+        "description": "Command Code local usage by model from the CLI logs in ~/.commandcode/projects, windowed by since or days.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "since": { "type": "string", "description": "ISO-8601 instant to count from, e.g. 2026-08-27T00:00:00Z" },
+                "days": { "type": "integer", "description": "Days back (used when since is absent)" },
+                "tz": { "type": "string", "description": "UTC offset for the local buckets, e.g. -08:00" },
             },
             "additionalProperties": false,
         },

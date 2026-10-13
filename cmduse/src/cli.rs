@@ -1,9 +1,33 @@
 use lexopt::prelude::*;
 
-#[derive(Default)]
+/// Which binary is running. The two share one parser/config/notify front-end;
+/// only a handful of flags are binary-gated (see [`Args`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Binary {
+    #[default]
+    Cmduse,
+    Ocuse,
+}
+
+impl Binary {
+    /// The name used in `-V/--version` and the usage header.
+    pub fn name(self) -> &'static str {
+        match self {
+            Binary::Cmduse => "cmduse",
+            Binary::Ocuse => "ocuse",
+        }
+    }
+}
+
+#[derive(Debug, Default)]
 pub struct Args {
+    /// The binary this argv was parsed for (gates `--local`/`--gated` vs the
+    /// ocuse-only flags).
+    pub binary: Binary,
     pub interval: Option<u64>,
     pub once: bool,
+    /// Explicit `-W`/`watch` seen (as opposed to the implicit default mode).
+    pub watch: bool,
     pub plain: bool,
     pub bar_width: Option<usize>,
     pub bursts: Option<usize>,
@@ -20,6 +44,19 @@ pub struct Args {
     pub dismiss_update: bool,
     /// ISO-8601 start of the window, for `model`/`session`.
     pub since: Option<String>,
+    // --- ocuse-only (the cmduse binary rejects these) ---
+    /// opencode store path (`--db`).
+    pub db: Option<String>,
+    /// Go plan to measure against (`--plan`).
+    pub plan: Option<String>,
+    /// Report window (`--window`): month, all, or `<n>d`.
+    pub window: Option<String>,
+    /// Pinned period start (`--period-start`), `YYYY-MM-DD`.
+    pub period_start: Option<String>,
+    /// Infer the period start from the first Go request (`--infer-anniversary`).
+    pub infer_anniversary: bool,
+    /// Table rows to print (`--rows`).
+    pub rows: Option<usize>,
 }
 
 #[derive(Debug, Default)]
@@ -48,8 +85,8 @@ pub enum SubCmd {
     Mcp,
 }
 
-pub fn parse_args() -> Args {
-    match parse_args_from(std::env::args_os()) {
+pub fn parse_args(binary: Binary) -> Args {
+    match parse_args_from(std::env::args_os(), binary) {
         Ok(a) => a,
         Err(e) => {
             eprintln!("{e}");
@@ -58,12 +95,17 @@ pub fn parse_args() -> Args {
     }
 }
 
-/// Parse a full argv (binary name first, as `std::env::args_os` yields).
-/// Split out so tests can drive it without touching the real process args.
+/// Parse a full argv (binary name first, as `std::env::args_os` yields) for the
+/// named binary. Split out so tests can drive it without touching the real
+/// process args.
 pub(crate) fn parse_args_from(
     args: impl IntoIterator<Item = std::ffi::OsString>,
+    binary: Binary,
 ) -> Result<Args, String> {
-    let mut a = Args::default();
+    let mut a = Args {
+        binary,
+        ..Args::default()
+    };
     let mut parser = lexopt::Parser::from_iter(args);
     let (mut saw_once, mut saw_watch) = (false, false);
     while let Some(arg) = parser.next().map_err(|e| e.to_string())? {
@@ -75,16 +117,18 @@ pub(crate) fn parse_args_from(
             Short('p') | Long("plain") => a.plain = true,
             Short('W') | Long("watch") => {
                 a.once = false; // explicit default mode
+                a.watch = true;
                 saw_watch = true;
             }
             Short('h') | Long("help") => a.help = true,
             Short('V') | Long("version") => {
-                println!("cmduse {}", env!("CARGO_PKG_VERSION"));
+                println!("{} {}", binary.name(), env!("CARGO_PKG_VERSION"));
                 std::process::exit(0);
             }
             Long("json") => a.json = true,
             Long("csv") => a.csv = true,
-            Long("local") => a.local = true,
+            // Shared: `--gated` filters `models`, and both binaries have a model
+            // catalogue (cmduse's live API list, ocuse's Go/plan allowance table).
             Long("gated") => a.gated = true,
             Long("dismiss-update") => a.dismiss_update = true,
             Long("tz") => {
@@ -150,14 +194,66 @@ pub(crate) fn parse_args_from(
                     Err(_) => return Err("--hours needs a number (e.g. --hours 6, max 168)".into()),
                 }
             }
+            // --- cmduse-only flags ---
+            Long("local") => {
+                if binary != Binary::Cmduse {
+                    return Err(unknown_long("local"));
+                }
+                a.local = true;
+            }
+            // --- ocuse-only flags ---
+            Long("db") => {
+                if binary != Binary::Ocuse {
+                    return Err(unknown_long("db"));
+                }
+                a.db = Some(need_value(&mut parser, "--db needs a path")?);
+            }
+            Long("plan") => {
+                if binary != Binary::Ocuse {
+                    return Err(unknown_long("plan"));
+                }
+                a.plan = Some(need_value(&mut parser, "--plan needs an id")?);
+            }
+            Long("window") => {
+                if binary != Binary::Ocuse {
+                    return Err(unknown_long("window"));
+                }
+                a.window = Some(need_value(
+                    &mut parser,
+                    "--window needs month, all, or <n>d",
+                )?);
+            }
+            Long("period-start") => {
+                if binary != Binary::Ocuse {
+                    return Err(unknown_long("period-start"));
+                }
+                a.period_start = Some(need_value(&mut parser, "--period-start needs YYYY-MM-DD")?);
+            }
+            Long("infer-anniversary") => {
+                if binary != Binary::Ocuse {
+                    return Err(unknown_long("infer-anniversary"));
+                }
+                a.infer_anniversary = true;
+            }
+            Long("rows") => {
+                if binary != Binary::Ocuse {
+                    return Err(unknown_long("rows"));
+                }
+                let v = need_value(&mut parser, "--rows needs a number")?;
+                match v.parse::<usize>() {
+                    Ok(n) => a.rows = Some(n),
+                    Err(_) => return Err(format!("--rows needs a number (got '{v}')")),
+                }
+            }
             Value(v) => match v.to_string_lossy().as_ref() {
                 "watch" => {
                     a.once = false;
+                    a.watch = true;
                     saw_watch = true;
                 }
                 "help" => a.help = true,
                 "version" => {
-                    println!("cmduse {}", env!("CARGO_PKG_VERSION"));
+                    println!("{} {}", binary.name(), env!("CARGO_PKG_VERSION"));
                     std::process::exit(0);
                 }
                 "daily" | "days" => a.subcmd = Some(SubCmd::Daily),
@@ -172,7 +268,7 @@ pub(crate) fn parse_args_from(
                 other => return Err(format!("unknown arg: {other} (try --help)")),
             },
             Short(c) => return Err(format!("unknown arg: -{c} (try --help)")),
-            Long(l) => return Err(format!("unknown arg: --{l} (try --help)")),
+            Long(l) => return Err(unknown_long(l)),
         }
     }
     if saw_once && saw_watch {
@@ -182,6 +278,10 @@ pub(crate) fn parse_args_from(
         return Err("cannot combine --json with --csv".into());
     }
     Ok(a)
+}
+
+fn unknown_long(flag: &str) -> String {
+    format!("unknown arg: --{flag} (try --help)")
 }
 
 fn need_value(parser: &mut lexopt::Parser, msg: &str) -> Result<String, String> {
@@ -289,12 +389,12 @@ pub fn parse_tz(s: &str) -> Option<i64> {
     Some(sign * (h * 3600 + m * 60))
 }
 
-pub fn usage() {
-    println!("{}", usage_text());
+pub fn usage(binary: Binary) {
+    println!("{}", usage_text(binary));
 }
 
-pub fn usage_text() -> &'static str {
-    "cmduse — Command Code usage dashboard
+/// The `cmduse` help text — byte-identical to what it has always printed.
+const CMDUSE_HELP: &str = "cmduse — Command Code usage dashboard
 
 Usage: cmduse [options]           Live plan dashboard (watch mode)
        cmduse -1                  One-shot dashboard
@@ -305,7 +405,7 @@ Usage: cmduse [options]           Live plan dashboard (watch mode)
        cmduse models              Live model list from the Command Code API
        cmduse plans               Plan comparison table
        cmduse statusline          Compact one-liner for prompts/tmux
-       cmduse mcp                 MCP stdio server (usage/plans/models/daily/hourly tools)
+       cmduse mcp                 MCP stdio server (usage/plans/models/daily/hourly/session/model tools)
        cmduse config set interval=<s> width=<n> burst_on=true burst=40
 
 Options:
@@ -326,6 +426,7 @@ Options:
                         (applies to local logs too)
       --days <n>        daily: number of days back (default 7, max 365)
       --hours <n>       hourly: number of hours back (default 24, max 168)
+      --since <ISO>     model/session: count from this instant instead of --days
       --local           daily: use local CLI logs only (skip account API)
   -V, --version         Print version
   -h, --help            This help
@@ -338,5 +439,66 @@ Config: ~/.config/cmd-usage/config.json
     \"check_updates\": true, \"dismissed_update\": null }
 
 daily/model/session read ~/.commandcode/projects offline (no API calls).
-Dashboard needs: logged-in Command Code CLI (~/.commandcode/auth.json)"
+Dashboard needs: logged-in Command Code CLI (~/.commandcode/auth.json)";
+
+/// The `ocuse` help text: the shared block plus its own extras and the
+/// ocuse-only flags. Kept in sync with `CMDUSE_HELP` by the parity test in
+/// `cli_tests` (every shared token cmduse prints must print here too).
+const OCUSE_HELP: &str = "ocuse — OpenCode Go/Zen usage (local, from opencode.db)
+
+Usage: ocuse [options]            Live plan dashboard (watch mode)
+       ocuse -1                   One-shot dashboard
+       ocuse daily [--days N] [--json]     Spend by day
+       ocuse hourly [--hours N] [--json]   Spend by hour
+       ocuse model [--since ISO] [--json]  Local usage by model
+       ocuse session [--json]              Local usage by session
+       ocuse models               Model list
+       ocuse plans                The Go/Zen catalogue: both plans' limits and rates
+       ocuse statusline           Compact one-liner for prompts/tmux
+       ocuse mcp                  MCP stdio server (usage/plans/models/daily/hourly/session/model tools)
+       ocuse config set interval=<s> width=<n> burst_on=true burst=40
+
+Options:
+  -1, --once            Fetch once, print, exit (no watch)
+  -W, --watch           Force watch mode (default; conflicts with -1)
+  -p, --plain           No colors / no live redraw (for scripts, pipes)
+  -i, --interval <dur>  Refresh interval (default: config or 10s). Accepts a
+                        unit suffix: 30s, 5m, 1h (bare number = seconds)
+  -w, --bar-width <n>   Progress bar width in chars (default: config or 20)
+  -b, --bursts <n>      Spend-burst sparkline samples (default: 40; hide when
+                        idle via config burst_on=false)
+      --json            Machine-readable JSON output where supported
+      --csv             CSV output for daily/hourly/model/session
+      --dismiss-update  Ack the current update notice (hides it until a newer
+                        version; same as config set dismissed_update=<ver>)
+      --tz <±HH:MM>     daily/hourly: bucket by this UTC offset instead of UTC
+                        (applies to local logs too)
+      --days <n>        daily: number of days back (default 120, max 365)
+      --hours <n>       hourly: number of hours back (default 24, max 168)
+      --since <ISO>     model/session: count from this instant instead of --days
+      --gated           models: filter to what the selected plan grants
+      --db <path>       opencode store (default $OPENCODE_DB or
+                        ~/.local/share/opencode/opencode.db)
+      --plan <id>       Go plan to measure against: go (default) or go-plus
+      --window <w>      report window: month (default), all, or <n>d
+      --period-start <date>  pin the period start (YYYY-MM-DD, UTC)
+      --infer-anniversary   infer the period start from the first Go request
+      --rows <n>        table rows to print (default 15)
+  -V, --version         Print version
+  -h, --help            This help
+  Respects NO_COLOR; colors auto-off when stdout is not a terminal.
+
+Config: ~/.config/ocuse/config.json
+  { \"interval_secs\": 10, \"bar_width\": 20, \"burst_enabled\": true,
+    \"burst_samples\": 40, \"notify_on_cap\": true, \"statusline_template\": \"…\",
+    \"statusline_colors\": true, \"statusline_ascii\": false,
+    \"check_updates\": true, \"dismissed_update\": null }
+
+Reads opencode's own store; no usage API exists for OpenCode Go/Zen.";
+
+pub fn usage_text(binary: Binary) -> &'static str {
+    match binary {
+        Binary::Cmduse => CMDUSE_HELP,
+        Binary::Ocuse => OCUSE_HELP,
+    }
 }

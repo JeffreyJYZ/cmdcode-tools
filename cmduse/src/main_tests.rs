@@ -1,6 +1,20 @@
 use crate::{clip_to_width, redraw_frame};
 
 #[test]
+fn local_since_is_epoch_millis_for_both_branches() {
+    // `--since` must come back in the unit the record timestamps parse to (ms,
+    // pinned by core's `parseIso` vectors) and `--days` must convert to it too:
+    // an old seconds bound made the days filter a silent no-op (ms >= seconds).
+    assert_eq!(
+        crate::local_since(Some("2026-09-27T12:23:00.000Z"), None),
+        Some(1_790_511_780_000.0)
+    );
+    let day_ago = crate::local_since(None, Some(1)).expect("days bound");
+    assert!(day_ago > 1.0e12, "must be ms, not seconds: {day_ago}");
+    assert!(crate::local_since(None, None).is_none());
+}
+
+#[test]
 fn redraw_grow_rewrites_from_old_top() {
     let mut buf: Vec<u8> = Vec::new();
     // prev = 5 (error frame), new = 14 (full frame)

@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+use crate::cli::Binary;
+
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct Config {
@@ -17,6 +19,7 @@ pub struct Config {
     pub dismissed_update: Option<String>,
 }
 
+/// cmduse's defaults — unchanged; `Config::default()` is kept for that binary.
 impl Default for Config {
     fn default() -> Self {
         Config {
@@ -35,25 +38,50 @@ impl Default for Config {
     }
 }
 
-pub fn config_path() -> PathBuf {
-    std::env::var("XDG_CONFIG_HOME")
-        .map(|d| PathBuf::from(d).join("cmd-usage/config.json"))
-        .unwrap_or_else(|_| crate::paths::home().join(".config/cmd-usage/config.json"))
+/// ocuse's statusline default: its `Report` has spend/window totals, not
+/// cmduse's `{plan} {credits}/{cap}` credit pool.
+const OCUSE_STATUSLINE: &str = "{period} {month} \u{b7} 5h {five_hour} \u{b7} wk {weekly}";
+
+/// The defaults for a given binary. Identical to cmduse's except the refresh
+/// interval (ocuse's live frame has always redrawn every 10s) and the statusline
+/// template, which follows what that binary's report actually carries.
+pub fn default_for(binary: Binary) -> Config {
+    match binary {
+        Binary::Cmduse => Config::default(),
+        Binary::Ocuse => Config {
+            interval_secs: 10,
+            statusline_template: OCUSE_STATUSLINE.into(),
+            ..Config::default()
+        },
+    }
 }
 
-pub fn load() -> Config {
-    let path = config_path();
+/// Config file for a binary: `~/.config/<bin>/config.json`, honouring
+/// `XDG_CONFIG_HOME` exactly as before. `cmduse` keeps `cmd-usage` (its crate
+/// name, not its binary name); `ocuse` uses its own directory.
+pub fn config_path(binary: Binary) -> PathBuf {
+    let rel = match binary {
+        Binary::Cmduse => "cmd-usage/config.json",
+        Binary::Ocuse => "ocuse/config.json",
+    };
+    std::env::var("XDG_CONFIG_HOME")
+        .map(|d| PathBuf::from(d).join(rel))
+        .unwrap_or_else(|_| crate::paths::home().join(".config").join(rel))
+}
+
+pub fn load(binary: Binary) -> Config {
+    let path = config_path(binary);
     match std::fs::read_to_string(&path) {
         Ok(s) => serde_json::from_str(&s).unwrap_or_else(|e| {
             eprintln!("warn: bad config {}: {e}; using defaults", path.display());
-            Config::default()
+            default_for(binary)
         }),
-        Err(_) => Config::default(),
+        Err(_) => default_for(binary),
     }
 }
 
 /// Persist any subset of settings; missing keys keep current values.
-pub fn set(cs: &crate::cli::ConfigSet) -> Result<(), String> {
+pub fn set(binary: Binary, cs: &crate::cli::ConfigSet) -> Result<(), String> {
     if [
         cs.interval.is_some(),
         cs.width.is_some(),
@@ -87,7 +115,7 @@ pub fn set(cs: &crate::cli::ConfigSet) -> Result<(), String> {
         }
     }
 
-    let cur = load();
+    let cur = load(binary);
     let cfg = Config {
         interval_secs: cs.interval.unwrap_or(cur.interval_secs),
         bar_width: cs.width.unwrap_or(cur.bar_width),
@@ -100,8 +128,8 @@ pub fn set(cs: &crate::cli::ConfigSet) -> Result<(), String> {
         check_updates: cs.update_check.unwrap_or(cur.check_updates),
         dismissed_update: cs.dismissed_update.clone().or(cur.dismissed_update),
     };
-    save(&cfg)?;
-    println!("saved {}", config_path().display());
+    save(binary, &cfg)?;
+    println!("saved {}", config_path(binary).display());
     println!("  interval_secs       = {}", cfg.interval_secs);
     println!("  bar_width           = {}", cfg.bar_width);
     println!("  burst_enabled       = {}", cfg.burst_enabled);
@@ -119,9 +147,9 @@ pub fn set(cs: &crate::cli::ConfigSet) -> Result<(), String> {
 }
 
 /// Persist `cfg` to disk (pretty JSON + trailing newline).
-fn save(cfg: &Config) -> Result<(), String> {
+fn save(binary: Binary, cfg: &Config) -> Result<(), String> {
     let json = serde_json::to_string_pretty(cfg).map_err(|e| e.to_string())?;
-    let path = config_path();
+    let path = config_path(binary);
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     }
@@ -129,9 +157,9 @@ fn save(cfg: &Config) -> Result<(), String> {
     Ok(())
 }
 
-/// Record `version` as dismissed (used by `cmduse --dismiss-update`).
-pub fn set_dismissed(version: &str) -> Result<(), String> {
-    let mut cfg = load();
+/// Record `version` as dismissed (used by `--dismiss-update`).
+pub fn set_dismissed(binary: Binary, version: &str) -> Result<(), String> {
+    let mut cfg = load(binary);
     cfg.dismissed_update = Some(version.to_string());
-    save(&cfg)
+    save(binary, &cfg)
 }

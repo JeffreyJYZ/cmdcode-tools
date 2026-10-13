@@ -1,5 +1,5 @@
-use super::config::{set, Config};
-use crate::cli::ConfigSet;
+use super::config::{config_path, default_for, set, Config};
+use crate::cli::{Binary, ConfigSet};
 
 fn cs(interval: Option<u64>, width: Option<usize>) -> ConfigSet {
     ConfigSet {
@@ -27,6 +27,39 @@ fn config_defaults_when_missing() {
     assert_eq!(d.burst_samples, 40);
     assert!(d.check_updates, "update check default ON");
     assert!(d.dismissed_update.is_none());
+}
+
+#[test]
+fn ocuse_default_differs_only_in_interval_and_statusline() {
+    let c = default_for(Binary::Cmduse);
+    let o = default_for(Binary::Ocuse);
+    assert_ne!(c.statusline_template, o.statusline_template);
+    // ocuse's live frame has always redrawn every 10s (see OCUSE_HELP)
+    assert_eq!(c.interval_secs, 5);
+    assert_eq!(o.interval_secs, 10);
+    // every other field matches cmduse's defaults
+    let c2 = Config {
+        statusline_template: o.statusline_template.clone(),
+        ..c
+    };
+    assert_eq!(c2.bar_width, o.bar_width);
+    assert_eq!(c2.burst_enabled, o.burst_enabled);
+    assert_eq!(c2.burst_samples, o.burst_samples);
+    assert_eq!(c2.notify_on_cap, o.notify_on_cap);
+    assert_eq!(c2.statusline_colors, o.statusline_colors);
+    assert_eq!(c2.statusline_ascii, o.statusline_ascii);
+    assert_eq!(c2.check_updates, o.check_updates);
+    assert_eq!(c2.dismissed_update, o.dismissed_update);
+}
+
+#[test]
+fn config_paths_differ_per_binary() {
+    // suffix assertions hold whether or not XDG_CONFIG_HOME is set
+    let c = config_path(Binary::Cmduse);
+    let o = config_path(Binary::Ocuse);
+    assert_ne!(c, o);
+    assert!(c.ends_with("cmd-usage/config.json"));
+    assert!(o.ends_with("ocuse/config.json"));
 }
 
 #[test]
@@ -62,62 +95,82 @@ fn config_set_validates_and_persists() {
     std::env::set_var("XDG_CONFIG_HOME", &dir);
 
     // valid set
-    set(&cs(Some(15), Some(30))).unwrap();
+    set(Binary::Cmduse, &cs(Some(15), Some(30))).unwrap();
     let c: Config = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
     assert_eq!(c.interval_secs, 15);
     assert_eq!(c.bar_width, 30);
     assert!(c.burst_enabled);
 
     // partial set keeps other key
-    set(&cs(Some(60), None)).unwrap();
+    set(Binary::Cmduse, &cs(Some(60), None)).unwrap();
     let c: Config = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
     assert_eq!(c.interval_secs, 60);
     assert_eq!(c.bar_width, 30);
 
     // burst toggle off keeps samples; notify toggle off persists
-    set(&ConfigSet {
-        burst_on: Some(false),
-        notify: Some(false),
-        ..Default::default()
-    })
+    set(
+        Binary::Cmduse,
+        &ConfigSet {
+            burst_on: Some(false),
+            notify: Some(false),
+            ..Default::default()
+        },
+    )
     .unwrap();
     let c: Config = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
     assert!(!c.burst_enabled);
     assert!(!c.notify_on_cap);
 
     // update toggle + dismissed version persist
-    set(&ConfigSet {
-        update_check: Some(false),
-        dismissed_update: Some("0.6.8".into()),
-        ..Default::default()
-    })
+    set(
+        Binary::Cmduse,
+        &ConfigSet {
+            update_check: Some(false),
+            dismissed_update: Some("0.6.8".into()),
+            ..Default::default()
+        },
+    )
     .unwrap();
     let c: Config = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
     assert!(!c.check_updates);
     assert_eq!(c.dismissed_update.as_deref(), Some("0.6.8"));
 
     // set_dismissed keeps unrelated settings
-    super::config::set_dismissed("9.9.9").unwrap();
+    super::config::set_dismissed(Binary::Cmduse, "9.9.9").unwrap();
     let c: Config = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
     assert_eq!(c.dismissed_update.as_deref(), Some("9.9.9"));
     assert!(!c.check_updates);
 
+    // the ocuse binary writes its own file, leaving cmduse's untouched
+    let opath = dir.join("ocuse/config.json");
+    set(Binary::Ocuse, &cs(Some(20), None)).unwrap();
+    let oc: Config = serde_json::from_str(&std::fs::read_to_string(&opath).unwrap()).unwrap();
+    assert_eq!(oc.interval_secs, 20);
+    let c: Config = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    assert_eq!(c.interval_secs, 60, "cmduse config untouched by ocuse set");
+
     // validation errors
-    assert!(set(&cs(Some(0), None)).is_err());
-    assert!(set(&cs(Some(86_401), None)).is_err());
-    assert!(set(&cs(None, Some(4))).is_err()); // < 5
-    assert!(set(&cs(None, Some(201))).is_err()); // > 200
-    assert!(set(&ConfigSet {
-        bursts: Some(3),
-        ..Default::default()
-    })
+    assert!(set(Binary::Cmduse, &cs(Some(0), None)).is_err());
+    assert!(set(Binary::Cmduse, &cs(Some(86_401), None)).is_err());
+    assert!(set(Binary::Cmduse, &cs(None, Some(4))).is_err()); // < 5
+    assert!(set(Binary::Cmduse, &cs(None, Some(201))).is_err()); // > 200
+    assert!(set(
+        Binary::Cmduse,
+        &ConfigSet {
+            bursts: Some(3),
+            ..Default::default()
+        }
+    )
     .is_err()); // < 5
-    assert!(set(&ConfigSet {
-        bursts: Some(241),
-        ..Default::default()
-    })
+    assert!(set(
+        Binary::Cmduse,
+        &ConfigSet {
+            bursts: Some(241),
+            ..Default::default()
+        }
+    )
     .is_err()); // > 240
-    assert!(set(&ConfigSet::default()).is_err()); // nothing to set
+    assert!(set(Binary::Cmduse, &ConfigSet::default()).is_err()); // nothing to set
 
     // file unchanged after failed set
     let c: Config = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();

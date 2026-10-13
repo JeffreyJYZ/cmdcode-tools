@@ -95,13 +95,14 @@ pub fn load_local(tz: i64) -> LocalData {
     load_local_since(tz, None)
 }
 
-/// Local usage restricted to records at or after `since_secs` (epoch seconds).
-/// Local JSONL is all-time otherwise, so a caller wanting one billing period
-/// must pass a bound.
-pub fn load_local_since(tz: i64, since_secs: Option<f64>) -> LocalData {
+/// Local usage restricted to records at or after `since_ms` (epoch
+/// MILLISECONDS — the unit `parse_iso_utc` returns and `UsageRecord::timestamp`
+/// parses to). Local JSONL is all-time otherwise, so a caller wanting one
+/// billing period must pass a bound.
+pub fn load_local_since(tz: i64, since_ms: Option<f64>) -> LocalData {
     let files = session_files();
     let records = usage_records(&files);
-    let kept: Vec<UsageRecord> = match since_secs {
+    let kept: Vec<UsageRecord> = match since_ms {
         None => records,
         Some(since) => records
             .into_iter()

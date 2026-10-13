@@ -1,7 +1,7 @@
 // MCP stdio server for ocuse — the same JSON-RPC profile cmduse speaks
 // (initialize / ping / tools/list / tools/call), so a host that already drives
-// cmduse can drive this. Tools mirror the CLI: usage, plans, daily, hourly,
-// session, model.
+// cmduse can drive this. Tools mirror the CLI: usage, plans, models, daily,
+// hourly, session, model — the same seven cmduse exposes.
 //
 // Read-only, like everything else here: it reads opencode.db and the generated
 // catalogue, never the network.
@@ -108,34 +108,52 @@ fn tool_call(
                 db_path,
                 15,
                 colour,
+                render::DEFAULT_BAR_WIDTH,
             )
         }),
         "plans" => Ok(render::plans_text(colour)),
+        "models" => {
+            // The catalogue is static, but a per-call plan override must be real.
+            let catalog = zen::catalog();
+            if catalog.plan(&plan_id).is_none() {
+                return Err((
+                    -32602,
+                    format!("plan must be one of: {}", catalog.plan_ids().join(", ")),
+                ));
+            }
+            let gated = args.get("gated").and_then(|v| v.as_bool()).unwrap_or(false);
+            Ok(render::models_text(&plan_id, gated, colour))
+        }
         "daily" => rows().map(|rows| {
             render::bucket_text(
                 &rows,
                 window::now_ms(),
-                number("days", days),
+                number("days", days) * 86_400_000,
                 86_400_000,
-                "day",
                 tz_secs,
                 colour,
+                crate::report_render::Fmt::Table,
             )
         }),
         "hourly" => rows().map(|rows| {
             render::bucket_text(
                 &rows,
                 window::now_ms(),
-                number("hours", 24),
+                number("hours", 24) * 3_600_000,
                 3_600_000,
-                "hour",
                 tz_secs,
                 colour,
+                crate::report_render::Fmt::Table,
             )
         }),
-        "session" => {
-            rows().map(|rows| render::session_text(&rows, number("limit", 20) as usize, colour))
-        }
+        "session" => rows().map(|rows| {
+            render::session_text(
+                &rows,
+                number("limit", 20) as usize,
+                colour,
+                crate::report_render::Fmt::Table,
+            )
+        }),
         "model" => {
             let wanted = args
                 .get("id")
@@ -173,6 +191,7 @@ fn tools() -> Value {
     json!([
         { "name": "usage", "description": "OpenCode Go/Zen usage: period totals, rolling windows, per-model spend against each model's monthly limit. Defaults to the Go plan.", "inputSchema": { "type": "object", "properties": { "plan": { "type": "string", "description": "Go plan: go (default) or go-plus" } } } },
         { "name": "plans", "description": "The Go/Zen catalogue from the docs: both Go plans' per-model monthly limits and the shared $/1M rates.", "inputSchema": { "type": "object", "properties": {} } },
+        { "name": "models", "description": "The Go catalogue for a plan: every model's $/1M in/out/cache-read rates and its monthly limit, marked granted or not.", "inputSchema": { "type": "object", "properties": { "plan": { "type": "string", "description": "Go plan: go (default) or go-plus" }, "gated": { "type": "boolean", "description": "Only models the plan grants" } } } },
         { "name": "daily", "description": "Spend, requests and tokens per day.", "inputSchema": { "type": "object", "properties": { "days": { "type": "integer", "description": "days of history (default 120)" } } } },
         { "name": "hourly", "description": "Spend, requests and tokens per hour.", "inputSchema": { "type": "object", "properties": { "hours": { "type": "integer", "description": "hours of history (default 24)" } } } },
         { "name": "session", "description": "Spend per OpenCode session, newest first.", "inputSchema": { "type": "object", "properties": { "limit": { "type": "integer", "description": "sessions to list (default 20)" } } } },
@@ -230,17 +249,41 @@ mod tests {
     #[test]
     fn tools_list_covers_every_command() {
         let r = call("tools/list", json!({}), 5);
-        let names: Vec<&str> = r["result"]["tools"]
+        // Sorted set: fails if either MCP server's tool list drifts (the cmduse
+        // side asserts the same seven).
+        let mut names: Vec<&str> = r["result"]["tools"]
             .as_array()
             .unwrap()
             .iter()
             .map(|t| t["name"].as_str().unwrap())
             .collect();
-        for expected in ["usage", "plans", "daily", "hourly", "session", "model"] {
-            assert!(
-                names.contains(&expected),
-                "{expected} missing from {names:?}"
-            );
-        }
+        names.sort_unstable();
+        assert_eq!(
+            names,
+            ["daily", "hourly", "model", "models", "plans", "session", "usage"]
+        );
+    }
+
+    #[test]
+    fn models_tool_is_the_catalogue_and_needs_no_store() {
+        let r = call(
+            "tools/call",
+            json!({ "name": "models", "arguments": {} }),
+            6,
+        );
+        assert!(r.get("error").is_none(), "{r}");
+        let text = r["result"]["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("glm-5.3-flash"), "{text}");
+        assert!(text.contains("GRANTED"), "{text}");
+    }
+
+    #[test]
+    fn models_tool_rejects_an_unknown_plan() {
+        let r = call(
+            "tools/call",
+            json!({ "name": "models", "arguments": { "plan": "nope" } }),
+            7,
+        );
+        assert_eq!(r["error"]["code"], -32602, "{r}");
     }
 }

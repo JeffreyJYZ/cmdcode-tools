@@ -9,8 +9,9 @@ pub enum Fmt {
     Csv,
 }
 
-/// RFC 4180 field: quote when it holds a comma, quote, or newline.
-fn csv_field(s: &str) -> String {
+/// RFC 4180 field: quote when it holds a comma, quote, or newline. Shared with
+/// ocuse's reports, so neither side hand-rolls quoting.
+pub fn csv_field(s: &str) -> String {
     if s.contains([',', '"', '\n', '\r']) {
         format!("\"{}\"", s.replace('"', "\"\""))
     } else {
@@ -84,6 +85,15 @@ pub struct StatusData<'a> {
 ///   | or newline    segment separators
 /// Unknown placeholders are dropped. Plain text passes through.
 pub fn render_statusline(tpl: &str, d: &StatusData) -> String {
+    render_template(tpl, |key| placeholder(key, d))
+}
+
+/// Neutral `{key}` template engine, shared by cmduse's statusline and ocuse's:
+/// literal text passes through, each `{key}` is replaced by `resolve(key)`
+/// (lower-cased), a `{` with no closing brace is emitted verbatim, and `|` /
+/// newlines are literal separators. An unknown key resolves to whatever
+/// `resolve` returns (the statusline drops it by returning an empty string).
+pub fn render_template(tpl: &str, resolve: impl Fn(&str) -> String) -> String {
     let mut out = String::new();
     let mut rest = tpl;
     while let Some(start) = rest.find('{') {
@@ -92,7 +102,7 @@ pub fn render_statusline(tpl: &str, d: &StatusData) -> String {
         match after.find('}') {
             Some(end) => {
                 let key = after[..end].to_lowercase();
-                out.push_str(&placeholder(&key, d));
+                out.push_str(&resolve(&key));
                 rest = &after[end + 1..];
             }
             None => {

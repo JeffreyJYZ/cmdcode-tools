@@ -1,7 +1,8 @@
 mod api;
-mod cli;
+pub mod cli;
 mod config;
 mod mcp;
+mod notify;
 // OpenCode Go/Zen half (the `ocuse` bin): local usage from opencode.db plus the
 // docs catalogue in core/zen.json. Independent of the CommandCode code paths.
 pub mod ocuse;
@@ -32,14 +33,14 @@ use std::io::{IsTerminal, Write};
 use crate::render::{BOLD, DIM, RESET};
 
 pub fn run() {
-    let args = cli::parse_args();
+    let args = cli::parse_args(cli::Binary::Cmduse);
     if args.help {
-        cli::usage();
+        cli::usage(cli::Binary::Cmduse);
         return;
     }
 
     if let Some(cs) = args.config_set {
-        if let Err(e) = config::set(&cs) {
+        if let Err(e) = config::set(cli::Binary::Cmduse, &cs) {
             eprintln!("error: {e}");
             std::process::exit(1);
         }
@@ -48,7 +49,7 @@ pub fn run() {
 
     if args.dismiss_update {
         match update_check::latest_newer() {
-            Ok(Some(v)) => match config::set_dismissed(&v) {
+            Ok(Some(v)) => match config::set_dismissed(cli::Binary::Cmduse, &v) {
                 Ok(()) => println!("dismissed update notice for {v}"),
                 Err(e) => {
                     eprintln!("error: {e}");
@@ -96,19 +97,16 @@ pub fn run() {
             return;
         }
         Some(cli::SubCmd::Model) => {
-            let since = since_secs_from(&args);
-            let d = reports::load_local_since(tz, since);
             print!(
                 "{}",
-                report_render::model_table(&d.by_model, fmt, colors, args.since.as_deref())
+                model_output(args.since.as_deref(), args.last, tz, fmt, colors)
             );
             return;
         }
         Some(cli::SubCmd::Session) => {
-            let d = reports::load_local(tz);
             print!(
                 "{}",
-                report_render::project_table(&d.by_project, fmt, colors)
+                session_output(args.since.as_deref(), args.last, tz, fmt, colors)
             );
             return;
         }
@@ -129,7 +127,7 @@ pub fn run() {
         None => {}
     }
 
-    let cfg = config::load();
+    let cfg = config::load(cli::Binary::Cmduse);
     let interval = args.interval.unwrap_or(cfg.interval_secs).clamp(1, 86_400);
     let bar_width = args.bar_width.unwrap_or(cfg.bar_width).clamp(5, 200);
     // spend-burst sparkline is opt-in: -b/--bursts on the CLI turns it on for
@@ -235,10 +233,16 @@ pub fn run() {
                 .map(|w| w.exceeded)
                 .unwrap_or(false);
             if ex5 && !was_exceeded_5h {
-                notify_cap("5-hour");
+                notify::cap(
+                    "cmduse: limit exceeded",
+                    "Command Code 5-hour window is over its cap",
+                );
             }
             if exwk && !was_exceeded_wk {
-                notify_cap("weekly");
+                notify::cap(
+                    "cmduse: limit exceeded",
+                    "Command Code weekly window is over its cap",
+                );
             }
             was_exceeded_5h = ex5;
             was_exceeded_wk = exwk;
@@ -281,33 +285,6 @@ pub fn run() {
             out.flush().ok();
         }
     }
-}
-
-/// Fire a desktop notification that a spend window hit its cap. Best-effort:
-/// runs on a detached thread and silently no-ops if the OS tool is missing.
-/// macOS uses osascript, Linux notify-send.
-fn notify_cap(window: &str) {
-    let window = window.to_string();
-    std::thread::spawn(move || {
-        let title = "cmduse: limit exceeded";
-        let body = format!("Command Code {window} window is over its cap");
-        if cfg!(target_os = "macos") {
-            let script = format!(
-                "display notification \"{}\" with title \"{}\"",
-                body.replace('\\', "\\\\").replace('"', "\\\""),
-                title
-            );
-            let _ = std::process::Command::new("osascript")
-                .arg("-e")
-                .arg(script)
-                .status();
-        } else if cfg!(target_os = "linux") {
-            let _ = std::process::Command::new("notify-send")
-                .arg(title)
-                .arg(&body)
-                .status();
-        }
-    });
 }
 
 /// Minimal one-line dashboard for windows too small for the full frame:
@@ -469,15 +446,6 @@ pub fn redraw_frame(
         write!(out, "\x1b[{}F", prev_lines - n).ok();
     }
     n
-}
-
-/// `--since` (ISO, wins) or `--days N` as epoch seconds, for local reports.
-fn since_secs_from(args: &cli::Args) -> Option<f64> {
-    if let Some(iso) = &args.since {
-        return cmduse_core::dates::parse_iso_utc(iso);
-    }
-    let days = args.last?;
-    Some(cmduse_core::dates::now_secs() as f64 - (days as f64) * 86_400.0)
 }
 
 fn models_cmd(args: &cli::Args) {
@@ -716,6 +684,45 @@ pub(crate) fn hourly_output(
     Ok(report_render::hourly_table(&rows, fmt, &subtitle, false))
 }
 
+/// The local-report window bound, in epoch MILLISECONDS — the unit both
+/// `parse_iso_utc` and `UsageRecord::timestamp` use. ISO `since` wins; else
+/// `days` back from now. (The `days` branch used to emit SECONDS here while the
+/// records parse to ms, so `--days N` compared ms against seconds and silently
+/// kept every record — the filter was a no-op.)
+fn local_since(since_iso: Option<&str>, days: Option<usize>) -> Option<f64> {
+    match since_iso {
+        Some(iso) => cmduse_core::dates::parse_iso_utc(iso),
+        None => {
+            days.map(|d| (cmduse_core::dates::now_secs() as f64 - (d as f64) * 86_400.0) * 1000.0)
+        }
+    }
+}
+
+/// Local usage by model (offline CLI logs). `since_iso` is echoed into `--json`
+/// output as-is.
+pub(crate) fn model_output(
+    since_iso: Option<&str>,
+    days: Option<usize>,
+    tz: i64,
+    fmt: report_render::Fmt,
+    colors: bool,
+) -> String {
+    let d = reports::load_local_since(tz, local_since(since_iso, days));
+    report_render::model_table(&d.by_model, fmt, colors, since_iso)
+}
+
+/// Local usage by project/session (offline CLI logs), same window as `model`.
+pub(crate) fn session_output(
+    since_iso: Option<&str>,
+    days: Option<usize>,
+    tz: i64,
+    fmt: report_render::Fmt,
+    colors: bool,
+) -> String {
+    let d = reports::load_local_since(tz, local_since(since_iso, days));
+    report_render::project_table(&d.by_project, fmt, colors)
+}
+
 /// Report output format. `--json`/`--csv` are mutually exclusive (parse-guarded).
 fn output_fmt(args: &cli::Args) -> report_render::Fmt {
     if args.json {
@@ -728,7 +735,7 @@ fn output_fmt(args: &cli::Args) -> report_render::Fmt {
 }
 
 fn statusline_cmd(args: &cli::Args) {
-    let cfg = config::load();
+    let cfg = config::load(cli::Binary::Cmduse);
     let s = snapshot::snapshot(false);
     let plan = render::plan_name(&s.sub.plan_id);
     let cap = render::plan_monthly_cap(&s.sub.plan_id).unwrap_or(0.0);

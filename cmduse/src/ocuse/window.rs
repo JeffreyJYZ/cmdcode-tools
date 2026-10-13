@@ -53,6 +53,25 @@ impl ModelUsage {
     }
 }
 
+/// Which of this model's windows is over its share of the monthly limit, if
+/// any — the verdict the sidebar's flag, the watch frame and the cap
+/// notification all read from. Go meters per model AND per window (5-hour =
+/// 20%, weekly = 50%, monthly = 100%), so any one of them counts; the shortest
+/// window wins, being the most actionable. `None` for a free/unlimited model.
+pub fn over_window(model: &ModelUsage) -> Option<&'static str> {
+    let limit = model.limit.filter(|l| *l > 0.0)?;
+    let shares = &crate::ocuse::zen::catalog().go.window_share;
+    if model.five_hour.cost > limit * shares.five_hour {
+        Some("5-hour")
+    } else if model.weekly.cost > limit * shares.weekly {
+        Some("weekly")
+    } else if model.month.cost > limit * shares.monthly {
+        Some("monthly")
+    } else {
+        None
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Report {
     /// What the caller called this period ("calendar month", "all", "30d") for display.

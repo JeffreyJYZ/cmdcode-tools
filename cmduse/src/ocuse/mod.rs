@@ -13,6 +13,6 @@ pub mod window;
 pub mod zen;
 
 pub use cli::run;
-pub use render::{render_json, render_text, status_line};
+pub use render::{render_json, render_text, statusline_template};
 pub use window::{build, Report, Totals, LOOKBACK_SECS};
 pub use zen::catalog;

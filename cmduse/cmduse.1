@@ -146,9 +146,9 @@ weeklyCap (all dollars as JSON numbers; plan is the human name such as
 .TP
 .B mcp
 Run an MCP (Model Context Protocol) stdio server: newline\-delimited
-JSON\-RPC on stdin/stdout, diagnostics on stderr.  Exposes five tools \(
-usage, plans, models, daily, hourly \) whose output is the same text the
-corresponding subcommands print.  Tool execution errors are returned as
+JSON\-RPC on stdin/stdout, diagnostics on stderr.  Exposes seven tools \(
+usage, plans, models, daily, hourly, session, model \) whose output is the same
+text the corresponding subcommands print.  Tool execution errors are returned as
 results with isError true, not JSON\-RPC errors.  Intended for MCP hosts
 such as Zed's context_servers ("command": "cmduse", "args": ["mcp"]).
 .TP
@@ -592,20 +592,25 @@ the account is on, so the plan is explicit (\fB\-\-plan\fR) and defaults to
 [\fB\-\-json\fR] [\fIOPTIONS\fR]
 .br
 .B ocuse model
-[\fIid\fR] [\fIOPTIONS\fR]
+[\fIid\fR] [\fB\-\-since\fR \fIISO\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
 .br
 .B ocuse daily
-[\fIOPTIONS\fR]
+[\fB\-\-days\fR \fIn\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
 .br
 .B ocuse hourly
-[\fIOPTIONS\fR]
+[\fB\-\-hours\fR \fIn\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
 .br
 .B ocuse session
+[\fB\-\-since\fR \fIISO\fR] [\fB\-\-json\fR | \fB\-\-csv\fR]
+.br
+.B ocuse models
+[\fB\-\-gated\fR] [\fB\-\-json\fR]
 .br
 .B ocuse plans
+[\fB\-\-json\fR]
 .br
 .B ocuse statusline
-[\fIOPTIONS\fR]
+[\fB\-\-json\fR] [\fIOPTIONS\fR]
 .br
 .B ocuse mcp
 .br
@@ -635,24 +640,54 @@ and exits rather than redrawing.
 Local usage grouped by model.  With no \fIid\fR, the full model table; with an
 \fIid\fR, that model's limit, its month/5\-hour/weekly spend, and its share of
 period spend.  An unused model prints that it has no usage in the period.
+\fB\-\-since\fR \fIISO\fR pins the window start (an exact instant, outranking
+\fB\-\-window\fR and \fB\-\-period\-start\fR).  \fB\-\-json\fR emits one object
+\fI{"scope","source","sinceMs","models"}\fR whose \fImodels\fR map each id to
+requests, tokensIn, tokensOut, cacheRead, costUsd and its limit; \fB\-\-csv\fR
+emits \fImodel,requests,tokens_in,tokens_out,cache_read,cost_usd\fR.
 .TP
 .B daily
 Spend per day (oldest first) over the read window (\fB\-\-days\fR), bucketed in
-the display timezone (\fB\-\-tz\fR).
+the display timezone (\fB\-\-tz\fR).  \fB\-\-json\fR emits
+\fI{"scope","source","total","days"}\fR; \fB\-\-csv\fR emits
+\fIday,requests,tokens_in,tokens_out,cache_read,cost_usd\fR with a final
+\fItotal\fR row.
 .TP
 .B hourly
-Spend per hour, same window and bucketing as \fBdaily\fR.
+Spend per hour, same bucketing as \fBdaily\fR but over the last \fB\-\-hours\fR
+N hours (default 24, max 168).  \fB\-\-json\fR emits
+\fI{"scope","source","total","hours"}\fR; \fB\-\-csv\fR emits
+\fIhour,requests,tokens_in,tokens_out,cache_read,cost_usd\fR with a final
+\fItotal\fR row.
 .TP
 .B session
-Spend per session, newest first (top 20).
+Spend per session, newest first (top 20).  \fB\-\-since\fR \fIISO\fR pins the
+window start.  \fB\-\-json\fR emits \fI{"scope","source","sessions"}\fR (each
+entry adding the last\-used instant and the distinct\-model count);
+\fB\-\-csv\fR emits
+\fIsession,requests,tokens_in,tokens_out,cache_read,cost_usd\fR.
+.TP
+.B models
+The Go catalogue for the selected plan: each model's name, id, \fB$\fR/1M
+in/out/cache\-read rates, the plan's monthly limit, and a \fIGRANTED\fR column.
+Without \fB\-\-gated\fR every catalogued model is listed and marked;
+\fB\-\-gated\fR keeps only the models the plan grants (present in the plan's
+allowance map).  \fB\-\-json\fR prints one JSON object per line with keys id,
+name, input, output, cacheRead, limit (null when not granted) and granted.
+Needs no database; works offline.
 .TP
 .B plans
 Print the Go/Zen catalogue: both Go plans (label, price, and each model's
 monthly limit) beside the shared token rates, then a line for the Zen
-pay\-as\-you\-go models.  Needs no database; works offline.
+pay\-as\-you\-go models.  \fB\-\-json\fR emits one object with
+\fIextractedAt\fR, \fIwindows\fR (the 5\-hour/weekly/monthly shares),
+\fIplans\fR (id, label, priceUsd, allowanceByModel), and the Go and Zen rate
+tables.  Needs no database; works offline.
 .TP
 .B statusline
 Print one compact line: month spend, 5\-hour spend, and the top model.
+\fB\-\-json\fR prints one object: plan, period, monthSpent, monthCap,
+fiveHourSpent, fiveHourCap, weeklySpent, weeklyCap, model.
 .TP
 .B mcp
 Run an MCP stdio server; see \fBocuse mcp server\fR below.
@@ -677,8 +712,14 @@ records no subscription, so the plan must be given.  An unknown id exits 2 and
 lists the known ids.
 .TP
 .B \-\-days \fIn\fR
-Days of history to read (default 120).  Bounds the \fBdaily\fR/\fBhourly\fR
-window and the range the MCP tools scan.
+Days of history to read (default 120).  Bounds the
+\fBdaily\fR window and the range the MCP tools scan.
+.TP
+.B \-\-hours \fIn\fR
+Hours of history for \fBhourly\fR (default 24, max 168).
+.TP
+.B \-\-gated
+models: keep only the models the selected plan grants.
 .TP
 .B \-\-window \fIw\fR
 Reporting window for the dashboard and statusline: \fBmonth\fR (default, the
@@ -691,8 +732,24 @@ Pin the period start (midnight UTC) instead of deriving it from
 .B \-\-infer\-anniversary
 Infer the period start from the first Go request ever seen, instead of the
 calendar month.  Opt\-in, because sparse history infers badly; ignored when
-\fB\-\-period-start\fR is given.  The JSON's \fIperiodInferred\fR reports which
+\fB\-\-period-start\fR or \fB\-\-since\fR is given.  The JSON's
+\fIperiodInferred\fR reports which
 was used.
+.TP
+.B \-\-since \fIISO\fR
+Window start for \fBmodel\fR/\fBsession\fR as an exact ISO\-8601 instant
+(\fI2026\-08\-27T00:00:00Z\fR).  Outranks \fB\-\-window\fR and
+\fB\-\-period\-start\fR; an unparseable value exits 2.
+.TP
+.B \-\-json
+Machine\-readable output for every subcommand that has one: the dashboard
+(\fB\-1\fR), \fBdaily\fR, \fBhourly\fR, \fBmodel\fR, \fBsession\fR,
+\fBmodels\fR, \fBplans\fR, \fBstatusline\fR.  Never coloured.
+.TP
+.B \-\-csv
+CSV output for \fBdaily\fR, \fBhourly\fR, \fBmodel\fR and \fBsession\fR
+(the columns carry the store's fields; there is no cache\-write column).
+Never coloured.  Supplying both \fB\-\-json\fR and \fB\-\-csv\fR exits 2.
 .TP
 .B \-\-rows \fIn\fR
 Table rows to print (default 15).
@@ -717,11 +774,11 @@ regenerated from OpenCode's own docs sources with
 .BR "bun scripts/extract\-zen.ts" .
 .SS ocuse mcp server
 \fBocuse mcp\fR runs an MCP stdio server (newline\-delimited JSON\-RPC on
-stdin/stdout, diagnostics on stderr) exposing six tools \( \fIusage\fR,
-\fIplans\fR, \fIdaily\fR, \fIhourly\fR, \fIsession\fR, \fImodel\fR \) whose
-output matches the corresponding subcommands.  Tool execution errors are
-returned as results with \fIisError\fR true, never as JSON\-RPC errors.  stdout
-carries protocol traffic only.
+stdin/stdout, diagnostics on stderr) exposing seven tools \( \fIusage\fR,
+\fIplans\fR, \fImodels\fR, \fIdaily\fR, \fIhourly\fR, \fIsession\fR,
+\fImodel\fR \) whose output matches the corresponding subcommands.  Tool
+execution errors are returned as results with \fIisError\fR true, never as
+JSON\-RPC errors.  stdout carries protocol traffic only.
 .SS ocuse files
 .TP
 .I ~/.local/share/opencode/opencode.db

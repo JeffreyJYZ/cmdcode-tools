@@ -65,7 +65,7 @@ cmduse models --gated        # ...only models the current plan allows
 cmduse models --gated --json # every model annotated with allowed + reason
 cmduse plans                 # plan comparison table (marks your plan)
 cmduse statusline            # compact one-liner for prompts/tmux
-cmduse mcp                   # MCP stdio server (usage/plans/models/daily/hourly tools)
+cmduse mcp                   # MCP stdio server (usage/plans/models/daily/hourly/session/model tools)
 cmduse daily --json          # JSON output (daily, hourly, model, session, models, statusline, plans, -1)
 cmduse daily --csv           # CSV output for daily/hourly/model/session
 ```
@@ -83,6 +83,8 @@ Color: SGR escapes are suppressed when stdout is not a terminal or when `NO_COLO
 | `models` | live model list, filtered to the current plan (same as `cmduse models --gated`) |
 | `daily` | account daily report; args `days`, `tz` (±HH:MM), `local` |
 | `hourly` | account hourly report; args `hours`, `tz`, `local` |
+| `session` | local usage by project/session; args `since` (ISO-8601), `days`, `tz` |
+| `model` | local usage by model; args `since` (ISO-8601), `days`, `tz` |
 
 Auth is the same as the CLI (`CMD_API_KEY`, then `~/.commandcode/auth.json`). Tool errors come back as `isError: true` results; stdout carries protocol traffic only. Zed config:
 
@@ -183,28 +185,34 @@ Logged-in [Command Code CLI](https://commandcode.ai) — reads your API key from
 
 ### ocuse — OpenCode Go/Zen (same crate, second binary)
 
-The same crate ships `ocuse`, which tracks **OpenCode Go** (the Go subscription) and **OpenCode Zen** (pay-as-you-go) with the same CLI shape:
+The same crate ships `ocuse`, which tracks **OpenCode Go** (the Go subscription) and **OpenCode Zen** (pay-as-you-go) at full command/flag parity with `cmduse` — same subcommands, same `--json`/`--csv`, same config keys, same update check and cap notification. The two share one front-end (`cli.rs` parses both binaries' argv, `config.rs` owns both config files) and `cmduse`'s render/watch/sparkline helpers; only the data source and the flags it forces differ (`--plan`/`--window`/`--period-start`/`--infer-anniversary`/`--db` are ocuse-only, `--local` is cmduse-only).
 
 ```sh
-ocuse                 # watch: live frame (colour, gauges, spend-burst sparkline)
-ocuse -1 --json       # one-shot, machine-readable
-ocuse daily|hourly|session
-ocuse model [id]
-ocuse plans           # the docs catalogue: both plans' limits and rates
-ocuse statusline
-ocuse mcp             # MCP stdio server (usage/plans/daily/hourly/session/model)
+ocuse                        # watch: live frame (colour, gauges, spend-burst sparkline)
+ocuse -1                     # one-shot dashboard
+ocuse -1 --json              # one-shot, machine-readable
+ocuse daily [--days N] [--json|--csv] [--tz ±HH:MM]
+ocuse hourly [--hours N] [--json|--csv] [--tz ±HH:MM]
+ocuse model [id] [--since ISO] [--json|--csv]
+ocuse session [--since ISO] [--json|--csv]
+ocuse models [--gated] [--json]   # the Go catalogue for the selected plan
+ocuse plans [--json]              # both plans' limits, rates and window shares
+ocuse statusline [--json]         # compact one-liner, or its numbers as JSON
+ocuse mcp                    # MCP stdio server (usage/plans/models/daily/hourly/session/model)
 ```
 
-Two upstream facts shape it: OpenCode publishes **no usage API** (the one route, `/zen/go/v1/usage`, is entitlement-gated; the console is the only surface), and Go's allowance is **per model** — each model has a monthly dollar limit with windows of 5h = 20%, weekly = 50%, monthly = 100%. Go comes in **two plans** — Go ($10/mo) and Go Plus ($40/mo) — that share the token prices but grant different per-model limits; nothing local records your plan, so `ocuse` selects it with `--plan go|go-plus` (default `go`). So `ocuse` reports your local usage from `opencode.db` (providers `opencode-go` and `opencode`, which record real `cost`) against the limits in `core/zen.json` (regenerated with `bun scripts/extract-zen.ts`).
+Two upstream facts shape it: OpenCode publishes **no usage API** (the one route, `/zen/go/v1/usage`, is entitlement-gated; the console is the only surface), and Go's allowance is **per model** — each model has a monthly dollar limit with windows of 5h = 20%, weekly = 50%, monthly = 100%. Go comes in **two plans** — Go ($10/mo) and Go Plus ($40/mo) — that share the token prices but grant different per-model limits; nothing local records your plan, so `ocuse` selects it with `--plan go|go-plus` (default `go`). So `ocuse` reports your local usage from `opencode.db` (providers `opencode-go` and `opencode`, which record real `cost`) against the limits in `core/zen.json` (regenerated with `bun scripts/extract-zen.ts`). `ocuse models` lists that catalogue for the plan (`--gated` keeps only the models the plan grants); `ocuse models --json` is one object per line, like `cmduse models --json`.
 
-The billing period has no local record, so the default is the calendar month: `--period-start YYYY-MM-DD` pins the real one, `--window all|<n>d` reports other ranges, and `--tz` shifts day/hour buckets.
+The billing period has no local record, so the default is the calendar month: `--period-start YYYY-MM-DD` pins the real one, `--window all|<n>d` reports other ranges, `--since <ISO-8601>` pins an exact instant for `model`/`session`, and `--tz` shifts day/hour buckets. `--days` (default 120) bounds the read window; `hourly` uses `--hours` (default 24, max 168).
 
-`ocuse` renders with `cmduse`'s own presentation: the same palette, the same severity-coloured gauges (green &lt;70%, yellow 70–90%, red ≥90%), the same in-place watch redraw (`cmduse`'s `redraw_frame`, so a shrinking frame never scrolls), and the same spend-burst sparkline. Both watch loop and gauges reuse `cmduse/src/render.rs` rather than a second copy. Every subcommand takes the colour flag — `daily`, `hourly`, `session`, `model`, `plans` and `statusline` included (bold headings, dim secondary text, cyan figures, an over-cap window *or* model flagged `LIMIT EXCEEDED`, and a per-model share of period spend). `--plain`, `NO_COLOR` and a piped stdout drop colour and gauges; scripted output stays escape-free.
+`ocuse` renders with `cmduse`'s own presentation: the same palette, the same severity-coloured gauges (green &lt;70%, yellow 70–90%, red ≥90%), the same in-place watch redraw (`cmduse`'s `redraw_frame`, so a shrinking frame never scrolls), and the same spend-burst sparkline. Both watch loop and gauges reuse `cmduse/src/render.rs` rather than a second copy. Every subcommand takes the colour flag — `daily`, `hourly`, `session`, `model`, `models`, `plans` and `statusline` included (bold headings, dim secondary text, cyan figures, an over-cap window *or* model flagged `LIMIT EXCEEDED`, and a per-model share of period spend). `--plain`, `NO_COLOR` and a piped stdout drop colour and gauges; scripted output stays escape-free, and `--json`/`--csv` are never coloured.
+
+Config lives at `~/.config/ocuse/config.json` with the same keys as cmduse's: `interval_secs`, `bar_width`, `burst_enabled`, `burst_samples`, `notify_on_cap`, `statusline_template`, `statusline_colors`, `statusline_ascii`, `check_updates`, `dismissed_update`. Set with `ocuse config set interval=<s> width=<n> burst_on=<bool> burst=<n> notify=<bool> sl=<tpl> sl_colors=<bool> sl_ascii=<bool> update_check=<bool> dismissed_update=<ver>`. The statusline template placeholders: `{plan}` `{period}` `{month}` `{month_pct}` `{month_bar}` `{five_hour}` `{five_hour_pct}` `{five_hour_bar}` (aliases `{5h}` `{5h_pct}` `{5h_bar}`), `{weekly}` `{weekly_pct}` `{weekly_bar}` (aliases `{wk}` `{wk_pct}` `{wk_bar}`), and `{models}` (top model by period spend).
 
 ## Notes
 
 - Window bars: green &lt;70%, yellow 70–90%, red ≥90%, plus `LIMIT EXCEEDED` flag.
-- Report tables show cache read and cache write separately; `daily` is bucketed in UTC unless `--tz`, and `--local` honors `--tz`; token totals in the model/session `Tokens` column include both cache columns.
+- Report tables show cache read and cache write separately; `daily` is bucketed in UTC unless `--tz`, and `--local` honors `--tz`; token totals in the model/session `Tokens` column include both cache columns. `ocuse`'s `--csv` columns are `day|hour|model|session,requests,tokens_in,tokens_out,cache_read,cost_usd` — its aggregates carry no cache-write, so that column is deliberately absent.
 - Spend-burst sparkline appears in watch mode after 2 refreshes (bars = $ spent between refreshes, ~3 min of history at 5s interval, capped at 40 samples; tall = burst, flat = idle).
 - `ocuse`'s watch frame uses the same three pieces: `redraw_frame` parks the cursor on the frame's last line (its status/countdown line), the sparkline tracks 5-hour spend deltas at 10s samples (capped at 60), and `Ink` carries `cmduse`'s palette as empty strings when colour is off.
 - On Monthly caps: monthly pool is the plan total (e.g. $70 on GOAT). Docs describe per-model allowances, but the CLI and API meter one shared pool — verified empirically.
