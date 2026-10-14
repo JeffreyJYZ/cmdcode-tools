@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-10-14T11:20:56.838Z",
+	"generatedAt": "2026-10-14T11:24:12.919Z",
 	"github": [
 		{
 			"tag": "cmduse-v0.7.10",
@@ -40,12 +40,6 @@
 	"npm": [
 		{
 			"package": "@jeffreyjyz/mpc",
-			"version": "0.0.0-stage",
-			"date": "2026-10-09T10:49:32.727Z",
-			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.0.0-stage"
-		},
-		{
-			"package": "@jeffreyjyz/mpc",
 			"version": "0.1.0",
 			"date": "2026-10-09T10:50:29.371Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.0"
@@ -73,12 +67,6 @@
 			"version": "0.1.4",
 			"date": "2026-10-12T13:12:17.461Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.4"
-		},
-		{
-			"package": "@jeffreyjyz/reqshape",
-			"version": "0.0.0-stage",
-			"date": "2026-10-09T10:49:39.433Z",
-			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.0.0-stage"
 		},
 		{
 			"package": "@jeffreyjyz/reqshape",
@@ -358,12 +346,6 @@
 		},
 		{
 			"package": "@jeffreyjyz/opencode-context",
-			"version": "0.0.0-stage",
-			"date": "2026-10-04T06:04:48.107Z",
-			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-context/v/0.0.0-stage"
-		},
-		{
-			"package": "@jeffreyjyz/opencode-context",
 			"version": "0.1.0",
 			"date": "2026-10-04T06:05:56.479Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-context/v/0.1.0"
@@ -376,12 +358,6 @@
 		},
 		{
 			"package": "@jeffreyjyz/opencode-shell-rc",
-			"version": "0.0.0-stage",
-			"date": "2026-10-04T08:17:51.087Z",
-			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.0.0-stage"
-		},
-		{
-			"package": "@jeffreyjyz/opencode-shell-rc",
 			"version": "0.1.0",
 			"date": "2026-10-04T08:24:49.587Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.1.0"
@@ -391,12 +367,6 @@
 			"version": "0.1.1",
 			"date": "2026-10-12T05:16:22.790Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.1.1"
-		},
-		{
-			"package": "@jeffreyjyz/opencode-session-dir",
-			"version": "0.0.0-stage",
-			"date": "2026-10-04T09:09:55.760Z",
-			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-session-dir/v/0.0.0-stage"
 		},
 		{
 			"package": "@jeffreyjyz/opencode-session-dir",

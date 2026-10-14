@@ -135,6 +135,10 @@ async function fetchNpmPackage(pkg: string): Promise<NpmRelease[]> {
 	for (const [version, date] of Object.entries(time)) {
 		// `created`/`modified` are packument metadata, not published versions.
 		if (version === "created" || version === "modified") continue;
+		// `0.0.0-stage` is a publish-time placeholder npm keeps in the timeline
+		// (mpc and reqshape each carry one); it is not a release, so the
+		// changelog must not list it.
+		if (version.startsWith("0.0.0-")) continue;
 		versions.push({
 			package: pkg,
 			version,

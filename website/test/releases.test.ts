@@ -135,3 +135,19 @@ describe("sourceLabel", () => {
 		expect(sourceLabel("https://example.com/x")).toBe("example.com");
 	});
 });
+
+describe("the committed snapshot", () => {
+	test("lists no publish-time placeholder versions", async () => {
+		// npm keeps `0.0.0-stage` in a package's timeline after the staging flow
+		// touches it (mpc and reqshape each carry one). It is not a release, so
+		// the changelog must not show it: the generator skips these, and this
+		// pins the committed output.
+		const snapshot = (await Bun.file(
+			new URL("../src/data/releases.json", import.meta.url),
+		).json()) as ReleasesSnapshot;
+		const placeholders = snapshot.npm.filter((r) =>
+			r.version.startsWith("0.0.0-"),
+		);
+		expect(placeholders).toEqual([]);
+	});
+});
