@@ -201,7 +201,12 @@ export function zenRows(
 	];
 	// Go's limits are per model, so the windows read the active model's row
 	// rather than the account totals: the caps belong to that model's allowance.
-	const mine = meta ? usage.models.get(modelKey(meta.name)) : undefined;
+	// ocuse keys its per-model rows by model id, so the session's own id resolves
+	// this row without mpc: the catalog supplies the display name, not the limit.
+	// (mpc's name normalises to the same key, so it stays as the second try.)
+	const mine =
+		usage.models.get(modelKey(fallbackName ?? "")) ??
+		(meta ? usage.models.get(modelKey(meta.name)) : undefined);
 	const limit = oc?.allowance ?? mine?.limit;
 	// A window cap is one *model's* share, so it may only be paired with that
 	// model's own spend. Without a per-model row ocuse's totals are account-wide,
@@ -255,12 +260,14 @@ export function zenRows(
 	// The store-backed rows, exactly where `modelRows` puts them: this model's
 	// requests, then this conversation's own totals.
 	rows.push(...localUsageRows(modelUsage, session));
-	if (!meta) return rows;
+	// The allowance outlives the catalog: ocuse publishes the model's own limit,
+	// so it still renders when mpc is missing. Everything below is mpc-only.
 	if (typeof limit === "number") {
 		// A free/unbounded model reads `∞`, not `$0/mo` (allowance 0 is the
 		// convention for free, not an empty budget).
 		rows.push(["Allowance", allowanceLabel(limit, oc?.free), "base"]);
 	}
+	if (!meta) return rows;
 	if (oc?.rates) {
 		const cache = [`cache read ${rate(oc.rates.cacheRead)}`];
 		if (

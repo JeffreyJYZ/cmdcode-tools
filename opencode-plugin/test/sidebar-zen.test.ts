@@ -106,6 +106,31 @@ describe("zenRows", () => {
 		).toBe(true);
 	});
 
+	test("caps and the allowance survive a missing catalog", () => {
+		// ocuse keys its per-model rows by model id and ships the limit, so the
+		// session's own id resolves both without mpc — the catalog supplies the
+		// display name and the benchmarks, not the allowance. This is the state
+		// the panel was in with a stale mpc: windows with no caps and no
+		// Allowance row.
+		const rows = zenRows(
+			parseZenJson(sample),
+			undefined,
+			undefined,
+			undefined,
+			"glm-5.3-flash",
+		);
+		const find = (label: string) => rows.find((row) => row[0] === label);
+		expect(find("5-hour")).toEqual(["5-hour", "$0.50/$12 (4.2%)", "ok"]);
+		expect(find("Weekly")).toEqual(["Weekly", "$1/$30 (3.3%)", "ok"]);
+		expect(find("Monthly")).toEqual(["Monthly", "$12/$60 (20.0%)", "ok"]);
+		expect(find("Allowance")).toEqual(["Allowance", "$60/mo", "base"]);
+		expect(find("Model")?.[1]).toBe("glm-5.3-flash");
+		// mpc-only rows are the ones that drop out.
+		expect(find("Rates")).toBeUndefined();
+		expect(find("Intelligence")).toBeUndefined();
+		expect(find("Tok/s")).toBeUndefined();
+	});
+
 	test("a window at or over its cap is flagged, like CommandCode", () => {
 		// Go has no `exceeded` flag, so the over-cap state is derived: a window at
 		// its cap reads LIMIT EXCEEDED in the crit tone, where it used to read a
@@ -328,7 +353,11 @@ describe("zenRows", () => {
 		expect(find("Session")).toEqual(["Session", "5 req · $0.25", "base"]);
 		// No model figure scanned, no `Usage (this model)` row.
 		expect(find("Usage (this model)")).toBeUndefined();
-		expect(find("Allowance")).toBeUndefined();
+		// The allowance comes from ocuse, not mpc, so it survives the missing
+		// catalog (0.5.2); only the mpc-only rows drop.
+		expect(find("Allowance")).toEqual(["Allowance", "$60/mo", "base"]);
 		expect(find("Rates")).toBeUndefined();
+		expect(find("Intelligence")).toBeUndefined();
+		expect(find("Tok/s")).toBeUndefined();
 	});
 });
