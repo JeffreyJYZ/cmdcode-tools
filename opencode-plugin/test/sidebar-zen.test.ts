@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import type { ModelMeta } from "../src/sidebar/rows";
-import { parseZenJson, zenRows } from "../src/sidebar/zen";
+import { FIVE_HOUR_SECS, WEEKLY_SECS } from "../src/constants/sidebar";
+import { type ModelMeta, usageRows } from "../src/sidebar/rows";
+import { parseZenJson, rollingReset, zenRows } from "../src/sidebar/zen";
 
 const sample = JSON.stringify({
 	generatedAt: 1,
@@ -205,9 +206,10 @@ describe("zenRows", () => {
 		);
 	});
 
-	test("the rolling 5-hour/Weekly windows carry no reset countdown", () => {
-		// Deliberate: Go has no usage API, so a rolling window has no real reset
-		// epoch — ocuse would have to invent "now + window", worse than nothing.
+	test("without a window start the rolling windows stay spend only", () => {
+		// The derived reset needs the oldest in-window request from the store;
+		// with none (an empty window, or no read) there is nothing to count down,
+		// so the request count stands alone, as before.
 		const rows = zenRows(parseZenJson(sample), meta);
 		const five = rows.findIndex((row) => row[0] === "5-hour");
 		expect(rows[five + 1]?.[1]).toBe("1 req");
@@ -359,5 +361,106 @@ describe("zenRows", () => {
 		expect(find("Rates")).toBeUndefined();
 		expect(find("Intelligence")).toBeUndefined();
 		expect(find("Tok/s")).toBeUndefined();
+	});
+});
+
+describe("rolling window ageing-out (derived reset)", () => {
+	// A rolling window's start is the oldest request still inside it, read from
+	// opencode's own store by `useRows` and passed to `zenRows`; the reset is
+	// that request's ageing-out, `start + window`. Epoch ms.
+	const age = (secs: number) => Date.now() - secs * 1000;
+
+	test("5-hour and Weekly show the elapsed share and the derived reset", () => {
+		const rows = zenRows(
+			parseZenJson(sample),
+			meta,
+			undefined,
+			undefined,
+			undefined,
+			{
+				fiveHour: age(FIVE_HOUR_SECS / 5), // an hour into 5h
+				weekly: age(WEEKLY_SECS / 7), // a day into the week
+			},
+		);
+		const five = rows.findIndex((row) => row[0] === "5-hour");
+		expect(rows[five]).toEqual(["5-hour", "$0.50/$12 (4.2%)", "ok"]);
+		expect(rows[five + 1]).toEqual([
+			"",
+			"20.0% elapsed · resets 4h",
+			"muted",
+		]);
+		// The request count rides on after the continuation, as before.
+		expect(rows[five + 2]?.[1]).toBe("1 req");
+		const weekly = rows.findIndex((row) => row[0] === "Weekly");
+		expect(rows[weekly + 1]).toEqual([
+			"",
+			"14.3% elapsed · resets 6d",
+			"muted",
+		]);
+	});
+
+	test("the reset is the oldest request plus the window", () => {
+		const oldest = age(4 * 3600);
+		// A derived-reset test on the pure helper, independent of rendering.
+		expect(rollingReset(oldest, FIVE_HOUR_SECS)).toBe(
+			oldest + FIVE_HOUR_SECS * 1000,
+		);
+		expect(rollingReset(undefined, FIVE_HOUR_SECS)).toBeUndefined();
+		// Rendered: a request four hours old leaves the 5-hour window in an hour.
+		const rows = zenRows(
+			parseZenJson(sample),
+			meta,
+			undefined,
+			undefined,
+			undefined,
+			{ fiveHour: oldest },
+		);
+		const five = rows.findIndex((row) => row[0] === "5-hour");
+		expect(rows[five + 1]?.[1]).toBe("80.0% elapsed · resets 1h");
+	});
+
+	test("an empty rolling window keeps the request count alone", () => {
+		const rows = zenRows(
+			parseZenJson(sample),
+			meta,
+			undefined,
+			undefined,
+			undefined,
+			{},
+		);
+		const five = rows.findIndex((row) => row[0] === "5-hour");
+		expect(rows[five + 1]?.[1]).toBe("1 req");
+		// No continuation row between the count and the next window.
+		expect(rows[five + 2]?.[0]).toBe("Weekly");
+		expect(rows.some((row) => (row[1] ?? "").includes("resets"))).toBe(
+			false,
+		);
+	});
+
+	test("the continuation matches the CommandCode row byte for byte", () => {
+		// The whole point: the Go/Zen 5-hour continuation has the same shape and
+		// tone as the CommandCode one, because both go through `windowRows`.
+		const start = age(3600);
+		const resetAt = rollingReset(start, FIVE_HOUR_SECS);
+		const cc = usageRows(
+			{
+				plan: "GOAT",
+				fiveHour: { cap: 12, used: 0.5, resetAt, exceeded: false },
+			},
+			Date.now(),
+		);
+		const ccFive = cc.findIndex((row) => row[0] === "5-hour");
+		const zen = zenRows(
+			parseZenJson(sample),
+			meta,
+			undefined,
+			undefined,
+			undefined,
+			{ fiveHour: start },
+		);
+		const zenFive = zen.findIndex((row) => row[0] === "5-hour");
+		expect(cc.slice(ccFive, ccFive + 2)).toEqual(
+			zen.slice(zenFive, zenFive + 2),
+		);
 	});
 });

@@ -13,6 +13,7 @@ import {
 } from "../src/sidebar/data";
 import {
 	loadModelUsage,
+	loadModelWindowStart,
 	loadSessionUsage,
 	periodStart,
 } from "../src/sidebar/usageDb";
@@ -457,6 +458,144 @@ describe("v2 store (session_message + session_v2)", () => {
 		expect(
 			loadModelUsage("deepseek-v4.1-flash", 0, path, "ses_b")?.requests,
 		).toBe(1);
+	});
+});
+
+/** A legacy store with assistant turns at explicit epochs, for the window scan. */
+function windowDb(
+	rows: Array<{ id?: string; modelID: string; at: number; role?: string }>,
+): string {
+	const dir = mkdtempSync(join(tmpdir(), "cc-window-"));
+	const path = join(dir, "opencode.db");
+	const db = new Database(path);
+	db.run("CREATE TABLE message (data TEXT, time_created INTEGER)");
+	for (const row of rows) {
+		db.run("INSERT INTO message VALUES (?, ?)", [
+			JSON.stringify({
+				role: row.role ?? "assistant",
+				modelID: row.modelID,
+				tokens: { input: 1 },
+				cost: 0.1,
+			}),
+			row.at,
+		]);
+	}
+	db.close();
+	return path;
+}
+
+/** A v2 store with assistant turns at explicit epochs. */
+function windowV2Db(
+	rows: Array<{ model: string; at: number; type?: string }>,
+): string {
+	const dir = mkdtempSync(join(tmpdir(), "cc-window-v2-"));
+	const path = join(dir, "opencode.db");
+	const db = new Database(path);
+	db.run(
+		"CREATE TABLE session_message (id TEXT, session_id TEXT, type TEXT, time_created INTEGER, data TEXT)",
+	);
+	rows.forEach((row, i) => {
+		db.run("INSERT INTO session_message VALUES (?, ?, ?, ?, ?)", [
+			`m${i}`,
+			"ses_a",
+			row.type ?? "assistant",
+			row.at,
+			JSON.stringify({ model: { id: row.model } }),
+		]);
+	});
+	db.close();
+	return path;
+}
+
+describe("loadModelWindowStart", () => {
+	test("returns the oldest in-window turn for one model", () => {
+		const now = Date.now();
+		const path = windowDb([
+			{ modelID: "deepseek/deepseek-v4.1-flash", at: now - 3_600_000 },
+			// 6h ago: inside the week, outside the 5-hour window.
+			{ modelID: "deepseek-v4.1-flash", at: now - 6 * 3_600_000 },
+			{ modelID: "other/model", at: now - 2 * 3_600_000 },
+			// A month ago: outside both rolling windows.
+			{ modelID: "deepseek-v4.1-flash", at: now - 40 * 86_400_000 },
+		]);
+		// The two spellings share a canonical key, so both turns count.
+		expect(
+			loadModelWindowStart(
+				"deepseek-v4.1-flash",
+				now - 5 * 3_600_000,
+				path,
+			),
+		).toBe(now - 3_600_000);
+		expect(
+			loadModelWindowStart(
+				"deepseek-v4.1-flash",
+				now - 7 * 86_400_000,
+				path,
+			),
+		).toBe(now - 6 * 3_600_000);
+	});
+
+	test("null when the model has no turn in the window", () => {
+		const now = Date.now();
+		const path = windowDb([
+			{ modelID: "deepseek-v4.1-flash", at: now - 3_600_000 },
+		]);
+		expect(
+			loadModelWindowStart("kimi-k2.7", now - 7 * 86_400_000, path),
+		).toBeNull();
+		// A bound at `now` excludes the turn one hour old.
+		expect(
+			loadModelWindowStart("deepseek-v4.1-flash", now, path),
+		).toBeNull();
+	});
+
+	test("ignores non-assistant turns", () => {
+		const now = Date.now();
+		const path = windowDb([
+			{ modelID: "deepseek-v4.1-flash", at: now - 2_000, role: "user" },
+			{ modelID: "deepseek-v4.1-flash", at: now - 3_600_000 },
+		]);
+		expect(
+			loadModelWindowStart(
+				"deepseek-v4.1-flash",
+				now - 5 * 3_600_000,
+				path,
+			),
+		).toBe(now - 3_600_000);
+	});
+
+	test("reads the v2 store, grouping by model key", () => {
+		const now = Date.now();
+		const path = windowV2Db([
+			{ model: "deepseek/deepseek-v4.1-flash", at: now - 3_600_000 },
+			{ model: "deepseek-v4.1-flash", at: now - 6 * 3_600_000 },
+			{ model: "kimi-k2.7", at: now - 1_000 },
+			{ model: "deepseek-v4.1-flash", at: now - 40 * 86_400_000 },
+			{ model: "deepseek-v4.1-flash", at: now - 500, type: "user" },
+		]);
+		expect(
+			loadModelWindowStart(
+				"deepseek-v4.1-flash",
+				now - 5 * 3_600_000,
+				path,
+			),
+		).toBe(now - 3_600_000);
+		expect(
+			loadModelWindowStart(
+				"deepseek-v4.1-flash",
+				now - 7 * 86_400_000,
+				path,
+			),
+		).toBe(now - 6 * 3_600_000);
+		expect(
+			loadModelWindowStart("missing/model", now - 7 * 86_400_000, path),
+		).toBeNull();
+	});
+
+	test("returns null without a store", () => {
+		expect(
+			loadModelWindowStart("deepseek-v4.1-flash", 0, "/nope/missing.db"),
+		).toBeNull();
 	});
 });
 

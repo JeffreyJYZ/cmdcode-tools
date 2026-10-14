@@ -1,7 +1,8 @@
 // Sidebar data hook: cmduse polled every 5s for CommandCode account totals,
 // ocuse the same way for OpenCode Go / Zen, mpc's catalog read from disk, and
-// opencode's own store for the active model's period usage and this session's
-// totals (the account APIs have no per-model, per-session dimension).
+// opencode's own store for the active model's period usage, its rolling-window
+// starts (Go/Zen resets) and this session's totals (the account APIs have no
+// per-model, per-session dimension).
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { minPlan } from "../catalog";
 import {
@@ -10,6 +11,7 @@ import {
 	ZEN_PROVIDER_ID,
 	ZEN_PROVIDER_PREFIX,
 } from "../constants/providers";
+import { FIVE_HOUR_SECS, WEEKLY_SECS } from "../constants/sidebar";
 import { POLL_MS } from "../constants/timing";
 import { loadMeta, loadUsage, loadZen } from "./data";
 import { loadPrefs } from "./prefs";
@@ -24,8 +26,13 @@ import {
 	type Usage,
 	usageRows,
 } from "./rows";
-import { loadModelUsage, loadSessionUsage, usageDbPath } from "./usageDb";
-import { type ZenUsage, zenRows } from "./zen";
+import {
+	loadModelUsage,
+	loadModelWindowStart,
+	loadSessionUsage,
+	usageDbPath,
+} from "./usageDb";
+import { type ZenUsage, type ZenWindowStarts, zenRows } from "./zen";
 
 /**
  * Which family a session's provider belongs to, as far as this panel is
@@ -161,6 +168,12 @@ export function useRows(
 	const [sessionUsage, setSessionUsage] = createSignal<
 		ModelUsage | undefined
 	>();
+	// The active model's rolling-window starts (Go/Zen), from the store: the
+	// oldest request still inside the 5-hour and weekly windows, so each row can
+	// count that request's ageing-out as the window's reset.
+	const [modelWindows, setModelWindows] = createSignal<
+		ZenWindowStarts | undefined
+	>();
 	// Once a session on one of our models has been seen, an unresolved switch
 	// keeps the section up rather than hiding it; a cold start on someone else's
 	// model still shows nothing.
@@ -195,6 +208,23 @@ export function useRows(
 		if (fresh) rememberModelUsage(id, fresh, session);
 		setModelUsage(lastModelUsage);
 	};
+	/**
+	 * Re-read the active model's rolling-window starts for the Go/Zen panel. A
+	 * local indexed read — no network, no CLI spawn — the same class as `Usage
+	 * (this model)`. Account-wide like ocuse's own per-model window totals, so it
+	 * takes no session scope; two scans, one per window.
+	 */
+	const refreshModelWindows = (id: string | undefined) => {
+		if (!id) return;
+		const now = Date.now();
+		setModelWindows({
+			fiveHour:
+				loadModelWindowStart(id, now - FIVE_HOUR_SECS * 1000) ??
+				undefined,
+			weekly:
+				loadModelWindowStart(id, now - WEEKLY_SECS * 1000) ?? undefined,
+		});
+	};
 
 	// One poll in flight at a time. During an outage a single cmduse invocation
 	// can sit in its retry ladder for a while, and the 5s interval would stack a
@@ -222,6 +252,7 @@ export function useRows(
 				// The store scan is provider-agnostic and needs no network, so the
 				// Go/Zen panel gets the same `Usage (this model)` row.
 				refreshModelUsage(activeModelId());
+				refreshModelWindows(activeModelId());
 			}
 		} catch {
 			// the CLI is missing, offline, or returned its errored defaults: keep
@@ -251,7 +282,12 @@ export function useRows(
 	createEffect(() => {
 		const id = activeModelId();
 		const session = sessionID();
-		if (!shows(sessionKind(providerID())) || !id || !session) return;
+		const kind = sessionKind(providerID());
+		if (!shows(kind) || !id) return;
+		// Window starts are account-wide and need no session, so they refresh on a
+		// model switch even before the host resolves the conversation.
+		if (kind === "go" || kind === "zen") refreshModelWindows(id);
+		if (!session) return;
 		refreshModelUsage(id);
 	});
 
@@ -289,6 +325,7 @@ export function useRows(
 				usageFor(id),
 				sessionUsage(),
 				fallbackName,
+				modelWindows(),
 			);
 		}
 		// gating keys are model ids, not display names, so tier comes from the

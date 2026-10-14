@@ -8,8 +8,9 @@
 //
 // Windows go through the same `rows.ts::windowRows` the CommandCode side uses,
 // so `LIMIT EXCEEDED`, tone, `cap in …`, `elapsed` and `resets` have one
-// implementation; only the rolling 5-hour/weekly windows stay without a reset
-// countdown (see `zenWindow`).
+// implementation. The rolling 5-hour/weekly windows get their reset from the
+// oldest request still inside them (see `rollingReset`), so they carry the same
+// continuation the CommandCode panel shows.
 import {
 	FIVE_HOUR_SECS,
 	GO_WINDOW_SHARE,
@@ -132,16 +133,41 @@ function monthPeriod(
 }
 
 /**
+ * The starts of the active model's rolling windows, epoch ms: the oldest request
+ * still inside each one, from opencode's own store. The Go/Zen panel turns each
+ * into a reset via `rollingReset`; absent when no such request exists.
+ */
+export interface ZenWindowStarts {
+	fiveHour?: number;
+	weekly?: number;
+}
+
+/**
+ * A rolling window's reset, derived from the oldest request still inside it:
+ * that request leaves the window at `oldest + durSecs`, which is an honest reset
+ * epoch — unlike `now + durSecs`, a constant that would be noise in a usage
+ * panel. Undefined when there is no oldest request (an empty window), so the row
+ * keeps the same spend-only degrade it had before.
+ */
+export function rollingReset(
+	startMs: number | undefined,
+	durSecs: number,
+): number | undefined {
+	if (typeof startMs !== "number" || !Number.isFinite(startMs))
+		return undefined;
+	return startMs + durSecs * 1000;
+}
+
+/**
  * One window on the Go/Zen panel. With a cap it goes through the shared
  * `windowRows`, so the over-cap flag, tone, `cap in …`, `elapsed` and `resets`
  * all match the CommandCode panel; the window's request count rides on as the
  * `extra` continuation. Without a cap (Zen is pay-as-you-go, and a Go model may
  * publish no limit) the spend stands alone.
  *
- * `resetAt` is only set for Monthly, from the billing period's bounds: Go has no
- * usage API, so a rolling 5-hour/weekly window has no real reset epoch, and
- * ocuse would have to approximate one as "now + window" — a made-up countdown in
- * a usage panel is worse than none, so that refusal is deliberate.
+ * `resetAt` is the billing period's end for Monthly, and the derived
+ * `rollingReset` for 5-hour/Weekly; absent on an older ocuse (no period bounds)
+ * or an empty window, where the row then keeps to spend (and its request count).
  */
 function zenWindow(
 	label: string,
@@ -192,6 +218,7 @@ export function zenRows(
 	modelUsage?: ModelUsage,
 	session?: ModelUsage,
 	fallbackName?: string,
+	windows?: ZenWindowStarts,
 ): SidebarRow[] {
 	if (!usage) return [];
 	const now = Date.now();
@@ -213,6 +240,9 @@ export function zenRows(
 	// and dividing them by one model's allowance would report the whole account
 	// against a single cap; show the spend alone instead.
 	const cap = mine ? limit : undefined;
+	// A rolling window's reset is derived from the oldest request still inside it
+	// (the same store read that backs `Usage (this model)`), so 5-hour and Weekly
+	// carry the elapsed share and the countdown CommandCode shows.
 	rows.push(
 		...zenWindow(
 			"5-hour",
@@ -221,6 +251,7 @@ export function zenRows(
 			GO_WINDOW_SHARE.fiveHour,
 			now,
 			FIVE_HOUR_SECS,
+			rollingReset(windows?.fiveHour, FIVE_HOUR_SECS),
 		),
 	);
 	rows.push(
@@ -231,6 +262,7 @@ export function zenRows(
 			GO_WINDOW_SHARE.weekly,
 			now,
 			WEEKLY_SECS,
+			rollingReset(windows?.weekly, WEEKLY_SECS),
 		),
 	);
 	// Monthly is a billing period, not a rolling window: its length and reset

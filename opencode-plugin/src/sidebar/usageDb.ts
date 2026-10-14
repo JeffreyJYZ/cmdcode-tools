@@ -160,6 +160,76 @@ export function loadModelUsage(
 }
 
 /**
+ * The oldest in-window assistant turn for one model, as epoch ms — the start of
+ * the rolling window the Go/Zen panel needs. A rolling 5-hour/weekly window has
+ * no service-reported reset (Go has no usage API), but its clock does have a
+ * real start: the oldest request still inside it ages out at `start + window`,
+ * which is that window's honest reset. Null when the model has no turn in the
+ * window, or the store is missing/unreadable, so callers then omit the
+ * continuation exactly as before.
+ *
+ * Account-wide like ocuse's per-model window totals, so it is *not* scoped to a
+ * session: a rolling window counts the model's spend across every conversation.
+ * Matching is on the canonical key, the same normalisation `loadModelUsage` uses
+ * (the session id and the stored `modelID` differ by vendor prefix/punctuation).
+ */
+export function loadModelWindowStart(
+	modelID: string,
+	sinceMs: number,
+	path = usageDbPath(),
+): number | null {
+	let db: Database;
+	try {
+		db = new Database(path, { readonly: true });
+	} catch {
+		return null;
+	}
+	try {
+		const key = modelKey(modelID);
+		if (hasV2(db)) {
+			const rows = db
+				.query(
+					`SELECT json_extract(data, '$.model.id') AS model,
+					        min(time_created) AS start
+					 FROM session_message
+					 WHERE type = 'assistant' AND time_created >= ?
+					 GROUP BY model`,
+				)
+				.all(sinceMs) as Array<{ model: string | null; start: number }>;
+			for (const row of rows) {
+				if (row.model && modelKey(row.model) === key) return row.start;
+			}
+			return null;
+		}
+		const rows = db
+			.query(
+				`SELECT data, time_created FROM message
+				 WHERE data LIKE '%"tokens"%' AND time_created >= ?`,
+			)
+			.all(sinceMs) as Array<{ data: string; time_created: number }>;
+		let oldest: number | null = null;
+		for (const row of rows) {
+			let data: AssistantData;
+			try {
+				data = JSON.parse(row.data) as AssistantData;
+			} catch {
+				continue;
+			}
+			if (data.role !== "assistant" || !data.tokens || !data.modelID)
+				continue;
+			if (modelKey(data.modelID) !== key) continue;
+			if (oldest === null || row.time_created < oldest)
+				oldest = row.time_created;
+		}
+		return oldest;
+	} catch {
+		return null;
+	} finally {
+		db.close();
+	}
+}
+
+/**
  * Requests and cost for one session, so the panel can show what this
  * conversation has spent rather than only the period-to-date figure. Null when
  * the store is missing or unreadable, and callers then omit the row. Rows are
