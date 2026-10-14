@@ -196,15 +196,22 @@ export function until(epoch: number | undefined, now = Date.now()): string {
 	return hours % 24 ? `${days}d ${hours % 24}h` : `${days}d`;
 }
 
-/** A rolling window as two rows: the use line, then resets plus whatever needs
- * flagging. The lead segment follows cmduse's importance order — over-cap flag,
- * then the cap ETA, then the informational elapsed share — because the
- * 37-column budget fits exactly one of them beside the reset countdown. */
-function windowRows(
+/** A rolling window as two or three rows: the use line, then resets plus whatever
+ * needs flagging, then an optional `extra` continuation. The lead segment follows
+ * cmduse's importance order — over-cap flag, then the cap ETA, then the
+ * informational elapsed share — because the 37-column budget fits exactly one of
+ * them beside the reset countdown.
+ *
+ * Shared by both panels: CommandCode passes four arguments (output unchanged),
+ * the OpenCode Go/Zen side adds the window's request count as `extra`, so
+ * `LIMIT EXCEEDED`, the tone, `cap in …`, `elapsed` and `resets` all have one
+ * implementation. */
+export function windowRows(
 	label: string,
 	w: WindowUsage | undefined,
 	now: number,
 	durSecs: number,
+	extra?: string,
 ): SidebarRow[] {
 	if (!w || typeof w.cap !== "number" || w.cap <= 0) return [];
 	const used = typeof w.used === "number" ? w.used : 0;
@@ -231,7 +238,52 @@ function windowRows(
 			w.exceeded ? "crit" : pctTone(pct),
 		],
 		...(detail ? [["", detail, "muted"] as SidebarRow] : []),
+		...(extra ? [["", extra, "muted"] as SidebarRow] : []),
 	];
+}
+
+/**
+ * The two store-backed rows for the active model — its requests under `Usage
+ * (this model)`, then this conversation's own totals under `Session`. They need
+ * no network, so both panels keep them when the catalog is missing, and both
+ * families build them here rather than in two places.
+ */
+export function localUsageRows(
+	usage?: ModelUsage,
+	session?: ModelUsage,
+): SidebarRow[] {
+	const rows: SidebarRow[] = [];
+	if (usage) {
+		// A model may be subscription-billed, so the harness only prices it when
+		// it knows the rates; the share of the session goes beside the spend,
+		// because a figure without its denominator says little. The two figures
+		// come from different writes — the model's from summing `session_message`
+		// rows, the session's from `session_v2.cost` — so for the moment between a
+		// turn's row landing and the session total catching up the numerator can
+		// lead, which flashed "105% of session" then settled to 100%. A part of a
+		// whole never reads over the whole: clamp it.
+		rows.push([
+			"Usage (this model)",
+			`${count(usage.requests)} req`,
+			"base",
+		]);
+		const spend = usage.cost > 0 ? money(usage.cost) : "";
+		const share =
+			usage.cost > 0 && session && session.cost > 0
+				? `${Math.min(100, Math.round((usage.cost / session.cost) * 100))}% of session`
+				: "";
+		const detail = [spend, share].filter(Boolean).join(" · ");
+		if (detail) rows.push(["", detail, "muted"]);
+	}
+	if (session) {
+		const spent = session.cost > 0 ? ` · ${money(session.cost)}` : "";
+		rows.push([
+			"Session",
+			`${count(session.requests)} req${spent}`,
+			"base",
+		]);
+	}
+	return rows;
 }
 
 /**
@@ -318,37 +370,8 @@ export function modelRows(
 	if (!name) return [];
 	const rows: SidebarRow[] = [
 		["Model", clip(name, valueWidth("Model")), "strong", true],
+		...localUsageRows(usage, session),
 	];
-	if (usage) {
-		// CommandCode is subscription-billed, so the harness only prices a model
-		// when it knows the rates; the share of the session goes beside the spend,
-		// because a figure without its denominator says little. The two figures
-		// come from different writes — the model's from summing `session_message`
-		// rows, the session's from `session_v2.cost` — so for the moment between a
-		// turn's row landing and the session total catching up the numerator can
-		// lead, which flashed "105% of session" then settled to 100%. A part of a
-		// whole never reads over the whole: clamp it.
-		rows.push([
-			"Usage (this model)",
-			`${count(usage.requests)} req`,
-			"base",
-		]);
-		const spend = usage.cost > 0 ? money(usage.cost) : "";
-		const share =
-			usage.cost > 0 && session && session.cost > 0
-				? `${Math.min(100, Math.round((usage.cost / session.cost) * 100))}% of session`
-				: "";
-		const detail = [spend, share].filter(Boolean).join(" · ");
-		if (detail) rows.push(["", detail, "muted"]);
-	}
-	if (session) {
-		const spent = session.cost > 0 ? ` · ${money(session.cost)}` : "";
-		rows.push([
-			"Session",
-			`${count(session.requests)} req${spent}`,
-			"base",
-		]);
-	}
 	// Everything below is catalog data; without it the block is just the model
 	// and its local figures.
 	if (!meta) return rows;

@@ -11,6 +11,7 @@ import {
 	tierFor,
 	until,
 	usageRows,
+	windowRows,
 } from "../src/sidebar/rows";
 import { elapsedLabel } from "../src/sidebar/windows";
 
@@ -175,6 +176,36 @@ describe("usageRows", () => {
 	});
 	test("empty input yields no rows", () => {
 		expect(usageRows(undefined)).toEqual([]);
+	});
+});
+
+describe("windowRows", () => {
+	const now = 1_000_000_000_000;
+	const window = { cap: 14, used: 7, resetAt: now + 9_000_000 };
+	test("four arguments match what the CommandCode panel always drew", () => {
+		expect(windowRows("5-hour", window, now, 5 * 3600)).toEqual([
+			["5-hour", "$7/$14 (50.0%)", "ok"],
+			["", "50.0% elapsed · resets 2h 30m", "muted"],
+		]);
+	});
+	test("extra appends the OpenCode side's request count", () => {
+		const rows = windowRows("5-hour", window, now, 5 * 3600, "3 req");
+		expect(rows[rows.length - 1]).toEqual(["", "3 req", "muted"]);
+		// Still the same use line and detail.
+		expect(rows[0]).toEqual(["5-hour", "$7/$14 (50.0%)", "ok"]);
+		expect(rows[1]).toEqual(["", "50.0% elapsed · resets 2h 30m", "muted"]);
+	});
+	test("over-cap leads the continuation and tones the row crit", () => {
+		const rows = windowRows(
+			"5-hour",
+			{ cap: 14, used: 14.2, resetAt: now + 9_000_000, exceeded: true },
+			now,
+			5 * 3600,
+			"3 req",
+		);
+		expect(rows[0]).toEqual(["5-hour", "$14.20/$14 (101.4%)", "crit"]);
+		expect(rows[1]?.[1]).toStartWith("LIMIT EXCEEDED · resets");
+		expect(rows[2]).toEqual(["", "3 req", "muted"]);
 	});
 });
 

@@ -9,6 +9,7 @@ import {
 	separator,
 	usageRows,
 } from "../src/sidebar/rows";
+import { parseZenJson, zenRows } from "../src/sidebar/zen";
 
 /** The panel draws `label: value`, continuation rows as two spaces + value. */
 const render = (row: Parameters<typeof parts>[0]) => parts(row).join("");
@@ -88,6 +89,59 @@ describe("sidebar rows fit the panel", () => {
 			...usageRows(big),
 			...modelRows(claude, { requests: 1_234_567, cost: 99.5 }),
 		]) {
+			expect(render(row).length).toBeLessThanOrEqual(ROW_WIDTH);
+		}
+	});
+
+	test("the Go/Zen panel's rows fit too", () => {
+		// The OpenCode side now carries the same continuations (usage share,
+		// elapsed share, reset, request count) as CommandCode, so it needs the
+		// same width guard.
+		const now = Date.now();
+		const zen = parseZenJson(
+			JSON.stringify({
+				periodStart: now - 20 * 86_400_000,
+				periodEndAt: now + 10 * 86_400_000,
+				totals: {
+					fiveHour: { requests: 1_234_567, cost: 1_800 },
+					weekly: { requests: 1_234_567, cost: 1_800 },
+					month: { requests: 1_234_567, cost: 1_234.56 },
+				},
+				models: [
+					{
+						id: "z-ai/glm-5.3-flash",
+						provider: "opencode-go",
+						limit: 1_800,
+						fiveHour: { requests: 1_234_567, cost: 1_800 },
+						weekly: { requests: 1_234_567, cost: 1_800 },
+						month: { requests: 1_234_567, cost: 1_234.56 },
+					},
+				],
+			}),
+		);
+		const rows = zenRows(
+			zen,
+			{
+				key: "glm53flash",
+				name: "Claude Sonnet 5 (Anthropic, extended thinking variant)",
+				oc: {
+					plan: "Go Plus",
+					allowance: 1_800,
+					rates: {
+						input: 2,
+						output: 10,
+						cacheRead: 0.2,
+						cacheWrite: 2.5,
+					},
+					ability: 48,
+					tps: 120,
+				},
+			},
+			{ requests: 1_234_567, cost: 99.5 },
+			{ requests: 2_000_000, cost: 120 },
+		);
+		for (const row of rows) {
+			expect(rowWidth(row)).toBeLessThanOrEqual(ROW_WIDTH);
 			expect(render(row).length).toBeLessThanOrEqual(ROW_WIDTH);
 		}
 	});

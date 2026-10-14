@@ -219,6 +219,9 @@ export function useRows(
 				refreshModelUsage(activeModelId());
 			} else if (kind === "go" || kind === "zen") {
 				setZen(await loadZen(loadPrefs().ocPlan));
+				// The store scan is provider-agnostic and needs no network, so the
+				// Go/Zen panel gets the same `Usage (this model)` row.
+				refreshModelUsage(activeModelId());
 			}
 		} catch {
 			// the CLI is missing, offline, or returned its errored defaults: keep
@@ -243,11 +246,12 @@ export function useRows(
 	// figure until it landed. Track the model *and* the session, because the
 	// figure counts this conversation's turns: a tab change keeps the provider,
 	// so the poll alone would only notice a minute later. The scan is sqlite (no
-	// process spawn) and the seed keeps the row up while it runs.
+	// process spawn) and the seed keeps the row up while it runs. Runs for the
+	// Go/Zen sections too: the figure is the same per-model, per-session read.
 	createEffect(() => {
 		const id = activeModelId();
 		const session = sessionID();
-		if (sessionKind(providerID()) !== "ours" || !id || !session) return;
+		if (!shows(sessionKind(providerID())) || !id || !session) return;
 		refreshModelUsage(id);
 	});
 
@@ -279,7 +283,13 @@ export function useRows(
 		// its vendor prefix is noise, so keep the tail.
 		const fallbackName = id ? (id.split("/").pop() ?? id) : undefined;
 		if (kind === "go" || kind === "zen") {
-			return zenRows(zen(), found, sessionUsage(), fallbackName);
+			return zenRows(
+				zen(),
+				found,
+				usageFor(id),
+				sessionUsage(),
+				fallbackName,
+			);
 		}
 		// gating keys are model ids, not display names, so tier comes from the
 		// session's id rather than the catalog row.
