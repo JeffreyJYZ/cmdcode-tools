@@ -103,12 +103,21 @@ impl Ink {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn window_line(
     ink: &Ink,
     label: &str,
     used: &Totals,
     cap: Option<f64>,
     reset_ms: Option<i64>,
+    // Length of the window ending at `reset_ms`; `None` when there is no real
+    // reset to measure against (the rolling 5h/weekly windows are cut at
+    // `now - window` locally, so they have no boundary — see `render_text`).
+    dur_secs: Option<u64>,
+    // `cmduse`'s pro-rata flag: monthly is a budget, so it alone gets the
+    // "by now" figure; the rolling windows are throttles, where that number
+    // would read as a spend target.
+    pro_rata: bool,
     now_ms: i64,
 ) -> String {
     let reset = reset_ms
@@ -121,6 +130,32 @@ fn window_line(
     } else {
         format!(" · resets {reset}")
     };
+    // cmduse's field order is importance order, so a clipped watch frame keeps
+    // the actionable parts: limit flag, pace warning, elapsed share, then the
+    // informational pro-rata figure. Percentages come from core (one decimal);
+    // duration (never rel_time) formats the ETA.
+    let now_secs = (now_ms / 1000).max(0) as u64;
+    let reset_at = reset_ms.map(|ms| ms as f64);
+    let elapsed = dur_secs.and_then(|d| cmduse_core::elapsed_pct(reset_at, d, Some(now_secs)));
+    let pace = dur_secs
+        .and_then(|d| {
+            cmduse_core::pace_eta(reset_at, d, used.cost, cap.unwrap_or(0.0), now_secs)
+                .map(|secs| duration(secs as u64))
+        })
+        .map(|eta| format!(" · {}on pace to hit cap in {eta}{}", ink.yellow, ink.reset))
+        .unwrap_or_default();
+    let thru = elapsed
+        .map(|p| format!(" · {}window {p:.1}% elapsed{}", ink.dim, ink.reset))
+        .unwrap_or_default();
+    let by_now = match (pro_rata, elapsed) {
+        (true, Some(p)) => format!(
+            " · {}{} by now{}",
+            ink.dim,
+            money(cap.unwrap_or(0.0) * p / 100.0),
+            ink.reset
+        ),
+        _ => String::new(),
+    };
     match cap {
         Some(cap) if cap > 0.0 => {
             // Same placement cmduse uses for the flag: on the window it belongs to.
@@ -131,7 +166,7 @@ fn window_line(
             };
             if ink.colour {
                 format!(
-                    " {}{label:<8}{} {} {}{} / {}{}{}{}\n",
+                    " {}{label:<8}{} {} {}{} / {}{}{}{}{}{}{}\n",
                     ink.bold,
                     ink.reset,
                     ink.bar(used.cost, cap),
@@ -140,12 +175,16 @@ fn window_line(
                     money(cap),
                     reset_text,
                     flag,
+                    pace,
+                    thru,
+                    by_now,
                     ink.reset,
                 )
             } else {
-                // The plain frame is the script-facing one: keep the old text.
+                // The plain frame is the script-facing one: same field order,
+                // no SGR (the Ink helpers are empty strings when colour is off).
                 format!(
-                    "  {label:<8} {} / {} ({}){reset_text}{flag}\n",
+                    "  {label:<8} {} / {} ({}){reset_text}{flag}{pace}{thru}{by_now}\n",
                     money(used.cost),
                     money(cap),
                     pct(used.cost, cap),
@@ -263,17 +302,31 @@ pub fn render_text(
         shorten(db_path),
         ink.reset,
     ));
+    // cmduse prints `Success N%` from its account API; opencode's own store
+    // records no per-request success/error signal, so there is no rate to read
+    // here — omitted rather than synthesised (source-forced).
+    let end = report
+        .period_end_ms
+        .map(|ms| format!(" · ends {}", date_of(ms / 86_400_000)))
+        .unwrap_or_default();
     out.push_str(&format!(
-        "period: {} · {} requests · {} · {} tokens\n",
+        "period: {}{end} · {} requests · {} · {} in / {} out tokens\n",
         report.period_label,
         c(compact(report.month.requests)),
         c(money(report.month.cost)),
-        c(compact(report.month.tokens())),
+        c(compact(report.month.input)),
+        c(compact(report.month.output)),
     ));
 
     if report.month.requests > 0 {
         let five_reset = report.now_ms + crate::ocuse::window::FIVE_HOUR_SECS * 1000;
         let week_reset = report.now_ms + crate::ocuse::window::WEEKLY_SECS * 1000;
+        // Only the monthly period has a real end (`period_end_ms`): the rolling
+        // windows are cut at `now - window`, so they keep their countdown but
+        // gain no elapsed share or pace ETA.
+        let monthly_dur = report
+            .period_end_ms
+            .map(|end| ((end - report.since_ms) / 1000).max(0) as u64);
         out.push_str(&format!(
             "\n{}GO{} {}\n",
             ink.bold,
@@ -286,22 +339,28 @@ pub fn render_text(
             &report.five_hour,
             aggregate_cap(report, shares.five_hour),
             Some(five_reset),
+            None,
+            false,
             report.now_ms,
         ));
         out.push_str(&window_line(
             &ink,
-            "weekly",
+            "Weekly",
             &report.weekly,
             aggregate_cap(report, shares.weekly),
             Some(week_reset),
+            None,
+            false,
             report.now_ms,
         ));
         out.push_str(&window_line(
             &ink,
-            "monthly",
+            "Monthly",
             &report.month,
             aggregate_cap(report, shares.monthly),
-            None,
+            report.period_end_ms,
+            monthly_dur,
+            true,
             report.now_ms,
         ));
     }
@@ -478,6 +537,12 @@ pub fn render_json(report: &Report) -> String {
         "source": "opencode.db",
         "generatedAt": report.now_ms,
         "periodStart": report.since_ms,
+        // Period bounds in epoch ms, the same units as cmduse's `-1 --json`
+        // (`periodStartAt`/`periodEndAt`) — `periodStart` stays for the plugin's
+        // existing read. `periodEndAt` is null when the period has no boundary
+        // (`--window all`).
+        "periodStartAt": report.since_ms,
+        "periodEndAt": report.period_end_ms,
         "periodInferred": report.month_inferred,
         "totals": {
             "month": totals(&report.month),
@@ -1151,6 +1216,27 @@ mod tests {
         assert_eq!(line, "go glm-5.3-flash");
     }
 
+    #[test]
+    fn json_carries_the_period_bounds() {
+        // The default/month report has an end resolved from its own start, and
+        // `periodStartAt` is the alias of the existing `periodStart`.
+        let mut r = report();
+        r.period_end_ms = Some(crate::ocuse::window::next_month(r.since_ms));
+        let parsed: serde_json::Value = serde_json::from_str(&render_json(&r)).unwrap();
+        assert_eq!(parsed["periodStart"], r.since_ms);
+        assert_eq!(parsed["periodStartAt"], r.since_ms);
+        assert_eq!(parsed["periodEndAt"], r.period_end_ms.unwrap());
+
+        // `--window all` resolves no end: the key is present and null, and the
+        // old keys are unchanged.
+        let mut all = report();
+        all.period_end_ms = None;
+        let parsed: serde_json::Value = serde_json::from_str(&render_json(&all)).unwrap();
+        assert_eq!(parsed["periodEndAt"], serde_json::Value::Null);
+        assert_eq!(parsed["periodStart"], all.since_ms);
+        assert!(parsed.get("periodInferred").is_some());
+    }
+
     /// Every renderer, both ways round: piped/non-tty output must stay free of
     /// SGR escapes, and every one of them must colour when colour is on. This is
     /// the guard for the bug where only `render_text` ever got a colour flag, so
@@ -1158,7 +1244,10 @@ mod tests {
     /// plain regardless of the terminal.
     #[test]
     fn every_renderer_respects_the_colour_flag() {
-        let report = report();
+        let mut report = report();
+        // Exercise the monthly row's real period (reset, elapsed, by-now) both
+        // ways round, so a colour leak into the new plain fields fails here too.
+        report.period_end_ms = Some(crate::ocuse::window::next_month(report.since_ms));
         let rows = vec![Row {
             at_ms: report.now_ms - 60_000,
             session: "ses_fixture".into(),
@@ -1439,6 +1528,69 @@ mod tests {
         );
         // The gauge is colour-only; the plain frame keeps the old percentage text.
         assert!(text.contains("50%"), "{text}");
+    }
+
+    /// The monthly row is the only one with a real period end, so it alone gains
+    /// the reset, the elapsed share and the pro-rata "$X by now"; the rolling
+    /// windows have no boundary and must not invent one.
+    #[test]
+    fn monthly_row_carries_the_real_period_metrics() {
+        let mut r = report();
+        r.period_end_ms = Some(crate::ocuse::window::next_month(r.since_ms));
+        let text = render_text(&r, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+
+        let monthly = text
+            .lines()
+            .find(|line| line.trim_start().starts_with("Monthly"))
+            .expect("the monthly row");
+        assert!(monthly.contains("resets"), "{monthly}");
+        assert!(
+            monthly.contains("window") && monthly.contains("% elapsed"),
+            "the real period gives an elapsed share: {monthly}"
+        );
+        assert!(
+            monthly.contains("by now"),
+            "monthly is the pro-rata budget: {monthly}"
+        );
+
+        for label in ["5-hour", "Weekly"] {
+            let row = text
+                .lines()
+                .find(|line| line.trim_start().starts_with(label))
+                .unwrap_or_else(|| panic!("the {label} row"));
+            assert!(!row.contains("elapsed"), "{label} has no boundary: {row}");
+            assert!(!row.contains("by now"), "{label} is a throttle: {row}");
+        }
+    }
+
+    /// The period header splits tokens like cmduse and names the resolved end
+    /// date when the period has one (`--window all` has none).
+    #[test]
+    fn period_line_splits_tokens_and_shows_the_end_date() {
+        let mut r = report();
+        r.period_end_ms = Some(crate::ocuse::window::next_month(r.since_ms));
+        let text = render_text(&r, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        let header = text
+            .lines()
+            .find(|line| line.starts_with("period:"))
+            .expect("the period line");
+        assert!(
+            header.contains(" in / "),
+            "token split like cmduse: {header}"
+        );
+        assert!(header.contains(" out tokens"), "{header}");
+        assert!(
+            header.contains(&date_of(r.period_end_ms.unwrap() / 86_400_000)),
+            "the resolved end date: {header}"
+        );
+
+        // No end resolved: no date is invented.
+        let no_end = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        let header = no_end
+            .lines()
+            .find(|line| line.starts_with("period:"))
+            .expect("the period line");
+        assert!(!header.contains("ends"), "{header}");
     }
 
     #[test]

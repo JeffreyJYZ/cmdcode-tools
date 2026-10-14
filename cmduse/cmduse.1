@@ -631,7 +631,10 @@ instead of the text dashboard.
 .TP
 .B \-\-json
 Machine\-readable projection (one object): \fIsource\fR, \fIgeneratedAt\fR,
-\fIperiodStart\fR, \fIperiodInferred\fR, \fItotals\fR (each of month, fiveHour,
+\fIperiodStart\fR (and its alias \fIperiodStartAt\fR, both epoch ms),
+\fIperiodEndAt\fR (the resolved end of the period in epoch ms, \fBnull\fR for
+\fB\-\-window all\fR, whose range has no boundary), \fIperiodInferred\fR,
+\fItotals\fR (each of month, fiveHour,
 weekly carrying cost, requests, and tokens), and the per\-model breakdown
 \fImodels\fR.  A bare \fB\-\-json\fR also leaves the watch loop, so it prints
 and exits rather than redrawing.
@@ -767,8 +770,14 @@ The header's window lines and each model's table row compare 5\-hour and weekly
 spend against the model's monthly limit times 20% and 50% (the docs' shares).
 The monthly period has no local record, so it defaults to the calendar month;
 \fB\-\-period\-start\fR pins the real anniversary and
-\fB\-\-infer\-anniversary\fR guesses it from history.  A model whose spend
-crosses its limit is flagged \fILIMIT EXCEEDED\fR.  Limits and rates come from
+\fB\-\-infer\-anniversary\fR guesses it from history.  Only the monthly period
+has a real end, so that row alone gains a reset countdown, its \fIwindow N%
+elapsed\fR share and a pro\-rata \fB$\fR by\-now figure; the rolling 5\-hour
+and weekly rows show only their countdown.  The header splits period tokens
+\fIin / out\fR and names the resolved end date.  A model whose spend
+crosses its limit is flagged \fILIMIT EXCEEDED\fR.  There is no
+\fISuccess N%\fR figure \(em opencode's store records no per\-request success
+or error signal.  Limits and rates come from
 .IR core/zen.json ,
 regenerated from OpenCode's own docs sources with
 .BR "bun scripts/extract\-zen.ts" .

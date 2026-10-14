@@ -131,6 +131,29 @@ fn output_fmt(args: &cli::Args) -> Fmt {
     }
 }
 
+/// The period's end (epoch ms), resolved from the report's own resolved start so
+/// an inferred anniversary gets one too. `--window all` has no boundary (`None`);
+/// an `<n>d` window ends n days after it started; every other mode — the calendar
+/// month, `--period-start`, an inferred anniversary — runs to the same
+/// day-of-month next month. The rolling 5h/weekly windows never carry an end:
+/// they have no real reset (see `render_text`).
+fn period_end(report: &window::Report, window_mode: &str, inferred: bool) -> Option<i64> {
+    // Inference pins the start itself, so it outranks the window mode.
+    if inferred {
+        return Some(window::next_month(report.since_ms));
+    }
+    if window_mode == "all" {
+        None
+    } else if let Some(d) = window_mode
+        .strip_suffix('d')
+        .and_then(|v| v.parse::<i64>().ok())
+    {
+        Some(report.since_ms + d * 86_400_000)
+    } else {
+        Some(window::next_month(report.since_ms))
+    }
+}
+
 pub fn run() {
     let (argv, model_id) = split_model_id(std::env::args_os().collect());
     let args = match cli::parse_args_from(argv, Binary::Ocuse) {
@@ -261,6 +284,9 @@ pub fn run() {
         } else {
             period_start
         };
+    // Only the inference branch leaves `period_start` unset; the report then
+    // resolves the anniversary itself, so remember which mode produced it.
+    let period_inferred = period_start.is_none();
 
     let read_since = |since_ms: i64| match db::read_rows(&db_path, since_ms) {
         Ok(rows) => rows,
@@ -281,6 +307,7 @@ pub fn run() {
             period_start,
         );
         report.period_label = period_label.clone();
+        report.period_end_ms = period_end(&report, &window_mode, period_inferred);
         report
     };
 
@@ -553,6 +580,39 @@ mod tests {
         assert!(matches!(of(&[]), Fmt::Table));
         assert!(matches!(of(&["--json"]), Fmt::Json));
         assert!(matches!(of(&["--csv"]), Fmt::Csv));
+    }
+
+    #[test]
+    fn period_end_resolves_from_the_reports_own_start() {
+        let since = window::days_from_civil(2026, 9, 15) * 86_400_000;
+        let report = window::Report {
+            period_label: "calendar month".into(),
+            now_ms: since,
+            since_ms: since,
+            period_end_ms: None,
+            month_inferred: false,
+            five_hour: Default::default(),
+            weekly: Default::default(),
+            month: Default::default(),
+            models: Vec::new(),
+        };
+        // Month / --period-start: same day-of-month next month.
+        assert_eq!(
+            period_end(&report, "month", false),
+            Some(window::next_month(since))
+        );
+        // An <n>d window ends n days after it started.
+        assert_eq!(
+            period_end(&report, "30d", false),
+            Some(since + 30 * 86_400_000)
+        );
+        // All time has no boundary.
+        assert_eq!(period_end(&report, "all", false), None);
+        // Inference pins the start itself, so it outranks the window mode.
+        assert_eq!(
+            period_end(&report, "30d", true),
+            Some(window::next_month(since))
+        );
     }
 
     #[test]

@@ -78,6 +78,10 @@ pub struct Report {
     pub period_label: String,
     pub now_ms: i64,
     pub since_ms: i64,
+    /// End of the period (epoch ms), resolved by the caller from its own start
+    /// — see `next_month`. `None` when the period has no boundary (`--window
+    /// all`); the rolling 5h/weekly windows never carry one.
+    pub period_end_ms: Option<i64>,
     pub month_inferred: bool,
     pub five_hour: Totals,
     pub weekly: Totals,
@@ -129,6 +133,20 @@ pub fn now_ms() -> i64 {
 pub fn calendar_month_start(now_ms: i64) -> i64 {
     let (year, month, _) = civil(now_ms / 1000);
     days_from_civil(year, month, 1) * 86_400_000
+}
+
+/// The same day-of-month one month later, 00:00 UTC, in epoch ms; the year
+/// wraps. The day is clamped to 28 so an anniversary on the 29th–31st cannot
+/// skip a month into the wrong one — the same clamp `month_start` applies, so a
+/// period start it produced always has a matching end.
+pub fn next_month(ms: i64) -> i64 {
+    let (year, month, day) = civil(ms / 1000);
+    let (ny, nm) = if month == 12 {
+        (year + 1, 1)
+    } else {
+        (year, month + 1)
+    };
+    days_from_civil(ny, nm, day.min(28)) * 86_400_000
 }
 
 /// Start of the billing month: the most recent occurrence of the inferred
@@ -190,6 +208,7 @@ pub fn build(
         period_label: "calendar month".into(),
         now_ms,
         since_ms,
+        period_end_ms: None,
         month_inferred: since_override.is_none() && month_inferred,
         five_hour: Totals::default(),
         weekly: Totals::default(),
@@ -260,6 +279,19 @@ mod tests {
         let secs = days_from_civil(2026, 9, 27) * 86_400;
         assert_eq!(civil(secs), (2026, 9, 27));
         assert_eq!(day_of_month(secs), 27);
+    }
+
+    #[test]
+    fn next_month_keeps_the_day_and_wraps_the_year() {
+        // Same day-of-month, one month later, across a year boundary.
+        let dec15 = days_from_civil(2026, 12, 15) * 86_400_000;
+        assert_eq!(civil(next_month(dec15) / 1000), (2027, 1, 15));
+        // A calendar-month start (day 1) lands on day 1 of the next month.
+        let jan1 = days_from_civil(2026, 1, 1) * 86_400_000;
+        assert_eq!(civil(next_month(jan1) / 1000), (2026, 2, 1));
+        // A 31st start is clamped to 28, so it cannot skip a short month.
+        let jan31 = days_from_civil(2026, 1, 31) * 86_400_000;
+        assert_eq!(civil(next_month(jan31) / 1000), (2026, 2, 28));
     }
 
     #[test]
