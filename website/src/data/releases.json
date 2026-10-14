@@ -1,6 +1,27 @@
 {
-	"generatedAt": "2026-10-09T11:19:46.749Z",
+	"generatedAt": "2026-10-14T11:20:56.838Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.7.10",
+			"name": "cmduse-v0.7.10",
+			"publishedAt": "2026-10-14T09:44:05Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.10",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.9...cmduse-v0.7.10"
+		},
+		{
+			"tag": "cmduse-v0.7.9",
+			"name": "cmduse-v0.7.9",
+			"publishedAt": "2026-10-13T10:22:27Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.9",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.8...cmduse-v0.7.9"
+		},
+		{
+			"tag": "cmduse-v0.7.8",
+			"name": "cmduse-v0.7.8",
+			"publishedAt": "2026-10-09T14:15:49Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.8",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.7...cmduse-v0.7.8"
+		},
 		{
 			"tag": "cmduse-v0.7.7",
 			"name": "cmduse-v0.7.7",
@@ -36,6 +57,24 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.1"
 		},
 		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.2",
+			"date": "2026-10-09T12:21:20.688Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.2"
+		},
+		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.3",
+			"date": "2026-10-10T01:43:57.486Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.3"
+		},
+		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.4",
+			"date": "2026-10-12T13:12:17.461Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.4"
+		},
+		{
 			"package": "@jeffreyjyz/reqshape",
 			"version": "0.0.0-stage",
 			"date": "2026-10-09T10:49:39.433Z",
@@ -52,6 +91,18 @@
 			"version": "0.1.1",
 			"date": "2026-10-09T10:54:40.603Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.1.1"
+		},
+		{
+			"package": "@jeffreyjyz/reqshape",
+			"version": "0.1.2",
+			"date": "2026-10-09T12:21:42.180Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.1.2"
+		},
+		{
+			"package": "@jeffreyjyz/reqshape",
+			"version": "0.2.0",
+			"date": "2026-10-12T12:42:24.718Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.2.0"
 		},
 		{
 			"package": "@jeffreyjyz/opencode-command-code",
@@ -282,6 +333,30 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.3.19"
 		},
 		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.4.0",
+			"date": "2026-10-10T01:44:07.644Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.4.0"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.0",
+			"date": "2026-10-11T04:36:47.090Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.0"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.1",
+			"date": "2026-10-14T10:03:57.763Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.1"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.3",
+			"date": "2026-10-14T11:02:52.684Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.3"
+		},
+		{
 			"package": "@jeffreyjyz/opencode-context",
 			"version": "0.0.0-stage",
 			"date": "2026-10-04T06:04:48.107Z",
@@ -312,6 +387,12 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.1.0"
 		},
 		{
+			"package": "@jeffreyjyz/opencode-shell-rc",
+			"version": "0.1.1",
+			"date": "2026-10-12T05:16:22.790Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.1.1"
+		},
+		{
 			"package": "@jeffreyjyz/opencode-session-dir",
 			"version": "0.0.0-stage",
 			"date": "2026-10-04T09:09:55.760Z",
@@ -325,6 +406,24 @@
 		}
 	],
 	"crates": [
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.10",
+			"date": "2026-10-14T09:40:20.720358Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.10"
+		},
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.9",
+			"date": "2026-10-13T10:19:32.393144Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.9"
+		},
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.8",
+			"date": "2026-10-09T14:10:33.845742Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.8"
+		},
 		{
 			"crate": "cmd-usage",
 			"version": "0.7.7",
@@ -618,6 +717,12 @@
 			"version": "0.1.0",
 			"date": "2026-09-04T07:50:07.640696Z",
 			"url": "https://crates.io/crates/cmd-usage/0.1.0"
+		},
+		{
+			"crate": "cmduse-core",
+			"version": "2.1.0",
+			"date": "2026-10-09T14:09:54.347752Z",
+			"url": "https://crates.io/crates/cmduse-core/2.1.0"
 		},
 		{
 			"crate": "cmduse-core",
