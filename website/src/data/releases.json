@@ -1,6 +1,13 @@
 {
-	"generatedAt": "2026-10-14T11:24:12.919Z",
+	"generatedAt": "2026-10-16T11:13:14.373Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.7.11",
+			"name": "cmduse-v0.7.11",
+			"publishedAt": "2026-10-16T07:28:06Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.11",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.10...cmduse-v0.7.11"
+		},
 		{
 			"tag": "cmduse-v0.7.10",
 			"name": "cmduse-v0.7.10",
@@ -345,6 +352,12 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.3"
 		},
 		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.4",
+			"date": "2026-10-16T09:04:13.141Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.4"
+		},
+		{
 			"package": "@jeffreyjyz/opencode-context",
 			"version": "0.1.0",
 			"date": "2026-10-04T06:05:56.479Z",
@@ -376,6 +389,12 @@
 		}
 	],
 	"crates": [
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.11",
+			"date": "2026-10-16T07:24:33.470002Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.11"
+		},
 		{
 			"crate": "cmd-usage",
 			"version": "0.7.10",
