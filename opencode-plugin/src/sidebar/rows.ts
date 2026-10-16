@@ -212,6 +212,11 @@ export function windowRows(
 	now: number,
 	durSecs: number,
 	extra?: string,
+	/** How the use line reads. The default is money (`$0.55/$14 (3.9%)`); the
+	 *  account's own meters publish shares rather than dollars and pass a percent
+	 *  formatter, so the tone, `LIMIT EXCEEDED`, `cap in …`, `elapsed` and
+	 *  `resets` stay this one implementation for both. */
+	use?: (used: number, cap: number, pct: number) => string,
 ): SidebarRow[] {
 	if (!w || typeof w.cap !== "number" || w.cap <= 0) return [];
 	const used = typeof w.used === "number" ? w.used : 0;
@@ -234,7 +239,9 @@ export function windowRows(
 	return [
 		[
 			label,
-			`${money(used)}/${money(w.cap)} (${pct.toFixed(1)}%)`,
+			use
+				? use(used, w.cap, pct)
+				: `${money(used)}/${money(w.cap)} (${pct.toFixed(1)}%)`,
 			w.exceeded ? "crit" : pctTone(pct),
 		],
 		...(detail ? [["", detail, "muted"] as SidebarRow] : []),

@@ -200,6 +200,44 @@ fn window_line(
     }
 }
 
+/// One of the account's own meters, as `opencode.ai/console` shows it: the
+/// server's percentage, its reset instant, and its verdict. No dollar figure
+/// belongs here — the endpoint publishes shares and instants, not money; that is
+/// what the model table is for.
+fn meter_line(ink: &Ink, label: &str, meter: &crate::ocuse::api::Meter, now_ms: i64) -> String {
+    let reset = meter
+        .reset_ms()
+        .map(|at| duration(((at - now_ms) / 1000).max(0) as u64))
+        .unwrap_or_default();
+    let reset_text = if reset.is_empty() {
+        String::new()
+    } else {
+        format!(" · resets in {reset}")
+    };
+    // Actionable before informational, as everywhere else: a server verdict
+    // outranks the reset countdown.
+    let flag = if meter.exceeded() {
+        format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
+    } else if !meter.status.eq_ignore_ascii_case("ok") {
+        format!(" {}{}{}{}", ink.red, meter.status, ink.reset, "")
+    } else {
+        String::new()
+    };
+    let share = pct(meter.percent, 100.0);
+    if ink.colour {
+        let tone = ink.for_pct(meter.percent);
+        format!(
+            " {}{label:<8}{} {} {tone}{share:>7}{}{reset_text}{flag}\n",
+            ink.bold,
+            ink.reset,
+            ink.bar(meter.percent, 100.0),
+            ink.reset,
+        )
+    } else {
+        format!("  {label:<8} {share:>7}{reset_text}{flag}\n")
+    }
+}
+
 /// Sum of `limit * share` over the models used this month — an aggregate ceiling
 /// across the models in play, since Go grants limits per model.
 fn aggregate_cap(report: &Report, share: f64) -> Option<f64> {
@@ -318,51 +356,80 @@ pub fn render_text(
         c(compact(report.month.output)),
     ));
 
-    if report.month.requests > 0 {
-        let five_reset = report.now_ms + crate::ocuse::window::FIVE_HOUR_SECS * 1000;
-        let week_reset = report.now_ms + crate::ocuse::window::WEEKLY_SECS * 1000;
-        // Only the monthly period has a real end (`period_end_ms`): the rolling
-        // windows are cut at `now - window`, so they keep their countdown but
-        // gain no elapsed share or pace ETA.
-        let monthly_dur = report
-            .period_end_ms
-            .map(|end| ((end - report.since_ms) / 1000).max(0) as u64);
-        out.push_str(&format!(
-            "\n{}GO{} {}\n",
-            ink.bold,
-            ink.reset,
-            ink.dim_on("(limits are per model: 5h = 20%, weekly = 50%, monthly = 100%)".into()),
-        ));
-        out.push_str(&window_line(
-            &ink,
-            "5-hour",
-            &report.five_hour,
-            aggregate_cap(report, shares.five_hour),
-            Some(five_reset),
-            None,
-            false,
-            report.now_ms,
-        ));
-        out.push_str(&window_line(
-            &ink,
-            "Weekly",
-            &report.weekly,
-            aggregate_cap(report, shares.weekly),
-            Some(week_reset),
-            None,
-            false,
-            report.now_ms,
-        ));
-        out.push_str(&window_line(
-            &ink,
-            "Monthly",
-            &report.month,
-            aggregate_cap(report, shares.monthly),
-            report.period_end_ms,
-            monthly_dur,
-            true,
-            report.now_ms,
-        ));
+    // The three window rows. When the account answered, they are its own meters
+    // — the only view that agrees with opencode.ai/console, and the reason this
+    // endpoint is read at all: the store cannot reproduce the server's window
+    // anchors or its price basis (see `ocuse::api`).
+    match &report.account {
+        Some(account) => {
+            out.push_str(&format!(
+                "\n{}GO{} {}\n",
+                ink.bold,
+                ink.reset,
+                ink.dim_on("(account meters — what opencode.ai/console reports)".into()),
+            ));
+            out.push_str(&meter_line(&ink, "5-hour", &account.rolling, report.now_ms));
+            out.push_str(&meter_line(&ink, "Weekly", &account.weekly, report.now_ms));
+            out.push_str(&meter_line(
+                &ink,
+                "Monthly",
+                &account.monthly,
+                report.now_ms,
+            ));
+        }
+        // No Go key, no network, or a key without the subscription: the store's
+        // own estimate, which says so. Its windows are the local ones (`now -
+        // 5h` / `now - 7d` / the period), so they can disagree with the account.
+        None if report.month.requests > 0 => {
+            let five_reset = report.now_ms + crate::ocuse::window::FIVE_HOUR_SECS * 1000;
+            let week_reset = report.now_ms + crate::ocuse::window::WEEKLY_SECS * 1000;
+            // Only the monthly period has a real end (`period_end_ms`): the
+            // local rolling windows are cut at `now - window`, so they keep
+            // their countdown but gain no elapsed share or pace ETA.
+            let monthly_dur = report
+                .period_end_ms
+                .map(|end| ((end - report.since_ms) / 1000).max(0) as u64);
+            out.push_str(&format!(
+                "\n{}GO{} {}\n",
+                ink.bold,
+                ink.reset,
+                ink.dim_on(
+                    "(estimated locally — limits are per model: 5h = 20%, weekly = 50%, monthly = 100%)"
+                        .into()
+                ),
+            ));
+            out.push_str(&window_line(
+                &ink,
+                "5-hour",
+                &report.five_hour,
+                aggregate_cap(report, shares.five_hour),
+                Some(five_reset),
+                None,
+                false,
+                report.now_ms,
+            ));
+            out.push_str(&window_line(
+                &ink,
+                "Weekly",
+                &report.weekly,
+                aggregate_cap(report, shares.weekly),
+                Some(week_reset),
+                None,
+                false,
+                report.now_ms,
+            ));
+            out.push_str(&window_line(
+                &ink,
+                "Monthly",
+                &report.month,
+                aggregate_cap(report, shares.monthly),
+                report.period_end_ms,
+                monthly_dur,
+                true,
+                report.now_ms,
+            ));
+        }
+        None => {}
     }
 
     out.push_str(&format!(
@@ -386,6 +453,18 @@ pub fn render_text(
                 .into()
         )
     ));
+    // The GO block above is the account's own metering. These two columns are
+    // per model and cut from this machine's store, so say so rather than let
+    // them read as a second opinion on the same window.
+    if report.account.is_some() {
+        out.push_str(&format!(
+            "{}\n",
+            ink.dim_on(
+                "5H/WK columns: this model's own spend over the last 5h / 7 days (local, not the account's windows)."
+                    .into()
+            )
+        ));
+    }
     out
 }
 
@@ -432,12 +511,23 @@ pub fn compact_line(report: &Report, history: &[f64], colour: bool) -> String {
     } else {
         String::new()
     };
+    // The 5-hour figure is the one a narrow terminal shows, and the store's
+    // rolling 5h is not the server's block: prefer the account's own share
+    // whenever the endpoint answered (see `ocuse::api`). The month spend stays
+    // money — it is a budget, not a throttle.
+    let window_share = match &report.account {
+        Some(account) => format!(
+            " · 5h {} · wk {}",
+            ink.cyan_on(pct(account.rolling.percent, 100.0)),
+            ink.cyan_on(pct(account.weekly.percent, 100.0)),
+        ),
+        None => format!(" · 5h {}", ink.cyan_on(money(report.five_hour.cost))),
+    };
     format!(
-        "{}oc{} {} month · 5h {}{spark}",
+        "{}oc{} {} month{window_share}{spark}",
         ink.bold,
         ink.reset,
         ink.cyan_on(money(report.month.cost)),
-        ink.cyan_on(money(report.five_hour.cost)),
     )
 }
 
@@ -476,6 +566,21 @@ pub fn statusline_template(
         Some(cap) => crate::report_render::bar(used / cap * 100.0, bar_width, ascii, colours),
         None => String::new(),
     };
+    // The account's own share outranks the local one wherever both exist: it is
+    // what opencode.ai/console shows, and the local estimate's window anchors are
+    // not the server's (see `ocuse::api`). Money tokens stay local either way —
+    // the endpoint publishes shares and instants, not dollars.
+    let account = report.account.as_ref();
+    let share_of =
+        |meter: Option<&crate::ocuse::api::Meter>, used: f64, cap: Option<f64>| match meter {
+            Some(meter) => pct(meter.percent, 100.0),
+            None => pct_of(used, cap),
+        };
+    let share_bar =
+        |meter: Option<&crate::ocuse::api::Meter>, used: f64, cap: Option<f64>| match meter {
+            Some(meter) => crate::report_render::bar(meter.percent, bar_width, ascii, colours),
+            None => bar_of(used, cap),
+        };
     let top_model = || {
         report
             .models
@@ -487,14 +592,22 @@ pub fn statusline_template(
         "plan" => plan_id.to_string(),
         "period" => report.period_label.clone(),
         "month" => cash(report.month.cost),
-        "month_pct" => pct_of(report.month.cost, month_cap),
-        "month_bar" => bar_of(report.month.cost, month_cap),
+        "month_pct" => share_of(account.map(|a| &a.monthly), report.month.cost, month_cap),
+        "month_bar" => share_bar(account.map(|a| &a.monthly), report.month.cost, month_cap),
         "five_hour" | "5h" => cash(report.five_hour.cost),
-        "five_hour_pct" | "5h_pct" => pct_of(report.five_hour.cost, five_cap),
-        "five_hour_bar" | "5h_bar" => bar_of(report.five_hour.cost, five_cap),
+        "five_hour_pct" | "5h_pct" => {
+            share_of(account.map(|a| &a.rolling), report.five_hour.cost, five_cap)
+        }
+        "five_hour_bar" | "5h_bar" => {
+            share_bar(account.map(|a| &a.rolling), report.five_hour.cost, five_cap)
+        }
         "weekly" | "wk" => cash(report.weekly.cost),
-        "weekly_pct" | "wk_pct" => pct_of(report.weekly.cost, week_cap),
-        "weekly_bar" | "wk_bar" => bar_of(report.weekly.cost, week_cap),
+        "weekly_pct" | "wk_pct" => {
+            share_of(account.map(|a| &a.weekly), report.weekly.cost, week_cap)
+        }
+        "weekly_bar" | "wk_bar" => {
+            share_bar(account.map(|a| &a.weekly), report.weekly.cost, week_cap)
+        }
         "models" => top_model(),
         _ => String::new(),
     })
@@ -533,6 +646,16 @@ pub fn render_json(report: &Report) -> String {
             "weekly": totals(&m.weekly),
         })
     };
+    // The account's own meters, when the Go usage endpoint answered. Consumers
+    // (the sidebar's Go block among them) should prefer these over the local
+    // `totals`, which cannot reproduce the server's anchors or price basis.
+    let meter = |m: &crate::ocuse::api::Meter| {
+        serde_json::json!({
+            "status": m.status,
+            "percent": m.percent,
+            "resetsAt": m.reset_ms(),
+        })
+    };
     serde_json::to_string_pretty(&serde_json::json!({
         "source": "opencode.db",
         "generatedAt": report.now_ms,
@@ -549,6 +672,13 @@ pub fn render_json(report: &Report) -> String {
             "fiveHour": totals(&report.five_hour),
             "weekly": totals(&report.weekly),
         },
+        // `null` when no Go key, no network, or a key without the subscription:
+        // the caller then has only `totals`, which is the local estimate.
+        "account": report.account.as_ref().map(|a| serde_json::json!({
+            "rolling": meter(&a.rolling),
+            "weekly": meter(&a.weekly),
+            "monthly": meter(&a.monthly),
+        })),
         "models": report.models.iter().map(model).collect::<Vec<_>>(),
     }))
     .expect("json")
@@ -1204,6 +1334,112 @@ mod tests {
         assert!(text.contains("glm-5.3-flash"), "{text}");
         assert!(text.contains("$60"), "the model's monthly limit: {text}");
         assert!(text.contains("50%"), "30 of 60 is half: {text}");
+    }
+
+    fn meter(status: &str, percent: f64, resets_at: &str) -> crate::ocuse::api::Meter {
+        crate::ocuse::api::Meter {
+            status: status.into(),
+            percent,
+            resets_at: Some(resets_at.into()),
+        }
+    }
+
+    /// The same report with the account's own meters attached — the shape a Go
+    /// key produces. Reset instants sit after `now` (2027-01-15T08:00:00Z), so
+    /// the countdowns render rather than clamp to zero.
+    fn report_with_account() -> Report {
+        let mut report = report();
+        report.account = Some(crate::ocuse::api::Usage {
+            rolling: meter("ok", 5.0, "2027-01-15T12:31:00.000Z"),
+            weekly: meter("ok", 59.0, "2027-01-18T00:00:00.000Z"),
+            monthly: meter("ok", 29.0, "2027-02-15T08:00:00.000Z"),
+        });
+        report
+    }
+
+    #[test]
+    fn the_window_rows_come_from_the_account_when_it_answered() {
+        let text = render_text(
+            &report_with_account(),
+            "/tmp/opencode.db",
+            10,
+            false,
+            DEFAULT_BAR_WIDTH,
+        );
+        // The console's three shares, and its reset instants.
+        assert!(text.contains("5.0%"), "{text}");
+        assert!(text.contains("59.0%"), "{text}");
+        assert!(text.contains("29.0%"), "{text}");
+        assert!(text.contains("account meters"), "{text}");
+        assert!(
+            text.contains("resets in 4h 31m"),
+            "the 5h block's own end: {text}"
+        );
+        // The local estimate's aggregate ceilings are gone: their dollars would
+        // be a second, disagreeing answer to the same question.
+        assert!(!text.contains("$16.00"), "the local 5h cap: {text}");
+        assert!(!text.contains("$40.00"), "the local weekly cap: {text}");
+        // …and the per-model columns are called out as local, not a second meter.
+        assert!(text.contains("not the account's windows"), "{text}");
+    }
+
+    #[test]
+    fn without_an_account_the_rows_say_they_are_local() {
+        let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        assert!(text.contains("estimated locally"), "{text}");
+        assert!(text.contains("$60.00"), "the local monthly cap: {text}");
+        // Nothing claims to be the account's own view.
+        assert!(!text.contains("account meters"), "{text}");
+        assert!(!text.contains("not the account's windows"), "{text}");
+    }
+
+    #[test]
+    fn an_over_limit_meter_says_so_before_its_countdown() {
+        let mut report = report_with_account();
+        if let Some(account) = &mut report.account {
+            account.rolling = meter("rate_limited", 100.0, "2027-01-15T12:31:00.000Z");
+        }
+        let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        assert!(text.contains("LIMIT EXCEEDED"), "{text}");
+    }
+
+    #[test]
+    fn json_carries_the_account_meters_and_null_without_them() {
+        let parsed: serde_json::Value =
+            serde_json::from_str(&render_json(&report_with_account())).unwrap();
+        assert_eq!(parsed["account"]["rolling"]["percent"], 5.0);
+        assert_eq!(parsed["account"]["weekly"]["percent"], 59.0);
+        assert_eq!(parsed["account"]["monthly"]["status"], "ok");
+        // `resetsAt` in epoch ms (the same units as `periodEndAt`), not the ISO
+        // string the endpoint sent; `api::tests` pins the literal itself.
+        let monthly = cmduse_core::dates::parse_iso_utc("2027-02-15T08:00:00.000Z").unwrap();
+        assert_eq!(parsed["account"]["monthly"]["resetsAt"], monthly as i64);
+
+        // No account: the key is present and null, so a consumer can tell the
+        // difference between "no key" and "zero".
+        let parsed: serde_json::Value = serde_json::from_str(&render_json(&report())).unwrap();
+        assert_eq!(parsed["account"], serde_json::Value::Null);
+    }
+
+    #[test]
+    fn statusline_prefers_the_accounts_share_over_the_local_estimate() {
+        let tpl = "{five_hour_pct} {weekly_pct} {month_pct} {five_hour}";
+        let account = statusline_template(
+            &report_with_account(),
+            "go",
+            tpl,
+            false,
+            false,
+            DEFAULT_BAR_WIDTH,
+        );
+        assert!(account.starts_with("5.0% 59.0% 29.0%"), "{account}");
+        // Money stays local either way: the endpoint publishes shares, not dollars.
+        assert!(account.contains("$30.00"), "{account}");
+
+        // Without an account the same tokens resolve against the store, which is
+        // what makes the fallback worth having.
+        let local = statusline_template(&report(), "go", tpl, false, false, DEFAULT_BAR_WIDTH);
+        assert!(!local.starts_with("5.0%"), "{local}");
     }
 
     #[test]

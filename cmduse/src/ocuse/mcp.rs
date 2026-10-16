@@ -3,22 +3,33 @@
 // cmduse can drive this. Tools mirror the CLI: usage, plans, models, daily,
 // hourly, session, model — the same seven cmduse exposes.
 //
-// Read-only, like everything else here: it reads opencode.db and the generated
-// catalogue, never the network.
+// Read-only: it reads opencode.db and the generated catalogue. The Go usage
+// endpoint's meters are not fetched here — the caller resolves them once (the
+// CLI's own rule: one fetch per run, not one per tool call) and hands them in,
+// so a `usage` call shows the same window rows the dashboard does.
+use crate::ocuse::api::Usage;
 use crate::ocuse::{db, render, window, zen};
 use serde_json::{json, Value};
 
 const PROTOCOL_VERSION: &str = "2025-06-18";
 
+/// What every tool call needs, resolved once by the caller — the per-run
+/// settings plus the account meters it already fetched. Bundled rather than
+/// passed positionally so adding a source (as `account` did) does not grow every
+/// signature in the file.
+#[derive(Clone, Copy)]
+pub struct Settings<'a> {
+    pub db_path: &'a str,
+    pub days: i64,
+    pub tz_secs: i64,
+    pub colour: bool,
+    pub plan: &'a str,
+    pub period_start: Option<i64>,
+    pub account: Option<&'a Usage>,
+}
+
 /// Serve stdin -> stdout until the host closes the pipe.
-pub fn run(
-    db_path: &str,
-    days: i64,
-    tz_secs: i64,
-    colour: bool,
-    plan: &str,
-    period_start: Option<i64>,
-) {
+pub fn run(settings: Settings) {
     use std::io::{BufRead, Write};
     let stdin = std::io::stdin();
     let mut out = std::io::stdout().lock();
@@ -30,7 +41,7 @@ pub fn run(
         let Ok(msg) = serde_json::from_str::<Value>(&line) else {
             continue; // not JSON: ignore, a host bug shouldn't kill the server
         };
-        if let Some(response) = handle(&msg, db_path, days, tz_secs, colour, plan, period_start) {
+        if let Some(response) = handle(&msg, &settings) {
             if writeln!(out, "{response}").is_err() {
                 break; // stdout closed: host is gone
             }
@@ -40,15 +51,7 @@ pub fn run(
 }
 
 /// One message in, one response out; `None` for notifications (no `id`).
-pub fn handle(
-    msg: &Value,
-    db_path: &str,
-    days: i64,
-    tz_secs: i64,
-    colour: bool,
-    plan: &str,
-    period_start: Option<i64>,
-) -> Option<Value> {
+pub fn handle(msg: &Value, settings: &Settings) -> Option<Value> {
     let method = msg.get("method")?.as_str()?;
     let id = msg.get("id")?;
     let result = match method {
@@ -62,7 +65,7 @@ pub fn handle(
         })),
         "ping" => Ok(json!({})),
         "tools/list" => Ok(json!({ "tools": tools() })),
-        "tools/call" => tool_call(msg, db_path, days, tz_secs, colour, plan, period_start),
+        "tools/call" => tool_call(msg, settings),
         other => Err((-32601, format!("method not found: {other}"))),
     };
     Some(match result {
@@ -74,15 +77,16 @@ pub fn handle(
     })
 }
 
-fn tool_call(
-    msg: &Value,
-    db_path: &str,
-    days: i64,
-    tz_secs: i64,
-    colour: bool,
-    plan: &str,
-    period_start: Option<i64>,
-) -> Result<Value, (i64, String)> {
+fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
+    let Settings {
+        db_path,
+        days,
+        tz_secs,
+        colour,
+        plan,
+        period_start,
+        account,
+    } = *settings;
     let name = msg
         .pointer("/params/name")
         .and_then(|v| v.as_str())
@@ -103,13 +107,12 @@ fn tool_call(
     let rows = || db::read_rows(db_path, crate::ocuse::window::now_ms() - days * 86_400_000);
     let text = match name {
         "usage" => rows().map(|rows| {
-            render::render_text(
-                &window::build(&rows, &zen::catalog(), &plan_id, window::now_ms(), None),
-                db_path,
-                15,
-                colour,
-                render::DEFAULT_BAR_WIDTH,
-            )
+            let mut report =
+                window::build(&rows, &zen::catalog(), &plan_id, window::now_ms(), None);
+            // The account's own meters when the caller resolved them, so a `usage`
+            // call renders the same window rows the dashboard does.
+            report.account = account.cloned();
+            render::render_text(&report, db_path, 15, colour, render::DEFAULT_BAR_WIDTH)
         }),
         "plans" => Ok(render::plans_text(colour)),
         "models" => {
@@ -206,12 +209,17 @@ mod tests {
     fn call(method: &str, params: Value, id: i64) -> Value {
         handle(
             &json!({ "jsonrpc": "2.0", "id": id, "method": method, "params": params }),
-            "/nonexistent/opencode.db",
-            120,
-            0,
-            false,
-            crate::ocuse::zen::DEFAULT_PLAN,
-            None,
+            &Settings {
+                db_path: "/nonexistent/opencode.db",
+                days: 120,
+                tz_secs: 0,
+                colour: false,
+                plan: crate::ocuse::zen::DEFAULT_PLAN,
+                period_start: None,
+                // No account: the tests never reach the network, and the local
+                // estimate is what the fixtures below are written against.
+                account: None,
+            },
         )
         .expect("notification")
     }

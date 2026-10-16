@@ -73,16 +73,22 @@ struct Cache {
 /// `opencode` the Zen pay-as-you-go gateway.
 pub const PROVIDERS: [&str; 2] = ["opencode-go", "opencode"];
 
+/// opencode's own directory: `$XDG_DATA_HOME/opencode`, else
+/// `~/.local/share/opencode`. Holds the store and `auth.json` (the Go key).
+pub fn opencode_home() -> String {
+    let base = std::env::var("XDG_DATA_HOME").unwrap_or_else(|_| {
+        let home = std::env::var("HOME").unwrap_or_default();
+        format!("{home}/.local/share")
+    });
+    format!("{base}/opencode")
+}
+
 /// Default store location: `$OPENCODE_DB`, else the XDG data dir.
 pub fn default_path() -> String {
     if let Ok(path) = std::env::var("OPENCODE_DB") {
         return path;
     }
-    let base = std::env::var("XDG_DATA_HOME").unwrap_or_else(|_| {
-        let home = std::env::var("HOME").unwrap_or_default();
-        format!("{home}/.local/share")
-    });
-    format!("{base}/opencode/opencode.db")
+    format!("{}/opencode.db", opencode_home())
 }
 
 /// Every OpenCode-owned assistant row at or after `since_ms`, oldest first.

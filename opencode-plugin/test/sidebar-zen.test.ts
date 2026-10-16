@@ -464,3 +464,98 @@ describe("rolling window ageing-out (derived reset)", () => {
 		);
 	});
 });
+
+describe("the account's own meters", () => {
+	// What ocuse reports once it reached OpenCode Go's usage endpoint: the
+	// console's three shares, not this machine's rolling windows. Built relative
+	// to now so the countdowns and the elapsed shares are real.
+	const withAccount = () => {
+		const now = Date.now();
+		return JSON.stringify({
+			periodStart: now - 3 * 24 * 3_600_000,
+			periodEndAt: now + 27 * 24 * 3_600_000,
+			account: {
+				rolling: {
+					status: "ok",
+					percent: 5,
+					resetsAt: now + 4 * 3_600_000,
+				},
+				weekly: {
+					status: "ok",
+					percent: 59,
+					resetsAt: now + 2 * 24 * 3_600_000,
+				},
+				monthly: {
+					status: "ok",
+					percent: 29,
+					resetsAt: now + 27 * 24 * 3_600_000,
+				},
+			},
+			totals: {
+				fiveHour: { requests: 1, cost: 0.5 },
+				weekly: { requests: 3, cost: 1.5 },
+				month: { requests: 58, cost: 17 },
+			},
+			models: [
+				{
+					id: "z-ai/glm-5.3-flash",
+					provider: "opencode-go",
+					limit: 60,
+					fiveHour: { requests: 1, cost: 0.5 },
+					weekly: { requests: 3, cost: 1.5 },
+					month: { requests: 58, cost: 17 },
+				},
+			],
+		});
+	};
+
+	test("parseZenJson reads the meters, and leaves them out when absent", () => {
+		const usage = parseZenJson(withAccount());
+		expect(usage.account?.rolling).toEqual({
+			status: "ok",
+			percent: 5,
+			resetsAt: expect.any(Number),
+		});
+		expect(usage.account?.weekly.percent).toBe(59);
+		expect(usage.account?.monthly.percent).toBe(29);
+		// An older ocuse (or one with no key) publishes no `account` block.
+		expect(parseZenJson(sample).account).toBeUndefined();
+	});
+
+	test("the window rows are the account's shares, not the model's dollars", () => {
+		const rows = zenRows(parseZenJson(withAccount()), meta);
+		const find = (label: string) => rows.find((row) => row[0] === label);
+		expect(find("5-hour")?.[1]).toBe("5.0% of limit");
+		expect(find("Weekly")?.[1]).toBe("59.0% of limit");
+		expect(find("Monthly")?.[1]).toBe("29.0% of limit");
+		// The reset countdown rides on the continuation, as on the CC side.
+		expect(find("5-hour")?.[2]).toBe("ok");
+		const five = rows.findIndex((row) => row[0] === "5-hour");
+		expect(rows[five + 1]?.[1]).toContain("resets ");
+		// No per-model money rows: one answer per window, the server's.
+		expect(rows.some((row) => (row[1] ?? "").includes("$0.50/$12"))).toBe(
+			false,
+		);
+	});
+
+	test("a meter at its limit is flagged like an over-cap window", () => {
+		const body = JSON.parse(withAccount()) as Record<string, unknown>;
+		(body.account as Record<string, unknown>).rolling = {
+			status: "rate_limited",
+			percent: 100,
+			resetsAt: Date.now() + 3_600_000,
+		};
+		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
+		const five = rows.findIndex((row) => row[0] === "5-hour");
+		expect(rows[five]).toEqual(["5-hour", "100.0% of limit", "crit"]);
+		expect(rows[five + 1]?.[1]).toContain("LIMIT EXCEEDED");
+	});
+
+	test("without meters the per-model windows still render", () => {
+		// The fallback is what an older ocuse, a missing key or `--no-api` gives.
+		const rows = zenRows(parseZenJson(sample), meta);
+		expect(rows.find((row) => row[0] === "5-hour")?.[1]).toBe(
+			"$0.50/$12 (4.2%)",
+		);
+	});
+});

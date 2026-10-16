@@ -57,6 +57,8 @@ pub struct Args {
     pub infer_anniversary: bool,
     /// Table rows to print (`--rows`).
     pub rows: Option<usize>,
+    /// Skip OpenCode Go's usage endpoint (`--no-api`): stay local-only.
+    pub no_api: bool,
 }
 
 #[derive(Debug, Default)]
@@ -213,6 +215,12 @@ pub(crate) fn parse_args_from(
                     return Err(unknown_long("plan"));
                 }
                 a.plan = Some(need_value(&mut parser, "--plan needs an id")?);
+            }
+            Long("no-api") => {
+                if binary != Binary::Ocuse {
+                    return Err(unknown_long("no-api"));
+                }
+                a.no_api = true;
             }
             Long("window") => {
                 if binary != Binary::Ocuse {
@@ -444,7 +452,7 @@ Dashboard needs: logged-in Command Code CLI (~/.commandcode/auth.json)";
 /// The `ocuse` help text: the shared block plus its own extras and the
 /// ocuse-only flags. Kept in sync with `CMDUSE_HELP` by the parity test in
 /// `cli_tests` (every shared token cmduse prints must print here too).
-const OCUSE_HELP: &str = "ocuse — OpenCode Go/Zen usage (local, from opencode.db)
+const OCUSE_HELP: &str = "ocuse — OpenCode Go/Zen usage (opencode.db + Go's usage endpoint)
 
 Usage: ocuse [options]            Live plan dashboard (watch mode)
        ocuse -1                   One-shot dashboard
@@ -480,6 +488,7 @@ Options:
       --db <path>       opencode store (default $OPENCODE_DB or
                         ~/.local/share/opencode/opencode.db)
       --plan <id>       Go plan to measure against: go (default) or go-plus
+      --no-api          Skip OpenCode Go's usage endpoint and stay local-only
       --window <w>      report window: month (default), all, or <n>d
       --period-start <date>  pin the period start (YYYY-MM-DD, UTC)
       --infer-anniversary   infer the period start from the first Go request
@@ -494,7 +503,9 @@ Config: ~/.config/ocuse/config.json
     \"statusline_colors\": true, \"statusline_ascii\": false,
     \"check_updates\": true, \"dismissed_update\": null }
 
-Reads opencode's own store; no usage API exists for OpenCode Go/Zen.";
+Reads opencode's own store, and OpenCode Go's usage endpoint when a Go key is
+present (the account's own meters — what opencode.ai/console shows). Without a
+key, no network, or with --no-api, the windows fall back to a local estimate.";
 
 pub fn usage_text(binary: Binary) -> &'static str {
     match binary {

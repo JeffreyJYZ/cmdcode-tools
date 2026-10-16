@@ -2,7 +2,7 @@
 .SH NAME
 cmduse \- live Command Code (commandcode.ai) usage dashboard and reporter
 .br
-ocuse \- OpenCode Go/Zen usage from local opencode data
+ocuse \- OpenCode Go/Zen usage (Go's usage endpoint plus local opencode data)
 .SH SYNOPSIS
 .B cmduse
 [\fIOPTIONS\fR]
@@ -54,8 +54,8 @@ the usage API), offline reports from local CLI logs, a template\-driven
 statusline for prompts, and a listing of live models.  The same crate also
 ships a second binary,
 .BR ocuse ,
-which tracks OpenCode Go and OpenCode Zen from local data instead of the
-Command Code API; it shares this manual's presentation and is documented under
+which tracks OpenCode Go and OpenCode Zen; it shares this manual's
+presentation and is documented under
 .BR OCUSE .
 .PP
 Authentication is read from
@@ -568,21 +568,42 @@ it "Free" with no monthly cap and prints a one\-time warning to stderr; update
 The same crate also ships a second binary,
 .BR ocuse ,
 which tracks OpenCode Go (the Go subscription) and OpenCode Zen
-(pay\-as\-you\-go) with the same CLI shape as \fBcmduse\fR.  OpenCode publishes
-no usage API (its one route,
-.IR /zen/go/v1/usage ,
-answers an entitlement error for a key without a Go subscription), so
+(pay\-as\-you\-go) with the same CLI shape as \fBcmduse\fR.  OpenCode Go
+exposes the console's own usage endpoint,
+.IR GET\ /zen/go/v1/usage ,
+which reports the three account meters \(em
+.I rolling
+(5\-hour),
+.IR weekly ,
+and
+.I monthly
+\(em each a percent of its limit and a reset instant, so
 .B ocuse
-reports what actually ran on this machine from opencode's own store, priced by
-opencode itself, against the token rates and per\-model limits the OpenCode
-docs publish (the generated catalogue
+reads those for its window rows (the credential from
+.IR $OCUSE_API_KEY ", " $OPENCODE_API_KEY ,
+else the
+.I opencode\-go
+entry of opencode's
+.IR auth.json ).
+It reports what actually ran on this machine from opencode's own store for
+everything the endpoint does not carry \(em the per\-model table,
+\fBdaily\fR/\fBhourly\fR, tokens \(em priced by opencode itself, against the
+token rates and per\-model limits the OpenCode docs publish (the generated
+catalogue
 .IR core/zen.json ).
+The endpoint's figures win wherever both exist: the server's 5\-hour window is
+a block with its own reset, its week is anchored to Monday 00:00 UTC, its month
+is the subscription anniversary, and it meters with its own price basis, none
+of which is reproducible from the store.  With no key, no network, or
+\fB\-\-no\-api\fR, the windows fall back to a local estimate and the dashboard
+labels them as such.
 .PP
 Go meters per model: each model has a monthly dollar limit, and its 5\-hour,
 weekly, and monthly windows are fixed shares of that limit (20%, 50%, and
 100%).  Go ships as two plans that share one token price list but grant
-different per\-model limits: Go and Go Plus.  Nothing local records which plan
-the account is on, so the plan is explicit (\fB\-\-plan\fR) and defaults to
+different per\-model limits: Go and Go Plus.  Neither the store nor the usage
+endpoint names the plan the account is on, so the plan is explicit
+(\fB\-\-plan\fR) and defaults to
 .BR go .
 .SS ocuse synopsis
 .B ocuse
@@ -634,7 +655,10 @@ Machine\-readable projection (one object): \fIsource\fR, \fIgeneratedAt\fR,
 \fIperiodStart\fR (and its alias \fIperiodStartAt\fR, both epoch ms),
 \fIperiodEndAt\fR (the resolved end of the period in epoch ms, \fBnull\fR for
 \fB\-\-window all\fR, whose range has no boundary), \fIperiodInferred\fR,
-\fItotals\fR (each of month, fiveHour,
+\fIaccount\fR (the three account meters from Go's usage endpoint \(em
+\fIrolling\fR, \fIweekly\fR, \fImonthly\fR, each \fI{status, percent,
+resetsAt}\fR with \fIresetsAt\fR in epoch ms \(em or \fBnull\fR when the
+endpoint was not reached), \fItotals\fR (each of month, fiveHour,
 weekly carrying cost, requests, and tokens), and the per\-model breakdown
 \fImodels\fR.  A bare \fB\-\-json\fR also leaves the watch loop, so it prints
 and exits rather than redrawing.
@@ -710,9 +734,13 @@ unreadable store exits 1 with a hint.
 .TP
 .B \-\-plan \fIid\fR
 Which Go plan to measure against: \fBgo\fR (default) or \fBgo-plus\fR.  There
-is deliberately no auto\-detection: there is no usage API, and the local store
-records no subscription, so the plan must be given.  An unknown id exits 2 and
-lists the known ids.
+is deliberately no auto\-detection: the usage endpoint reports percentages
+rather than a plan id, and the local store records no subscription, so the plan
+must be given.  An unknown id exits 2 and lists the known ids.
+.TP
+.B \-\-no\-api
+Do not call OpenCode Go's usage endpoint: report the local estimate only.
+Useful offline, or to compare the local windows against the account's.
 .TP
 .B \-\-days \fIn\fR
 Days of history to read (default 120).  Bounds the
@@ -766,14 +794,26 @@ Display timezone for the \fBdaily\fR/\fBhourly\fR buckets.  Accepts
 .IR +05:30 ", " -08:00 ", " +0530 .
 Anything else exits 2.
 .SS ocuse data and windows
-The header's window lines and each model's table row compare 5\-hour and weekly
-spend against the model's monthly limit times 20% and 50% (the docs' shares).
-The monthly period has no local record, so it defaults to the calendar month;
-\fB\-\-period\-start\fR pins the real anniversary and
-\fB\-\-infer\-anniversary\fR guesses it from history.  Only the monthly period
-has a real end, so that row alone gains a reset countdown, its \fIwindow N%
-elapsed\fR share and a pro\-rata \fB$\fR by\-now figure; the rolling 5\-hour
-and weekly rows show only their countdown.  The header splits period tokens
+When Go's usage endpoint answers, the header's three window lines are the
+account's own meters (the shares and resets \fBopencode.ai/console\fR shows),
+and the billing period comes from the endpoint's monthly reset instant \(em
+the subscription anniversary, which is why the period line reads
+\fIGo billing month\fR.  Each model's table row still compares its own spend
+against its monthly limit; the table's \fI5H\fR/\fIWK\fR columns are local
+rolling windows (this model's spend over the last 5 hours / 7 days), and the
+dashboard says so rather than letting them read as a second opinion.
+.TP
+Without the endpoint \(em no Go key, no network, or \fB\-\-no\-api\fR \(em the
+window lines are a local estimate and are labelled as one: the header compares
+5\-hour and weekly spend against the model's monthly limit times 20% and 50%
+(the docs' shares), and the period defaults to the calendar month, with
+\fB\-\-period\-start\fR pinning the real anniversary and
+\fB\-\-infer\-anniversary\fR guessing it from history.  On that path only the
+monthly period has a real end, so that row alone gains a reset countdown, its
+\fIwindow N% elapsed\fR share and a pro\-rata \fB$\fR by\-now figure; the
+rolling 5\-hour and weekly rows show only their countdown, derived from the
+oldest request still inside the window rather than a fabricated
+\fInow + window\fR.  The header splits period tokens
 \fIin / out\fR and names the resolved end date.  A model whose spend
 crosses its limit is flagged \fILIMIT EXCEEDED\fR.  There is no
 \fISuccess N%\fR figure \(em opencode's store records no per\-request success
@@ -796,6 +836,12 @@ Read\-only; opencode's own message store (v1 \fBmessage\fR, or v2
 .TP
 .I $OPENCODE_DB
 Overrides the store path (equivalently, \fB\-\-db\fR).
+.TP
+.I ~/.local/share/opencode/auth.json
+Read (never written) for the
+.I opencode\-go
+key, the credential \fB/connect\fR stored; \fB$OCUSE_API_KEY\fR and
+\fB$OPENCODE_API_KEY\fR override it.
 .SH SEE ALSO
 .BR cmd (1),
 the Command Code CLI for login and authentication.

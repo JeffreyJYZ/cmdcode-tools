@@ -1,10 +1,13 @@
 // OpenCode Go / Zen half of the panel (0.4.0).
 //
-// Usage comes from the `ocuse` CLI, the only local source for those providers:
-// it reads opencode's own store and reports per-model window totals. Rates and
-// benchmarks come from mpc's `oc` side, which the CommandCode panel already
-// loads — one catalog, both products. Spawning lives in ./data with the other
-// CLI calls; this module stays pure.
+// Usage comes from the `ocuse` CLI: it reads opencode's own store for the
+// per-model totals and, when the account has a Go key, OpenCode Go's usage
+// endpoint for the three account meters — the shares opencode.ai/console shows.
+// The meters win where both exist (they are the server's own numbers, with the
+// server's window anchors); the store's per-model windows are the fallback.
+// Rates and benchmarks come from mpc's `oc` side, which the CommandCode panel
+// already loads — one catalog, both products. Spawning lives in ./data with the
+// other CLI calls; this module stays pure.
 //
 // Windows go through the same `rows.ts::windowRows` the CommandCode side uses,
 // so `LIMIT EXCEEDED`, tone, `cap in …`, `elapsed` and `resets` have one
@@ -48,6 +51,27 @@ export interface ZenModel {
 	month: ZenTotals;
 }
 
+/** One of the account's own meters (`ocuse`'s `account` block). */
+export interface ZenMeter {
+	/** The server's own word; anything but "ok" reads as over the limit. */
+	status: string;
+	/** Percent of the window's limit already used — the console's number. */
+	percent: number;
+	/** Reset instant, epoch ms. */
+	resetsAt?: number;
+}
+
+/** The account's three meters, under the endpoint's own names: `rolling` is the
+ *  5-hour window. Only present when ocuse reached OpenCode Go's usage endpoint,
+ *  and then these — not the per-model figures — are what opencode.ai/console
+ *  shows, because only the server knows its own window anchors and price
+ *  basis. */
+export interface ZenAccount {
+	rolling: ZenMeter;
+	weekly: ZenMeter;
+	monthly: ZenMeter;
+}
+
 export interface ZenUsage {
 	/**
 	 * Billing period start, epoch ms: `periodStart` on current ocuse, or
@@ -60,6 +84,8 @@ export interface ZenUsage {
 	periodEndAt?: number;
 	source?: string;
 	totals: { fiveHour: ZenTotals; weekly: ZenTotals; month: ZenTotals };
+	/** The account's own meters, when ocuse could ask for them. */
+	account?: ZenAccount;
 	/** Keyed by canonical model key, the same normalisation the CC side matches on. */
 	models: Map<string, ZenModel>;
 }
@@ -72,6 +98,17 @@ function totals(value: unknown): ZenTotals {
 		requests: num("requests"),
 		cost: num("cost"),
 		tokens: num("tokens"),
+	};
+}
+
+/** One meter out of `ocuse -1 --json`'s `account` block. Anything malformed
+ *  reads as "inside the limit": a figure we cannot read must not raise a flag. */
+function meter(value: unknown): ZenMeter {
+	const v = (value ?? {}) as Record<string, unknown>;
+	return {
+		status: typeof v.status === "string" ? v.status : "ok",
+		percent: typeof v.percent === "number" ? v.percent : 0,
+		resetsAt: typeof v.resetsAt === "number" ? v.resetsAt : undefined,
 	};
 }
 
@@ -108,6 +145,15 @@ export function parseZenJson(text: string): ZenUsage {
 		periodEndAt:
 			typeof body.periodEndAt === "number" ? body.periodEndAt : undefined,
 		source: typeof body.source === "string" ? body.source : undefined,
+		// Absent on an ocuse that could not reach the endpoint (no Go key, no
+		// network, `--no-api`); the panel then falls back to the per-model rows.
+		account: body.account
+			? {
+					rolling: meter((body.account as Record<string, unknown>).rolling),
+					weekly: meter((body.account as Record<string, unknown>).weekly),
+					monthly: meter((body.account as Record<string, unknown>).monthly),
+				}
+			: undefined,
 		totals: {
 			fiveHour: totals(top.fiveHour),
 			weekly: totals(top.weekly),
@@ -196,14 +242,45 @@ function zenWindow(
 			cap,
 			used: spent.cost,
 			resetAt,
-			// Go has no usage API and therefore no `exceeded` flag: derive it, the
-			// rule the account API applies — the window is over once its spend has
-			// reached its cap.
+			// No server verdict on this path (the account's own `exceeded` flag
+			// belongs to `zenMeterRows`): derive it, the rule the account API
+			// applies — the window is over once its spend has reached its cap.
 			exceeded: spent.cost >= cap,
 		},
 		now,
 		durSecs,
 		spent.requests > 0 ? `${count(spent.requests)} req` : undefined,
+	);
+}
+
+/**
+ * One of the account's own meters as a panel row: its share on the value line,
+ * then the reset — through the shared `windowRows`, so the tone, the
+ * `LIMIT EXCEEDED` flag, the `cap in …` pace line and `elapsed` all behave
+ * exactly as they do on the CommandCode side. The percent *is* the scale (a
+ * meter is already "of its limit"), so the use line reads as a share rather
+ * than the money pair a per-model row shows.
+ */
+function zenMeterRows(
+	label: string,
+	meter: ZenMeter,
+	now: number,
+	durSecs: number,
+): SidebarRow[] {
+	return windowRows(
+		label,
+		{
+			cap: 100,
+			used: meter.percent,
+			resetAt: meter.resetsAt,
+			// The endpoint's own verdict, with the percent as the fallback the
+			// account API's `exceeded` flag would give.
+			exceeded: meter.percent >= 100 || meter.status !== "ok",
+		},
+		now,
+		durSecs,
+		undefined,
+		(_used, _cap, pct) => `${pct.toFixed(1)}% of limit`,
 	);
 }
 
@@ -240,46 +317,66 @@ export function zenRows(
 	// and dividing them by one model's allowance would report the whole account
 	// against a single cap; show the spend alone instead.
 	const cap = mine ? limit : undefined;
-	// A rolling window's reset is derived from the oldest request still inside it
-	// (the same store read that backs `Usage (this model)`), so 5-hour and Weekly
-	// carry the elapsed share and the countdown CommandCode shows.
-	rows.push(
-		...zenWindow(
-			"5-hour",
-			mine?.fiveHour ?? usage.totals.fiveHour,
-			cap,
-			GO_WINDOW_SHARE.fiveHour,
-			now,
-			FIVE_HOUR_SECS,
-			rollingReset(windows?.fiveHour, FIVE_HOUR_SECS),
-		),
-	);
-	rows.push(
-		...zenWindow(
-			"Weekly",
-			mine?.weekly ?? usage.totals.weekly,
-			cap,
-			GO_WINDOW_SHARE.weekly,
-			now,
-			WEEKLY_SECS,
-			rollingReset(windows?.weekly, WEEKLY_SECS),
-		),
-	);
 	// Monthly is a billing period, not a rolling window: its length and reset
 	// come from the bounds ocuse publishes. "Monthly" matches the CommandCode
 	// panel's label.
 	const period = monthPeriod(usage);
-	rows.push(
-		...zenWindow(
-			"Monthly",
-			mine?.month ?? usage.totals.month,
-			cap,
-			GO_WINDOW_SHARE.month,
-			now,
-			period?.durSecs ?? 0,
-			period?.resetAt,
-		),
-	);
+	if (usage.account) {
+		// The account's own meters, which is what opencode.ai/console shows and
+		// what ocuse reads from Go's usage endpoint. They outrank the per-model
+		// rows below because the server's window anchors (a 5-hour block with its
+		// own reset, a Monday-anchored week, the billing anniversary) are not
+		// reproducible from the store — the per-model windows are this machine's
+		// own cuts, and the CC panel shows account windows in the same place.
+		rows.push(
+			...zenMeterRows("5-hour", usage.account.rolling, now, FIVE_HOUR_SECS),
+		);
+		rows.push(
+			...zenMeterRows("Weekly", usage.account.weekly, now, WEEKLY_SECS),
+		);
+		rows.push(
+			...zenMeterRows("Monthly", usage.account.monthly, now, period?.durSecs ?? 0),
+		);
+	} else {
+		// No endpoint answer (no Go key, no network, older ocuse): the store's own
+		// rolling windows. A window's reset is derived from the oldest request
+		// still inside it (the same store read that backs `Usage (this model)`), so
+		// 5-hour and Weekly carry the elapsed share and the countdown the
+		// CommandCode panel shows.
+		rows.push(
+			...zenWindow(
+				"5-hour",
+				mine?.fiveHour ?? usage.totals.fiveHour,
+				cap,
+				GO_WINDOW_SHARE.fiveHour,
+				now,
+				FIVE_HOUR_SECS,
+				rollingReset(windows?.fiveHour, FIVE_HOUR_SECS),
+			),
+		);
+		rows.push(
+			...zenWindow(
+				"Weekly",
+				mine?.weekly ?? usage.totals.weekly,
+				cap,
+				GO_WINDOW_SHARE.weekly,
+				now,
+				WEEKLY_SECS,
+				rollingReset(windows?.weekly, WEEKLY_SECS),
+			),
+		);
+		rows.push(
+			...zenWindow(
+				"Monthly",
+				mine?.month ?? usage.totals.month,
+				cap,
+				GO_WINDOW_SHARE.month,
+				now,
+				period?.durSecs ?? 0,
+				period?.resetAt,
+			),
+		);
+	}
 	rows.push([
 		"Period",
 		`${count(usage.totals.month.requests)} requests · ${money(usage.totals.month.cost)}`,

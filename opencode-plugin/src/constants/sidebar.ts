@@ -18,8 +18,9 @@ export const TIER_DISPLAY: Readonly<Record<Category, string>> = {
 
 /**
  * OpenCode Go plans the panel can render: the same token rates, different
- * per-model monthly limits. Which one a user is on is not discoverable (Go has
- * no usage API and the store records no subscription), so it is a setting.
+ * per-model monthly limits. Which one a user is on is not discoverable even with
+ * the usage endpoint in hand — it answers percentages, not a plan id, and the
+ * store records no subscription — so it is a setting.
  */
 export const OC_PLANS = ["go", "go-plus"] as const;
 export type OcPlan = (typeof OC_PLANS)[number];

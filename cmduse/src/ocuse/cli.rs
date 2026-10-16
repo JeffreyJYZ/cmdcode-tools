@@ -1,9 +1,8 @@
 // ocuse — OpenCode Go/Zen usage, same CLI shape as cmduse.
 //
-// Data: opencode's own store (read-only) plus the generated docs catalogue.
-// There is no OpenCode usage API to ask (see core/zen.json's header and the
-// README), so this reports what actually ran on this machine, priced by
-// opencode itself, against the limits the docs publish.
+// Data: opencode's own store (read-only), OpenCode Go's own usage endpoint when
+// the account carries a Go key — the meters opencode.ai/console shows, see
+// `ocuse::api` — and the generated docs catalogue.
 //
 // The front-end is the shared one: `cmduse/src/cli.rs` parses argv for both
 // binaries, `config.rs` owns both config files, `notify.rs` the desktop
@@ -14,7 +13,7 @@
 // one entry point: both bins are `fn main() { cmd_usage::ocuse::run(); }`.
 use crate::cli::{self, Binary, SubCmd};
 use crate::ocuse::window;
-use crate::ocuse::{build, db, mcp, render, zen};
+use crate::ocuse::{api, build, db, mcp, render, zen};
 use crate::report_render::Fmt;
 use std::collections::HashSet;
 use std::ffi::OsString;
@@ -213,7 +212,8 @@ pub fn run() {
     }
 
     // Which Go plan the allowances are measured against: explicit, because the
-    // store records no subscription and there is no usage API to ask.
+    // store records no subscription and the usage endpoint reports a percentage
+    // rather than a plan id.
     let catalog = zen::catalog();
     let plan_id = args
         .plan
@@ -288,6 +288,40 @@ pub fn run() {
     // resolves the anniversary itself, so remember which mode produced it.
     let period_inferred = period_start.is_none();
 
+    // OpenCode Go's own meters: the console's numbers, straight from the account
+    // (see `ocuse::api`). A missing key, a key without the subscription, or no
+    // network leaves `None`, and every window row falls back to the local
+    // derivation.
+    let fetch_account = || {
+        if args.no_api {
+            return None;
+        }
+        api::key().and_then(|key| api::fetch(&key).ok())
+    };
+    let mut account = fetch_account();
+    // The endpoint knows the billing anniversary; the calendar month is a guess,
+    // and slicing the totals by it would disagree with the monthly meter printed
+    // in the same frame. So when the endpoint answered and nothing pinned the
+    // period, take the account's own month: `(start, reset)`.
+    let account_month = account
+        .as_ref()
+        .and_then(|a| a.monthly.reset_ms())
+        .map(|reset| (window::prev_month(reset), reset));
+    let account_month = if window_mode == "month"
+        && !period_inferred
+        && since_override.is_none()
+        && args.period_start.is_none()
+    {
+        account_month
+    } else {
+        None
+    };
+    let period_start = account_month.map(|(start, _)| start).or(period_start);
+    let period_label = match account_month {
+        Some(_) => "Go billing month".to_string(),
+        None => period_label,
+    };
+
     let read_since = |since_ms: i64| match db::read_rows(&db_path, since_ms) {
         Ok(rows) => rows,
         Err(error) => {
@@ -298,7 +332,7 @@ pub fn run() {
     };
     // The report's own read window: an explicit --since pins it, else --days.
     let report_window = since_override.unwrap_or(now - days * 86_400_000);
-    let build_at = |t: i64| {
+    let build_at = |t: i64, account: Option<&api::Usage>| {
         let mut report = build(
             &read_since(report_window),
             &catalog,
@@ -307,13 +341,16 @@ pub fn run() {
             period_start,
         );
         report.period_label = period_label.clone();
-        report.period_end_ms = period_end(&report, &window_mode, period_inferred);
+        report.account = account.cloned();
+        report.period_end_ms = account_month
+            .map(|(_, reset)| reset)
+            .or_else(|| period_end(&report, &window_mode, period_inferred));
         report
     };
 
     match args.subcmd {
         Some(SubCmd::Statusline) => {
-            let report = build_at(now);
+            let report = build_at(now, account.as_ref());
             if args.json {
                 println!("{}", render::statusline_json(&report, &plan_id));
             } else {
@@ -370,11 +407,19 @@ pub fn run() {
         }
         Some(SubCmd::Mcp) => {
             // stdio JSON-RPC; stdout carries protocol only, so nothing else may print.
-            mcp::run(&db_path, days, tz_secs, false, &plan_id, period_start);
+            mcp::run(mcp::Settings {
+                db_path: &db_path,
+                days,
+                tz_secs,
+                colour: false,
+                plan: &plan_id,
+                period_start,
+                account: account.as_ref(),
+            });
             return;
         }
         Some(SubCmd::Model) => {
-            let report = build_at(now);
+            let report = build_at(now, account.as_ref());
             if fmt == Fmt::Table {
                 match &model_id {
                     Some(id) => print!("{}", render::model_text(&report, id, colours)),
@@ -418,7 +463,7 @@ pub fn run() {
         if let Some(msg) = &update {
             eprintln!("{msg}");
         }
-        let report = build_at(now);
+        let report = build_at(now, account.as_ref());
         if args.json {
             println!("{}", render::render_json(&report));
         } else {
@@ -442,7 +487,13 @@ pub fn run() {
     let mut over: HashSet<String> = HashSet::new();
     let use_color = crate::render::color_enabled();
     loop {
-        let report = build_at(window::now_ms());
+        // Re-ask each tick, keeping the last answer through a blip so the frame
+        // cannot flip back and forth between the account's meters and the local
+        // estimate.
+        if let Some(fresh) = fetch_account() {
+            account = Some(fresh);
+        }
+        let report = build_at(window::now_ms(), account.as_ref());
         let (term_rows, cols) = crate::term_size().unwrap_or((0, 0));
         let cols_opt = (cols > 0).then_some(cols);
         let compact = compact_frame(term_rows, cols);
@@ -460,6 +511,25 @@ pub fn run() {
         }
         if notify_on_cap {
             let mut over_now: HashSet<String> = HashSet::new();
+            // The account's own verdicts first: they are what the console shows,
+            // and they cover the windows no local per-model figure can.
+            if let Some(a) = &account {
+                for (key, label, meter) in [
+                    ("window:5h", "5-hour window", &a.rolling),
+                    ("window:wk", "weekly window", &a.weekly),
+                    ("window:mo", "monthly limit", &a.monthly),
+                ] {
+                    if meter.exceeded() {
+                        over_now.insert(key.to_string());
+                        if !over.contains(key) {
+                            crate::notify::cap(
+                                "ocuse: limit exceeded",
+                                &format!("OpenCode Go {label} is over its limit"),
+                            );
+                        }
+                    }
+                }
+            }
             for model in &report.models {
                 if let Some(window) = window::over_window(model) {
                     over_now.insert(model.id.clone());
@@ -575,6 +645,18 @@ mod tests {
     }
 
     #[test]
+    fn no_api_is_an_ocuse_flag() {
+        // The account's meters are only reachable from ocuse, so the escape
+        // hatch belongs to it; cmduse's account API is its own source.
+        assert!(parse(&["-1", "--no-api"]).no_api);
+        assert!(!parse(&["-1"]).no_api);
+        assert!(
+            cli::parse_args_from(argv(&["--no-api"]), Binary::Cmduse).is_err(),
+            "cmduse rejects --no-api"
+        );
+    }
+
+    #[test]
     fn output_fmt_maps_the_flags() {
         let of = |args: &[&str]| output_fmt(&parse(args));
         assert!(matches!(of(&[]), Fmt::Table));
@@ -591,6 +673,7 @@ mod tests {
             since_ms: since,
             period_end_ms: None,
             month_inferred: false,
+            account: None,
             five_hour: Default::default(),
             weekly: Default::default(),
             month: Default::default(),

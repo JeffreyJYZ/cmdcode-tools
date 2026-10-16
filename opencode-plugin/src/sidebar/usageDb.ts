@@ -162,9 +162,9 @@ export function loadModelUsage(
 /**
  * The oldest in-window assistant turn for one model, as epoch ms — the start of
  * the rolling window the Go/Zen panel needs. A rolling 5-hour/weekly window has
- * no service-reported reset (Go has no usage API), but its clock does have a
- * real start: the oldest request still inside it ages out at `start + window`,
- * which is that window's honest reset. Null when the model has no turn in the
+ * no reset recorded locally (the store carries none for these providers), but
+ * its clock does have a real start: the oldest request still inside it ages out
+ * at `start + window`, which is that window's honest reset. Null when the model has no turn in the
  * window, or the store is missing/unreadable, so callers then omit the
  * continuation exactly as before.
  *

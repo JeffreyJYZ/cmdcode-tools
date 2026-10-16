@@ -83,6 +83,12 @@ pub struct Report {
     /// all`); the rolling 5h/weekly windows never carry one.
     pub period_end_ms: Option<i64>,
     pub month_inferred: bool,
+    /// The account's own three meters, when OpenCode Go's usage endpoint
+    /// answered (`ocuse::api`). The dashboard's window rows read from here
+    /// rather than from [`Self::five_hour`]/[`Self::weekly`]/[`Self::month`],
+    /// because only the server's numbers agree with the console; the store's are
+    /// the fallback. `None` also keeps every existing caller working.
+    pub account: Option<crate::ocuse::api::Usage>,
     pub five_hour: Totals,
     pub weekly: Totals,
     pub month: Totals,
@@ -149,6 +155,20 @@ pub fn next_month(ms: i64) -> i64 {
     days_from_civil(ny, nm, day.min(28)) * 86_400_000
 }
 
+/// The same day-of-month one month *earlier*, keeping the time of day — the
+/// inverse of [`next_month`] for the instants it can produce. The account API's
+/// monthly `resetsAt` is an anniversary time (09:14:35, not midnight), so its
+/// period start has to carry that time of day back to the previous month.
+pub fn prev_month(ms: i64) -> i64 {
+    let (year, month, day) = civil(ms / 1000);
+    let (py, pm) = if month == 1 {
+        (year - 1, 12)
+    } else {
+        (year, month - 1)
+    };
+    days_from_civil(py, pm, day.min(28)) * 86_400_000 + ms.rem_euclid(86_400_000)
+}
+
 /// Start of the billing month: the most recent occurrence of the inferred
 /// anniversary day, else the first of the calendar month. Returns (start, inferred).
 pub fn month_start(rows: &[Row], now_ms: i64) -> (i64, bool) {
@@ -210,6 +230,7 @@ pub fn build(
         since_ms,
         period_end_ms: None,
         month_inferred: since_override.is_none() && month_inferred,
+        account: None,
         five_hour: Totals::default(),
         weekly: Totals::default(),
         month: Totals::default(),
@@ -292,6 +313,22 @@ mod tests {
         // A 31st start is clamped to 28, so it cannot skip a short month.
         let jan31 = days_from_civil(2026, 1, 31) * 86_400_000;
         assert_eq!(civil(next_month(jan31) / 1000), (2026, 2, 28));
+    }
+
+    #[test]
+    fn prev_month_inverts_next_month_and_keeps_the_clock() {
+        // The account API's monthly reset for this subscription.
+        let reset = 1_794_604_475_000; // 2026-11-13T09:14:35Z
+        let start = prev_month(reset);
+        assert_eq!(civil(start / 1000), (2026, 10, 13));
+        assert_eq!(start % 86_400_000, reset % 86_400_000, "time of day kept");
+        // One month on from the derived start is the reset's date again.
+        assert_eq!(civil(next_month(start) / 1000), (2026, 11, 13));
+        // Year wrap, and the day clamp that keeps a 31st from skipping a month.
+        let dec13 = days_from_civil(2026, 12, 13) * 86_400_000;
+        assert_eq!(civil(prev_month(dec13) / 1000), (2026, 11, 13));
+        let mar31 = days_from_civil(2026, 3, 31) * 86_400_000;
+        assert_eq!(civil(prev_month(mar31) / 1000), (2026, 2, 28));
     }
 
     #[test]

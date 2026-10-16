@@ -6,9 +6,10 @@
 // token price list but grant each model a different monthly dollar limit; Zen is
 // pay-as-you-go, so it has rates but no limits.
 //
-// Which plan you are on is not discoverable: there is no OpenCode usage API and
-// the local store records no subscription, so `ocuse` takes a `--plan` flag and
-// defaults to [`DEFAULT_PLAN`].
+// Which plan you are on is not discoverable: the usage endpoint reports the
+// meters' percentages, not a plan id, and the local store records no
+// subscription, so `ocuse` takes a `--plan` flag and defaults to
+// [`DEFAULT_PLAN`].
 use serde::Deserialize;
 use std::collections::BTreeMap;
 
