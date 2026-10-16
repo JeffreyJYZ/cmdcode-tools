@@ -104,24 +104,48 @@ impl Ink {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn window_line(
-    ink: &Ink,
-    label: &str,
-    used: &Totals,
+/// One window row's inputs. The account's own meters and the local estimate both
+/// go through this one builder, so the two branches cannot drift apart in which
+/// fields a window row carries or in the order it carries them.
+/// One account-metered window row's inputs, before they become a `RowSpec`:
+/// the label, the meter, this store's totals, the window's share of the
+/// monthly limit, the window length in seconds, and the pro-rata flag.
+type MeterRow<'a> = (
+    &'a str,
+    &'a crate::ocuse::api::Meter,
+    &'a Totals,
+    f64,
+    Option<u64>,
+    bool,
+);
+
+struct RowSpec<'a> {
+    label: &'a str,
+    /// This store's own totals for the window.
+    used: &'a Totals,
+    /// The ceiling the window is a share of; `None` on a row with no limit.
     cap: Option<f64>,
-    reset_ms: Option<i64>,
-    // Length of the window ending at `reset_ms`; `None` when there is no real
-    // reset to measure against (the rolling 5h/weekly windows are cut at
-    // `now - window` locally, so they have no boundary — see `render_text`).
-    dur_secs: Option<u64>,
-    // `cmduse`'s pro-rata flag: monthly is a budget, so it alone gets the
-    // "by now" figure; the rolling windows are throttles, where that number
-    // would read as a spend target.
+    /// The window's reset instant and its length in seconds. `None` on the local
+    /// estimate's rolling 5h/weekly windows: those are cut at `now - window`, so
+    /// they have no boundary to measure an elapsed share or a pace against.
+    reset: Option<(i64, u64)>,
+    /// The account's own share of the limit, when it answered — the console's
+    /// figure, and the reason the endpoint is read at all. `None` falls back to
+    /// `used / cap`, the only share this machine can compute.
+    share_pct: Option<f64>,
+    /// `cmduse`'s pro-rata flag: monthly is a budget, so it alone gets the
+    /// "by now" figure; the rolling windows are throttles, where that number
+    /// would read as a spend target.
     pro_rata: bool,
-    now_ms: i64,
-) -> String {
-    let reset = reset_ms
-        .map(|at| duration(((at - now_ms) / 1000).max(0) as u64))
+    /// The account's own verdict: a status it does not call `ok` rides beside
+    /// the limit flag.
+    status: Option<&'a str>,
+}
+
+fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
+    let reset = spec
+        .reset
+        .map(|(at, _)| duration(((at - now_ms) / 1000).max(0) as u64))
         .unwrap_or_default();
     let reset_text = if reset.is_empty() {
         String::new()
@@ -135,44 +159,84 @@ fn window_line(
     // informational pro-rata figure. Percentages come from core (one decimal);
     // duration (never rel_time) formats the ETA.
     let now_secs = (now_ms / 1000).max(0) as u64;
-    let reset_at = reset_ms.map(|ms| ms as f64);
+    let reset_at = spec.reset.map(|(at, _)| at as f64);
+    let dur_secs = spec.reset.map(|(_, dur)| dur);
     let elapsed = dur_secs.and_then(|d| cmduse_core::elapsed_pct(reset_at, d, Some(now_secs)));
     let pace = dur_secs
         .and_then(|d| {
-            cmduse_core::pace_eta(reset_at, d, used.cost, cap.unwrap_or(0.0), now_secs)
-                .map(|secs| duration(secs as u64))
+            cmduse_core::pace_eta(
+                reset_at,
+                d,
+                spec.used.cost,
+                spec.cap.unwrap_or(0.0),
+                now_secs,
+            )
+            .map(|secs| duration(secs as u64))
         })
         .map(|eta| format!(" · {}on pace to hit cap in {eta}{}", ink.yellow, ink.reset))
         .unwrap_or_default();
     let thru = elapsed
         .map(|p| format!(" · {}window {p:.1}% elapsed{}", ink.dim, ink.reset))
         .unwrap_or_default();
-    let by_now = match (pro_rata, elapsed) {
+    let by_now = match (spec.pro_rata, elapsed) {
         (true, Some(p)) => format!(
             " · {}{} by now{}",
             ink.dim,
-            money(cap.unwrap_or(0.0) * p / 100.0),
+            money(spec.cap.unwrap_or(0.0) * p / 100.0),
             ink.reset
         ),
         _ => String::new(),
     };
-    match cap {
+    let label = spec.label;
+    match spec.cap {
         Some(cap) if cap > 0.0 => {
-            // Same placement cmduse uses for the flag: on the window it belongs to.
-            let flag = if used.cost > cap {
+            // The account's own share leads and is labelled, because it is the
+            // figure its console prints and the one it meters with; the money
+            // beside it is this store's spend against the same ceiling, so the
+            // two need not divide to each other (the server meters higher).
+            let share = spec.share_pct.map(|p| p.max(0.0));
+            // Without an account answer the computed share is all there is, and
+            // it reads as the plain percentage cmduse prints.
+            let local_pct = spec.used.cost / cap * 100.0;
+            let share_value = share.unwrap_or(local_pct);
+            // Same placement cmduse uses for the flag: on the window it belongs
+            // to. Either meter can raise it — the account's own verdict, or this
+            // store's spend past the ceiling.
+            let flag = if share_value >= 100.0 {
                 format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
+            } else if spec.status.is_some_and(|s| !s.eq_ignore_ascii_case("ok")) {
+                format!(
+                    " {}{}{}{}",
+                    ink.red,
+                    spec.status.unwrap_or_default(),
+                    ink.reset,
+                    ""
+                )
             } else {
                 String::new()
             };
+            // The layout is cmduse's own (bar, money pair, then the tail), with
+            // the bar, its tone and the flag driven by the share that gates:
+            // the account's own when it answered, else the computed one. The
+            // account's share is labelled, because the money beside it is this
+            // store's and the two need not divide to each other.
+            let paren = match share {
+                Some(p) => format!(" ({} of limit)", pct(p, 100.0)),
+                None => format!(" ({})", pct(spec.used.cost, cap)),
+            };
             if ink.colour {
                 format!(
-                    " {}{label:<8}{} {} {}{} / {}{}{}{}{}{}{}\n",
+                    " {}{label:<8}{} {} {}{} / {}{}{}{}{}{}{}{}\n",
                     ink.bold,
                     ink.reset,
-                    ink.bar(used.cost, cap),
+                    ink.bar(share_value, 100.0),
                     ink.dim,
-                    money(used.cost),
+                    money(spec.used.cost),
                     money(cap),
+                    match share {
+                        Some(_) => paren,
+                        None => String::new(),
+                    },
                     reset_text,
                     flag,
                     pace,
@@ -184,10 +248,9 @@ fn window_line(
                 // The plain frame is the script-facing one: same field order,
                 // no SGR (the Ink helpers are empty strings when colour is off).
                 format!(
-                    "  {label:<8} {} / {} ({}){reset_text}{flag}{pace}{thru}{by_now}\n",
-                    money(used.cost),
+                    "  {label:<8} {} / {}{paren}{reset_text}{flag}{pace}{thru}{by_now}\n",
+                    money(spec.used.cost),
                     money(cap),
-                    pct(used.cost, cap),
                 )
             }
         }
@@ -195,46 +258,18 @@ fn window_line(
         // dim it the way cmduse dims its pay-as-you-go line.
         _ => format!(
             "  {label:<8} {}\n",
-            ink.dim_on(format!("{}{}", money(used.cost), reset_text))
+            ink.dim_on(format!("{}{}", money(spec.used.cost), reset_text))
         ),
     }
 }
 
-/// One of the account's own meters, as `opencode.ai/console` shows it: the
-/// server's percentage, its reset instant, and its verdict. No dollar figure
-/// belongs here — the endpoint publishes shares and instants, not money; that is
-/// what the model table is for.
-fn meter_line(ink: &Ink, label: &str, meter: &crate::ocuse::api::Meter, now_ms: i64) -> String {
-    let reset = meter
-        .reset_ms()
-        .map(|at| duration(((at - now_ms) / 1000).max(0) as u64))
-        .unwrap_or_default();
-    let reset_text = if reset.is_empty() {
-        String::new()
-    } else {
-        format!(" · resets in {reset}")
-    };
-    // Actionable before informational, as everywhere else: a server verdict
-    // outranks the reset countdown.
-    let flag = if meter.exceeded() {
-        format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
-    } else if !meter.status.eq_ignore_ascii_case("ok") {
-        format!(" {}{}{}{}", ink.red, meter.status, ink.reset, "")
-    } else {
-        String::new()
-    };
-    let share = pct(meter.percent, 100.0);
-    if ink.colour {
-        let tone = ink.for_pct(meter.percent);
-        format!(
-            " {}{label:<8}{} {} {tone}{share:>7}{}{reset_text}{flag}\n",
-            ink.bold,
-            ink.reset,
-            ink.bar(meter.percent, 100.0),
-            ink.reset,
-        )
-    } else {
-        format!("  {label:<8} {share:>7}{reset_text}{flag}\n")
+/// The account meter's own window boundary, when the endpoint gave one: its
+/// reset instant together with the window's length, so the row can measure an
+/// elapsed share and a pace against the server's clock rather than a guess.
+fn meter_reset(meter: &crate::ocuse::api::Meter, dur_secs: Option<u64>) -> Option<(i64, u64)> {
+    match (meter.reset_ms(), dur_secs) {
+        (Some(at), Some(dur)) if dur > 0 => Some((at, dur)),
+        _ => None,
     }
 }
 
@@ -366,26 +401,69 @@ pub fn render_text(
                 "\n{}GO{} {}\n",
                 ink.bold,
                 ink.reset,
-                ink.dim_on("(account meters — what opencode.ai/console reports)".into()),
+                ink.dim_on(
+                    "(account meters — what opencode.ai/console reports; the $ beside them is this store's own)"
+                        .into()
+                ),
             ));
-            out.push_str(&meter_line(&ink, "5-hour", &account.rolling, report.now_ms));
-            out.push_str(&meter_line(&ink, "Weekly", &account.weekly, report.now_ms));
-            out.push_str(&meter_line(
-                &ink,
-                "Monthly",
-                &account.monthly,
-                report.now_ms,
-            ));
+            // Every field cmduse shows stays on the row — money, elapsed share,
+            // pace, the monthly pro-rata — with the server's own share leading,
+            // and its own reset instant replacing the local guess. The account's
+            // window lengths are the documented shares of the monthly limit:
+            // 5h = 20%, weekly = 50%, monthly = 100%.
+            let monthly_dur = report
+                .period_end_ms
+                .map(|end| ((end - report.since_ms) / 1000).max(0) as u64);
+            let rows: [MeterRow; 3] = [
+                (
+                    "5-hour",
+                    &account.rolling,
+                    &report.five_hour,
+                    shares.five_hour,
+                    Some(crate::ocuse::window::FIVE_HOUR_SECS as u64),
+                    false,
+                ),
+                (
+                    "Weekly",
+                    &account.weekly,
+                    &report.weekly,
+                    shares.weekly,
+                    Some(crate::ocuse::window::WEEKLY_SECS as u64),
+                    false,
+                ),
+                (
+                    "Monthly",
+                    &account.monthly,
+                    &report.month,
+                    shares.monthly,
+                    monthly_dur,
+                    true,
+                ),
+            ];
+            for (label, meter, used, share, dur_secs, pro_rata) in rows {
+                out.push_str(&window_line(
+                    &ink,
+                    &RowSpec {
+                        label,
+                        used,
+                        cap: aggregate_cap(report, share),
+                        reset: meter_reset(meter, dur_secs),
+                        share_pct: Some(meter.percent),
+                        pro_rata,
+                        status: Some(meter.status.as_str()),
+                    },
+                    report.now_ms,
+                ));
+            }
         }
         // No Go key, no network, or a key without the subscription: the store's
         // own estimate, which says so. Its windows are the local ones (`now -
         // 5h` / `now - 7d` / the period), so they can disagree with the account.
         None if report.month.requests > 0 => {
-            let five_reset = report.now_ms + crate::ocuse::window::FIVE_HOUR_SECS * 1000;
-            let week_reset = report.now_ms + crate::ocuse::window::WEEKLY_SECS * 1000;
-            // Only the monthly period has a real end (`period_end_ms`): the
-            // local rolling windows are cut at `now - window`, so they keep
-            // their countdown but gain no elapsed share or pace ETA.
+            // Only the monthly period has a boundary of its own (`period_end_ms`).
+            // The rolling 5h/weekly windows are cut at `now - window`, so they get
+            // no reset, no elapsed share and no pace — the fabricated `now + window`
+            // countdown that used to sit here moved on every frame.
             let monthly_dur = report
                 .period_end_ms
                 .map(|end| ((end - report.since_ms) / 1000).max(0) as u64);
@@ -400,32 +478,41 @@ pub fn render_text(
             ));
             out.push_str(&window_line(
                 &ink,
-                "5-hour",
-                &report.five_hour,
-                aggregate_cap(report, shares.five_hour),
-                Some(five_reset),
-                None,
-                false,
+                &RowSpec {
+                    label: "5-hour",
+                    used: &report.five_hour,
+                    cap: aggregate_cap(report, shares.five_hour),
+                    reset: None,
+                    share_pct: None,
+                    pro_rata: false,
+                    status: None,
+                },
                 report.now_ms,
             ));
             out.push_str(&window_line(
                 &ink,
-                "Weekly",
-                &report.weekly,
-                aggregate_cap(report, shares.weekly),
-                Some(week_reset),
-                None,
-                false,
+                &RowSpec {
+                    label: "Weekly",
+                    used: &report.weekly,
+                    cap: aggregate_cap(report, shares.weekly),
+                    reset: None,
+                    share_pct: None,
+                    pro_rata: false,
+                    status: None,
+                },
                 report.now_ms,
             ));
             out.push_str(&window_line(
                 &ink,
-                "Monthly",
-                &report.month,
-                aggregate_cap(report, shares.monthly),
-                report.period_end_ms,
-                monthly_dur,
-                true,
+                &RowSpec {
+                    label: "Monthly",
+                    used: &report.month,
+                    cap: aggregate_cap(report, shares.monthly),
+                    reset: report.period_end_ms.zip(monthly_dur),
+                    share_pct: None,
+                    pro_rata: true,
+                    status: None,
+                },
                 report.now_ms,
             ));
         }
@@ -1346,7 +1433,10 @@ mod tests {
 
     /// The same report with the account's own meters attached — the shape a Go
     /// key produces. Reset instants sit after `now` (2027-01-15T08:00:00Z), so
-    /// the countdowns render rather than clamp to zero.
+    /// the countdowns render rather than clamp to zero. The period bounds mirror
+    /// what `cli.rs` derives from the monthly reset (`prev_month`), so the
+    /// Monthly row carries the same elapsed share and pro-rata figure a live
+    /// dashboard shows.
     fn report_with_account() -> Report {
         let mut report = report();
         report.account = Some(crate::ocuse::api::Usage {
@@ -1354,6 +1444,8 @@ mod tests {
             weekly: meter("ok", 59.0, "2027-01-18T00:00:00.000Z"),
             monthly: meter("ok", 29.0, "2027-02-15T08:00:00.000Z"),
         });
+        report.period_end_ms = Some(1_802_678_400_000); // 2027-02-15T08:00:00Z
+        report.since_ms = crate::ocuse::window::prev_month(1_802_678_400_000);
         report
     }
 
@@ -1372,13 +1464,20 @@ mod tests {
         assert!(text.contains("29.0%"), "{text}");
         assert!(text.contains("account meters"), "{text}");
         assert!(
-            text.contains("resets in 4h 31m"),
+            text.contains("resets 4h 31m"),
             "the 5h block's own end: {text}"
         );
-        // The local estimate's aggregate ceilings are gone: their dollars would
-        // be a second, disagreeing answer to the same question.
-        assert!(!text.contains("$16.00"), "the local 5h cap: {text}");
-        assert!(!text.contains("$40.00"), "the local weekly cap: {text}");
+        // Every field cmduse shows stays on the row: this store's money against
+        // the aggregate ceiling, with the server's share labelled beside it.
+        // The two need not divide to each other (the server meters higher), so
+        // the share carries its "of limit" label.
+        assert!(text.contains("$30.00 / $12.00 (5.0% of limit)"), "{text}");
+        assert!(text.contains("$30.00 / $60.00 (29.0% of limit)"), "{text}");
+        assert!(text.contains("of limit"), "{text}");
+        // The Monthly row measures against the period bounds, like cmduse's:
+        // an elapsed share, the server's reset, and the pro-rata figure.
+        assert!(text.contains("elapsed"), "{text}");
+        assert!(text.contains("$0.00 by now"), "{text}");
         // …and the per-model columns are called out as local, not a second meter.
         assert!(text.contains("not the account's windows"), "{text}");
     }
@@ -1892,7 +1991,13 @@ mod tests {
 
     #[test]
     fn colour_frames_get_the_palette_and_a_gauge() {
-        let text = render_text(&report(), "/tmp/opencode.db", 10, true, DEFAULT_BAR_WIDTH);
+        // The local estimate's rolling rows carry no reset (their countdown was
+        // a fabricated `now + window`); only the Monthly row has a real end, so
+        // the fixture borrows one to pin the countdown's presence.
+        let mut dated = report();
+        dated.period_end_ms = Some(1_802_678_400_000); // 2027-02-15T08:00:00Z
+        dated.since_ms = crate::ocuse::window::prev_month(1_802_678_400_000);
+        let text = render_text(&dated, "/tmp/opencode.db", 10, true, DEFAULT_BAR_WIDTH);
         assert!(text.contains(crate::render::BOLD), "{text}");
         assert!(text.contains(crate::render::CYAN), "{text}");
         assert!(

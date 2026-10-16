@@ -796,7 +796,9 @@ Anything else exits 2.
 .SS ocuse data and windows
 When Go's usage endpoint answers, the header's three window lines are the
 account's own meters (the shares and resets \fBopencode.ai/console\fR shows),
-and the billing period comes from the endpoint's monthly reset instant \(em
+each paired with this store's own spend against the same ceiling \(em the two
+need not divide to each other, so the share carries an \fIof limit\fR label
+\(em and the billing period comes from the endpoint's monthly reset instant \(em
 the subscription anniversary, which is why the period line reads
 \fIGo billing month\fR.  Each model's table row still compares its own spend
 against its monthly limit; the table's \fI5H\fR/\fIWK\fR columns are local
@@ -811,9 +813,8 @@ window lines are a local estimate and are labelled as one: the header compares
 \fB\-\-infer\-anniversary\fR guessing it from history.  On that path only the
 monthly period has a real end, so that row alone gains a reset countdown, its
 \fIwindow N% elapsed\fR share and a pro\-rata \fB$\fR by\-now figure; the
-rolling 5\-hour and weekly rows show only their countdown, derived from the
-oldest request still inside the window rather than a fabricated
-\fInow + window\fR.  The header splits period tokens
+rolling 5\-hour and weekly rows have no boundary to measure against and show
+spend alone.  The header splits period tokens
 \fIin / out\fR and names the resolved end date.  A model whose spend
 crosses its limit is flagged \fILIMIT EXCEEDED\fR.  There is no
 \fISuccess N%\fR figure \(em opencode's store records no per\-request success

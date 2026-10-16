@@ -123,6 +123,15 @@ export interface WindowUsage {
 	resetAt?: number;
 	/** The account API's own over-cap flag (cmduse passes it through). */
 	exceeded?: boolean;
+	/**
+	 * The account's own share of the limit, when its endpoint answered. That
+	 * figure is the one the server gates on and prints on its console, so it —
+	 * not `used / cap`, which this machine computes and which sits below the
+	 * server's meter — sets the row's tone and reads as the share. The money
+	 * pair stays this store's own, which is why the two need not divide to each
+	 * other.
+	 */
+	sharePct?: number;
 }
 
 /** One model's usage for the account's current billing period. */
@@ -213,14 +222,18 @@ export function windowRows(
 	durSecs: number,
 	extra?: string,
 	/** How the use line reads. The default is money (`$0.55/$14 (3.9%)`); the
-	 *  account's own meters publish shares rather than dollars and pass a percent
-	 *  formatter, so the tone, `LIMIT EXCEEDED`, `cap in …`, `elapsed` and
-	 *  `resets` stay this one implementation for both. */
-	use?: (used: number, cap: number, pct: number) => string,
+	 *  account's own meters publish their own share of the limit, which the
+	 *  formatter receives as `share` — the money pair beside it stays local, so
+	 *  the tone, `LIMIT EXCEEDED`, `cap in …`, `elapsed` and `resets` stay this
+	 *  one implementation for both panels. */
+	use?: (used: number, cap: number, share: number) => string,
 ): SidebarRow[] {
 	if (!w || typeof w.cap !== "number" || w.cap <= 0) return [];
 	const used = typeof w.used === "number" ? w.used : 0;
 	const pct = (used / w.cap) * 100;
+	// The server's own share outranks the computed one: it is the figure that
+	// gates, and the one the row labels as the limit share.
+	const share = typeof w.sharePct === "number" ? w.sharePct : pct;
 	const nowSecs = Math.floor(now / 1000);
 	const elapsed = elapsedLabel(w.resetAt, durSecs, nowSecs);
 	const eta = paceEtaSecs(w.resetAt, durSecs, used, w.cap, nowSecs);
@@ -240,9 +253,9 @@ export function windowRows(
 		[
 			label,
 			use
-				? use(used, w.cap, pct)
+				? use(used, w.cap, share)
 				: `${money(used)}/${money(w.cap)} (${pct.toFixed(1)}%)`,
-			w.exceeded ? "crit" : pctTone(pct),
+			w.exceeded ? "crit" : pctTone(share),
 		],
 		...(detail ? [["", detail, "muted"] as SidebarRow] : []),
 		...(extra ? [["", extra, "muted"] as SidebarRow] : []),

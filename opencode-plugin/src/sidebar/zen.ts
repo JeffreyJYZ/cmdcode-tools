@@ -254,25 +254,33 @@ function zenWindow(
 }
 
 /**
- * One of the account's own meters as a panel row: its share on the value line,
- * then the reset — through the shared `windowRows`, so the tone, the
- * `LIMIT EXCEEDED` flag, the `cap in …` pace line and `elapsed` all behave
- * exactly as they do on the CommandCode side. The percent *is* the scale (a
- * meter is already "of its limit"), so the use line reads as a share rather
- * than the money pair a per-model row shows.
+ * One of the account's own meters as a panel row: the active model's own money
+ * against that window's share of its limit, with the server's percentage
+ * labelled beside it, then the reset — through the shared `windowRows`, so the
+ * tone, the `LIMIT EXCEEDED` flag, the `cap in …` pace line and `elapsed` all
+ * behave exactly as they do on the CommandCode side.
+ *
+ * The account's percent leads the share because it is the figure the server
+ * gates on and prints on its console; the money pair is this store's, and the
+ * two need not divide to each other. Without a per-model row (no catalog, or no
+ * ocuse row for this model) there is no money to pair it with, so the row falls
+ * back to the share alone rather than dividing the account's spend by one
+ * model's cap.
  */
 function zenMeterRows(
 	label: string,
 	meter: ZenMeter,
 	now: number,
 	durSecs: number,
+	local?: { spent: number; cap: number },
 ): SidebarRow[] {
 	return windowRows(
 		label,
 		{
-			cap: 100,
-			used: meter.percent,
+			cap: local?.cap ?? 100,
+			used: local?.spent ?? meter.percent,
 			resetAt: meter.resetsAt,
+			sharePct: meter.percent,
 			// The endpoint's own verdict, with the percent as the fallback the
 			// account API's `exceeded` flag would give.
 			exceeded: meter.percent >= 100 || meter.status !== "ok",
@@ -280,7 +288,10 @@ function zenMeterRows(
 		now,
 		durSecs,
 		undefined,
-		(_used, _cap, pct) => `${pct.toFixed(1)}% of limit`,
+		(used, cap, share) =>
+			local
+				? `${money(used)}/${money(cap)} (${share.toFixed(1)}% of limit)`
+				: `${share.toFixed(1)}% of limit`,
 	);
 }
 
@@ -315,8 +326,15 @@ export function zenRows(
 	// A window cap is one *model's* share, so it may only be paired with that
 	// model's own spend. Without a per-model row ocuse's totals are account-wide,
 	// and dividing them by one model's allowance would report the whole account
-	// against a single cap; show the spend alone instead.
+	// against a single cap; the meter row then keeps the share alone.
 	const cap = mine ? limit : undefined;
+	const windowMoney = (
+		spent: ZenTotals,
+		share: number,
+	): { spent: number; cap: number } | undefined =>
+		mine && typeof limit === "number" && limit > 0
+			? { spent: spent.cost, cap: limit * share }
+			: undefined;
 	// Monthly is a billing period, not a rolling window: its length and reset
 	// come from the bounds ocuse publishes. "Monthly" matches the CommandCode
 	// panel's label.
@@ -329,13 +347,31 @@ export function zenRows(
 		// reproducible from the store — the per-model windows are this machine's
 		// own cuts, and the CC panel shows account windows in the same place.
 		rows.push(
-			...zenMeterRows("5-hour", usage.account.rolling, now, FIVE_HOUR_SECS),
+			...zenMeterRows(
+				"5-hour",
+				usage.account.rolling,
+				now,
+				FIVE_HOUR_SECS,
+				mine ? windowMoney(mine.fiveHour, GO_WINDOW_SHARE.fiveHour) : undefined,
+			),
 		);
 		rows.push(
-			...zenMeterRows("Weekly", usage.account.weekly, now, WEEKLY_SECS),
+			...zenMeterRows(
+				"Weekly",
+				usage.account.weekly,
+				now,
+				WEEKLY_SECS,
+				mine ? windowMoney(mine.weekly, GO_WINDOW_SHARE.weekly) : undefined,
+			),
 		);
 		rows.push(
-			...zenMeterRows("Monthly", usage.account.monthly, now, period?.durSecs ?? 0),
+			...zenMeterRows(
+				"Monthly",
+				usage.account.monthly,
+				now,
+				period?.durSecs ?? 0,
+				mine ? windowMoney(mine.month, GO_WINDOW_SHARE.month) : undefined,
+			),
 		);
 	} else {
 		// No endpoint answer (no Go key, no network, older ocuse): the store's own

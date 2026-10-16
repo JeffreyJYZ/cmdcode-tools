@@ -522,20 +522,19 @@ describe("the account's own meters", () => {
 		expect(parseZenJson(sample).account).toBeUndefined();
 	});
 
-	test("the window rows are the account's shares, not the model's dollars", () => {
+	test("the window rows pair the server's share with this store's money", () => {
 		const rows = zenRows(parseZenJson(withAccount()), meta);
 		const find = (label: string) => rows.find((row) => row[0] === label);
-		expect(find("5-hour")?.[1]).toBe("5.0% of limit");
-		expect(find("Weekly")?.[1]).toBe("59.0% of limit");
-		expect(find("Monthly")?.[1]).toBe("29.0% of limit");
+		expect(find("5-hour")?.[1]).toBe("$0.50/$12 (5.0% of limit)");
+		expect(find("Weekly")?.[1]).toBe("$1.50/$30 (59.0% of limit)");
+		expect(find("Monthly")?.[1]).toBe("$17/$60 (29.0% of limit)");
 		// The reset countdown rides on the continuation, as on the CC side.
 		expect(find("5-hour")?.[2]).toBe("ok");
 		const five = rows.findIndex((row) => row[0] === "5-hour");
 		expect(rows[five + 1]?.[1]).toContain("resets ");
-		// No per-model money rows: one answer per window, the server's.
-		expect(rows.some((row) => (row[1] ?? "").includes("$0.50/$12"))).toBe(
-			false,
-		);
+		// The money is this store's own: it need not divide to the server's
+		// share (the server meters higher), so both figures stay on the row.
+		expect(find("5-hour")?.[1]).toContain("of limit");
 	});
 
 	test("a meter at its limit is flagged like an over-cap window", () => {
@@ -547,7 +546,11 @@ describe("the account's own meters", () => {
 		};
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		const five = rows.findIndex((row) => row[0] === "5-hour");
-		expect(rows[five]).toEqual(["5-hour", "100.0% of limit", "crit"]);
+		expect(rows[five]).toEqual([
+			"5-hour",
+			"$0.50/$12 (100.0% of limit)",
+			"crit",
+		]);
 		expect(rows[five + 1]?.[1]).toContain("LIMIT EXCEEDED");
 	});
 
