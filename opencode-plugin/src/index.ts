@@ -17,6 +17,7 @@ import {
 	MODEL_CAPABILITIES,
 } from "./constants/models";
 import {
+	LANES,
 	MPC_TOOL_ARG_DESCRIPTION,
 	MPC_TOOL_DESCRIPTION,
 	TOOL_DESCRIPTION,
@@ -33,6 +34,9 @@ import { commandCodeV2 } from "./v2";
  * starts with `create` — `createCommandCode` below.
  */
 const PROVIDER_NPM = `${pkg.name}@${pkg.version}`;
+
+/** The two provider lane ids this plugin owns, from the one lane table. */
+const [ANTHROPIC, OPENAI] = LANES;
 
 /** Runtime `tool()` in @opencode-ai/plugin is the identity function — the
  * host builds tools from plain objects, so we define ours inline and import
@@ -162,7 +166,7 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 		// options.apiKey injected at startup, so no second /connect entry is
 		// needed.
 		auth: {
-			provider: "command-code-anthropic",
+			provider: ANTHROPIC.id,
 			loader: async (getAuth) => {
 				const auth = await getAuth();
 				if (auth?.type !== "api") {
@@ -193,7 +197,7 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 							return {
 								type: "success",
 								key,
-								provider: "command-code-anthropic",
+								provider: ANTHROPIC.id,
 							};
 						} catch {
 							return { type: "failed" };
@@ -254,20 +258,16 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			// lane is auth-gated (its /connect entry has no stored key headlessly).
 			// Confirm in the TUI after /connect, not via the CLI listing.
 			const claudeDefs = split
-				? toModelDefs(
-						split.claude,
-						"command-code-anthropic",
-						PROVIDER_NPM,
-					)
+				? toModelDefs(split.claude, ANTHROPIC.id, PROVIDER_NPM)
 				: {};
 			const openDefs = split
-				? toModelDefs(split.open, "command-code-openai", PROVIDER_NPM, {
+				? toModelDefs(split.open, OPENAI.id, PROVIDER_NPM, {
 						field: "reasoning_content",
 					})
 				: {};
 
-			const userAnthropic = existing("command-code-anthropic");
-			cfg.provider["command-code-anthropic"] = {
+			const userAnthropic = existing(ANTHROPIC.id);
+			cfg.provider[ANTHROPIC.id] = {
 				npm: userAnthropic.npm ?? PROVIDER_NPM,
 				name: userAnthropic.name ?? "Command Code (Anthropic)",
 				options: { baseURL: PROVIDER_BASE, ...userAnthropic.options },
@@ -282,8 +282,8 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			// ~/.commandcode/auth.json gets no open-lane models/key here. Fixing
 			// that needs a second plugin entry (or an upstream multi-provider
 			// hook); until then the open lane requires cmd login or options.apiKey.
-			const userOpenai = existing("command-code-openai");
-			cfg.provider["command-code-openai"] = {
+			const userOpenai = existing(OPENAI.id);
+			cfg.provider[OPENAI.id] = {
 				npm: userOpenai.npm ?? PROVIDER_NPM,
 				name: userOpenai.name ?? "Command Code (OpenAI)",
 				options: {
@@ -306,7 +306,7 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 
 		// opencode >=1.14.49 resolves the model list here, with auth injected.
 		provider: {
-			id: "command-code-anthropic",
+			id: ANTHROPIC.id,
 			models: async (_provider, ctx) => {
 				const key = await resolveKey(async () => {
 					const a = ctx.auth;
@@ -315,11 +315,7 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 						: undefined;
 				});
 				const split = await loadModels(key);
-				return toModelDefs(
-					split.claude,
-					"command-code-anthropic",
-					PROVIDER_NPM,
-				);
+				return toModelDefs(split.claude, ANTHROPIC.id, PROVIDER_NPM);
 			},
 		},
 

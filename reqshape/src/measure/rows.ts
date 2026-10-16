@@ -33,8 +33,13 @@ export function text(value: unknown): string {
 	return typeof value === "string" ? value : "";
 }
 
-function numberOr(value: unknown): number {
-	return typeof value === "number" && Number.isFinite(value) ? value : 0;
+/** A finite number, or null when the value is missing/non-numeric. The ONE
+ * coercion shared by the store rows here and mpc's payload (`market/`): `null`
+ * keeps "unpublished" distinct from `0` — a model with no cache rate, or an
+ * unbounded one — and a caller wanting a default writes `?? 0`. Folding the
+ * two shapes together (a 0-returning variant) would erase that distinction. */
+export function numberOr(value: unknown): number | null {
+	return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function parse(data: string): Record<string, unknown> | null {
@@ -84,7 +89,7 @@ export function readV2(db: Database): RawMessage[] {
 			model: text(object(data.model).id),
 			provider: text(object(data.model).providerID),
 			tokens: (data.tokens as RawTokens | undefined) ?? null,
-			cost: numberOr(data.cost),
+			cost: numberOr(data.cost) ?? 0,
 		});
 	}
 	return messages;
@@ -118,7 +123,7 @@ export function readLegacy(db: Database): RawMessage[] {
 			// made every legacy session emit no `sides` at all.
 			provider: text(data.providerID),
 			tokens: (data.tokens as RawTokens | undefined) ?? null,
-			cost: numberOr(data.cost),
+			cost: numberOr(data.cost) ?? 0,
 		});
 	}
 	return messages;

@@ -33,7 +33,7 @@ src/cli/run.ts               run(): orchestration
 src/cli/options.ts           Options, validators
 src/cli/parse/               cac.ts (declarations), map.ts (bag -> Options), fields.ts, validate.ts
 src/cli/flow/                collect.ts, sort.ts, check.ts, columns.ts
-src/cli/engine/              cost.ts, rows.ts, score.ts, ability.ts, scale.ts, index.ts
+src/cli/engine/              cost.ts, rows.ts, score.ts, ability.ts, project.ts, index.ts
 src/data/sources/            opencode.ts + cc/ (plans, cmduse, catalog) + aa/ (web, api, parse)
 src/data/bench/              index.ts (loadAbility), resolve.ts, cc.ts, types.ts
 src/data/scrape/             index.ts, tables.ts, tabs.ts, roleRows.ts; catalog/ (catalog, numeric, variant)
@@ -119,7 +119,7 @@ Same prune hits every `bun link` in group (`reqshape` too); global symlink store
 
 ## Scraping lessons (the messy part)
 
-Everything below was a real bug. Keep them in mind when touching `src/html.ts`.
+Everything below was a real bug. Keep them in mind when touching `src/data/scrape/`.
 
 - **Text nodes concatenate.** A cell like `<del>$15</del> <strong>$60</strong><small>4x</small>` flattens to `$604x`. `parseTables`/`parseRoleRows` insert `BOUNDARY` (`\u0001`, from `constants/data.ts`) between text nodes; `parseMoney` splits on it, takes **last** segment carrying a price. Don't join text nodes without marker.
 - **Biome forbids control chars in regex literals** (`noControlCharactersInRegex`). Never write `/\u0001/`. Use `str.split(BOUNDARY)` — not a regex.

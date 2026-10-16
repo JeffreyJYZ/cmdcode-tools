@@ -1,10 +1,10 @@
 import { API_BASE } from "./constants/endpoints";
 
-export function authHeaders(key: string): Record<string, string> {
+function authHeaders(key: string): Record<string, string> {
 	return { Authorization: `Bearer ${key}`, Accept: "application/json" };
 }
 
-export async function getJson(
+async function getJson(
 	path: string,
 	key: string,
 	timeoutMs = 10_000,
@@ -57,14 +57,6 @@ export type Credits = {
 	windowLimits?: { fiveHour?: Window; weekly?: Window };
 };
 
-export type Summary = {
-	totalCount?: number;
-	totalCost?: number;
-	successRate?: number;
-	totalTokensIn?: number;
-	totalTokensOut?: number;
-};
-
 export type ProviderModelsResp = {
 	data: Array<{
 		id: string;
@@ -103,10 +95,6 @@ export async function credits(key: string): Promise<Credits> {
 		},
 		windowLimits: r.windowLimits,
 	};
-}
-
-export async function usageSummary(key: string): Promise<Summary> {
-	return getJson("/alpha/usage/summary", key) as Promise<Summary>;
 }
 
 export async function providerModels(key: string): Promise<ProviderModelsResp> {

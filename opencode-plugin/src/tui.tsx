@@ -14,7 +14,7 @@ import type { Plugin as TuiPluginNs } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
 import type { JSX } from "@opentui/solid";
 import { runCmduse } from "./cli";
-import { TUI_ID } from "./constants/providers";
+import { CMD_USAGE_COMMAND_ID, TUI_ID } from "./constants/providers";
 import {
 	hostColors,
 	legacyColors,
@@ -122,7 +122,7 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 					priority: 10,
 					commands: [
 						{
-							id: "command-code.cmd-usage",
+							id: CMD_USAGE_COMMAND_ID,
 							title: "Command Code usage",
 							group: "Command Code",
 							slash: { name: "cmd-usage", arguments: true },
@@ -150,7 +150,7 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 							},
 						},
 					],
-					bindings: ["command-code.cmd-usage"],
+					bindings: [CMD_USAGE_COMMAND_ID],
 				}));
 			}) as unknown as () => JSX.Element,
 		});

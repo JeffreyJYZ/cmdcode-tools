@@ -9,7 +9,9 @@ on:
   schedule:
     # 5-minutely, deliberately off the top of the hour: GitHub's scheduler piles
     # up there and drops runs (the mpc snapshot sits off the hour for the same
-    # reason).
+    # reason). GitHub also delays and coalesces scheduled runs — a 5-min cron is
+    # a request, not a guarantee — so the timeline may be hours old, never stale
+    # enough to matter, and a release can be snapshotted by hand any time.
     - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
   workflow_dispatch:
 

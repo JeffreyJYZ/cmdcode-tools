@@ -4,13 +4,16 @@ import {
 	buildMpcArgs,
 	cmduseCandidates,
 	mpcCandidates,
+	ocuseCandidates,
 	runCmduse,
 	runMpc,
+	runOcuse,
 	splitCliArgs,
 } from "../src/cli";
 import {
 	CMDUSE_BIN_CANDIDATES,
 	MPC_BIN_CANDIDATES,
+	OCUSE_BIN_CANDIDATES,
 } from "../src/constants/binaries";
 
 describe("splitCliArgs", () => {
@@ -172,5 +175,38 @@ describe("mpcCandidates", () => {
 		);
 		expect(mpcCandidates({})).toEqual([...MPC_BIN_CANDIDATES]);
 		expect(mpcCandidates({ MPC_BIN: "" })).not.toContain("");
+	});
+});
+
+describe("ocuseCandidates", () => {
+	test("OCUSE_BIN leads, the homebrew paths remain as fallbacks", () => {
+		expect(ocuseCandidates({ OCUSE_BIN: "/tmp/ocusdev" })[0]).toBe(
+			"/tmp/ocusdev",
+		);
+		expect(ocuseCandidates({})).toEqual([...OCUSE_BIN_CANDIDATES]);
+		expect(ocuseCandidates({ OCUSE_BIN: "" })).not.toContain("");
+	});
+});
+
+describe("runOcuse", () => {
+	test("ENOENT across all candidates yields install hint", async () => {
+		try {
+			await runOcuse(["-1", "--json"], {
+				candidates: ["definitely-not-ocuse-xyz", "/no/such/ocuse"],
+			});
+			throw new Error("expected runOcuse to reject");
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			expect(msg).toContain("ocuse binary not found");
+			expect(msg).toContain("brew install JeffreyJYZ/tap/cmduse");
+		}
+	});
+	test("a pre-split token array is accepted (sidebar's call shape)", async () => {
+		// runOcuse takes the sidebar's own argv: `-1 --json --plan <plan>`.
+		await expect(
+			runOcuse(["-1", "--json", "--plan", "go"], {
+				candidates: ["definitely-not-ocuse-xyz"],
+			}),
+		).rejects.toThrow("ocuse binary not found");
 	});
 });

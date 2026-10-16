@@ -167,7 +167,7 @@ Relative paths resolve against the config file's directory. A plugin is a `.json
 | Source | Provides |
 | --- | --- |
 | `cmduse plans --json` | CommandCode plan price, credits, 5h/weekly windows |
-| `commandcode.ai/docs/plans/{goat,pro,max}` | per-model credits + token rates |
+| `commandcode.ai/docs/plans/{goat,pro,max,go}` | per-model credits + token rates |
 | `opencode.ai/v2/docs/console/go/` | oc-go per-model monthly limit (per Go plan) + shared token rates |
 | `opencode.ai/zen/go/v1/models` | oc-go live model list (`--check` drift) |
 

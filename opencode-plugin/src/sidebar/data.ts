@@ -3,15 +3,10 @@
 //
 // Both are read-only spawns. Usage is polled (cheap, local); the mpc catalog
 // is cached on disk because it reads live docs over the network.
-import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { cmduseCandidates } from "../cli";
-import {
-	MPC_BIN_CANDIDATES,
-	OCUSE_BIN_CANDIDATES,
-} from "../constants/binaries";
+import { type RunOptions, runCmduse, runMpc, runOcuse } from "../cli";
 import { SPAWN_OPTIONS } from "../constants/cli";
 import { CACHE_DIR, ccCatalogFile } from "../constants/paths";
 import { OC_PLAN_DEFAULT, type OcPlan } from "../constants/sidebar";
@@ -19,73 +14,17 @@ import { CATALOG_CACHE_TTL_MS, CHILD_TIMEOUT_MS } from "../constants/timing";
 import { type ModelMeta, modelKey, type Usage } from "./rows";
 import { parseZenJson, type ZenUsage } from "./zen";
 
-// One list, shared with the /cmd-usage dialog: `cli.ts` owns which cmduse we
-// run, so CMDUSE_BIN reaches the sidebar too (the brew Cellar is read-only, so
-// there is no other way to point the panel at a dev build).
-const CMDUSE = cmduseCandidates();
-const MPC = MPC_BIN_CANDIDATES;
-// ocuse ships in the same crate as cmduse (cmd-usage), so the same override
-// applies to it: a dev build can be pointed at without touching the Cellar.
-const OCUSE = [process.env.OCUSE_BIN, ...OCUSE_BIN_CANDIDATES].filter(
-	(bin): bin is string => Boolean(bin),
-);
-
-function run(bin: string, args: string[]): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const child = spawn(bin, args, SPAWN_OPTIONS);
-		const out: Buffer[] = [];
-		const err: Buffer[] = [];
-		let settled = false;
-		const timer = setTimeout(() => {
-			if (settled) return;
-			settled = true;
-			child.kill();
-			reject(
-				new Error(
-					`${bin} ${args.join(" ")}: timed out after ${CHILD_TIMEOUT_MS}ms`,
-				),
-			);
-		}, CHILD_TIMEOUT_MS);
-		const done = (fn: () => void) => {
-			if (settled) return;
-			settled = true;
-			clearTimeout(timer);
-			fn();
-		};
-		child.stdout?.on("data", (d: Buffer) => out.push(d));
-		child.stderr?.on("data", (d: Buffer) => err.push(d));
-		child.on("error", (e) => done(() => reject(e)));
-		child.on("close", (code) =>
-			done(() =>
-				code === 0
-					? resolve(Buffer.concat(out).toString("utf8"))
-					: reject(
-							new Error(
-								`${bin} ${args.join(" ")}: exit ${code} ${Buffer.concat(err).toString("utf8").slice(-200)}`,
-							),
-						),
-			),
-		);
-	});
-}
-
-async function runFirst(
-	candidates: readonly string[],
-	args: string[],
-): Promise<string> {
-	let last: unknown;
-	for (const bin of candidates) {
-		try {
-			return await run(bin, args);
-		} catch (e) {
-			last = e;
-			if ((e as NodeJS.ErrnoException)?.code !== "ENOENT") throw e;
-		}
-	}
-	throw last instanceof Error
-		? last
-		: new Error(`${candidates[0]} not found`);
-}
+// The sidebar spawns the same CLIs as the /cmd-usage dialog, through the same
+// helpers in ../cli (one candidate loop, one install hint). It differs in two
+// ways the tool path does not need: `detached` gives the child no controlling
+// terminal, so cmduse's /dev/tty spinner cannot overpaint the TUI; and the
+// timeout bounds one spawn, since an outage can park it in cmduse's retry
+// ladder and the poll would otherwise stack spawns. `CMDUSE_BIN`/`MPC_BIN`/
+// `OCUSE_BIN` all reach the sidebar through those helpers.
+const SIDEBAR_OPTS: RunOptions = {
+	spawnOptions: SPAWN_OPTIONS,
+	timeoutMs: CHILD_TIMEOUT_MS,
+};
 
 /** Parse `cmduse -1 --json` into the usage snapshot. */
 export function parseUsageJson(text: string): Usage {
@@ -260,7 +199,7 @@ export async function loadMeta(
 	} catch {
 		// no cache yet
 	}
-	const meta = parseMpcJson(await runFirst(MPC, metaArgs(plan)));
+	const meta = parseMpcJson(await runMpc(metaArgs(plan), SIDEBAR_OPTS));
 	try {
 		const path = cachePath(plan);
 		await mkdir(dirname(path), { recursive: true });
@@ -279,17 +218,20 @@ export async function loadMeta(
  * unreachable (see `requireSnapshot`). */
 export async function loadUsage(): Promise<Usage> {
 	return requireSnapshot(
-		parseUsageJson(await runFirst(CMDUSE, ["-1", "--json", "--plain"])),
+		parseUsageJson(
+			await runCmduse(["-1", "--json", "--plain"], SIDEBAR_OPTS),
+		),
 	);
 }
 
 /**
- * One OpenCode Go / Zen snapshot from ocuse, which reads opencode's own store
- * (those providers have no usage API). Throws when ocuse is missing or fails,
- * and the caller then omits the panel.
+ * One OpenCode Go / Zen snapshot from ocuse: opencode's own store for the
+ * per-model totals, plus OpenCode Go's usage endpoint for the account meters
+ * when the account has a Go key. Throws when ocuse is missing or fails, and the
+ * caller then omits the panel.
  */
 export async function loadZen(
 	plan: OcPlan = OC_PLAN_DEFAULT,
 ): Promise<ZenUsage> {
-	return parseZenJson(await runFirst(OCUSE, zenArgs(plan)));
+	return parseZenJson(await runOcuse(zenArgs(plan), SIDEBAR_OPTS));
 }

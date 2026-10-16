@@ -22,7 +22,7 @@ Everything Command Code (commandcode.ai) usage lives under `core/` + `cmduse/` +
 | Component | Crate / dir | Install | Docs |
 |---|---|---|---|
 | `cmduse` CLI | `cmduse/` (crate `cmd-usage`, bin `cmduse`) | [crates.io](https://crates.io/crates/cmd-usage) · [brew](https://github.com/JeffreyJYZ/homebrew-tap) | **[cmduse/README.md](cmduse/README.md)** · [man page](cmduse/cmduse.1) |
-| `ocuse` (same crate) | `cmduse/` (bin `ocuse`) | same crate as `cmduse` | OpenCode Go/Zen usage from local data — see below |
+| `ocuse` (same crate) | `cmduse/` (bin `ocuse`) | same crate as `cmduse` | OpenCode Go/Zen usage — Go's own usage endpoint plus local data — see below |
 | Shared core | `core/` (crate `cmduse-core`) | [crates.io](https://crates.io/crates/cmduse-core) | [docs.rs/cmduse-core](https://docs.rs/cmduse-core) · versioned on its own `2.x` line, not as a pair with the CLI |
 | opencode plugin | `opencode-plugin/` (`@jeffreyjyz/opencode-command-code`) | [npm](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code) | [opencode-plugin/src/index.ts](opencode-plugin/src/index.ts) |
 
@@ -59,7 +59,7 @@ Shared truth lives in `core/`: `plans.json` (plan table/caps), `gating.json` (mo
 
 ## opencode plugin
 
-Providers (`command-code-anthropic`, `command-code-openai`), a live gated model list, `/usage` (TUI slash command, alias `/cmd-usage`), and the `cmd_usage` and `mpc_prices` tools — for **both opencode v1 (≥1.18.29) and v2 (≥2.0.0)** from one package.
+Providers (`command-code-anthropic`, `command-code-openai`), a live gated model list, `/cmd-usage` (TUI slash command), and the `cmd_usage` and `mpc_prices` tools — for **both opencode v1 (≥1.18.29) and v2 (≥2.0.0)** from one package.
 
 Requires the `cmduse` CLI (usage windows/pace rendering live in the Rust core — the plugin spawns it):
 
@@ -97,7 +97,7 @@ While a session uses a `command-code*` model — or an OpenCode Go/Zen one — t
 - the active model's own period usage — requests, plus spend and its share of the session when the harness records them (new in 0.2.9, spend share in 0.3.15; labelled `Usage (this model)`)
 - a running promotion on the active model (`Deal`: badge plus expiry, new in 0.3.14)
 - this session's own totals (`Session`), so mid-conversation you see what the conversation has cost rather than only the period-to-date figure (new in 0.3.12)
-- on OpenCode Go/Zen sessions: the same shape from `ocuse`, the only local source for those providers — spend against each window's share of the model's per-model allowance (5h 20%, weekly 50%, monthly 100%), plus rates and benchmarks from mpc's OpenCode side (new in 0.3.12). The allowance shown is the **selected Go plan**'s limit: Go and Go Plus share token prices but grant different per-model limits, and nothing local records which you have, so set it (below). A free/unbounded model reads `Allowance: ∞` rather than a money figure. The rolling 5-hour/Weekly windows count down too: Go has no usage API to report a reset, so the panel derives one from opencode's own store — the oldest request still inside the window leaves it at `oldest + window`, which is that window's honest reset — and shows the same `% elapsed` / `resets …` continuation the Command Code side does. Monthly counts down from the period bounds `ocuse` publishes (`periodStartAt`/`periodEndAt`), with the same elapsed share.
+- on OpenCode Go/Zen sessions: the same shape from `ocuse` — the three windows come from **OpenCode Go's own usage endpoint** (the numbers `opencode.ai/console` shows: the 5-hour `rolling` block, the Monday-anchored week, the billing month, each with the server's reset), and the per-model spend, `Usage (this model)` and `Session` figures come from opencode's own store, plus rates and benchmarks from mpc's OpenCode side (new in 0.3.12). The allowance shown is the **selected Go plan**'s limit: Go and Go Plus share token prices but grant different per-model limits, and the endpoint reports percentages rather than a plan id, so set it (below). A free/unbounded model reads `Allowance: ∞` rather than a money figure. With no Go key, no network, or `--no-api`, the windows fall back to the local estimate — each window's share of the model's per-model allowance (5h 20%, weekly 50%, monthly 100%), with the 5-hour/Weekly reset derived from the oldest request still inside the window — and the panel then shows money rows rather than the account's shares.
 
 Usage comes from the `cmduse` CLI (polled every 5s); the model catalog comes from `mpc --json`, cached for 1h and re-read on every poll, so a new model or promotion reaches a running panel — install it with `bun link` in the `oc-cmd-compare` package, or the section keeps the model name and the store-backed rows and simply omits the catalog rows (tier, rates, allowance). The model's own usage is read from opencode's message store (`~/.local/share/opencode/opencode.db`, read-only); CommandCode is subscription-billed, so spend appears only when the harness priced the turns (a free or unpriced model keeps requests only). Non-CommandCode models show nothing.
 
@@ -116,10 +116,10 @@ opencode is told each model's published $/1M rates, so its own cost display (and
 For the fastest startup, pin the plugin to an exact version in `opencode.json`:
 
 ```json
-{ "plugins": ["@jeffreyjyz/opencode-command-code@0.3.18"] }
+{ "plugins": ["@jeffreyjyz/opencode-command-code@<version>"] }
 ```
 
-A bare name makes opencode re-resolve `@latest` (a registry round-trip) on every start; a pinned specifier is cached as-is, and the plugin's own provider is versioned with it.
+A bare name makes opencode re-resolve `@latest` (a registry round-trip) on every start; a pinned specifier is cached as-is, and the plugin's own provider is versioned with it. Take `<version>` from `npm view @jeffreyjyz/opencode-command-code version` — never copy a number into this page.
 
 ## OpenCode Go/Zen usage (`ocuse`)
 
@@ -138,10 +138,10 @@ ocuse mcp             # MCP stdio server
 
 Two differences from `cmduse` are worth knowing up front, both from upstream:
 
-- **OpenCode publishes no usage API.** The console tracks usage; the one API route (`/zen/go/v1/usage`) answers `EntitlementError` for keys without a Go subscription, and Zen has no equivalent at all. So `ocuse` reports your **local** usage — opencode.db, which records `cost`, tokens and the model for every request, for both providers.
-- **Go's allowance is per model**, not per account: each model has a monthly dollar limit, with windows of 5h = 20%, weekly = 50%, monthly = 100%. The dashboard shows each model against its own limit, and the header's window lines sum the caps of the models you used. Go ships **two plans** — Go ($10/mo) and Go Plus ($40/mo) — with the same token prices but different per-model limits; nothing local records which one you have (the subscription lives in the console), so select it with `--plan go|go-plus` (default `go`).
+- **Go has a usage API, and `ocuse` reads it.** `GET https://opencode.ai/zen/go/v1/usage` (the credential `/connect` stored, or `OCUSE_API_KEY`/`OPENCODE_API_KEY`) answers the console's three meters — `rolling` (5-hour), `weekly` and `monthly`, each a percent and a reset instant. Those are the only window figures that agree with `opencode.ai/console`, because the server's windows are not local ones: its 5-hour window is a block with its own reset, its week is anchored to Monday 00:00 UTC, its month is the subscription anniversary, and it meters with its own price basis. Everything else — per-model totals, `daily`/`hourly`, the model table — comes from local usage: opencode.db, which records `cost`, tokens and the model for every request, for both providers. With no key, no network, or `--no-api`, the windows fall back to a **local estimate** and the dashboard says so.
+- **Go's allowance is per model**, not per account: each model has a monthly dollar limit, with windows of 5h = 20%, weekly = 50%, monthly = 100%. The dashboard shows each model against its own limit, and the header's window lines sum the caps of the models you used. Go ships **two plans** — Go ($10/mo) and Go Plus ($40/mo) — with the same token prices but different per-model limits; nothing local records which one you have (the subscription lives in the console, and the usage endpoint reports percentages rather than a plan id), so select it with `--plan go|go-plus` (default `go`).
 
-The monthly *period* has no local record (renewals are in the console), so the default is the calendar month; `--period-start YYYY-MM-DD` pins the real one and `--window all|<n>d` reports other ranges (inference from your first Go request exists behind `--infer-anniversary`, but it guesses wrong on sparse history).
+The monthly *period* comes from the endpoint's own reset instant when it answers (the billing anniversary, which is why the dashboard reads `Go billing month`); without it the default is the calendar month, `--period-start YYYY-MM-DD` pins a real one and `--window all|<n>d` reports other ranges (inference from your first Go request exists behind `--infer-anniversary`, but it guesses wrong on sparse history).
 
 Limits and rates come from `core/zen.json`, regenerated with `bun scripts/extract-zen.ts` from OpenCode's own docs sources.
 
@@ -149,7 +149,7 @@ The watch frame is `cmduse`'s: the same palette, severity-coloured gauges (green
 
 ## MCP server
 
-`cmduse mcp` runs an MCP stdio server (hand-rolled JSON-RPC, no extra deps) exposing five tools: `usage` (dashboard), `plans` (comparison table), `models` (live gated list), `daily`, and `hourly` — the same output the CLI subcommands print, with auth and `~/.commandcode/auth.json` shared.
+`cmduse mcp` runs an MCP stdio server (hand-rolled JSON-RPC, no extra deps) exposing seven tools: `usage` (dashboard), `plans` (comparison table), `models` (live gated list), `daily`, `hourly`, `session` (by project) and `model` (by model) — the same output the CLI subcommands print, with auth and `~/.commandcode/auth.json` shared.
 
 Zed (`~/.config/zed/settings.json`):
 
@@ -165,4 +165,4 @@ Any other MCP host: run `cmduse mcp` as a stdio server. The opencode plugin does
 
 ## License
 
-MIT — see [cmduse/LICENSE-MIT](cmduse/LICENSE-MIT), [core/LICENSE-MIT](core/LICENSE-MIT), and [opencode-plugin/LICENSE](opencode-plugin/LICENSE).
+MIT — each package ships its own: [cmduse/LICENSE-MIT](cmduse/LICENSE-MIT), [core/LICENSE-MIT](core/LICENSE-MIT), and a `LICENSE` in every TypeScript package (`opencode-plugin`, `oc-cmd-compare`, `reqshape`, `opencode-context`, `opencode-shell-rc`, `opencode-session-dir`).

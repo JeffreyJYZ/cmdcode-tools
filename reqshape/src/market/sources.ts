@@ -1,14 +1,11 @@
 import { spawnSync } from "node:child_process";
+import { numberOr } from "#~/measure/rows.ts";
 import type { MpcJson } from "./rates.ts";
 
 export interface AccountSummary {
 	plan: string;
 	requests: number;
 	periodEnd: string;
-}
-
-export function numberOr(value: unknown): number | null {
-	return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 /** Run a sibling CLI and parse its JSON, with the failure mode worth reading. */

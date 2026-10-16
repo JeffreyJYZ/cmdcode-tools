@@ -1,5 +1,5 @@
+import { numberOr } from "#~/measure/rows.ts";
 import type { MpcJson, MpcSide, ProviderId, RateEntry } from "./rates.ts";
-import { numberOr } from "./sources.ts";
 
 /**
  * The plan's window caps as a share of its monthly allowance. Taken from the

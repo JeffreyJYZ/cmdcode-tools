@@ -8,6 +8,7 @@ import { spawn } from "node:child_process";
 import {
 	CMDUSE_BIN_CANDIDATES,
 	MPC_BIN_CANDIDATES,
+	OCUSE_BIN_CANDIDATES,
 } from "./constants/binaries";
 import { DEFAULT_ARGS, MPC_DEFAULT_ARGS, SUBCOMMANDS } from "./constants/cli";
 
@@ -34,6 +35,17 @@ export function mpcCandidates(
 }
 
 const MPC_CANDIDATES = mpcCandidates();
+
+/** Same lookup for ocuse, the OpenCode Go/Zen reader shipped in the cmd-usage
+ * crate: `OCUSE_BIN` wins when set, then the homebrew fallbacks. */
+export function ocuseCandidates(
+	env: Record<string, string | undefined> = process.env,
+): string[] {
+	const candidates = [env.OCUSE_BIN, ...OCUSE_BIN_CANDIDATES];
+	return candidates.filter((bin): bin is string => Boolean(bin));
+}
+
+const OCUSE_CANDIDATES = ocuseCandidates();
 
 /** Shell-words split: whitespace-separated, with single/double quoting and
  * backslash escapes ("--tz +05:30", arg='a b'). Unterminated quotes close at
@@ -101,6 +113,14 @@ export type RunOptions = {
 	env?: Record<string, string>;
 	/** Overridable for tests. */
 	candidates?: readonly string[];
+	/** Extra spawn options. Excludes `stdio`: the callbacks below assume stdout
+	 * and stderr are piped (the default here), so callers may only add fields
+	 * that leave that contract intact — the sidebar passes `detached` (see
+	 * constants/cli.ts; its own stdio equals the default). */
+	spawnOptions?: Omit<NonNullable<Parameters<typeof spawn>[2]>, "stdio">;
+	/** Kill the child after this many ms. The sidebar bounds each poll; the
+	 * tool spawns leave it unset. */
+	timeoutMs?: number;
 };
 
 function stderrTail(text: string): string {
@@ -118,30 +138,50 @@ function runOnce(
 		const child = spawn(bin, args, {
 			env: { ...process.env, ...(opts.env ?? {}) },
 			stdio: ["ignore", "pipe", "pipe"],
+			...opts.spawnOptions,
 		});
 		const out: Buffer[] = [];
 		const err: Buffer[] = [];
+		let settled = false;
+		const timer =
+			opts.timeoutMs === undefined
+				? undefined
+				: setTimeout(() => {
+						if (settled) return;
+						settled = true;
+						child.kill();
+						reject(
+							new Error(
+								`${name} ${args.join(" ")}: timed out after ${opts.timeoutMs}ms`,
+							),
+						);
+					}, opts.timeoutMs);
 		const onAbort = () => child.kill("SIGTERM");
 		opts.signal?.addEventListener("abort", onAbort, { once: true });
+		const settle = (fn: () => void) => {
+			if (settled) return;
+			settled = true;
+			if (timer) clearTimeout(timer);
+			opts.signal?.removeEventListener("abort", onAbort);
+			fn();
+		};
 		child.stdout.on("data", (d: Buffer) => out.push(d));
 		child.stderr.on("data", (d: Buffer) => err.push(d));
-		child.on("error", (e) => {
-			opts.signal?.removeEventListener("abort", onAbort);
-			reject(e);
-		});
+		child.on("error", (e) => settle(() => reject(e)));
 		child.on("close", (code, signal) => {
-			opts.signal?.removeEventListener("abort", onAbort);
 			const stdout = Buffer.concat(out).toString("utf8");
 			if (opts.signal?.aborted) {
-				reject(new Error(`${name} invocation aborted`));
+				settle(() => reject(new Error(`${name} invocation aborted`)));
 			} else if (code === 0) {
-				resolve(stdout);
+				settle(() => resolve(stdout));
 			} else {
 				const why = signal ? `killed by ${signal}` : `exit ${code}`;
 				const tail = stderrTail(Buffer.concat(err).toString("utf8"));
-				reject(
-					new Error(
-						`${name} ${args.join(" ")}: ${why}${tail ? `\n${tail}` : ""}`,
+				settle(() =>
+					reject(
+						new Error(
+							`${name} ${args.join(" ")}: ${why}${tail ? `\n${tail}` : ""}`,
+						),
 					),
 				);
 			}
@@ -149,14 +189,24 @@ function runOnce(
 	});
 }
 
+/** argv for an invocation: a pre-split token array is used as-is, so a caller
+ * with its own argv (the sidebar) needs no arg-string round-trip; a string arg
+ * goes through that binary's builder. */
+function resolveArgs(
+	arg: string | readonly string[],
+	build: (arg: string) => string[],
+): string[] {
+	return typeof arg === "string" ? build(arg) : [...arg];
+}
+
 /** Run cmduse and return its plain-text stdout. Tries PATH, then common
  * homebrew locations; every candidate failing with ENOENT yields a single
  * install-hint error. */
 export async function runCmduse(
-	arg: string,
+	arg: string | readonly string[],
 	opts: RunOptions = {},
 ): Promise<string> {
-	const args = buildCmduseArgs(arg);
+	const args = resolveArgs(arg, buildCmduseArgs);
 	const candidates = opts.candidates ?? CANDIDATES;
 	let last: unknown;
 	for (const bin of candidates) {
@@ -179,10 +229,10 @@ export async function runCmduse(
  * single install-hint error, and any other failure (a non-zero exit
  * included) surfaces immediately with mpc's last stderr lines. */
 export async function runMpc(
-	arg: string,
+	arg: string | readonly string[],
 	opts: RunOptions = {},
 ): Promise<string> {
-	const args = buildMpcArgs(arg);
+	const args = resolveArgs(arg, buildMpcArgs);
 	const candidates = opts.candidates ?? MPC_CANDIDATES;
 	let last: unknown;
 	for (const bin of candidates) {
@@ -195,6 +245,31 @@ export async function runMpc(
 	}
 	throw new Error(
 		`mpc binary not found (install: bun add -g @jeffreyjyz/mpc)${last instanceof Error && last.message !== last.name ? ` — ${last.message}` : ""}`,
+		{ cause: last },
+	);
+}
+
+/** Run ocuse and return its plain-text stdout (OpenCode Go/Zen usage). Same
+ * contract as runCmduse; ocuse ships in the cmd-usage crate, so its install
+ * hint is the same brew formula. A string arg is shell-split, an array used
+ * as-is. */
+export async function runOcuse(
+	arg: string | readonly string[],
+	opts: RunOptions = {},
+): Promise<string> {
+	const args = resolveArgs(arg, splitCliArgs);
+	const candidates = opts.candidates ?? OCUSE_CANDIDATES;
+	let last: unknown;
+	for (const bin of candidates) {
+		try {
+			return await runOnce(bin, args, opts, "ocuse");
+		} catch (e) {
+			last = e;
+			if ((e as NodeJS.ErrnoException)?.code !== "ENOENT") throw e;
+		}
+	}
+	throw new Error(
+		`ocuse binary not found (install: brew install JeffreyJYZ/tap/cmduse)${last instanceof Error && last.message !== last.name ? ` — ${last.message}` : ""}`,
 		{ cause: last },
 	);
 }

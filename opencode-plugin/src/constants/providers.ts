@@ -22,6 +22,9 @@ export const ZEN_PROVIDER_PREFIX = "opencode-zen";
 /** TUI plugin id (stable contract; test/tui.test.ts pins it). */
 export const TUI_ID = "command-code.tui";
 
+/** The v2 /cmd-usage slash command id (registered and bound in tui.tsx). */
+export const CMD_USAGE_COMMAND_ID = "command-code.cmd-usage";
+
 /** The cmd_usage tool description, shared by the v1 and v2 halves. */
 export const TOOL_DESCRIPTION =
 	"Fetch live Command Code plan/usage: plan name, monthly credits, 5-hour & weekly windows, billing-period summary. Pass arg='plans' for the plan comparison table only, or extra cmduse flags (e.g. '--tz +05:30 daily').";

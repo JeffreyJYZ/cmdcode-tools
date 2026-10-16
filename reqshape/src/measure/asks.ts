@@ -1,23 +1,19 @@
 import { BOUNDARY } from "#~/constants/asks.ts";
 import type { Ask, AskKind, Req } from "#~/types.ts";
-import type { RawMessage } from "./rows.ts";
+import { numberOr, type RawMessage } from "./rows.ts";
 import type { SessionRow } from "./store.ts";
-
-function numberOr(value: unknown): number {
-	return typeof value === "number" && Number.isFinite(value) ? value : 0;
-}
 
 function toReq(message: RawMessage, position: number): Req {
 	const tokens = message.tokens;
 	return {
 		model: message.model,
 		provider: message.provider,
-		tokensIn: numberOr(tokens?.input),
-		output: numberOr(tokens?.output),
-		reasoning: numberOr(tokens?.reasoning),
-		cacheRead: numberOr(tokens?.cache?.read),
-		cacheWrite: numberOr(tokens?.cache?.write),
-		cost: numberOr(message.cost),
+		tokensIn: numberOr(tokens?.input) ?? 0,
+		output: numberOr(tokens?.output) ?? 0,
+		reasoning: numberOr(tokens?.reasoning) ?? 0,
+		cacheRead: numberOr(tokens?.cache?.read) ?? 0,
+		cacheWrite: numberOr(tokens?.cache?.write) ?? 0,
+		cost: numberOr(message.cost) ?? 0,
 		position,
 	};
 }

@@ -16,8 +16,10 @@ export type ModelSplit = {
 
 let cache: { key: string; at: number; models: CmdModel[] } | null = null;
 
-// ponytail: process-lifetime cache only; restart refetches. Add disk cache if
-// startup fetch latency ever annoys offline users.
+// ponytail: in-process cache only; restart refetches from the API. The disk
+// cache that spares a warm start the listing call is `src/modelsCache.ts`,
+// wired into provider registration in `src/v2.ts`; this cache still covers the
+// config-hook path (src/index.ts).
 export function isClaude(id: string): boolean {
 	const bare = id.includes("/") ? id.slice(id.lastIndexOf("/") + 1) : id;
 	return bare.toLowerCase().startsWith("claude");
