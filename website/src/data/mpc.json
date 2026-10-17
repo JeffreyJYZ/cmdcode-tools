@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-10-17T03:12:07.261Z",
+	"generatedAt": "2026-10-17T17:55:40.247Z",
 	"plans": [
 		{
 			"key": "go",
@@ -4806,17 +4806,17 @@
 								"cacheRead": 0.03,
 								"cacheWrite": null
 							},
-							"allowance": 100,
-							"requestsPerMonth": 58139.53488372093,
-							"requestsPerFiveHour": 11627.906976744187,
-							"requestsPerWeek": 29069.767441860466,
+							"allowance": 80,
+							"requestsPerMonth": 46511.62790697675,
+							"requestsPerFiveHour": 9302.32558139535,
+							"requestsPerWeek": 23255.813953488374,
 							"costPerRequest": 0.00172,
-							"payPerRequest": 0.000172,
-							"multiplier": 10,
+							"payPerRequest": 0.000215,
+							"multiplier": 8,
 							"ability": 41.8,
 							"tps": 70.8312344302647,
-							"index": 67,
-							"valueIndex": 79,
+							"index": 64,
+							"valueIndex": 76,
 							"free": false
 						}
 					},
@@ -7335,17 +7335,17 @@
 								"cacheRead": 0.03,
 								"cacheWrite": null
 							},
-							"allowance": 100,
-							"requestsPerMonth": 58139.53488372093,
-							"requestsPerFiveHour": 11627.906976744187,
-							"requestsPerWeek": 29069.767441860466,
+							"allowance": 80,
+							"requestsPerMonth": 46511.62790697675,
+							"requestsPerFiveHour": 9302.32558139535,
+							"requestsPerWeek": 23255.813953488374,
 							"costPerRequest": 0.00172,
-							"payPerRequest": 0.000172,
-							"multiplier": 10,
+							"payPerRequest": 0.000215,
+							"multiplier": 8,
 							"ability": 41.8,
 							"tps": 70.8312344302647,
-							"index": 67,
-							"valueIndex": 74,
+							"index": 63,
+							"valueIndex": 72,
 							"free": false
 						}
 					},
@@ -9920,17 +9920,17 @@
 								"cacheRead": 0.03,
 								"cacheWrite": null
 							},
-							"allowance": 100,
-							"requestsPerMonth": 58139.53488372093,
-							"requestsPerFiveHour": 11627.906976744187,
-							"requestsPerWeek": 29069.767441860466,
+							"allowance": 90,
+							"requestsPerMonth": 52325.58139534884,
+							"requestsPerFiveHour": 10465.116279069769,
+							"requestsPerWeek": 26162.79069767442,
 							"costPerRequest": 0.00172,
-							"payPerRequest": 0.000344,
-							"multiplier": 5,
+							"payPerRequest": 0.0003822222222222222,
+							"multiplier": 4.5,
 							"ability": 41.8,
 							"tps": 70.8312344302647,
-							"index": 63,
-							"valueIndex": 79,
+							"index": 62,
+							"valueIndex": 78,
 							"free": false
 						}
 					},
@@ -12854,17 +12854,17 @@
 								"cacheRead": 0.03,
 								"cacheWrite": null
 							},
-							"allowance": 100,
-							"requestsPerMonth": 58139.53488372093,
-							"requestsPerFiveHour": 11627.906976744187,
-							"requestsPerWeek": 29069.767441860466,
+							"allowance": 90,
+							"requestsPerMonth": 52325.58139534884,
+							"requestsPerFiveHour": 10465.116279069769,
+							"requestsPerWeek": 26162.79069767442,
 							"costPerRequest": 0.00172,
-							"payPerRequest": 0.000344,
-							"multiplier": 5,
+							"payPerRequest": 0.0003822222222222222,
+							"multiplier": 4.5,
 							"ability": 41.8,
 							"tps": 70.8312344302647,
-							"index": 63,
-							"valueIndex": 75,
+							"index": 61,
+							"valueIndex": 74,
 							"free": false
 						}
 					},
@@ -15524,8 +15524,8 @@
 				"tally": {
 					"headToHead": 25,
 					"ocWins": 14,
-					"ccWins": 4,
-					"ties": 7,
+					"ccWins": 3,
+					"ties": 8,
 					"ocOnly": 4,
 					"ccOnly": 60
 				}
