@@ -17,7 +17,7 @@
 // window math and formatting (see ./cli.ts).
 import type { Plugin as PluginNs } from "@opencode/plugin";
 import { inputModalities, modelCost, reasoningVariants } from "./catalog";
-import { runCmduse, runMpc } from "./cli";
+import { ocuseArgs, runCmduse, runMpc, runOcuse } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import { KNOWN_MODELS } from "./constants/gating";
 import {
@@ -31,6 +31,8 @@ import {
 	type Lane,
 	MPC_TOOL_ARG_DESCRIPTION,
 	MPC_TOOL_DESCRIPTION,
+	OCUSE_TOOL_ARG_DESCRIPTION,
+	OCUSE_TOOL_DESCRIPTION,
 	PLUGIN_ID,
 	TOOL_DESCRIPTION,
 } from "./constants/providers";
@@ -363,6 +365,33 @@ export const commandCodeV2: PluginNs.Plugin = {
 						content: await runMpc(arg, {
 							env: key ? { CMD_API_KEY: key } : undefined,
 						}),
+					};
+				},
+			} as never);
+			// ocuse_usage: the same thin-spawn pattern for the Go/Zen side —
+			// ocuse owns the dashboard, so the tool returns its text (or
+			// --json) verbatim. Empty arg defaults to `-1`: a bare ocuse is
+			// the live watch loop and would never return to the agent.
+			editor.add({
+				name: "ocuse_usage",
+				description: OCUSE_TOOL_DESCRIPTION,
+				input: {
+					type: "object",
+					properties: {
+						arg: {
+							type: "string",
+							description: OCUSE_TOOL_ARG_DESCRIPTION,
+						},
+					},
+					additionalProperties: false,
+				},
+				async execute(input: unknown) {
+					const arg =
+						typeof (input as { arg?: unknown })?.arg === "string"
+							? (input as { arg: string }).arg
+							: undefined;
+					return {
+						content: await runOcuse(ocuseArgs(arg)),
 					};
 				},
 			} as never);

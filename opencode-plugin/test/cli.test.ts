@@ -4,6 +4,7 @@ import {
 	buildMpcArgs,
 	cmduseCandidates,
 	mpcCandidates,
+	ocuseArgs,
 	ocuseCandidates,
 	runCmduse,
 	runMpc,
@@ -185,6 +186,22 @@ describe("ocuseCandidates", () => {
 		);
 		expect(ocuseCandidates({})).toEqual([...OCUSE_BIN_CANDIDATES]);
 		expect(ocuseCandidates({ OCUSE_BIN: "" })).not.toContain("");
+	});
+});
+
+describe("ocuseArgs", () => {
+	test("empty input defaults to the one-shot dashboard", () => {
+		// A bare ocuse is the live watch loop and would never return to the
+		// agent or resolve the dialog, so empty never passes through.
+		expect(ocuseArgs(undefined)).toBe("-1");
+		expect(ocuseArgs("")).toBe("-1");
+		expect(ocuseArgs("   ")).toBe("-1");
+	});
+	test("given args pass through untouched", () => {
+		expect(ocuseArgs("daily")).toBe("daily");
+		expect(ocuseArgs("--plan go-plus --json")).toBe(
+			"--plan go-plus --json",
+		);
 	});
 });
 

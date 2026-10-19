@@ -25,6 +25,9 @@ export const TUI_ID = "command-code.tui";
 /** The v2 /cmd-usage slash command id (registered and bound in tui.tsx). */
 export const CMD_USAGE_COMMAND_ID = "command-code.cmd-usage";
 
+/** The v2 /ocuse-usage slash command id (registered and bound in tui.tsx). */
+export const OCUSE_USAGE_COMMAND_ID = "command-code.ocuse-usage";
+
 /** The cmd_usage tool description, shared by the v1 and v2 halves. */
 export const TOOL_DESCRIPTION =
 	"Fetch live Command Code plan/usage: plan name, monthly credits, 5-hour & weekly windows, billing-period summary. Pass arg='plans' for the plan comparison table only, or extra cmduse flags (e.g. '--tz +05:30 daily').";
@@ -36,6 +39,14 @@ export const MPC_TOOL_DESCRIPTION =
 /** The mpc_prices `arg` description, shared by the v1 and v2 halves. */
 export const MPC_TOOL_ARG_DESCRIPTION =
 	"Optional mpc flags: '--model <regex>' filters rows, '--minimal' | '--medium' | '--detail' set table width, '--json' for full structured rows, '--cc-plan'/'--oc-plan' pick a plan, '--usage' projects real usage";
+
+/** The ocuse_usage tool description, shared by the v1 and v2 halves. */
+export const OCUSE_TOOL_DESCRIPTION =
+	"Fetch live OpenCode Go/Zen usage: the account's window meters, per-model spend against limits, 5-hour & weekly windows, billing-period summary. Defaults to the one-shot dashboard; pass extra ocuse flags for more (e.g. '--plan go-plus', 'daily', '--json').";
+
+/** The ocuse_usage `arg` description, shared by the v1 and v2 halves. */
+export const OCUSE_TOOL_ARG_DESCRIPTION =
+	"Optional: extra ocuse flags (e.g. '--plan go-plus', 'daily', '--json'); empty means the one-shot dashboard";
 
 export type Lane = {
 	id: "command-code-anthropic" | "command-code-openai";

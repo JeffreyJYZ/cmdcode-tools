@@ -107,6 +107,15 @@ export function buildMpcArgs(arg: string): string[] {
 	return tokens;
 }
 
+/**
+ * The arg the ocuse_usage tool and the /ocuse-usage dialog pass on: the
+ * agent's (or slash) args when given, else `-1`. A bare ocuse is the live
+ * watch loop and would never return, so empty input never passes through.
+ */
+export function ocuseArgs(arg: string | undefined): string {
+	return arg !== undefined && arg.trim() !== "" ? arg : "-1";
+}
+
 export type RunOptions = {
 	signal?: AbortSignal;
 	/** Extra env for the child (CMD_API_KEY when the plugin resolved one). */

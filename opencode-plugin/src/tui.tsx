@@ -13,8 +13,12 @@
 import type { Plugin as TuiPluginNs } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
 import type { JSX } from "@opentui/solid";
-import { runCmduse } from "./cli";
-import { CMD_USAGE_COMMAND_ID, TUI_ID } from "./constants/providers";
+import { ocuseArgs, runCmduse, runOcuse } from "./cli";
+import {
+	CMD_USAGE_COMMAND_ID,
+	OCUSE_USAGE_COMMAND_ID,
+	TUI_ID,
+} from "./constants/providers";
 import {
 	hostColors,
 	legacyColors,
@@ -149,8 +153,39 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 								});
 							},
 						},
+						{
+							id: OCUSE_USAGE_COMMAND_ID,
+							title: "OpenCode Go/Zen usage",
+							group: "Command Code",
+							slash: { name: "ocuse-usage", arguments: true },
+							enabled: () => true,
+							suggested: true,
+							// Empty input defaults to `-1` (see `ocuseArgs`): a bare
+							// ocuse is the live watch loop and would never
+							// resolve the dialog.
+							run: async (input) => {
+								let text: string;
+								try {
+									text = await runOcuse(ocuseArgs(input));
+								} catch (error) {
+									ctx.ui.toast.show({
+										title: "ocuse-usage failed",
+										message:
+											error instanceof Error
+												? error.message
+												: String(error),
+										variant: "error",
+									});
+									return;
+								}
+								await ctx.ui.dialog.alert({
+									title: "OpenCode Go/Zen usage",
+									message: text.trimEnd(),
+								});
+							},
+						},
 					],
-					bindings: [CMD_USAGE_COMMAND_ID],
+					bindings: [CMD_USAGE_COMMAND_ID, OCUSE_USAGE_COMMAND_ID],
 				}));
 			}) as unknown as () => JSX.Element,
 		});

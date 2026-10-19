@@ -149,9 +149,15 @@ export function parseZenJson(text: string): ZenUsage {
 		// network, `--no-api`); the panel then falls back to the per-model rows.
 		account: body.account
 			? {
-					rolling: meter((body.account as Record<string, unknown>).rolling),
-					weekly: meter((body.account as Record<string, unknown>).weekly),
-					monthly: meter((body.account as Record<string, unknown>).monthly),
+					rolling: meter(
+						(body.account as Record<string, unknown>).rolling,
+					),
+					weekly: meter(
+						(body.account as Record<string, unknown>).weekly,
+					),
+					monthly: meter(
+						(body.account as Record<string, unknown>).monthly,
+					),
 				}
 			: undefined,
 		totals: {
@@ -352,7 +358,9 @@ export function zenRows(
 				usage.account.rolling,
 				now,
 				FIVE_HOUR_SECS,
-				mine ? windowMoney(mine.fiveHour, GO_WINDOW_SHARE.fiveHour) : undefined,
+				mine
+					? windowMoney(mine.fiveHour, GO_WINDOW_SHARE.fiveHour)
+					: undefined,
 			),
 		);
 		rows.push(
@@ -361,7 +369,9 @@ export function zenRows(
 				usage.account.weekly,
 				now,
 				WEEKLY_SECS,
-				mine ? windowMoney(mine.weekly, GO_WINDOW_SHARE.weekly) : undefined,
+				mine
+					? windowMoney(mine.weekly, GO_WINDOW_SHARE.weekly)
+					: undefined,
 			),
 		);
 		rows.push(
@@ -370,7 +380,9 @@ export function zenRows(
 				usage.account.monthly,
 				now,
 				period?.durSecs ?? 0,
-				mine ? windowMoney(mine.month, GO_WINDOW_SHARE.month) : undefined,
+				mine
+					? windowMoney(mine.month, GO_WINDOW_SHARE.month)
+					: undefined,
 			),
 		);
 	} else {

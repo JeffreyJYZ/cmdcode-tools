@@ -59,7 +59,7 @@ Shared truth lives in `core/`: `plans.json` (plan table/caps), `gating.json` (mo
 
 ## opencode plugin
 
-Providers (`command-code-anthropic`, `command-code-openai`), a live gated model list, `/cmd-usage` (TUI slash command), and the `cmd_usage` and `mpc_prices` tools — for **both opencode v1 (≥1.18.29) and v2 (≥2.0.0)** from one package.
+Providers (`command-code-anthropic`, `command-code-openai`), a live gated model list, `/cmd-usage` + `/ocuse-usage` (TUI slash commands), and the `cmd_usage`, `mpc_prices` and `ocuse_usage` tools — for **both opencode v1 (≥1.18.29) and v2 (≥2.0.0)** from one package.
 
 Requires the `cmduse` CLI (usage windows/pace rendering live in the Rust core — the plugin spawns it):
 

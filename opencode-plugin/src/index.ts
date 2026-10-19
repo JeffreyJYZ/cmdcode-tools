@@ -9,7 +9,7 @@ import { z } from "zod";
 import pkg from "../package.json";
 import { whoami } from "./api";
 import { modelCost, supportsImage } from "./catalog";
-import { runCmduse, runMpc } from "./cli";
+import { ocuseArgs, runCmduse, runMpc, runOcuse } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import {
 	DEFAULT_CONTEXT_LENGTH,
@@ -20,6 +20,8 @@ import {
 	LANES,
 	MPC_TOOL_ARG_DESCRIPTION,
 	MPC_TOOL_DESCRIPTION,
+	OCUSE_TOOL_ARG_DESCRIPTION,
+	OCUSE_TOOL_DESCRIPTION,
 	TOOL_DESCRIPTION,
 } from "./constants/providers";
 import { resolveKey } from "./key";
@@ -302,6 +304,14 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 				template:
 					"Call the cmd_usage tool and present its markdown output verbatim to the user. If the tool errors, tell the user to run /connect (Command Code (Anthropic)) and retry. $ARGUMENTS",
 			};
+			// /ocuse-usage command -> agent calls the ocuse_usage tool. Same
+			// shape as /cmd-usage above, for the Go/Zen side the sidebar shows.
+			cfg.command["ocuse-usage"] = {
+				description:
+					"Show OpenCode Go/Zen usage: account meters and per-model spend",
+				template:
+					"Call the ocuse_usage tool and present its markdown output verbatim to the user. If the tool errors, the Go key is missing or has no subscription — usage still shows where the store has it. $ARGUMENTS",
+			};
 		},
 
 		// opencode >=1.14.49 resolves the model list here, with auth injected.
@@ -354,6 +364,21 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 					return runMpc(args.arg ?? "", {
 						env: { CMD_API_KEY: key },
 					});
+				},
+			}),
+			ocuse_usage: tool({
+				description: OCUSE_TOOL_DESCRIPTION,
+				args: {
+					arg: z
+						.string()
+						.optional()
+						.describe(OCUSE_TOOL_ARG_DESCRIPTION),
+				},
+				// Rendering lives in the ocuse binary (Rust core); this is a
+				// thin spawn wrapper. Empty arg defaults to `-1` (see
+				// `ocuseArgs`): a bare ocuse is the watch loop.
+				async execute(args) {
+					return runOcuse(ocuseArgs(args.arg));
 				},
 			}),
 		},

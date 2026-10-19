@@ -8,6 +8,8 @@ import { MODEL_CATEGORIES, PLAN_RULES } from "../src/constants/gating";
 import {
 	MPC_TOOL_ARG_DESCRIPTION,
 	MPC_TOOL_DESCRIPTION,
+	OCUSE_TOOL_ARG_DESCRIPTION,
+	OCUSE_TOOL_DESCRIPTION,
 	TOOL_DESCRIPTION,
 } from "../src/constants/providers";
 import { isClaude, splitModels } from "../src/models";
@@ -137,15 +139,22 @@ describe("tool registrations", () => {
 		type ToolEntry = { description: string; args: z.ZodRawShape };
 		const plugin = await (
 			CommandCodePlugin as unknown as (input: unknown) => Promise<{
-				tool: Record<"cmd_usage" | "mpc_prices", ToolEntry>;
+				tool: Record<
+					"cmd_usage" | "mpc_prices" | "ocuse_usage",
+					ToolEntry
+				>;
 			}>
 		)({});
 		expect(Object.keys(plugin.tool).sort()).toEqual([
 			"cmd_usage",
 			"mpc_prices",
+			"ocuse_usage",
 		]);
 		expect(plugin.tool.cmd_usage.description).toBe(TOOL_DESCRIPTION);
 		expect(plugin.tool.mpc_prices.description).toBe(MPC_TOOL_DESCRIPTION);
+		expect(plugin.tool.ocuse_usage.description).toBe(
+			OCUSE_TOOL_DESCRIPTION,
+		);
 		const schema = z.object(plugin.tool.mpc_prices.args);
 		expect(schema.parse({})).toEqual({});
 		expect(schema.parse({ arg: "--json" })).toEqual({ arg: "--json" });
@@ -182,11 +191,20 @@ describe("tool registrations", () => {
 		};
 		const stop = (await commandCodeV2.setup(ctx as never)) as () => void;
 		stop();
-		expect(added.map((t) => t.name)).toEqual(["cmd_usage", "mpc_prices"]);
+		expect(added.map((t) => t.name)).toEqual([
+			"cmd_usage",
+			"mpc_prices",
+			"ocuse_usage",
+		]);
 		const mpc = added.find((t) => t.name === "mpc_prices");
 		expect(mpc?.description).toBe(MPC_TOOL_DESCRIPTION);
 		expect(mpc?.input.properties.arg.description).toBe(
 			MPC_TOOL_ARG_DESCRIPTION,
+		);
+		const ocuse = added.find((t) => t.name === "ocuse_usage");
+		expect(ocuse?.description).toBe(OCUSE_TOOL_DESCRIPTION);
+		expect(ocuse?.input.properties.arg.description).toBe(
+			OCUSE_TOOL_ARG_DESCRIPTION,
 		);
 	});
 	test("mpc_prices description answers cost per request and per month", () => {
