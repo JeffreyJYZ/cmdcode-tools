@@ -8,7 +8,7 @@ Personal tooling for [opencode](https://opencode.ai) and Command Code, kept in o
 
 | Project | Dir | What it is |
 | --- | --- | --- |
-| cmduse | [`core/`](core) · [`cmduse/`](cmduse) · [`opencode-plugin/`](opencode-plugin) | Everything Command Code usage: the `cmd-usage` CLI (`cmduse` / `ocuse`), the shared `cmduse-core`, and the opencode plugin (`@jeffreyjyz/opencode-command-code`). |
+| cmduse | [`core/`](core) · [`cmduse/`](cmduse) · [`opencode-plugin/`](opencode-plugin) | Everything Command Code usage: the `cmd-usage` CLI (`cmduse` / `ocuse` / `arkuse`), the shared `cmduse-core`, and the opencode plugin (`@jeffreyjyz/opencode-command-code`). |
 | [`mpc`](oc-cmd-compare) | `oc-cmd-compare/` | Compare model pricing across OpenCode Go and Command Code plans. |
 | [`reqshape`](reqshape) | `reqshape/` | Measure the shape of your requests from opencode's own history, then price it against any model. |
 | [opencode-context](opencode-context) | `opencode-context/` | opencode plugin: a `/context` dialog plus a `context_breakdown` tool showing where the window went. |
@@ -23,6 +23,7 @@ Everything Command Code (commandcode.ai) usage lives under `core/` + `cmduse/` +
 |---|---|---|---|
 | `cmduse` CLI | `cmduse/` (crate `cmd-usage`, bin `cmduse`) | [crates.io](https://crates.io/crates/cmd-usage) · [brew](https://github.com/JeffreyJYZ/homebrew-tap) | **[cmduse/README.md](cmduse/README.md)** · [man page](cmduse/cmduse.1) |
 | `ocuse` (same crate) | `cmduse/` (bin `ocuse`) | same crate as `cmduse` | OpenCode Go/Zen usage — Go's own usage endpoint plus local data — see below |
+| `arkuse` (same crate) | `cmduse/` (bin `arkuse`) | same crate as `cmduse` | Volcengine ARK Agent Plan usage in AFP — control-plane meters plus local data — see below |
 | Shared core | `core/` (crate `cmduse-core`) | [crates.io](https://crates.io/crates/cmduse-core) | [docs.rs/cmduse-core](https://docs.rs/cmduse-core) · versioned on its own `2.x` line, not as a pair with the CLI |
 | opencode plugin | `opencode-plugin/` (`@jeffreyjyz/opencode-command-code`) | [npm](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code) | [opencode-plugin/src/index.ts](opencode-plugin/src/index.ts) |
 
@@ -146,6 +147,31 @@ The monthly *period* comes from the endpoint's own reset instant when it answers
 Limits and rates come from `core/zen.json`, regenerated with `bun scripts/extract-zen.ts` from OpenCode's own docs sources.
 
 The watch frame is `cmduse`'s: the same palette, severity-coloured gauges (green <70%, yellow 70–90%, red ≥90%), an over-cap window flagged `LIMIT EXCEEDED`, and in-place redraw, so resizing or a shrinking frame never scrolls. A model over any of its own windows carries the same flag beside its name — Go meters per model *and* per window, so being over the 5-hour cap counts like being over the month — and every row ends with that model's share of the period's spend. A spend-burst sparkline appears once the 5-hour window moves between refreshes (delta spend, not the cumulative figure — that only ever rises). Every subcommand colours the same way — `daily`, `hourly`, `session`, `model`, `plans` and `statusline` included, with secondary text dimmed and figures in cyan. `--plain`, `NO_COLOR` and a piped stdout drop the colour and the gauges, so scripted output stays escape-free.
+
+## Volcengine ARK Agent Plan usage (`arkuse`)
+
+`arkuse` tracks a **Volcengine ARK Agent Plan** with the same CLI shape, in the plan's own unit — **AFP**, not dollars:
+
+```sh
+arkuse                # watch: live frame (plan meters, gauges, model block)
+arkuse -1             # one-shot dashboard
+arkuse --json
+arkuse daily|hourly|session
+arkuse model [id]
+arkuse plans          # personal tiers, AFP quotas, window shares, promos
+arkuse models         # catalogue with the coefficient in force today
+arkuse statusline
+arkuse mcp            # MCP stdio server
+```
+
+Two differences from `cmduse` are worth knowing up front, both from upstream:
+
+- **ARK meters in AFP, and the plan is the unit that has limits.** `AFP = (input + cache_read + output) × coefficient / 10,000`, one AFP is ¥0.002 at every tier; cache reads are billed, and `reasoning` is not counted twice because it already sits inside the output tokens. Coefficients, tier gates and the promo dates that halve them live in `core/ark.json` — the publisher documents them as prose, so there is no machine-readable catalogue to extract.
+- **The plan's own meters are the only account-wide view.** `arkcli usage plan --profile <name>` returns the 5-hour / daily / weekly / monthly meters with their resets — figures that see every machine and harness on the subscription. Local usage (`opencode.db`, provider `agent-plan` only) supplies per-model attribution; where both exist the meter owns the window row and this store's AFP is printed beside it labelled `local`. Without a profile, `arkcli`, or with `--no-api`, the windows are a **local estimate** and say so. The server's windows are not reproducible locally — the 5-hour window is a block with its own reset, the week starts Monday 00:00, the month is the subscription anniversary — so rows are cut at `reset − window`, never a rolling `now − window`, and dates print in the server's offset.
+
+A text-only workload has **no daily window** (only media and Harness items do), so that row simply does not appear. `--plan small|medium|large|max` picks the ARK tier (default: the profile's own `plan_tier`, else `medium`) and `--profile <name>` picks the `arkcli` profile (default `$ARKUSE_PROFILE`, else the first `agent-plan` profile); `arkuse plans` lists the personal tiers with their AFP quotas, the enterprise seat prices (their AFP is metered per seat and the personal API does not expose it), and the plan's rules: no downgrade, monthly quota pro-rated on upgrade while the 5-hour and weekly windows reset immediately, and plain API calls against the plan base URL forbidden.
+
+ARK limits the plan rather than a model, so the cap notification fires per window meter and the model block shows each model's share of period AFP instead of an allowance ARK does not have. The watch frame is `cmduse`'s: same palette, same severity gauges, same in-place redraw and spend-burst sparkline.
 
 ## MCP server
 

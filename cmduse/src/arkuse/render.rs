@@ -1,0 +1,1457 @@
+// arkuse's presentation: a watch frame, a one-shot dashboard, a status line, and
+// JSON.
+//
+// Reuses cmduse-core's pure formatters (compact/pct/duration) and cmduse's own
+// palette, gauge and sparkline, so all three binaries read the same. ARK's unit
+// is AFP — the plan's own currency — so no row prints `money()`'s `$`; yuan
+// appears only where a price is meant (1 AFP = ¥0.002 at every tier).
+use crate::arkuse::ark;
+use crate::arkuse::window::{Report, Totals};
+use crate::report_render::Fmt;
+use cmduse_core::{compact, duration};
+
+/// Gauge width for the window bars when neither config nor `--bar-width` says
+/// otherwise — cmduse's own default.
+pub const DEFAULT_BAR_WIDTH: usize = 20;
+
+/// ANSI styles — cmduse's palette, or empty strings when colour is off, so a
+/// piped run never leaks SGR escapes.
+pub struct Ink {
+    pub colour: bool,
+    /// Gauge width for the window bars (config / `--bar-width`).
+    pub bar_width: usize,
+    pub bold: &'static str,
+    pub dim: &'static str,
+    pub reset: &'static str,
+    pub cyan: &'static str,
+    pub green: &'static str,
+    pub yellow: &'static str,
+    pub red: &'static str,
+}
+
+impl Ink {
+    pub fn new(colour: bool) -> Self {
+        if colour {
+            Self {
+                colour,
+                bar_width: DEFAULT_BAR_WIDTH,
+                bold: crate::render::BOLD,
+                dim: crate::render::DIM,
+                reset: crate::render::RESET,
+                cyan: crate::render::CYAN,
+                green: crate::render::GREEN,
+                yellow: crate::render::YELLOW,
+                red: crate::render::RED,
+            }
+        } else {
+            Self {
+                colour,
+                bar_width: DEFAULT_BAR_WIDTH,
+                bold: "",
+                dim: "",
+                reset: "",
+                cyan: "",
+                green: "",
+                yellow: "",
+                red: "",
+            }
+        }
+    }
+
+    /// Override the gauge width (config / `--bar-width`); chains after `new`.
+    pub fn width(mut self, width: usize) -> Self {
+        self.bar_width = width;
+        self
+    }
+
+    fn cyan_on(&self, text: String) -> String {
+        format!("{}{text}{}", self.cyan, self.reset)
+    }
+
+    fn dim_on(&self, text: String) -> String {
+        format!("{}{text}{}", self.dim, self.reset)
+    }
+
+    fn bold_on(&self, text: String) -> String {
+        format!("{}{text}{}", self.bold, self.reset)
+    }
+
+    /// Severity for a used/limit percentage — cmduse's thresholds.
+    fn for_pct(&self, pct_used: f64) -> &'static str {
+        if !self.colour {
+            ""
+        } else if pct_used >= 90.0 {
+            self.red
+        } else if pct_used >= 70.0 {
+            self.yellow
+        } else {
+            self.green
+        }
+    }
+
+    /// Pct + gauge, exactly cmduse's `render::bar`; empty when colour is off so
+    /// the plain frame keeps its script-friendly column layout.
+    fn bar(&self, used: f64, cap: f64) -> String {
+        if self.colour {
+            crate::render::bar(used, cap, self.bar_width)
+        } else {
+            String::new()
+        }
+    }
+}
+
+/// AFP with thousands separators and no decimals. AFP is a countable quota, not
+/// a currency: a tenth of a point is below the control plane's own noise (it
+/// reports fractions, the console floors them).
+pub fn afp(value: f64) -> String {
+    let rounded = value.round() as i64;
+    let digits = rounded.unsigned_abs().to_string();
+    let mut out = String::new();
+    for (i, ch) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(ch);
+    }
+    if rounded < 0 {
+        format!("-{out}")
+    } else {
+        out
+    }
+}
+
+/// Yuan, for prices only — never for metered usage, which is AFP.
+pub fn yuan(value: f64) -> String {
+    format!("¥{:.2}", (value * 100.0).round() / 100.0)
+}
+
+/// A percentage exactly as the control plane published it. ARK serves fractions
+/// (`29.756678`), so this keeps one decimal; local percentages keep `pct`'s own
+/// formatting.
+fn given_pct(value: f64) -> String {
+    if (value - value.round()).abs() < 1e-9 {
+        format!("{}", value.round() as i64)
+    } else {
+        format!("{value:.1}")
+    }
+}
+
+/// `YYYY-MM-DD` for a Unix day number.
+pub fn date_of(day: i64) -> String {
+    let z = day + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = if m <= 2 { y + 1 } else { y };
+    format!("{year:04}-{m:02}-{d:02}")
+}
+
+fn shorten(path: &str) -> String {
+    match std::env::var("HOME") {
+        Ok(home) if path.starts_with(&home) => format!("~{}", &path[home.len()..]),
+        _ => path.to_string(),
+    }
+}
+
+/// The account meter's window boundary: its reset instant and the window's
+/// length, so the row can measure elapsed share and pace on the server's clock.
+fn meter_reset(meter: &crate::arkuse::api::Meter, dur_secs: Option<u64>) -> Option<(i64, u64)> {
+    match (meter.reset_ms(), dur_secs) {
+        (Some(at), Some(dur)) if dur > 0 => Some((at, dur)),
+        _ => None,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+/// One window row's inputs. The control plane's meters and the local estimate
+/// both go through this one builder, so the two branches cannot drift apart in
+/// which fields a row carries or in the order it carries them.
+///
+/// Unlike Go, ARK publishes the quota itself (`total`), so the row can print a
+/// true `used / quota` pair and a pace against it. The local branch has no
+/// quota — it shows AFP alone, never a denominator this store cannot know.
+struct RowSpec<'a> {
+    label: &'a str,
+    /// This store's own totals for the window.
+    used: &'a Totals,
+    /// The account's meter, when it answered.
+    meter: Option<&'a crate::arkuse::api::Meter>,
+    /// The window's reset instant and its length in seconds.
+    reset: Option<(i64, u64)>,
+    /// Whether an even-burn figure belongs on this row: the monthly window alone
+    /// is a budget, where "what even burn would have spent by now" is a fair
+    /// comparison; the throttles above it would read as a spend target.
+    pro_rata: bool,
+}
+
+fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64, catalog: &ark::Catalog) -> String {
+    let now_secs = (now_ms / 1000).max(0) as u64;
+    let reset_at = spec.reset.map(|(at, _)| at as f64);
+    let dur_secs = spec.reset.map(|(_, dur)| dur);
+    let elapsed = dur_secs.and_then(|d| cmduse_core::elapsed_pct(reset_at, d, Some(now_secs)));
+    let reset = spec
+        .reset
+        .map(|(at, _)| duration(((at - now_ms) / 1000).max(0) as u64))
+        .unwrap_or_default();
+    let reset_text = if reset.is_empty() {
+        String::new()
+    } else if ink.colour {
+        format!(" · resets in {reset}")
+    } else {
+        format!(" · resets {reset}")
+    };
+    let thru = elapsed
+        .map(|p| format!(" · {}window {p:.1}% elapsed{}", ink.dim, ink.reset))
+        .unwrap_or_default();
+
+    // Server branch: the quota is the server's own, so the pair and the pace are
+    // exact. Local branch: AFP alone.
+    let (body, tone) = match spec.meter {
+        Some(meter) => {
+            let pace = spec
+                .reset
+                .and_then(|(at, d)| {
+                    cmduse_core::pace_eta(Some(at as f64), d, meter.used, meter.quota, now_secs)
+                        .map(|secs| duration(secs as u64))
+                })
+                .map(|eta| format!(" · {}on pace to hit cap in {eta}{}", ink.yellow, ink.reset))
+                .unwrap_or_default();
+            let by_now = match (spec.pro_rata, elapsed) {
+                (true, Some(p)) => format!(
+                    " · {}{} by now{}",
+                    ink.dim,
+                    afp(meter.quota * p / 100.0),
+                    ink.reset
+                ),
+                _ => String::new(),
+            };
+            let flag = if meter.exceeded() {
+                format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
+            } else if !meter.status.eq_ignore_ascii_case("ok") {
+                format!(" {}{}{}{}", ink.red, meter.status, ink.reset, "")
+            } else {
+                String::new()
+            };
+            let pct_tone = ink.for_pct(meter.percent);
+            let tail = format!("{reset_text}{flag}{pace}{thru}{by_now}");
+            let body = format!(
+                "{} / {} AFP · {}{}% of limit{} · {}{} local{}{tail}",
+                afp(meter.used),
+                afp(meter.quota),
+                pct_tone,
+                given_pct(meter.percent),
+                ink.reset,
+                ink.dim,
+                afp(spec.used.afp),
+                ink.reset,
+            );
+            (body, pct_tone)
+        }
+        None => {
+            let body = format!(
+                "{} AFP · {}{} · {} requests{}",
+                afp(spec.used.afp),
+                ink.dim,
+                yuan(catalog.yuan(spec.used.afp)),
+                compact(spec.used.requests),
+                ink.reset,
+            );
+            (format!("{body}{reset_text}{thru}"), ink.for_pct(0.0))
+        }
+    };
+    if ink.colour {
+        let bar = match spec.meter {
+            Some(meter) => format!("{} ", ink.bar(meter.percent, 100.0)),
+            None => String::new(),
+        };
+        format!(
+            " {}{:<8}{} {}{}{body}{}\n",
+            ink.bold, spec.label, ink.reset, bar, tone, ink.reset,
+        )
+    } else {
+        format!("  {:<8} {body}\n", spec.label)
+    }
+}
+
+/// One model's row: id, coefficient in force, AFP and requests this period, and
+/// its share of the period's AFP. No per-model limit exists on ARK — the quota is
+/// plan-level — so there is no USE column to invent.
+fn model_row(ink: &Ink, model: &crate::arkuse::window::ModelUsage, total_afp: f64) -> String {
+    let coef = format!("{:>5.2}", model.coef);
+    let coef_cell = if ink.colour {
+        format!("{}{coef}{}", ink.cyan, ink.reset)
+    } else {
+        coef
+    };
+    let share = if total_afp > 0.0 {
+        ink.dim_on(format!(" {:>5.1}%", model.month.afp / total_afp * 100.0))
+    } else {
+        String::new()
+    };
+    format!(
+        "{:<28} {coef_cell} {:>9} {:>7}{share}\n",
+        model.id,
+        afp(model.month.afp),
+        compact(model.month.requests),
+    )
+}
+
+/// `limit` rows to show; `usize::MAX` for all.
+pub fn render_text(
+    report: &Report,
+    db_path: &str,
+    rows: usize,
+    colour: bool,
+    bar_width: usize,
+) -> String {
+    let ink = Ink::new(colour).width(bar_width);
+    let catalog = ark::catalog();
+    let c = |text: String| ink.cyan_on(text);
+    let mut out = String::new();
+    let tier_label = catalog
+        .plan(&report.tier)
+        .map(|p| p.label.clone())
+        .unwrap_or_else(|| report.tier.clone());
+    out.push_str(&format!(
+        "{}Volcengine ARK usage{} — agent plan {}, from {}{}{}\n",
+        ink.bold,
+        ink.reset,
+        tier_label,
+        ink.dim,
+        shorten(db_path),
+        ink.reset,
+    ));
+    let end = report
+        .period_end_ms
+        .map(|ms| {
+            format!(
+                " · ends {}",
+                date_of((ms + report.offset_secs * 1000).div_euclid(86_400_000))
+            )
+        })
+        .unwrap_or_default();
+    let start = date_of((report.since_ms + report.offset_secs * 1000).div_euclid(86_400_000));
+    out.push_str(&format!(
+        "period: {start}{end} · {} requests · {} AFP ({}) · {} in / {} out tokens\n",
+        c(compact(report.month.requests)),
+        c(afp(report.month.afp)),
+        c(yuan(catalog.yuan(report.month.afp))),
+        c(compact(report.month.input)),
+        c(compact(report.month.output)),
+    ));
+    if let Some(plan) = catalog.plan(&report.tier) {
+        out.push_str(&format!(
+            "{}plan: {} {} · {} AFP/mo · {} · {} windows{}",
+            ink.dim,
+            plan.label,
+            yuan(plan.price),
+            afp(plan.afp),
+            catalog.currency,
+            if report.account.is_some() {
+                "metered by the control plane"
+            } else {
+                "local estimate"
+            },
+            ink.reset,
+        ));
+        out.push('\n');
+    }
+
+    match &report.account {
+        Some(account) => {
+            out.push_str(&format!(
+                "\n{}AGENT PLAN{} {}\n",
+                ink.bold,
+                ink.reset,
+                ink.dim_on(
+                    "(account meters — what the Volcengine console reports; AFP beside them is this store's own estimate)"
+                        .into()
+                ),
+            ));
+            let monthly_dur = report
+                .period_end_ms
+                .map(|end| ((end - report.since_ms) / 1000).max(0) as u64);
+            let daily_local = report.daily.clone().unwrap_or_default();
+            let mut windows: Vec<(&str, &crate::arkuse::api::Meter, &Totals, Option<u64>, bool)> =
+                vec![(
+                    "5-hour",
+                    &account.five_hour,
+                    &report.five_hour,
+                    Some(crate::arkuse::window::FIVE_HOUR_SECS as u64),
+                    false,
+                )];
+            if let Some(daily) = &account.daily {
+                windows.push((
+                    "Daily",
+                    daily,
+                    &daily_local,
+                    Some(crate::arkuse::window::DAY_SECS as u64),
+                    false,
+                ));
+            }
+            windows.push((
+                "Weekly",
+                &account.weekly,
+                &report.weekly,
+                Some(crate::arkuse::window::WEEKLY_SECS as u64),
+                false,
+            ));
+            windows.push((
+                "Monthly",
+                &account.monthly,
+                &report.month,
+                monthly_dur,
+                true,
+            ));
+            for (label, meter, used, dur, pro_rata) in windows {
+                out.push_str(&window_line(
+                    &ink,
+                    &RowSpec {
+                        label,
+                        used,
+                        meter: Some(meter),
+                        reset: meter_reset(meter, dur),
+                        pro_rata,
+                    },
+                    report.now_ms,
+                    &catalog,
+                ));
+            }
+            // Reconciliation is the point of holding both sources: the meter is
+            // account-wide, the store is this machine, so a gap is either another
+            // client or an unmodelled item — worth printing, never hidden.
+            let mut notes: Vec<String> = Vec::new();
+            if let Some(delta) = report.reconcile() {
+                notes.push(format!("local vs meter {:+.1}%", delta));
+            }
+            if let Some(per) = report.afp_per_request() {
+                notes.push(format!("{} AFP/request", afp(per)));
+            }
+            if let Some(burn) = report.burn_per_day() {
+                notes.push(format!("{} AFP/day at this pace", afp(burn)));
+            }
+            if !notes.is_empty() {
+                out.push_str(&format!(
+                    "{}    {} · {}{}\n",
+                    ink.dim,
+                    account.profile,
+                    notes.join(" · "),
+                    ink.reset,
+                ));
+            }
+        }
+        None => {
+            out.push_str(&format!(
+                "\n{}AGENT PLAN{} {}\n",
+                ink.bold,
+                ink.reset,
+                ink.dim_on("(estimated locally: no control-plane answer, so AFP alone)".into()),
+            ));
+            if let Some(why) = &report.account_error {
+                out.push_str(&format!("{}   usage API: {why}{}\n", ink.dim, ink.reset));
+            }
+            let monthly_dur = report
+                .period_end_ms
+                .map(|end| ((end - report.since_ms) / 1000).max(0) as u64);
+            out.push_str(&window_line(
+                &ink,
+                &RowSpec {
+                    label: "5-hour",
+                    used: &report.five_hour,
+                    meter: None,
+                    reset: None,
+                    pro_rata: false,
+                },
+                report.now_ms,
+                &catalog,
+            ));
+            out.push_str(&window_line(
+                &ink,
+                &RowSpec {
+                    label: "Weekly",
+                    used: &report.weekly,
+                    meter: None,
+                    reset: None,
+                    pro_rata: false,
+                },
+                report.now_ms,
+                &catalog,
+            ));
+            out.push_str(&window_line(
+                &ink,
+                &RowSpec {
+                    label: "Monthly",
+                    used: &report.month,
+                    meter: None,
+                    reset: report.period_end_ms.zip(monthly_dur),
+                    pro_rata: false,
+                },
+                report.now_ms,
+                &catalog,
+            ));
+        }
+    }
+
+    out.push_str(&format!(
+        "\n{}MODEL                            COEF       AFP     REQ  SHARE{}\n",
+        ink.bold, ink.reset
+    ));
+    let total_afp = report.month.afp;
+    for model in report.models.iter().take(rows) {
+        out.push_str(&model_row(&ink, model, total_afp));
+    }
+    if report.models.len() > rows {
+        out.push_str(&format!(
+            "{}\n",
+            ink.dim_on(format!("… {} more", report.models.len() - rows))
+        ));
+    }
+    // The subtlety that makes local AFP disagree with the meter: composition.
+    out.push_str(&format!(
+        "\n{}\n",
+        ink.dim_on(
+            "AFP = (input + cache_read + output) × coefficient / 10,000; the coefficient is the plan's own and a promo halves it until its date."
+                .into()
+        ),
+    ));
+    if report.account.is_some() {
+        out.push_str(&format!(
+            "{}\n",
+            ink.dim_on(
+                "The windows are the account's own cuts (5h block, Monday week, subscription month); the model AFP is this machine inside them."
+                    .into()
+            )
+        ));
+    } else {
+        out.push_str(&format!(
+            "{}\n",
+            ink.dim_on(
+                "Windows are rolling 5h / 7d / calendar month cuts, local only — not the control plane's anchors."
+                    .into()
+            )
+        ));
+    }
+    out
+}
+
+/// One watch frame: the dashboard, then an AFP-burst sparkline when the 5-hour
+/// figure has moved since the previous refresh. No trailing newline — the caller
+/// appends its own status line and `redraw_frame` (cmduse's) parks the cursor
+/// there, which is what lets the countdown rewrite a single line per second.
+pub fn watch_frame(
+    report: &Report,
+    db_path: &str,
+    rows: usize,
+    colour: bool,
+    history: &[f64],
+    interval_secs: u64,
+    bar_width: usize,
+) -> String {
+    let ink = Ink::new(colour);
+    let mut out = render_text(report, db_path, rows, colour, bar_width);
+    if history.len() >= 2 && history.iter().any(|v| *v > 0.0) {
+        out.push_str(&format!(
+            "{}AFP bursts ({}s samples){} {}\n",
+            ink.dim,
+            interval_secs,
+            ink.reset,
+            crate::render::sparkline(history),
+        ));
+    }
+    out.trim_end_matches('\n').to_string()
+}
+
+/// Minimal one-line dashboard for terminals too small for the full frame.
+pub fn compact_line(report: &Report, history: &[f64], colour: bool) -> String {
+    let ink = Ink::new(colour);
+    let catalog = ark::catalog();
+    let spark = if history.len() >= 2 && history.iter().any(|v| *v > 0.0) {
+        format!(
+            " {}{}{}",
+            ink.dim,
+            crate::render::sparkline(history),
+            ink.reset
+        )
+    } else {
+        String::new()
+    };
+    let window_share = match &report.account {
+        Some(account) => format!(
+            " · 5h {} · wk {} · mo {}",
+            ink.cyan_on(format!("{}%", given_pct(account.five_hour.percent))),
+            ink.cyan_on(format!("{}%", given_pct(account.weekly.percent))),
+            ink.cyan_on(format!("{}%", given_pct(account.monthly.percent))),
+        ),
+        None => format!(" · 5h {}", ink.cyan_on(afp(report.five_hour.afp))),
+    };
+    format!(
+        "{}ARK{} {} AFP ({}) month{window_share}{spark}",
+        ink.bold,
+        ink.reset,
+        ink.cyan_on(afp(report.month.afp)),
+        ink.cyan_on(yuan(catalog.yuan(report.month.afp))),
+    )
+}
+
+/// arkuse's statusline: cmduse's `{key}` template engine
+/// (`report_render::render_template`) resolved against this report's own
+/// placeholders.
+///
+/// Placeholders (case-insensitive):
+///   {plan} {tier} {period}                 tier id / period label
+///   {month} {month_pct} {month_bar}
+///   {five_hour} {five_hour_pct} {five_hour_bar}   (aliases {5h} {5h_pct} {5h_bar})
+///   {weekly} {weekly_pct} {weekly_bar}            (aliases {wk} {wk_pct} {wk_bar})
+///   {yuan} {yuan_month}                    this store's AFP in yuan
+///   {models}                               top model by period AFP
+pub fn statusline_template(
+    report: &Report,
+    plan_id: &str,
+    tpl: &str,
+    colours: bool,
+    ascii: bool,
+    bar_width: usize,
+) -> String {
+    let ink = Ink::new(colours);
+    let catalog = ark::catalog();
+    let account = report.account.as_ref();
+    let share_of = |meter: Option<&crate::arkuse::api::Meter>| match meter {
+        Some(meter) => format!("{}%", given_pct(meter.percent)),
+        None => "—".into(),
+    };
+    let share_bar = |meter: Option<&crate::arkuse::api::Meter>| match meter {
+        Some(meter) => crate::report_render::bar(meter.percent, bar_width, ascii, colours),
+        None => String::new(),
+    };
+    let cash = |value: f64| ink.cyan_on(afp(value));
+    let top = report
+        .models
+        .first()
+        .map(|m| m.id.clone())
+        .unwrap_or_else(|| "—".into());
+    let replacements: Vec<(&str, String)> = vec![
+        ("plan", plan_id.to_string()),
+        ("tier", plan_id.to_string()),
+        ("period", report.period_label.clone()),
+        ("month", cash(report.month.afp)),
+        ("month_pct", share_of(account.map(|a| &a.monthly))),
+        ("month_bar", share_bar(account.map(|a| &a.monthly))),
+        ("five_hour", cash(report.five_hour.afp)),
+        ("5h", cash(report.five_hour.afp)),
+        ("five_hour_pct", share_of(account.map(|a| &a.five_hour))),
+        ("5h_pct", share_of(account.map(|a| &a.five_hour))),
+        ("five_hour_bar", share_bar(account.map(|a| &a.five_hour))),
+        ("5h_bar", share_bar(account.map(|a| &a.five_hour))),
+        ("weekly", cash(report.weekly.afp)),
+        ("wk", cash(report.weekly.afp)),
+        ("weekly_pct", share_of(account.map(|a| &a.weekly))),
+        ("wk_pct", share_of(account.map(|a| &a.weekly))),
+        ("weekly_bar", share_bar(account.map(|a| &a.weekly))),
+        ("wk_bar", share_bar(account.map(|a| &a.weekly))),
+        ("yuan", yuan(catalog.yuan(report.month.afp))),
+        ("yuan_month", yuan(catalog.yuan(report.month.afp))),
+        ("models", top),
+    ];
+    crate::report_render::render_template(tpl, |key| {
+        let lower = key.to_ascii_lowercase();
+        replacements
+            .iter()
+            .find(|(name, _)| *name == lower)
+            .map(|(_, value)| value.clone())
+            .unwrap_or_default()
+    })
+}
+
+pub fn statusline_json(report: &Report, plan_id: &str) -> String {
+    let catalog = ark::catalog();
+    serde_json::json!({
+        "plan": plan_id,
+        "period": report.period_label,
+        "source": "opencode",
+        // The shared names a statusline consumer already reads; here they carry
+        // AFP, because AFP is this plan's currency.
+        "monthSpent": report.month.afp,
+        "monthCap": serde_json::Value::Null,
+        "fiveHourSpent": report.five_hour.afp,
+        "fiveHourCap": serde_json::Value::Null,
+        "weeklySpent": report.weekly.afp,
+        "weeklyCap": serde_json::Value::Null,
+        "model": report.models.first().map(|m| m.id.clone()),
+        "afp": {
+            "fiveHour": report.five_hour.afp,
+            "weekly": report.weekly.afp,
+            "monthly": report.month.afp,
+            "yuan": catalog.yuan(report.month.afp),
+        },
+        "account": report.account.as_ref().map(usage_json),
+        "accountError": report.account_error,
+        "periodEnd": report.period_end_ms,
+    })
+    .to_string()
+}
+
+/// One meter as JSON, with the server's own figures preserved — the percentage
+/// is the console's, not a recomputation.
+fn meter_json(meter: &crate::arkuse::api::Meter) -> serde_json::Value {
+    serde_json::json!({
+        "used": meter.used,
+        "total": meter.quota,
+        "percent": meter.percent,
+        "status": meter.status,
+        "resetsAt": meter.resets_at,
+        "resetAt": meter.reset_ms(),
+    })
+}
+
+/// Every window the control plane answered, keeping the plan's own shape — a
+/// text-only workload has no `daily` period, so that key is simply absent.
+fn usage_json(usage: &crate::arkuse::api::Usage) -> serde_json::Value {
+    serde_json::json!({
+        "profile": usage.profile,
+        "tier": usage.tier,
+        "fiveHour": meter_json(&usage.five_hour),
+        "daily": usage.daily.as_ref().map(meter_json),
+        "weekly": meter_json(&usage.weekly),
+        "monthly": meter_json(&usage.monthly),
+    })
+}
+
+pub fn render_json(report: &Report) -> String {
+    let totals = |t: &Totals| {
+        serde_json::json!({
+            "afp": t.afp,
+            "requests": t.requests,
+            "tokensIn": t.input,
+            "tokensOut": t.output,
+            "cacheRead": t.cache_read,
+            "cacheWrite": t.cache_write,
+        })
+    };
+    let models: serde_json::Map<String, serde_json::Value> = report
+        .models
+        .iter()
+        .map(|m| {
+            (
+                m.id.clone(),
+                serde_json::json!({
+                    "coef": m.coef,
+                    "month": totals(&m.month),
+                    "fiveHour": totals(&m.five_hour),
+                    "weekly": totals(&m.weekly),
+                }),
+            )
+        })
+        .collect();
+    serde_json::json!({
+        "source": "opencode",
+        "scope": "local",
+        "plan": report.tier,
+        "profile": report.profile,
+        "periodStart": report.since_ms,
+        "periodEndAt": report.period_end_ms,
+        "periodEnd": report.period_end_ms
+            .map(|ms| date_of((ms + report.offset_secs * 1000).div_euclid(86_400_000))),
+        "monthInferred": report.month_inferred,
+        "summary": {
+            "afp": report.month.afp,
+            "yuan": ark::catalog().yuan(report.month.afp),
+            "requests": report.month.requests,
+            "tokensIn": report.month.input,
+            "tokensOut": report.month.output,
+            "cacheRead": report.month.cache_read,
+        },
+        "fiveHour": totals(&report.five_hour),
+        "weekly": totals(&report.weekly),
+        "monthly": totals(&report.month),
+        "daily": report.daily.as_ref().map(totals),
+        "account": report.account.as_ref().map(|account| {
+            let mut body = serde_json::json!({
+                "profile": account.profile,
+                "tier": account.tier,
+                "fiveHour": meter_json(&account.five_hour),
+                "weekly": meter_json(&account.weekly),
+                "monthly": meter_json(&account.monthly),
+            });
+            if let Some(daily) = &account.daily {
+                body["daily"] = meter_json(daily);
+            }
+            body
+        }),
+        "accountError": report.account_error,
+        "reconciledPct": report.reconcile(),
+        "afpPerRequest": report.afp_per_request(),
+        "models": models,
+    })
+    .to_string()
+}
+
+/// The tier catalogue: what each plan costs, what quota it grants, and how that
+/// quota is split across the windows. The window figures are the plan's own
+/// fractions of its monthly AFP — the same table the console shows per tier.
+pub fn plans_text(colour: bool) -> String {
+    let ink = Ink::new(colour);
+    let catalog = ark::catalog();
+    let mut out = format!(
+        "{}{:<8} {:>9} {:>9} {:>10} {:>10} {:>10}{}\n",
+        ink.bold, "TIER", "YUAN/MO", "AFP/MO", "5H AFP", "DAILY AFP", "WK AFP", ink.reset
+    );
+    for plan in &catalog.plans {
+        out.push_str(&format!(
+            "{:<8} {:>9} {:>9} {:>10} {:>10} {:>10}\n",
+            plan.label,
+            ink.cyan_on(yuan(plan.price)),
+            ink.cyan_on(afp(plan.afp)),
+            afp(plan.afp * catalog.windows.five_hour),
+            afp(plan.afp * catalog.windows.daily),
+            afp(plan.afp * catalog.windows.weekly),
+        ));
+        if let Some(promo) = &plan.promo {
+            out.push_str(&format!(
+                "{}{} for {} months, until {}{}\n",
+                ink.dim,
+                yuan(promo.price),
+                promo.months.unwrap_or(1),
+                promo.until,
+                ink.reset,
+            ));
+        }
+    }
+    out.push_str(&format!(
+        "\n{}1 AFP = ¥{:.3} at every tier · 1,000 AFP = {}{}\n",
+        ink.dim,
+        catalog.afp_yuan,
+        yuan(catalog.yuan(1000.0)),
+        ink.reset,
+    ));
+    if !catalog.enterprise.is_empty() {
+        out.push_str(&format!(
+            "\n{}ENTERPRISE{} {}\n",
+            ink.bold,
+            ink.reset,
+            ink.dim_on(
+                "(seat-based; AFP is metered per seat and the personal usage API does not expose it)"
+                    .into()
+            ),
+        ));
+        for plan in &catalog.enterprise {
+            out.push_str(&format!(
+                "  {:<22} {}\n",
+                plan.label,
+                ink.cyan_on(format!("{}/seat/mo", yuan(plan.price))),
+            ));
+        }
+    }
+    if let Some(note) = catalog.notes.get("windows") {
+        out.push_str(&format!("\n{}{}{}\n", ink.dim, note, ink.reset));
+    }
+    out
+}
+
+pub fn plans_json() -> String {
+    let catalog = ark::catalog();
+    serde_json::json!({
+        "source": catalog.source,
+        "extractedAt": catalog.extracted_at,
+        "currency": catalog.currency,
+        "afpYuan": catalog.afp_yuan,
+        "windows": {
+            "fiveHour": catalog.windows.five_hour,
+            "daily": catalog.windows.daily,
+            "weekly": catalog.windows.weekly,
+            "monthly": catalog.windows.monthly,
+        },
+        "plans": catalog.plans.iter().map(|p| serde_json::json!({
+            "id": p.id,
+            "label": p.label,
+            "price": p.price,
+            "listPrice": p.list_price,
+            "afp": p.afp,
+            "promo": p.promo.as_ref().map(|promo| serde_json::json!({
+                "price": promo.price,
+                "until": promo.until,
+                "months": promo.months,
+            })),
+        })).collect::<Vec<_>>(),
+        "enterprise": catalog.enterprise.iter().map(|p| serde_json::json!({
+            "id": p.id,
+            "label": p.label,
+            "price": p.price,
+        })).collect::<Vec<_>>(),
+        "modelCount": catalog.models.len(),
+    })
+    .to_string()
+}
+
+/// `y` yuan per million tokens at a coefficient — the same quantity the docs
+/// publish per model, so a reader can check a coefficient without arithmetic:
+/// 1M tokens × coef / 10,000 = 100·coef AFP, and 1 AFP = ¥0.002.
+fn yuan_per_million(coef: f64, afp_yuan: f64) -> f64 {
+    1_000_000.0 * coef / 10_000.0 * afp_yuan
+}
+
+/// The model catalogue with its coefficient in force today. `gated` keeps only
+/// what `plan_id` grants; the table always says which tier a model needs, because
+/// the plan you hold changes what you can call.
+pub fn models_text(plan_id: &str, gated: bool, colour: bool) -> String {
+    let ink = Ink::new(colour);
+    let catalog = ark::catalog();
+    let now = crate::arkuse::window::now_ms();
+    let mut out = format!(
+        "{}{:<30} {:>6} {:>7} {:>10} {:>8} {:>8}{}\n",
+        ink.bold, "MODEL", "KIND", "COEF", "YUAN/1M", "MIN", "GRANTED", ink.reset
+    );
+    for model in &catalog.models {
+        let granted = catalog.grants(plan_id, &model.min_plan);
+        if gated && !granted {
+            continue;
+        }
+        let coef = ark::effective_coef(model, now);
+        let promo = model.promo_coef.map(|_| {
+            format!(
+                " (promo until {})",
+                model.promo_until.as_deref().unwrap_or("?")
+            )
+        });
+        let coef_cell = ink.cyan_on(format!("{coef:.2}"));
+        out.push_str(&format!(
+            "{:<30} {:>6} {:>7} {:>10} {:>8} {:>8}",
+            model.id,
+            model.kind,
+            coef_cell,
+            format!("{:.2}", yuan_per_million(coef, catalog.afp_yuan)),
+            model.min_plan,
+            if granted { "yes" } else { "no" },
+        ));
+        if let Some(promo) = promo {
+            out.push_str(&format!("{}{promo}{}", ink.dim, ink.reset));
+        }
+        out.push('\n');
+    }
+    out
+}
+
+/// One JSON object per line, mirroring `models_text` — the shape cmduse's own
+/// `models --json` uses, so a consumer pipes either binary the same way.
+pub fn models_json(plan_id: &str, gated: bool) -> String {
+    let catalog = ark::catalog();
+    let now = crate::arkuse::window::now_ms();
+    let mut lines: Vec<String> = Vec::new();
+    for model in &catalog.models {
+        let granted = catalog.grants(plan_id, &model.min_plan);
+        if gated && !granted {
+            continue;
+        }
+        let coef = ark::effective_coef(model, now);
+        lines.push(
+            serde_json::json!({
+                "id": model.id,
+                "name": model.name,
+                "kind": model.kind,
+                "coef": coef,
+                "baseCoef": model.coef,
+                "promoCoef": model.promo_coef,
+                "promoUntil": model.promo_until,
+                "yuanPerMillion": yuan_per_million(coef, catalog.afp_yuan),
+                "minPlan": model.min_plan,
+                "granted": granted,
+            })
+            .to_string(),
+        );
+    }
+    lines.join("\n")
+}
+
+/// One model's period record: what it cost in AFP, where that AFP sits in each
+/// window, and how much of the period it accounts for.
+pub fn model_text(report: &Report, id: &str, colour: bool) -> String {
+    let ink = Ink::new(colour);
+    let Some(model) = report.models.iter().find(|m| m.id == id) else {
+        return format!("{id}: no usage in the period\n");
+    };
+    let row =
+        |label: &str, value: String| format!("  {}{value}\n", ink.dim_on(format!("{label:<10}")));
+    let mut out = format!(
+        "{} {}\n",
+        ink.bold_on(model.id.clone()),
+        ink.dim_on(format!("({})", model.provider)),
+    );
+    out.push_str(&row(
+        "coef",
+        ink.cyan_on(format!(
+            "{:.2} · {} per million tokens",
+            model.coef,
+            yuan(yuan_per_million(model.coef, ark::catalog().afp_yuan))
+        )),
+    ));
+    out.push_str(&row(
+        "month",
+        ink.cyan_on(format!(
+            "{} AFP ({}) · {} requests",
+            afp(model.month.afp),
+            yuan(ark::catalog().yuan(model.month.afp)),
+            model.month.requests
+        )),
+    ));
+    out.push_str(&row(
+        "5-hour",
+        ink.cyan_on(format!("{} AFP", afp(model.five_hour.afp))),
+    ));
+    out.push_str(&row(
+        "weekly",
+        ink.cyan_on(format!("{} AFP", afp(model.weekly.afp))),
+    ));
+    if report.month.afp > 0.0 {
+        out.push_str(&row(
+            "share",
+            ink.dim_on(format!(
+                "{:.1}% of the period's AFP",
+                model.month.afp / report.month.afp * 100.0
+            )),
+        ));
+    }
+    out
+}
+
+/// Per-model report: `Json` mirrors cmduse's `model --json` envelope with AFP in
+/// place of dollars; `Csv` is one row per model. `Table` is the caller's.
+pub fn model_report(report: &Report, id: Option<&str>, fmt: Fmt) -> String {
+    let models: Vec<&crate::arkuse::window::ModelUsage> = report
+        .models
+        .iter()
+        .filter(|m| id.is_none_or(|want| m.id == want))
+        .collect();
+    match fmt {
+        Fmt::Json => {
+            let map: serde_json::Map<String, serde_json::Value> = models
+                .iter()
+                .map(|m| {
+                    (
+                        m.id.clone(),
+                        serde_json::json!({
+                            "coef": m.coef,
+                            "requests": m.month.requests,
+                            "tokensIn": m.month.input,
+                            "tokensOut": m.month.output,
+                            "cacheRead": m.month.cache_read,
+                            "afp": m.month.afp,
+                            "yuan": ark::catalog().yuan(m.month.afp),
+                        }),
+                    )
+                })
+                .collect();
+            serde_json::json!({
+                "scope": "local",
+                "source": "opencode",
+                "sinceMs": report.since_ms,
+                "models": map,
+            })
+            .to_string()
+        }
+        Fmt::Csv => {
+            let mut out = String::from("model,requests,tokens_in,tokens_out,cache_read,afp\n");
+            for m in models {
+                out.push_str(&format!(
+                    "{},{},{},{},{},{:.2}\n",
+                    crate::report_render::csv_field(&m.id),
+                    m.month.requests,
+                    m.month.input,
+                    m.month.output,
+                    m.month.cache_read,
+                    m.month.afp,
+                ));
+            }
+            out
+        }
+        Fmt::Table => String::new(),
+    }
+}
+
+/// The period's per-model breakdown as a table — what `arkuse model` with no id
+/// prints. Columns mirror the dashboard's model block so a reader can put the
+/// two side by side.
+pub fn models_period_text(report: &Report, limit: usize, colour: bool) -> String {
+    let ink = Ink::new(colour);
+    let mut out = format!(
+        "{}{:<28} {:>5} {:>9} {:>7} {:>6}{}\n",
+        ink.bold, "MODEL", "COEF", "AFP", "REQ", "SHARE", ink.reset
+    );
+    let total = report.month.afp;
+    for model in report.models.iter().take(limit.min(report.models.len())) {
+        let share = if total > 0.0 {
+            ink.dim_on(format!("{:>5.1}%", model.month.afp / total * 100.0))
+        } else {
+            "     -".to_string()
+        };
+        out.push_str(&format!(
+            "{:<28} {} {:>9} {:>7} {}\n",
+            model.id,
+            ink.cyan_on(format!("{:>5.2}", model.coef)),
+            ink.cyan_on(format!("{:>9}", afp(model.month.afp))),
+            ink.cyan_on(format!("{:>7}", compact(model.month.requests))),
+            share,
+        ));
+    }
+    if report.models.is_empty() {
+        out.push_str(&format!(
+            "{}\n",
+            ink.dim_on("(no agent-plan usage in the period)".into())
+        ));
+    } else if total > 0.0 {
+        out.push_str(&format!(
+            "{:<28} {:>5} {:>9} {:>7} {:>6}\n",
+            ink.bold_on("TOTAL".into()),
+            "",
+            afp(total),
+            compact(report.month.requests),
+            "100.0%",
+        ));
+    }
+    out
+}
+
+/// The store's numeric fields, in the shape every machine format in this repo
+/// uses, with AFP standing where the other binaries put dollars.
+fn totals_json(
+    afp: f64,
+    requests: u64,
+    input: u64,
+    output: u64,
+    cache_read: u64,
+) -> serde_json::Value {
+    serde_json::json!({
+        "requests": requests,
+        "tokensIn": input,
+        "tokensOut": output,
+        "cacheRead": cache_read,
+        "afp": afp,
+    })
+}
+
+/// One day/hour bucket. AFP is accumulated per row, because the coefficient is
+/// a property of the model and of the day it ran (a promo can expire mid-window).
+#[derive(Default, Clone, Copy)]
+struct Bucket {
+    afp: f64,
+    requests: u64,
+    input: u64,
+    output: u64,
+    cache_read: u64,
+}
+
+impl Bucket {
+    fn add(&mut self, catalog: &ark::Catalog, row: &crate::arkuse::db::Row) {
+        self.requests += 1;
+        self.input += row.input;
+        self.output += row.output;
+        self.cache_read += row.cache_read;
+        self.afp += catalog
+            .afp(&row.model, row.at_ms, row.input, row.cache_read, row.output)
+            .unwrap_or(0.0);
+    }
+
+    fn merge(&mut self, other: &Bucket) {
+        self.afp += other.afp;
+        self.requests += other.requests;
+        self.input += other.input;
+        self.output += other.output;
+        self.cache_read += other.cache_read;
+    }
+
+    fn json(&self) -> serde_json::Value {
+        totals_json(
+            self.afp,
+            self.requests,
+            self.input,
+            self.output,
+            self.cache_read,
+        )
+    }
+}
+
+/// AFP per bucket (day or hour), oldest first — `arkuse daily` / `arkuse hourly`.
+#[allow(clippy::too_many_arguments)]
+pub fn bucket_text(
+    rows: &[crate::arkuse::db::Row],
+    catalog: &ark::Catalog,
+    now_ms: i64,
+    lookback_ms: i64,
+    size_ms: i64,
+    tz_secs: i64,
+    colour: bool,
+    fmt: Fmt,
+) -> String {
+    // Buckets are cut in the display timezone: shift, bucket, then label.
+    let shift = tz_secs * 1000;
+    let mut buckets: std::collections::BTreeMap<i64, Bucket> = Default::default();
+    for row in rows {
+        let bucket = (row.at_ms + shift).div_euclid(size_ms);
+        buckets.entry(bucket).or_default().add(catalog, row);
+    }
+    let start = (now_ms + shift - lookback_ms).div_euclid(size_ms);
+    let daily = size_ms >= crate::arkuse::window::DAY_SECS * 1000;
+    let label = if daily { "day" } else { "hour" };
+    let stamp = |bucket: i64| {
+        if daily {
+            date_of(bucket)
+        } else {
+            format!(
+                "{} {:02}h",
+                date_of(bucket.div_euclid(24)),
+                bucket.rem_euclid(24)
+            )
+        }
+    };
+    let window: Vec<(i64, Bucket)> = buckets
+        .range(start..)
+        .map(|(bucket, b)| (*bucket, *b))
+        .collect();
+
+    match fmt {
+        Fmt::Json => {
+            let mut keyed = serde_json::Map::new();
+            let mut total = Bucket::default();
+            for (bucket, b) in &window {
+                keyed.insert(stamp(*bucket), b.json());
+                total.merge(b);
+            }
+            let key = if daily { "days" } else { "hours" };
+            serde_json::json!({
+                "scope": "local",
+                "source": "opencode",
+                "total": total.json(),
+                key: keyed,
+            })
+            .to_string()
+        }
+        Fmt::Csv => {
+            let mut out = format!("{label},requests,tokens_in,tokens_out,cache_read,afp\n");
+            let mut total = Bucket::default();
+            for (bucket, b) in &window {
+                out.push_str(&format!(
+                    "{},{},{},{},{},{:.2}\n",
+                    crate::report_render::csv_field(&stamp(*bucket)),
+                    b.requests,
+                    b.input,
+                    b.output,
+                    b.cache_read,
+                    b.afp,
+                ));
+                total.merge(b);
+            }
+            out.push_str(&format!(
+                "total,{},{},{},{},{:.2}\n",
+                total.requests, total.input, total.output, total.cache_read, total.afp,
+            ));
+            out
+        }
+        Fmt::Table => {
+            let ink = Ink::new(colour);
+            let mut out = format!(
+                "{}{label:<12} AFP      requests   tokens{}\n",
+                ink.bold, ink.reset
+            );
+            for (bucket, b) in &window {
+                out.push_str(&format!(
+                    "{:<12} {} {} {}\n",
+                    stamp(*bucket),
+                    ink.cyan_on(format!("{:>9}", afp(b.afp))),
+                    ink.cyan_on(format!("{:>12}", compact(b.requests))),
+                    ink.cyan_on(format!("{:>9}", compact(b.input + b.output + b.cache_read))),
+                ));
+            }
+            if out.lines().count() == 1 {
+                out.push_str(&format!(
+                    "{}\n",
+                    ink.dim_on("(no agent-plan usage in the window)".into())
+                ));
+            }
+            out
+        }
+    }
+}
+
+/// One session's accumulating totals: `(afp, requests, tokens_in, tokens_out,
+/// cache_read, last_ms, distinct models)`.
+type SessionTotals<'a> = (
+    f64,
+    u64,
+    u64,
+    u64,
+    u64,
+    i64,
+    std::collections::BTreeSet<&'a str>,
+);
+
+/// AFP per session, newest first — the same columns as `ocuse session`, with AFP
+/// in place of USD.
+pub fn session_text(
+    rows: &[crate::arkuse::db::Row],
+    catalog: &ark::Catalog,
+    limit: usize,
+    colour: bool,
+    fmt: Fmt,
+) -> String {
+    let mut by_session: std::collections::BTreeMap<&str, SessionTotals> = Default::default();
+    for row in rows {
+        let entry = by_session
+            .entry(row.session.as_str())
+            .or_insert_with(|| (0.0, 0, 0, 0, 0, 0, Default::default()));
+        entry.0 += catalog
+            .afp(&row.model, row.at_ms, row.input, row.cache_read, row.output)
+            .unwrap_or(0.0);
+        entry.1 += 1;
+        entry.2 += row.input;
+        entry.3 += row.output;
+        entry.4 += row.cache_read;
+        entry.5 = entry.5.max(row.at_ms);
+        entry.6.insert(row.model.as_str());
+    }
+    let mut sessions: Vec<_> = by_session.into_iter().collect();
+    sessions.sort_by_key(|(_, (_, _, _, _, _, last, _))| std::cmp::Reverse(*last));
+    sessions.truncate(limit);
+
+    match fmt {
+        Fmt::Json => {
+            let mut keyed = serde_json::Map::new();
+            for (id, (cost, requests, input, output, cache_read, last, models)) in &sessions {
+                let mut body = totals_json(*cost, *requests, *input, *output, *cache_read);
+                body["lastMs"] = serde_json::json!(*last);
+                body["models"] = serde_json::json!(models.len());
+                keyed.insert((*id).to_string(), body);
+            }
+            serde_json::json!({
+                "scope": "local",
+                "source": "opencode",
+                "sessions": keyed,
+            })
+            .to_string()
+        }
+        Fmt::Csv => {
+            let mut out = String::from("session,requests,tokens_in,tokens_out,cache_read,afp\n");
+            for (id, (cost, requests, input, output, cache_read, _, _)) in &sessions {
+                out.push_str(&format!(
+                    "{},{},{},{},{},{:.2}\n",
+                    crate::report_render::csv_field(id),
+                    requests,
+                    input,
+                    output,
+                    cache_read,
+                    cost,
+                ));
+            }
+            out
+        }
+        Fmt::Table => {
+            let ink = Ink::new(colour);
+            let mut out = format!(
+                "{}session                          last        models   AFP       req{}\n",
+                ink.bold, ink.reset
+            );
+            for (id, (cost, requests, _, _, _, last, models)) in sessions {
+                let short = id.rsplit('_').next().unwrap_or(id);
+                out.push_str(&format!(
+                    "{:<32} {:<11} {:>6} {} {:>6}\n",
+                    short,
+                    ink.dim_on(format!("{:<11}", date_of(last.div_euclid(86_400_000)))),
+                    models.len(),
+                    ink.cyan_on(format!("{:>9}", afp(cost))),
+                    requests,
+                ));
+            }
+            if out.lines().count() == 1 {
+                out.push_str(&format!(
+                    "{}\n",
+                    ink.dim_on("(no sessions in the window)".into())
+                ));
+            }
+            out
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::arkuse::db::Row;
+
+    fn report() -> Report {
+        let now = 1_800_000_000_000;
+        let rows = vec![Row {
+            at_ms: now - 60_000,
+            session: "ses_a".into(),
+            provider: "agent-plan".into(),
+            model: "deepseek-v4.1-flash".into(),
+            input: 10_000,
+            output: 2_000,
+            ..Default::default()
+        }];
+        crate::arkuse::window::build(&rows, &ark::catalog(), ark::DEFAULT_PLAN, now, None, None)
+    }
+
+    #[test]
+    fn text_names_the_model_and_its_afp() {
+        let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        assert!(text.contains("deepseek-v4.1-flash"), "{text}");
+        assert!(text.contains("AFP"), "the plan's own unit: {text}");
+        assert!(!text.contains('$'), "ARK never prices in dollars: {text}");
+    }
+
+    #[test]
+    fn the_tier_table_carries_every_personal_plan() {
+        let text = plans_text(false);
+        for plan in ark::catalog().plans {
+            assert!(text.contains(&plan.label), "{} missing: {text}", plan.label);
+        }
+        let json: serde_json::Value = serde_json::from_str(&plans_json()).unwrap();
+        assert_eq!(
+            json["plans"].as_array().unwrap().len(),
+            ark::catalog().plans.len()
+        );
+    }
+
+    #[test]
+    fn gated_models_are_filtered_by_the_tier() {
+        let all = models_text("small", false, false);
+        let gated = models_text("small", true, false);
+        assert!(all.lines().count() >= gated.lines().count());
+        assert!(all.contains("kimi-k3"), "{all}");
+        assert!(!gated.contains("kimi-k3"), "{gated}");
+    }
+
+    #[test]
+    fn the_machine_formats_are_not_coloured() {
+        let rows = vec![Row {
+            at_ms: 1_800_000_000_000,
+            session: "ses_a".into(),
+            provider: "agent-plan".into(),
+            model: "deepseek-v4.1-flash".into(),
+            input: 1_000,
+            ..Default::default()
+        }];
+        let catalog = ark::catalog();
+        for fmt in [Fmt::Json, Fmt::Csv] {
+            let daily = bucket_text(
+                &rows,
+                &catalog,
+                1_800_000_000_000,
+                86_400_000,
+                86_400_000,
+                0,
+                true,
+                fmt,
+            );
+            assert!(!daily.contains('\u{1b}'), "{fmt:?} leaked colour: {daily}");
+        }
+        let report = report();
+        let json = model_report(&report, None, Fmt::Json);
+        assert!(!json.contains('\u{1b}'));
+        assert!(json.contains("deepseek-v4.1-flash"));
+        let csv = model_report(&report, None, Fmt::Csv);
+        assert!(csv.starts_with("model,requests,tokens_in,tokens_out,cache_read,afp"));
+    }
+}

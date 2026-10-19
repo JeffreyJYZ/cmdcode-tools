@@ -44,6 +44,12 @@ pub fn plan_monthly_cap(plan_id: &str) -> Option<f64> {
 /// reaching outside its own crate (which cargo refuses at package time).
 pub const ZEN_JSON: &str = include_str!("../zen.json");
 
+/// The Volcengine ARK Agent Plan catalogue, hand-maintained in `core/ark.json`
+/// from the docs (tiers, AFP quota, coefficients, model gates). Exposed here for
+/// the same reason as `ZEN_JSON`: the `arkuse` bin includes it from the
+/// published crate.
+pub const ARK_JSON: &str = include_str!("../ark.json");
+
 pub fn money(v: f64) -> String {
     // Round to cents half-away-from-zero before formatting: `{:.2}` alone is
     // round-half-to-even, JS `toFixed` is half-away, so a .x5 tie (0.125)
@@ -328,6 +334,25 @@ mod tests {
         assert!(
             ZEN_JSON.contains("\"allowanceByModel\""),
             "zen.json is missing per-plan allowances"
+        );
+    }
+
+    #[test]
+    fn ark_catalogue_is_embedded() {
+        // Same guard as zen.json: the published crate must carry it, and the
+        // four personal tiers plus a coefficient table are the invariants the
+        // docs state — a stale half-snapshot should fail the build.
+        assert!(ARK_JSON.contains("\"medium\""), "ark.json looks wrong");
+        for tier in ["\"small\"", "\"large\"", "\"max\""] {
+            assert!(ARK_JSON.contains(tier), "ark.json is missing tier {tier}");
+        }
+        assert!(
+            ARK_JSON.contains("\"promoCoef\""),
+            "ark.json is missing the promo coefficients"
+        );
+        assert!(
+            ARK_JSON.contains("\"afpYuan\""),
+            "ark.json is missing the AFP unit price"
         );
     }
 

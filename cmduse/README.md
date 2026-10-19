@@ -209,6 +209,32 @@ The billing period comes from the endpoint's own monthly reset instant (the anni
 
 Config lives at `~/.config/ocuse/config.json` with the same keys as cmduse's: `interval_secs`, `bar_width`, `burst_enabled`, `burst_samples`, `notify_on_cap`, `statusline_template`, `statusline_colors`, `statusline_ascii`, `check_updates`, `dismissed_update`. Set with `ocuse config set interval=<s> width=<n> burst_on=<bool> burst=<n> notify=<bool> sl=<tpl> sl_colors=<bool> sl_ascii=<bool> update_check=<bool> dismissed_update=<ver>`. The statusline template placeholders: `{plan}` `{period}` `{month}` `{month_pct}` `{month_bar}` `{five_hour}` `{five_hour_pct}` `{five_hour_bar}` (aliases `{5h}` `{5h_pct}` `{5h_bar}`), `{weekly}` `{weekly_pct}` `{weekly_bar}` (aliases `{wk}` `{wk_pct}` `{wk_bar}`), and `{models}` (top model by period spend).
 
+### arkuse — Volcengine ARK Agent Plan (same crate, third binary)
+
+The same crate ships `arkuse`, which tracks a **Volcengine ARK Agent Plan** at the same command/flag parity as `cmduse` and `ocuse` — every subcommand, `--json`/`--csv`, the same watch frame, config keys, update check, cap notification and MCP server. ARK is metered in **AFP**, the plan's own unit, not in dollars: `AFP = (input + cache_read + output) × coefficient / 10,000`, one AFP is ¥0.002 at every tier. Cache reads are billed, and `reasoning` is *not* added again because it already sits inside `output`. Model coefficients, tier gates and the promo dates that halve them live in hand-maintained `core/ark.json` (the publisher documents them as prose, so there is no machine-readable source to extract from).
+
+```sh
+arkuse                       # watch: live frame (meters, gauges, model block)
+arkuse -1                    # one-shot dashboard
+arkuse -1 --json             # one-shot, machine-readable
+arkuse daily [--days N] [--json|--csv] [--tz ±HH:MM]
+arkuse hourly [--hours N] [--json|--csv] [--tz ±HH:MM]
+arkuse model [id] [--since ISO] [--json|--csv]
+arkuse session [--since ISO] [--json|--csv]
+arkuse models [--gated] [--json]   # the ARK catalogue, coefficient in force today
+arkuse plans [--json]              # personal tiers, AFP quotas, window shares
+arkuse statusline [--json]
+arkuse mcp                   # MCP stdio server (usage/plans/models/daily/hourly/session/model)
+```
+
+Two sources, and the split matters. The **control plane** (`arkcli usage plan --profile <name>`, which `arkuse` shells out to so `arkcli` keeps owning the credential chain) returns the plan's own 5-hour / daily / weekly / monthly meters with their reset instants — the only figures that see every machine and every harness on the subscription. This store (`opencode.db`, provider `agent-plan` only) supplies the per-model attribution and the local estimate. Where both exist the meter wins for the window rows and the local AFP is printed beside it, labelled `local`; with no profile, no `arkcli`, or `--no-api`, the windows fall back to a rolling cut and say `estimated locally`. The server's windows are not reproducible locally: the 5-hour window is a *block* with its own reset, the week is anchored to Monday 00:00, and the month is the subscription anniversary — so `arkuse` cuts this store's rows at `reset − window` rather than a rolling `now − window`, and prints dates in the server's own offset. A text-only workload has **no daily window** (only media/Harness items do), so that row simply does not appear.
+
+`--plan small|medium|large|max` selects the ARK tier (default: the profile's own `plan_tier`, else `medium`); `--profile <name>` names the `arkcli` profile (default `$ARKUSE_PROFILE`, else the first `agent-plan` profile), and `--db` overrides the store. The billing period comes from the meter's monthly reset; without it the default is the calendar month, with `--period-start`, `--window all|<n>d` and `--since` as in `ocuse`. `--no-api` skips `arkcli` entirely, so the tier then comes from `--plan` (or the catalogue default) and no profile is resolved.
+
+ARK limits the **plan**, not any one model, so `notify_on_cap` fires per window meter (5-hour / weekly / monthly), and the model block shows each model's share of period AFP instead of a per-model allowance ARK does not have. The plan's own semantics are surfaced where they matter: no downgrade, the monthly quota is pro-rated on upgrade while the 5-hour and weekly windows reset to the new tier immediately, and plain API calls against the plan base URL are forbidden (ban risk) — the catalogue's `notes` carry these in `arkuse plans`. `arkuse plans` also lists the enterprise seat prices; their AFP is metered per seat and the personal usage API does not expose it, so only prices are shown.
+
+Config lives at `~/.config/arkuse/config.json` with cmduse's keys (`interval_secs`, `bar_width`, `burst_enabled`, `burst_samples`, `notify_on_cap`, `statusline_template`, `statusline_colors`, `statusline_ascii`, `check_updates`, `dismissed_update`). `arkuse daily|hourly|session|model --csv` use the repo's shared columns with `afp` in place of `cost_usd` (`afp` counts every token the coefficient prices, cache reads included).
+
 ## Notes
 
 - Window bars: green &lt;70%, yellow 70–90%, red ≥90%, plus `LIMIT EXCEEDED` flag.

@@ -16,6 +16,10 @@ fn parse_ocuse(args: &[&str]) -> Result<super::cli::Args, String> {
     parse_args_from(argv(args), Binary::Ocuse)
 }
 
+fn parse_arkuse(args: &[&str]) -> Result<super::cli::Args, String> {
+    parse_args_from(argv(args), Binary::Arkuse)
+}
+
 #[test]
 fn duration_suffixes() {
     assert_eq!(parse_duration("30"), Some(30));
@@ -159,6 +163,36 @@ fn ocuse_accepts_its_flags() {
 }
 
 #[test]
+fn arkuse_accepts_the_shared_flags_and_its_own_profile() {
+    let a = parse_arkuse(&[
+        "--db",
+        "/tmp/opencode.db",
+        "--plan",
+        "small",
+        "--profile",
+        "agent-plan_cn-beijing_medium",
+        "--window",
+        "30d",
+        "--period-start",
+        "2026-09-01",
+        "--infer-anniversary",
+        "--rows",
+        "20",
+        "--no-api",
+    ])
+    .unwrap();
+    assert_eq!(a.binary, Binary::Arkuse);
+    assert_eq!(a.plan.as_deref(), Some("small"));
+    assert_eq!(a.profile.as_deref(), Some("agent-plan_cn-beijing_medium"));
+    assert_eq!(a.rows, Some(20));
+    assert!(a.no_api);
+    // `--profile` names an arkcli profile, which only arkuse asks for.
+    assert!(parse(&["--profile", "x"]).is_err());
+    assert!(parse_ocuse(&["--profile", "x"]).is_err());
+    assert!(parse_arkuse(&["--profile"]).is_err());
+}
+
+#[test]
 fn parse_flags() {
     // usage text stays in sync with the parser's flags
     let u = usage_text(Binary::Cmduse);
@@ -233,4 +267,66 @@ fn ocuse_help_is_the_shared_block_plus_extras() {
     }
     assert!(o.contains("ocuse/config.json"));
     assert!(c.contains("cmd-usage/config.json"));
+}
+
+#[test]
+fn arkuse_help_is_the_shared_block_plus_ark_extras() {
+    let c = usage_text(Binary::Cmduse);
+    let a = usage_text(Binary::Arkuse);
+    let shared = [
+        "-1",
+        "--once",
+        "-W",
+        "--watch",
+        "-p",
+        "--plain",
+        "-h",
+        "--help",
+        "-V",
+        "--version",
+        "--json",
+        "--csv",
+        "--gated",
+        "-i",
+        "--interval",
+        "-w",
+        "--bar-width",
+        "-b",
+        "--bursts",
+        "--days",
+        "--last",
+        "-l",
+        "--since",
+        "--hours",
+        "--tz",
+        "--dismiss-update",
+        "NO_COLOR",
+        "config set",
+        "daily",
+        "hourly",
+        "model",
+        "session",
+        "statusline",
+        "models",
+        "plans",
+        "mcp",
+    ];
+    for tok in shared {
+        if c.contains(tok) {
+            assert!(a.contains(tok), "arkuse help missing shared token {tok}");
+        }
+    }
+    for tok in [
+        "--db",
+        "--plan",
+        "--profile",
+        "--window",
+        "--period-start",
+        "--infer-anniversary",
+        "--rows",
+        "--no-api",
+    ] {
+        assert!(a.contains(tok), "arkuse help missing {tok}");
+    }
+    assert!(a.contains("arkuse/config.json"));
 }

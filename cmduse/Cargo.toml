@@ -35,6 +35,18 @@ path = "src/bin/ocuse.rs"
 name = "ocusedev"
 path = "src/bin/ocusedev.rs"
 
+# Volcengine ARK Agent Plan twin: same CLI shape again, but its unit is AFP and
+# its authoritative figures are the control plane's own meters (through arkcli).
+[[bin]]
+name = "arkuse"
+path = "src/bin/arkuse.rs"
+
+# Dev twin of arkuse: same code, different name, so a local build never shadows
+# the installed `arkuse` (consumers can target it via ARKUSE_BIN).
+[[bin]]
+name = "arkusedev"
+path = "src/bin/arkusedev.rs"
+
 # cargo binstall: the release workflow publishes cmduse-<version>-<target>.tar.gz
 # with the binaries at the archive root. Assets are a public contract shared with
 # the Homebrew formula (see .github/workflows/release.yml).

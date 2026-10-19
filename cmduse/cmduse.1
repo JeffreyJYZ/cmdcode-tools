@@ -3,6 +3,8 @@
 cmduse \- live Command Code (commandcode.ai) usage dashboard and reporter
 .br
 ocuse \- OpenCode Go/Zen usage (Go's usage endpoint plus local opencode data)
+.br
+arkuse \- Volcengine ARK Agent Plan usage in AFP (control\-plane meters plus local opencode data)
 .SH SYNOPSIS
 .B cmduse
 [\fIOPTIONS\fR]
@@ -57,6 +59,11 @@ ships a second binary,
 which tracks OpenCode Go and OpenCode Zen; it shares this manual's
 presentation and is documented under
 .BR OCUSE .
+A third binary,
+.BR arkuse ,
+tracks a Volcengine ARK Agent Plan in the plan's own unit (AFP) and is
+documented under
+.BR ARKUSE .
 .PP
 Authentication is read from
 .IR ~/.commandcode/auth.json ,
@@ -839,7 +846,7 @@ regenerated from OpenCode's own docs sources with
 .BR "bun scripts/extract\-zen.ts" .
 .SS ocuse mcp server
 \fBocuse mcp\fR runs an MCP stdio server (newline\-delimited JSON\-RPC on
-stdin/stdout, diagnostics on stderr) exposing seven tools \( \fIusage\fR,
+stdin/stdout, diagnostics on stderr) exposing seven tools \(em \fIusage\fR,
 \fIplans\fR, \fImodels\fR, \fIdaily\fR, \fIhourly\fR, \fIsession\fR,
 \fImodel\fR \) whose output matches the corresponding subcommands.  Tool
 execution errors are returned as results with \fIisError\fR true, never as
@@ -858,6 +865,141 @@ Read (never written) as the fallback Go key \(em the legacy v1 location of the
 credential \fB/connect\fR stores; on v2 the live one is the \fBcredential\fR row
 of opencode's store, which is read first.  \fB$OCUSE_API_KEY\fR and
 \fB$OPENCODE_API_KEY\fR override both.
+.SS arkuse
+.B arkuse
+tracks a Volcengine ARK Agent Plan and reports in
+.BR AFP ,
+the plan's own unit, never in dollars or yuan: one AFP is ¥0.002 at every
+tier and a model's coefficient converts tokens into it \(em
+\fIAFP = (input + cache_read + output) \(mu coef / 10,000\fR.  Cache reads are
+billed; \fIreasoning\fR is not added again because it already sits inside
+the output count.  Coefficients, tier gates, promo dates and the plan table
+are hand\-maintained in
+.IR core/ark.json ,
+because the publisher documents them as prose.
+.SS arkuse synopsis
+.B arkuse
+[\fIOPTIONS\fR]
+.br
+.B arkuse \-1
+[\fB\-\-json\fR] [\fIOPTIONS\fR]
+.br
+.B arkuse model
+[\fIid\fR] [\fB\-\-since\fR \fIISO\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
+.br
+.B arkuse daily
+[\fB\-\-days\fR \fIn\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
+.br
+.B arkuse hourly
+[\fB\-\-hours\fR \fIn\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
+.br
+.B arkuse session
+[\fB\-\-since\fR \fIISO\fR] [\fB\-\-json\fR | \fB\-\-csv\fR]
+.br
+.B arkuse models
+[\fB\-\-gated\fR] [\fB\-\-json\fR]
+.br
+.B arkuse plans
+[\fB\-\-json\fR]
+.br
+.B arkuse statusline
+[\fB\-\-json\fR] [\fIOPTIONS\fR]
+.br
+.B arkuse mcp
+.br
+.B arkuse \-V
+.br
+.B arkuse \-h
+.SS arkuse commands
+Every subcommand, machine format, watch frame, config key, update check and
+cap notification mirrors
+.BR cmduse 's,
+with AFP standing where the other binaries put money.
+.TP
+.B (no command), \fB\-1\fR
+Live watch, or one frame with \fB\-1\fR.  The dashboard shows the plan's own
+5\-hour / daily / weekly / monthly meter rows, each with the server's share of
+the limit and this store's AFP beside it labelled \fIlocal\fR, then a model
+block with each model's coefficient, AFP, requests and share of period AFP.
+No per\-model allowance is invented: ARK limits the plan.
+.TP
+.B daily, hourly, session, model
+The same reports as
+.BR cmduse .
+\fB\-\-csv\fR columns are
+\fIday|hour|session|model,requests,tokens_in,tokens_out,cache_read,afp\fR
+(no cache\-write column, and AFP replaces cost).  \fBmodel\fR with no id prints
+the period's per\-model table.
+.TP
+.B models
+The ARK catalogue with the coefficient in force today (a promo halves it until
+its date), the derived ¥/1M tokens, the minimum tier and whether the selected
+plan grants the model.  \fB\-\-gated\fR keeps only what the plan grants;
+\fB\-\-json\fR is one object per line.  Needs no store.
+.TP
+.B plans
+The personal tiers (price, monthly AFP quota, and the 5\-hour / daily / weekly
+quotas), the active promos, the flat AFP rate, and the enterprise seat price
+list.  Enterprise AFP is metered per seat and the personal usage API does not
+expose it, so only prices appear.  Needs no store.
+.TP
+.B statusline
+One compact line: period AFP, 5\-hour AFP, weekly AFP and the top model.
+\fB\-\-json\fR mirrors cmduse's keys (\fImonthSpent\fR,
+\fIfiveHourSpent\fR, \fIweeklySpent\fR, the caps \fBnull\fR, \fImodel\fR)
+with an extra \fIafp\fR block carrying the monthly yuan figure and the
+control plane's \fIaccount\fR object.
+.TP
+.B mcp
+Run an MCP stdio server exposing the same seven tools \(em \fIusage\fR,
+\fIplans\fR, \fImodels\fR, \fIdaily\fR, \fIhourly\fR, \fIsession\fR,
+\fImodel\fR \) whose output matches the subcommands.
+.SS arkuse options
+The shared options are those under
+.BR "ocuse options" ,
+with these differences.
+.TP
+.B \-\-plan \fItier\fR
+The ARK tier: \fIsmall\fR, \fImedium\fR, \fIlarge\fR or \fImax\fR.  Default:
+the profile's own \fIplan_tier\fR, else \fImedium\fR.  An unknown tier exits 2
+and lists the known ones.
+.TP
+.B \-\-profile \fIname\fR
+The \fBarkcli\fR control\-plane profile to query.  Default
+\fB$ARKUSE_PROFILE\fR, else the first profile whose type is
+\fIagent\-plan\fR.  An unknown name degrades to the local estimate with the
+control plane's own reason on the dashboard.
+.TP
+.B \-\-no\-api
+Skip \fBarkcli\fR entirely and report the local estimate only.  The tier then
+comes from \fB\-\-plan\fR or the catalogue default, and no profile is
+resolved.
+.SS arkuse data and windows
+Two sources.  \fBarkcli usage plan\fR returns the plan's own meters with their
+reset instants \(em the only figures that see every machine and harness on the
+subscription \(em and this store (\fIopencode.db\fR, provider
+\fIagent\-plan\fR only) supplies the per\-model attribution and the local
+estimate.  The server's windows are not reproducible locally: the 5\-hour
+window is a block with its own reset, the week is anchored to Monday 00:00, and
+the month is the subscription anniversary, so rows are cut at
+\fIreset \(mi window\fR and period dates print in the server's own offset.
+A text\-only workload has no daily window; only media and Harness items do.
+When no meter answers the rows fall back to a rolling cut and the block is
+labelled \fIestimated locally\fR with the reason beside it.
+.PP
+The plan's semantics are surfaced rather than assumed: no downgrade; on an
+upgrade the monthly quota is pro\-rated while the 5\-hour and weekly windows
+reset to the new tier immediately; plain API calls against the plan base URL
+are forbidden (ban risk); the quota is shared across every harness; and
+postpaid overflow is opt\-in.  Because ARK limits the plan rather than a model,
+\fInotify_on_cap\fR fires per window meter.
+.SS arkuse files
+.TP
+.I ~/.config/arkuse/config.json
+The same keys as cmduse's config, set with \fBarkuse config set\fR.
+.TP
+.I $OPENCODE_DB, \-\-db
+The store path; opened read\-only.
 .SH SEE ALSO
 .BR cmd (1),
 the Command Code CLI for login and authentication.
@@ -865,3 +1007,7 @@ the Command Code CLI for login and authentication.
 .BR ocuse ,
 this crate's OpenCode Go/Zen twin, documented above under
 .BR OCUSE .
+.br
+.BR arkuse ,
+this crate's ARK Agent Plan twin, documented above under
+.BR ARKUSE .

@@ -2,7 +2,7 @@ use crate::render::{color_for, compact, money, BOLD, CYAN, DIM, RESET};
 
 /// Output format for the report tables. JSON and CSV are machine-readable
 /// (never colored); `Table` honors the caller's color decision.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Fmt {
     Table,
     Json,

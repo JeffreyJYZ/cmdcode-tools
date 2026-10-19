@@ -53,6 +53,14 @@ pub fn default_for(binary: Binary) -> Config {
             statusline_template: OCUSE_STATUSLINE.into(),
             ..Config::default()
         },
+        // ARK's meters move on request boundaries too, but every refresh shells
+        // out to `arkcli` (a control-plane round-trip), so it is slower than
+        // ocuse's local sqlite read.
+        Binary::Arkuse => Config {
+            interval_secs: 15,
+            statusline_template: OCUSE_STATUSLINE.into(),
+            ..Config::default()
+        },
     }
 }
 
@@ -63,6 +71,7 @@ pub fn config_path(binary: Binary) -> PathBuf {
     let rel = match binary {
         Binary::Cmduse => "cmd-usage/config.json",
         Binary::Ocuse => "ocuse/config.json",
+        Binary::Arkuse => "arkuse/config.json",
     };
     std::env::var("XDG_CONFIG_HOME")
         .map(|d| PathBuf::from(d).join(rel))

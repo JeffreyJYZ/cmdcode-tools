@@ -6,6 +6,9 @@ mod notify;
 // OpenCode Go/Zen half (the `ocuse` bin): local usage from opencode.db plus the
 // docs catalogue in core/zen.json. Independent of the CommandCode code paths.
 pub mod ocuse;
+// Volcengine ARK Agent Plan half (the `arkuse` bin): the control plane's AFP
+// meters through arkcli, plus opencode's `agent-plan` rows and core/ark.json.
+pub mod arkuse;
 mod paths;
 mod render;
 mod report_render;

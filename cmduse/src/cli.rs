@@ -7,6 +7,7 @@ pub enum Binary {
     #[default]
     Cmduse,
     Ocuse,
+    Arkuse,
 }
 
 impl Binary {
@@ -15,6 +16,7 @@ impl Binary {
         match self {
             Binary::Cmduse => "cmduse",
             Binary::Ocuse => "ocuse",
+            Binary::Arkuse => "arkuse",
         }
     }
 }
@@ -47,8 +49,10 @@ pub struct Args {
     // --- ocuse-only (the cmduse binary rejects these) ---
     /// opencode store path (`--db`).
     pub db: Option<String>,
-    /// Go plan to measure against (`--plan`).
+    /// Go plan / ARK tier to measure against (`--plan`).
     pub plan: Option<String>,
+    /// ARK control-plane profile (`--profile`), resolved from arkcli otherwise.
+    pub profile: Option<String>,
     /// Report window (`--window`): month, all, or `<n>d`.
     pub window: Option<String>,
     /// Pinned period start (`--period-start`), `YYYY-MM-DD`.
@@ -203,27 +207,33 @@ pub(crate) fn parse_args_from(
                 }
                 a.local = true;
             }
-            // --- ocuse-only flags ---
+            // --- ocuse/arkuse-only flags ---
             Long("db") => {
-                if binary != Binary::Ocuse {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
                     return Err(unknown_long("db"));
                 }
                 a.db = Some(need_value(&mut parser, "--db needs a path")?);
             }
             Long("plan") => {
-                if binary != Binary::Ocuse {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
                     return Err(unknown_long("plan"));
                 }
                 a.plan = Some(need_value(&mut parser, "--plan needs an id")?);
             }
+            Long("profile") => {
+                if binary != Binary::Arkuse {
+                    return Err(unknown_long("profile"));
+                }
+                a.profile = Some(need_value(&mut parser, "--profile needs a name")?);
+            }
             Long("no-api") => {
-                if binary != Binary::Ocuse {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
                     return Err(unknown_long("no-api"));
                 }
                 a.no_api = true;
             }
             Long("window") => {
-                if binary != Binary::Ocuse {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
                     return Err(unknown_long("window"));
                 }
                 a.window = Some(need_value(
@@ -232,19 +242,19 @@ pub(crate) fn parse_args_from(
                 )?);
             }
             Long("period-start") => {
-                if binary != Binary::Ocuse {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
                     return Err(unknown_long("period-start"));
                 }
                 a.period_start = Some(need_value(&mut parser, "--period-start needs YYYY-MM-DD")?);
             }
             Long("infer-anniversary") => {
-                if binary != Binary::Ocuse {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
                     return Err(unknown_long("infer-anniversary"));
                 }
                 a.infer_anniversary = true;
             }
             Long("rows") => {
-                if binary != Binary::Ocuse {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
                     return Err(unknown_long("rows"));
                 }
                 let v = need_value(&mut parser, "--rows needs a number")?;
@@ -507,9 +517,69 @@ Reads opencode's own store, and OpenCode Go's usage endpoint when a Go key is
 present (the account's own meters — what opencode.ai/console shows). Without a
 key, no network, or with --no-api, the windows fall back to a local estimate.";
 
+/// The `arkuse` help text: the shared block plus ARK's own flags. Same parity
+/// rule as ocuse's (the shared tokens are asserted by `cli_tests`).
+const ARKUSE_HELP: &str = "arkuse — Volcengine ARK Agent Plan usage (opencode.db + arkcli control plane)
+
+Usage: arkuse [options]           Live plan dashboard (watch mode)
+       arkuse -1                  One-shot dashboard
+       arkuse daily [--days N] [--json]     AFP by day
+       arkuse hourly [--hours N] [--json]   AFP by hour
+       arkuse model [--since ISO] [--json]  Local AFP by model
+       arkuse session [--json]              Local AFP by session
+       arkuse models              Model coefficients and tier gates
+       arkuse plans               The Agent Plan catalogue: tiers, AFP, prices
+       arkuse statusline          Compact one-liner for prompts/tmux
+       arkuse mcp                 MCP stdio server (usage/plans/models/daily/hourly/session/model tools)
+       arkuse config set interval=<s> width=<n> burst_on=true burst=40
+
+Options:
+  -1, --once            Fetch once, print, exit (no watch)
+  -W, --watch           Force watch mode (default; conflicts with -1)
+  -p, --plain           No colors / no live redraw (for scripts, pipes)
+  -i, --interval <dur>  Refresh interval (default: config or 15s). Accepts a
+                        unit suffix: 30s, 5m, 1h (bare number = seconds)
+  -w, --bar-width <n>   Progress bar width in chars (default: config or 20)
+  -b, --bursts <n>      AFP-burst sparkline samples (default: 40; hide when
+                        idle via config burst_on=false)
+      --json            Machine-readable JSON output where supported
+      --csv             CSV output for daily/hourly/model/session
+      --dismiss-update  Ack the current update notice (hides it until a newer
+                        version; same as config set dismissed_update=<ver>)
+      --tz <±HH:MM>     daily/hourly: bucket by this UTC offset instead of UTC
+                        (applies to local logs too)
+      --days <n>        daily: number of days back (default 120, max 365)
+      --hours <n>       hourly: number of hours back (default 24, max 168)
+      --since <ISO>     model/session: count from this instant instead of --days
+      --gated           models: filter to what the selected tier grants
+      --db <path>       opencode store (default $OPENCODE_DB or
+                        ~/.local/share/opencode/opencode.db)
+      --plan <id>       ARK tier: small, medium (default), large, max
+      --profile <name>  arkcli control-plane profile (default: the first
+                        agent-plan profile, or $ARKUSE_PROFILE)
+      --no-api          Skip arkcli and stay on the local AFP estimate
+      --window <w>      report window: month (default), all, or <n>d
+      --period-start <date>  pin the period start (YYYY-MM-DD)
+      --infer-anniversary   infer the period start from the first plan request
+      --rows <n>        table rows to print (default 15)
+  -V, --version         Print version
+  -h, --help            This help
+  Respects NO_COLOR; colors auto-off when stdout is not a terminal.
+
+Config: ~/.config/arkuse/config.json
+  { \"interval_secs\": 15, \"bar_width\": 20, \"burst_enabled\": true,
+    \"burst_samples\": 40, \"notify_on_cap\": true, \"statusline_template\": \"…\",
+    \"statusline_colors\": true, \"statusline_ascii\": false,
+    \"check_updates\": true, \"dismissed_update\": null }
+
+AFP is the plan's own currency (1 AFP = ¥0.002). Window rows prefer the control
+plane's meters (`arkcli usage plan`); the local figure is computed from the
+documented coefficients and reconciled against the meter every poll.";
+
 pub fn usage_text(binary: Binary) -> &'static str {
     match binary {
         Binary::Cmduse => CMDUSE_HELP,
         Binary::Ocuse => OCUSE_HELP,
+        Binary::Arkuse => ARKUSE_HELP,
     }
 }
