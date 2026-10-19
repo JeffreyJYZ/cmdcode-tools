@@ -805,9 +805,10 @@ Anything else exits 2.
 .SS ocuse data and windows
 When Go's usage endpoint answers, the header's three window lines are the
 account's own meters (the shares and resets \fBopencode.ai/console\fR shows),
-each with this store's own recorded cost beside the server's share of the
-limit \(em the two need not agree, since the console meters at roughly twice
-the cost opencode records, so the share carries its own \fIof limit\fR label
+each with this store's own spend beside the server's share of the
+limit \(em priced on the documented peak/off\-peak schedule, because opencode
+records the off\-peak sheet for every turn and would read about 40% under the
+console on a peak\-heavy day \(em the two need not agree, so the share carries its own \fIof limit\fR label
 \(em and the billing period comes from the endpoint's monthly reset instant \(em
 the subscription anniversary, which is why the period line reads
 \fIGo billing month\fR.  No dollar denominator is printed: any ceiling

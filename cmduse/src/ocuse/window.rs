@@ -23,11 +23,15 @@ pub struct Totals {
 }
 
 impl Totals {
-    pub fn add(&mut self, row: &Row) {
-        self.cost += row.cost_usd;
+    /// Add one turn at `cost` — priced by the caller, which is the whole point:
+    /// `row.cost_usd` is opencode's figure, always the off-peak sheet, so the
+    /// dashboard prices each turn on the documented schedule instead and falls
+    /// back to the recorded cost when the model carries no rates.
+    pub fn add(&mut self, row: &Row, cost: f64) {
+        self.cost += cost;
         self.requests += 1;
         self.input += row.input;
-        self.output += row.output;
+        self.output += row.output + row.reasoning;
         self.cache_read += row.cache_read;
     }
 
@@ -271,14 +275,29 @@ pub fn build(
         if !in_month && !in_week && !in_five {
             continue;
         }
+        // Priced on the documented schedule, not by opencode's recorded `cost`
+        // (always the off-peak sheet). Falls back to the recorded figure for a
+        // model with no rate rows, so a free or unknown model still counts zero
+        // and an unpriced one still counts its own cost.
+        let cost = catalog
+            .price(
+                &row.model,
+                row.at_ms,
+                row.input,
+                row.output,
+                row.reasoning,
+                row.cache_read,
+                row.cache_write,
+            )
+            .unwrap_or(row.cost_usd);
         if in_month {
-            report.month.add(row);
+            report.month.add(row, cost);
         }
         if in_week {
-            report.weekly.add(row);
+            report.weekly.add(row, cost);
         }
         if in_five {
-            report.five_hour.add(row);
+            report.five_hour.add(row, cost);
         }
         let entry = by_model
             .entry(row.model.clone())
@@ -291,13 +310,13 @@ pub fn build(
                 weekly: Totals::default(),
             });
         if in_month {
-            entry.month.add(row);
+            entry.month.add(row, cost);
         }
         if in_week {
-            entry.weekly.add(row);
+            entry.weekly.add(row, cost);
         }
         if in_five {
-            entry.five_hour.add(row);
+            entry.five_hour.add(row, cost);
         }
     }
 

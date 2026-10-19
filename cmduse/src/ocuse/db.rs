@@ -25,6 +25,7 @@ pub struct Row {
     pub cost_usd: f64,
     pub input: u64,
     pub output: u64,
+    pub reasoning: u64,
     pub cache_read: u64,
     pub cache_write: u64,
 }
@@ -60,6 +61,8 @@ struct V2Model {
 struct Tokens {
     input: Option<u64>,
     output: Option<u64>,
+    /// Billed at the output rate by opencode itself, so pricing must count it.
+    reasoning: Option<u64>,
     cache: Option<Cache>,
 }
 
@@ -202,6 +205,7 @@ fn read_v2(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, String> {
             cost_usd: parsed.cost.unwrap_or(0.0),
             input: tokens.input.unwrap_or(0),
             output: tokens.output.unwrap_or(0),
+            reasoning: tokens.reasoning.unwrap_or(0),
             cache_read: tokens.cache.as_ref().and_then(|c| c.read).unwrap_or(0),
             cache_write: tokens.cache.and_then(|c| c.write).unwrap_or(0),
         });
@@ -239,6 +243,7 @@ fn read_legacy(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, Strin
         let tokens = parsed.tokens.unwrap_or(Tokens {
             input: None,
             output: None,
+            reasoning: None,
             cache: None,
         });
         out.push(Row {
@@ -249,6 +254,7 @@ fn read_legacy(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, Strin
             cost_usd: parsed.cost.unwrap_or(0.0),
             input: tokens.input.unwrap_or(0),
             output: tokens.output.unwrap_or(0),
+            reasoning: tokens.reasoning.unwrap_or(0),
             cache_read: tokens.cache.as_ref().and_then(|c| c.read).unwrap_or(0),
             cache_write: tokens.cache.and_then(|c| c.write).unwrap_or(0),
         });

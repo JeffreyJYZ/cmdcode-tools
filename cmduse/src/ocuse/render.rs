@@ -383,7 +383,7 @@ pub fn render_text(
                 ink.bold,
                 ink.reset,
                 ink.dim_on(
-                    "(account meters — what opencode.ai/console reports; the $ is this store's own recorded cost, a lower basis than the console counts)"
+                    "(account meters — what opencode.ai/console reports; the $ is this store's spend priced on the documented peak/off-peak schedule)"
                         .into()
                 ),
             ));

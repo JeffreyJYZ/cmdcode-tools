@@ -114,6 +114,64 @@ pub fn window_cap(limit: f64, share: f64) -> f64 {
     limit * share
 }
 
+/// Is this instant inside a DeepSeek peak window?
+///
+/// The docs give it exactly: 01:00–04:00 and 06:00–10:00 UTC, Monday–Friday;
+/// every other hour, weekends included, is off-peak. The console applies it
+/// (its per-request cost for a peak-hour turn is the peak sheet), while opencode
+/// records the off-peak sheet for **every** turn — which is why this store reads
+/// ~40% under the console on peak-heavy days and why the total is priced here
+/// instead of trusting `cost`.
+pub fn is_peak(at_ms: i64) -> bool {
+    let secs = at_ms.div_euclid(1000);
+    let weekday = (secs.div_euclid(86_400) + 4).rem_euclid(7); // 1970-01-01 was a Thursday
+    if weekday >= 5 {
+        return false;
+    }
+    let hour = secs.rem_euclid(86_400) / 3600;
+    (1..4).contains(&hour) || (6..10).contains(&hour)
+}
+
+impl Catalog {
+    /// What one turn costs on the documented sheets, or `None` when the model is
+    /// unknown or free (no rate rows), so the caller can fall back to `cost`.
+    ///
+    /// `reasoning` is billed at the output rate — opencode does the same in its
+    /// own `cost`, verified to the cent on real rows.
+    #[allow(clippy::too_many_arguments)]
+    pub fn price(
+        &self,
+        model_id: &str,
+        at_ms: i64,
+        input: u64,
+        output: u64,
+        reasoning: u64,
+        cache_read: u64,
+        cache_write: u64,
+    ) -> Option<f64> {
+        let model = self.go.models.iter().find(|m| m.id == model_id)?;
+        let peak = model
+            .variants
+            .iter()
+            .find(|v| v.peak.as_deref() == Some("peak"));
+        let off_peak = model
+            .variants
+            .iter()
+            .find(|v| v.peak.as_deref() == Some("off-peak"));
+        let rates = match (peak, off_peak) {
+            (Some(peak), Some(_)) if is_peak(at_ms) => peak,
+            (Some(_), Some(off)) => off,
+            // No time-of-day split (or a single sheet): the only variant wins.
+            _ => model.variants.first()?,
+        };
+        let cost = input as f64 * rates.input
+            + (output + reasoning) as f64 * rates.output
+            + cache_read as f64 * rates.cache_read
+            + cache_write as f64 * rates.cache_write;
+        (cost > 0.0).then_some(cost / 1e6)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
