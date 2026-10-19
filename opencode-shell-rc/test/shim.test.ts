@@ -4,6 +4,7 @@ import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
+	readFileSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
@@ -16,6 +17,7 @@ import {
 	shimContent,
 	stateDir,
 	stateFile,
+	stateVersionFile,
 } from "../src/shim";
 
 const saved = {
@@ -79,9 +81,14 @@ describe("needsRefresh", () => {
 	});
 
 	test("refresh only when a source is newer", () => {
-		expect(needsRefresh(100, [50, 90])).toBe(false);
-		expect(needsRefresh(100, [50, 150])).toBe(true);
-		expect(needsRefresh(100, [])).toBe(false);
+		expect(needsRefresh(100, [50, 90], 2)).toBe(false);
+		expect(needsRefresh(100, [50, 150], 2)).toBe(true);
+		expect(needsRefresh(100, [], 2)).toBe(false);
+	});
+
+	test("an older capture format always refreshes", () => {
+		expect(needsRefresh(100, [], 1)).toBe(true);
+		expect(needsRefresh(100, [], undefined)).toBe(true);
 	});
 });
 
@@ -121,6 +128,36 @@ describe("prepare", () => {
 			expect(output.trim()).toBe("FAKE_PUSH");
 		},
 	);
+
+	test.skipIf(!hasZsh)("rc startup chatter never lands in the state", () => {
+		// A themed rc printing during startup is what wrote a coloured
+		// "requires at least zsh" line into state.zsh, which every
+		// non-interactive shell then failed to parse.
+		writeFileSync(
+			join(dir, ".zshrc"),
+			[
+				"print -r -- $'\\e[1mspaceship-prompt\\e[0m requires at least zsh'",
+				"alias gp='echo FAKE_PUSH'",
+				"",
+			].join("\n"),
+		);
+		prepare();
+		const state = readFileSync(stateFile(), "utf8");
+		expect(state).not.toContain("spaceship-prompt");
+		expect(state).toContain("alias gp='echo FAKE_PUSH'");
+	});
+
+	test.skipIf(!hasZsh)("an older capture format is regenerated", () => {
+		writeFileSync(join(dir, ".zshrc"), "alias gp='echo FAKE_PUSH'\n");
+		prepare();
+		// Pretend the installed state came from the chatter-prone capture.
+		writeFileSync(stateFile(), "# stale capture\n");
+		writeFileSync(stateVersionFile(), "1\n");
+		prepare();
+		expect(readFileSync(stateFile(), "utf8")).toContain(
+			"alias gp='echo FAKE_PUSH'",
+		);
+	});
 
 	test.skipIf(!hasZsh)(
 		"a shimmed interactive zsh does NOT source the captured state",
