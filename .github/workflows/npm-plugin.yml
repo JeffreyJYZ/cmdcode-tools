@@ -1,0 +1,85 @@
+name: Publish plugin
+
+# Publishes @jeffreyjyz/opencode-command-code through npm's OIDC trusted
+# publishing: the job proves its identity to the registry with a GitHub token,
+# so there is no 2FA prompt, no `npm stage publish` / `npm stage approve`
+# round-trip, and no long-lived token on any machine. Provenance is attached
+# because trusted publishing requires it and because it is what lets npm's
+# automated review see where the tarball came from.
+#
+#   git tag plugin-v0.5.9 && git push origin plugin-v0.5.9
+#
+# One-time setup on npmjs.com (package → Settings → Trusted publishing):
+#   owner JeffreyJYZ, repo cmdcode-tools, workflow npm-plugin.yml
+# Until that is configured the OIDC exchange fails; `workflow_dispatch` with
+# `dry_run` still exercises the whole build without publishing.
+
+on:
+  push:
+    tags: ["plugin-v*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and pack without publishing
+        type: boolean
+        default: true
+
+concurrency:
+  group: npm-plugin-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # The OIDC token the registry exchanges for a short-lived publish credential.
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v5
+        with:
+          # Trusted publishing needs npm >= 11.5.1; Node 24 ships a newer one.
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+
+      - run: bun install --frozen-lockfile
+      - name: Build, typecheck and test the plugin
+        working-directory: opencode-plugin
+        run: |
+          bun run typecheck
+          bun test
+          bun run build
+
+      - name: The tag and the manifest must agree
+        working-directory: opencode-plugin
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            want="${GITHUB_REF_NAME#plugin-v}"
+            if [ "$version" != "$want" ]; then
+              echo "package.json says $version, tag says $want" >&2
+              exit 1
+            fi
+          fi
+          echo "publishing $version"
+
+      - name: Publish
+        working-directory: opencode-plugin
+        env:
+          NPM_CONFIG_PROVENANCE: "true"
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm publish --provenance --access public --dry-run
+          else
+            npm publish --provenance --access public
+          fi
+
+      # The registry serves the packument before the tarball, so a published
+      # version can 404 for a few minutes. Poll rather than trust the 202.
+      - name: Verify the tarball is actually served
+        if: ${{ inputs.dry_run != 'true' }}
+        working-directory: opencode-plugin
+        run: bun scripts/verify-release.ts --tries 20
