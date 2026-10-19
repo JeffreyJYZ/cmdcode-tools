@@ -525,13 +525,13 @@ describe("the account's own meters", () => {
 	test("the window rows carry the console share and a pair that divides to it", () => {
 		const rows = zenRows(parseZenJson(withAccount()), meta);
 		const find = (label: string) => rows.find((row) => row[0] === label);
-		// One percentage on the row: the server's. The cap is the model's
-		// documented window limit (60 × 20%/50%/100%), and the dollars are the
-		// share of it the console accounts for — so the pair divides to the
-		// percentage and agrees with the `Allowance` row below.
-		expect(find("5-hour")?.[1]).toBe("$0.60/$12 (5%)");
-		expect(find("Weekly")?.[1]).toBe("$17.70/$30 (59%)");
-		expect(find("Monthly")?.[1]).toBe("$17.40/$60 (29%)");
+		// One percentage on the row: the server's, whole. The dollars are this
+		// store's own and named `local`, on the same basis as the `Period` row —
+		// never a figure derived from the share (that printed $43.20 beside a
+		// $21.81 period for the same month).
+		expect(find("5-hour")?.[1]).toBe("5% of limit · $0.50 local");
+		expect(find("Weekly")?.[1]).toBe("59% of limit · $1.50 local");
+		expect(find("Monthly")?.[1]).toBe("29% of limit · $17 local");
 		expect(find("Allowance")?.[1]).toBe("$60/mo");
 		// Every row stays inside the sidebar's budget: label + 2 + value.
 		for (const label of ["5-hour", "Weekly", "Monthly", "Period"]) {
@@ -553,7 +553,11 @@ describe("the account's own meters", () => {
 		};
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		const five = rows.findIndex((row) => row[0] === "5-hour");
-		expect(rows[five]).toEqual(["5-hour", "$12/$12 (100%)", "crit"]);
+		expect(rows[five]).toEqual([
+			"5-hour",
+			"100% of limit · $0.50 local",
+			"crit",
+		]);
 		expect(rows[five + 1]?.[1]).toContain("LIMIT EXCEEDED");
 	});
 
