@@ -112,8 +112,14 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
     let rows = || db::read_rows(db_path, crate::ocuse::window::now_ms() - days * 86_400_000);
     let text = match name {
         "usage" => rows().map(|rows| {
-            let mut report =
-                window::build(&rows, &zen::catalog(), &plan_id, window::now_ms(), None);
+            let mut report = window::build(
+                &rows,
+                &zen::catalog(),
+                &plan_id,
+                window::now_ms(),
+                None,
+                account,
+            );
             // The account's own meters when the caller resolved them, so a `usage`
             // call renders the same window rows the dashboard does — and the same
             // reason when a key was refused.
@@ -177,6 +183,7 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
                     &plan_id,
                     window::now_ms(),
                     period_start,
+                    account,
                 );
                 render::model_text(&report, &wanted, colour)
             })

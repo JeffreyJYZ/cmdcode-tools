@@ -274,17 +274,23 @@ function zenWindow(
 
 /**
  * One of the account's own meters as a panel row: the active model's own money
- * against that window's share of its limit, with the server's percentage
- * labelled beside it, then the reset — through the shared `windowRows`, so the
- * tone, the `LIMIT EXCEEDED` flag, the `cap in …` pace line and `elapsed` all
- * behave exactly as they do on the CommandCode side.
+ * against that window's share of its documented limit, then the reset — through
+ * the shared `windowRows`, so the tone, the `LIMIT EXCEEDED` flag, the `cap in …`
+ * pace line and `elapsed` all behave exactly as they do on the CommandCode side.
  *
- * The account's percent leads the share because it is the figure the server
- * gates on and prints on its console; the money pair is this store's, and the
- * two need not divide to each other. Without a per-model row (no catalog, or no
- * ocuse row for this model) there is no money to pair it with, so the row falls
- * back to the share alone rather than dividing the account's spend by one
- * model's cap.
+ * Two different quantities share this row, so each is labelled for what it is.
+ * The percentage in the parentheses belongs to the money pair and is computed
+ * from it; the console's own figure is printed beside it as `console N%`. They
+ * are not the same measurement and never divide to each other: Go's endpoint
+ * publishes three account-wide percentages and no dollars at all (no model
+ * parameter, no spend field), while the pair is this model's recorded spend
+ * against the window split `zen.json` documents. Printing the server's share
+ * inside the pair's parentheses read as a contradiction — `$18.16/$40 (3.0%)`
+ * was 45.4% of that cap, and `$0.10/$16 (6.0%)` was 0.6% of it.
+ *
+ * Without a per-model row (no catalog, or no ocuse row for this model) there is
+ * no money to pair, so the row falls back to the share alone rather than
+ * dividing the account's spend by one model's cap.
  */
 function zenMeterRows(
 	label: string,
@@ -299,6 +305,8 @@ function zenMeterRows(
 			cap: local?.cap ?? 100,
 			used: local?.spent ?? meter.percent,
 			resetAt: meter.resetsAt,
+			// The server's share still tones the row and raises `LIMIT EXCEEDED`:
+			// it is what gates. It is only kept out of the pair's parentheses.
 			sharePct: meter.percent,
 			// The endpoint's own verdict, with the percent as the fallback the
 			// account API's `exceeded` flag would give.
@@ -307,10 +315,12 @@ function zenMeterRows(
 		now,
 		durSecs,
 		undefined,
-		(used, cap, share) =>
+		(used, cap) =>
 			local
-				? `${money(used)}/${money(cap)} (${share.toFixed(1)}% of limit)`
-				: `${share.toFixed(1)}% of limit`,
+				? // The pair's own percentage, computed from the two figures printed
+					// beside it, then the console's account-wide share, named.
+					`${money(used)}/${money(cap)} (${((used / cap) * 100).toFixed(1)}%) · console ${meter.percent.toFixed(1)}%`
+				: `${meter.percent.toFixed(1)}% of limit`,
 	);
 }
 

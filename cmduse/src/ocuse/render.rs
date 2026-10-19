@@ -502,9 +502,19 @@ pub fn render_text(
         )
     ));
     // The GO block above is the account's own metering. These two columns are
-    // per model and cut from this machine's store, so say so rather than let
-    // them read as a second opinion on the same window.
+    // per model, so say whose they are: with an account answer they are cut at
+    // the server's own window bounds (the same block and Monday-anchored week its
+    // percentages describe), and only without one do they fall back to this
+    // machine's rolling cuts.
     if report.account.is_some() {
+        out.push_str(&format!(
+            "{}\n",
+            ink.dim_on(
+                "5H/WK columns: this model's own spend inside the account's windows (the same cuts its percentages use)."
+                    .into()
+            )
+        ));
+    } else {
         out.push_str(&format!(
             "{}\n",
             ink.dim_on(
@@ -1358,7 +1368,7 @@ mod tests {
             cost_usd: 30.0,
             ..Default::default()
         }];
-        crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None)
+        crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None, None)
     }
 
     #[test]
@@ -1429,8 +1439,9 @@ mod tests {
         // read it as a spend target.
         assert!(text.contains("elapsed"), "{text}");
         assert_eq!(text.matches("by now").count(), 1, "{text}");
-        // …and the per-model columns are called out as local, not a second meter.
-        assert!(text.contains("not the account's windows"), "{text}");
+        // …and the per-model columns are named as the same cuts, not a second
+        // measurement of a different window.
+        assert!(text.contains("the same cuts its percentages use"), "{text}");
     }
 
     /// The denominator is the server's own percentage read backwards: whatever
@@ -1475,7 +1486,13 @@ mod tests {
         assert!(!text.contains("elapsed"), "{text}");
         // Nothing claims to be the account's own view.
         assert!(!text.contains("account meters"), "{text}");
-        assert!(!text.contains("not the account's windows"), "{text}");
+        assert!(
+            !text.contains("the same cuts its percentages use"),
+            "{text}"
+        );
+        // Without an answer the columns keep saying they are this machine's own
+        // rolling cuts, since there is no server window to align them to.
+        assert!(text.contains("local, not the account's windows"), "{text}");
     }
 
     #[test]
@@ -1954,7 +1971,7 @@ mod tests {
             ..Default::default()
         }];
         let report =
-            crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None);
+            crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
         for colour in [false, true] {
             let text = render_text(&report, "/tmp/opencode.db", 10, colour, DEFAULT_BAR_WIDTH);
             assert!(!text.contains("LIMIT EXCEEDED"), "colour={colour}: {text}");
@@ -1971,6 +1988,7 @@ mod tests {
             &zen::catalog(),
             zen::DEFAULT_PLAN,
             1_800_000_000_000,
+            None,
             None,
         );
         assert!(!model_text(&empty, "glm-5.3-flash", false).contains("share"));
@@ -2094,6 +2112,7 @@ mod tests {
             &zen::catalog(),
             zen::DEFAULT_PLAN,
             1_800_000_000_000,
+            None,
             None,
         );
         let line = statusline_template(&empty, "go", "{month_pct} {models}", false, false, 20);

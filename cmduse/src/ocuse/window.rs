@@ -224,11 +224,26 @@ pub fn build(
     plan_id: &str,
     now_ms: i64,
     since_override: Option<i64>,
+    account: Option<&crate::ocuse::api::Usage>,
 ) -> Report {
     let (inferred_start, month_inferred) = month_start(rows, now_ms);
     let since_ms = since_override.unwrap_or(inferred_start);
-    let five_cut = now_ms - FIVE_HOUR_SECS * 1000;
-    let week_cut = now_ms - WEEKLY_SECS * 1000;
+    // The windows are cut at the *account's* bounds when it answered. Go meters a
+    // 5-hour block with its own reset, a week anchored to Monday 00:00 UTC, and
+    // the billing anniversary — none of which a rolling `now - length` cut
+    // reproduces. Cutting locally and pairing those dollars with the server's
+    // percentage put two different windows on one row: on real data the weekly
+    // row read `$20.45 (0.0% of limit)`, because the store's rolling week still
+    // held the previous week's spend while the server's week had just started.
+    // Without an answer the rolling cuts stay — the only ones this machine knows.
+    let (five_start, five_end) = match account.and_then(|a| a.rolling.reset_ms()) {
+        Some(reset) => (reset - FIVE_HOUR_SECS * 1000, reset),
+        None => (now_ms - FIVE_HOUR_SECS * 1000, i64::MAX),
+    };
+    let (week_start, week_end) = match account.and_then(|a| a.weekly.reset_ms()) {
+        Some(reset) => (reset - WEEKLY_SECS * 1000, reset),
+        None => (now_ms - WEEKLY_SECS * 1000, i64::MAX),
+    };
 
     let mut report = Report {
         period_label: "calendar month".into(),
@@ -246,14 +261,23 @@ pub fn build(
     let mut by_model: std::collections::BTreeMap<String, ModelUsage> = Default::default();
 
     for row in rows {
-        if row.at_ms < since_ms {
-            continue; // before the period: evidence for the anniversary only
+        // The month cut applies to the month, not to the loop: the account's week
+        // is anchored to Monday, which can start before a mid-week billing
+        // anniversary, and dropping those rows would undercount the very window
+        // the server's percentage describes.
+        let in_month = row.at_ms >= since_ms;
+        let in_week = row.at_ms >= week_start && row.at_ms < week_end;
+        let in_five = row.at_ms >= five_start && row.at_ms < five_end;
+        if !in_month && !in_week && !in_five {
+            continue;
         }
-        report.month.add(row);
-        if row.at_ms >= week_cut {
+        if in_month {
+            report.month.add(row);
+        }
+        if in_week {
             report.weekly.add(row);
         }
-        if row.at_ms >= five_cut {
+        if in_five {
             report.five_hour.add(row);
         }
         let entry = by_model
@@ -266,11 +290,13 @@ pub fn build(
                 five_hour: Totals::default(),
                 weekly: Totals::default(),
             });
-        entry.month.add(row);
-        if row.at_ms >= week_cut {
+        if in_month {
+            entry.month.add(row);
+        }
+        if in_week {
             entry.weekly.add(row);
         }
-        if row.at_ms >= five_cut {
+        if in_five {
             entry.five_hour.add(row);
         }
     }
@@ -299,6 +325,28 @@ mod tests {
             cost_usd: cost,
             ..Default::default()
         }
+    }
+
+    /// An account meter with a reset instant, for the window-bound tests.
+    fn meter(status: &str, percent: f64, resets_at: &str) -> crate::ocuse::api::Meter {
+        crate::ocuse::api::Meter {
+            status: status.into(),
+            percent,
+            resets_at: Some(resets_at.into()),
+        }
+    }
+
+    /// ISO-8601 UTC for an epoch-seconds instant, so the meter's wire shape
+    /// (`resetsAt`) is exercised rather than a pre-parsed value.
+    fn iso(secs: i64) -> String {
+        let rem = secs.rem_euclid(86_400);
+        let (y, m, d) = civil(secs - rem);
+        format!(
+            "{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}.000Z",
+            rem / 3600,
+            (rem % 3600) / 60,
+            rem % 60
+        )
     }
 
     #[test]
@@ -354,6 +402,7 @@ mod tests {
             crate::ocuse::zen::DEFAULT_PLAN,
             now * 1000,
             None,
+            None,
         );
         assert!(
             report.month_inferred,
@@ -376,6 +425,64 @@ mod tests {
         assert!((flash.five_hour.cost - 3.0).abs() < 1e-9);
     }
 
+    /// The account's own bounds decide the windows when it answered. Go's 5-hour
+    /// window is a *block* with its own reset and its week starts Monday 00:00
+    /// UTC, so a rolling `now - length` cut describes a different span — the bug
+    /// that printed `$20.45 (0.0% of limit)` on a row whose console share had
+    /// just started counting.
+    #[test]
+    fn the_accounts_bounds_cut_the_windows_when_it_answered() {
+        let now = days_from_civil(2026, 10, 19) * 86_400 + 12 * 3600; // Mon noon UTC
+        let week_reset = now + 6 * 86_400 + 12 * 3600; // next Monday 00:00
+        let five_reset = now + 3 * 3600;
+        let five_start = five_reset - FIVE_HOUR_SECS;
+        let rows = vec![
+            // Before the server's week (so outside it) but inside a rolling 7d.
+            row(now - 6 * 86_400, "glm-5.3-flash", 9.0),
+            // Inside the server's week but outside its 5-hour block (which
+            // starts two hours back), so the two cuts are distinguishable.
+            row(now - 3 * 3600, "glm-5.3-flash", 2.0),
+            // Inside the server's 5-hour block.
+            row(five_start + 60, "glm-5.3-flash", 1.0),
+        ];
+        let account = crate::ocuse::api::Usage {
+            rolling: meter("ok", 6.0, &iso(five_reset)),
+            weekly: meter("ok", 3.0, &iso(week_reset)),
+            monthly: meter("ok", 51.0, &iso(now + 20 * 86_400)),
+        };
+        let report = build(
+            &rows,
+            &crate::ocuse::zen::catalog(),
+            crate::ocuse::zen::DEFAULT_PLAN,
+            now * 1000,
+            None,
+            Some(&account),
+        );
+        // The rolling 7d cut would have counted the 6-day-old row ($9, so 12.0
+        // here); the server's Monday week starts 12h ago and must not.
+        assert!(
+            (report.weekly.cost - 3.0).abs() < 1e-9,
+            "weekly {}",
+            report.weekly.cost
+        );
+        assert!(
+            (report.five_hour.cost - 1.0).abs() < 1e-9,
+            "5h {}",
+            report.five_hour.cost
+        );
+        // …and the same cut applies to the per-model rows the panel pairs with.
+        let flash = report
+            .models
+            .iter()
+            .find(|m| m.id == "glm-5.3-flash")
+            .unwrap();
+        assert!((flash.weekly.cost - 3.0).abs() < 1e-9);
+        assert!((flash.five_hour.cost - 1.0).abs() < 1e-9);
+        // The month is untouched by the window cuts: it still sees every row in
+        // the period, including the one the server's week excluded.
+        assert!((report.month.cost - 12.0).abs() < 1e-9);
+    }
+
     #[test]
     fn models_sort_by_month_spend() {
         let now = days_from_civil(2026, 9, 27) * 86_400;
@@ -385,6 +492,7 @@ mod tests {
             &crate::ocuse::zen::catalog(),
             crate::ocuse::zen::DEFAULT_PLAN,
             now * 1000,
+            None,
             None,
         );
         assert_eq!(report.models[0].id, "pricey");

@@ -345,6 +345,7 @@ pub fn run() {
             &plan_id,
             t,
             period_start,
+            account,
         );
         report.period_label = period_label.clone();
         report.account = account.cloned();
