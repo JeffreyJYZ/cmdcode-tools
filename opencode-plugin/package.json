@@ -42,6 +42,13 @@
 		"ai-sdk"
 	],
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/JeffreyJYZ/cmdcode-tools.git",
+		"directory": "opencode-plugin"
+	},
+	"homepage": "https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/opencode-plugin#readme",
+	"bugs": "https://github.com/JeffreyJYZ/cmdcode-tools/issues",
 	"publishConfig": {
 		"access": "public"
 	}
