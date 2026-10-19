@@ -529,9 +529,9 @@ describe("the account's own meters", () => {
 		// store's own and named `local`, on the same basis as the `Period` row —
 		// never a figure derived from the share (that printed $43.20 beside a
 		// $21.81 period for the same month).
-		expect(find("5-hour")?.[1]).toBe("5% of limit · $0.50 local");
-		expect(find("Weekly")?.[1]).toBe("59% of limit · $1.50 local");
-		expect(find("Monthly")?.[1]).toBe("29% of limit · $17 local");
+		expect(find("5-hour")?.[1]).toBe("5% of limit · $0.50 model");
+		expect(find("Weekly")?.[1]).toBe("59% of limit · $1.50 model");
+		expect(find("Monthly")?.[1]).toBe("29% of limit · $17 model");
 		expect(find("Allowance")?.[1]).toBe("$60/mo");
 		// Every row stays inside the sidebar's budget: label + 2 + value.
 		for (const label of ["5-hour", "Weekly", "Monthly", "Period"]) {
@@ -555,7 +555,7 @@ describe("the account's own meters", () => {
 		const five = rows.findIndex((row) => row[0] === "5-hour");
 		expect(rows[five]).toEqual([
 			"5-hour",
-			"100% of limit · $0.50 local",
+			"100% of limit · $0.50 model",
 			"crit",
 		]);
 		expect(rows[five + 1]?.[1]).toContain("LIMIT EXCEEDED");

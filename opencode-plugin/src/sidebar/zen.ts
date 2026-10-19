@@ -299,7 +299,9 @@ function zenMeterRows(
 	// The endpoint publishes whole percents (`"percent":53`); a tenth here would
 	// claim a precision the console's own rounding does not have.
 	const pctText = Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
-	const local = typeof spent === "number" ? ` · ${money(spent)} local` : "";
+	// Named `model` because the share is per model: the same row would otherwise
+	// read as the account's money, which is a different number (`Period`).
+	const local = typeof spent === "number" ? ` · ${money(spent)} model` : "";
 	return windowRows(
 		label,
 		{
@@ -373,10 +375,13 @@ export function zenRows(
 				usage.account.rolling,
 				now,
 				FIVE_HOUR_SECS,
-				// This store's own spend in the same window: the panel's dollars
-				// stay on one basis (`Period`, `Usage (this model)`) instead of
-				// deriving a second one from the share.
-				usage.totals.fiveHour.cost,
+				// The *active model's* spend in the same window: the console's
+				// percentage is per model against that model's limit, so an
+				// account-wide total here pairs two different scopes (and the
+				// account total also carries other models — $2.47 of v4-pro, muse
+				// and glm on real data). `Period` below stays account-wide and says
+				// so by name.
+				mine?.fiveHour.cost ?? usage.totals.fiveHour.cost,
 			),
 		);
 		rows.push(
@@ -385,7 +390,7 @@ export function zenRows(
 				usage.account.weekly,
 				now,
 				WEEKLY_SECS,
-				usage.totals.weekly.cost,
+				mine?.weekly.cost ?? usage.totals.weekly.cost,
 			),
 		);
 		rows.push(
@@ -394,7 +399,7 @@ export function zenRows(
 				usage.account.monthly,
 				now,
 				period?.durSecs ?? 0,
-				usage.totals.month.cost,
+				mine?.month.cost ?? usage.totals.month.cost,
 			),
 		);
 	} else {
