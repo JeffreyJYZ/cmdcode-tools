@@ -805,11 +805,16 @@ Anything else exits 2.
 .SS ocuse data and windows
 When Go's usage endpoint answers, the header's three window lines are the
 account's own meters (the shares and resets \fBopencode.ai/console\fR shows),
-each with this store's own spend beside them \(em the two need not divide to
-each other, so the share carries an \fIof limit\fR label \(em and the billing period comes from the endpoint's monthly reset instant \(em
+each paired with the ceiling that share implies \(em the pair divides to
+exactly the printed share, while the two bases need not divide to each other,
+so the share carries an \fIof limit\fR label \(em and the billing period comes from the endpoint's monthly reset instant \(em
 the subscription anniversary, which is why the period line reads
-\fIGo billing month\fR.  There is no money pair, pace or pro\-rata figure:
-Go grants limits per model, so no account\-wide pool exists to divide by.
+\fIGo billing month\fR.  A ceiling the burn can reach before the reset also
+gets an \fIon pace to hit cap in\fR ETA, and the monthly row \(em the one
+budget \(em its \fI$X by now\fR pro\-rata figure.  No account\-wide pool is
+invented: Go grants limits per model, and summing them into one ceiling (the
+old \fI$215\fR) read as a budget the console does not have.  A share under
+0.1% implies no ceiling, so that row keeps the share alone.
 Each model's table row still compares its own spend
 against its monthly limit; the table's \fI5H\fR/\fIWK\fR columns are local
 rolling windows (this model's spend over the last 5 hours / 7 days), and the

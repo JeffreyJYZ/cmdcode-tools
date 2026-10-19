@@ -108,11 +108,12 @@ impl Ink {
 /// go through this one builder, so the two branches cannot drift apart in which
 /// fields a window row carries or in the order it carries them.
 ///
-/// There is deliberately no cap anywhere here: Go grants limits per model, so
-/// no account-wide pool exists to divide by. Summing the per-model limits into
-/// one ceiling read as a budget the console does not have (it meters each
-/// window on its own basis), so the rows carry this store's spend with the
-/// server's share labelled beside it — never a money pair against a pool.
+/// There is deliberately no cap *field* here: Go grants limits per model, so no
+/// account-wide pool exists to divide by, and summing the per-model limits into
+/// one ceiling read as a budget the console does not have (it meters each window
+/// on its own basis) — that is where `$215` came from. The money pair comes back
+/// the honest way instead: the server's own share back-solves the ceiling it is
+/// metering against, so `used / implied` divides to exactly the share beside it.
 struct RowSpec<'a> {
     label: &'a str,
     /// This store's own totals for the window.
@@ -128,6 +129,11 @@ struct RowSpec<'a> {
     /// The account's own verdict: a status it does not call `ok` rides beside
     /// the limit flag.
     status: Option<&'a str>,
+    /// Whether an even-burn figure belongs on this row. True for the monthly
+    /// window alone: that one is a budget, so "what even burn would have spent by
+    /// now" is a fair comparison, where the 5-hour and weekly throttles would
+    /// read the same number as a spend target.
+    pro_rata: bool,
 }
 
 fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
@@ -143,22 +149,45 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
         format!(" · resets {reset}")
     };
     // cmduse's field order is importance order, so a clipped watch frame keeps
-    // the actionable parts: limit flag, then the informational elapsed share.
-    // Percentages come from core (one decimal); duration (never rel_time)
-    // formats the countdown.
+    // the actionable parts: limit flag, pace warning, elapsed share, then the
+    // informational pro-rata figure. Percentages come from core (one decimal);
+    // duration (never rel_time) formats the ETA.
     let now_secs = (now_ms / 1000).max(0) as u64;
     let reset_at = spec.reset.map(|(at, _)| at as f64);
     let dur_secs = spec.reset.map(|(_, dur)| dur);
     let elapsed = dur_secs.and_then(|d| cmduse_core::elapsed_pct(reset_at, d, Some(now_secs)));
+    let share = spec.share_pct.map(|p| p.max(0.0));
+    // The ceiling the server's own share implies, in this store's dollars. No
+    // pool is invented here: the console's percentage *is* the fraction of the
+    // ceiling it meters against, so `spend / share` is the ceiling, and the pair
+    // below divides to exactly the percentage printed beside it.
+    let cap = share.and_then(|p| implied_cap(spec.used.cost, p));
+    let pace = cap
+        .and_then(|cap| {
+            dur_secs.and_then(|d| {
+                cmduse_core::pace_eta(reset_at, d, spec.used.cost, cap, now_secs)
+                    .map(|secs| duration(secs as u64))
+            })
+        })
+        .map(|eta| format!(" · {}on pace to hit cap in {eta}{}", ink.yellow, ink.reset))
+        .unwrap_or_default();
     let thru = elapsed
         .map(|p| format!(" · {}window {p:.1}% elapsed{}", ink.dim, ink.reset))
         .unwrap_or_default();
+    let by_now = match (spec.pro_rata, elapsed, cap) {
+        (true, Some(p), Some(cap)) => format!(
+            " · {}{} by now{}",
+            ink.dim,
+            money(cap * p / 100.0),
+            ink.reset
+        ),
+        _ => String::new(),
+    };
     let label = spec.label;
     // The account's own share is labelled, because the money beside it is this
     // store's spend and the two need not divide to each other (the server
     // meters higher). Same placement cmduse uses for the flag: on the window
     // it belongs to.
-    let share = spec.share_pct.map(|p| p.max(0.0));
     let flag = if share.is_some_and(|p| p >= 100.0) {
         format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
     } else if spec.status.is_some_and(|s| !s.eq_ignore_ascii_case("ok")) {
@@ -172,10 +201,19 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
     } else {
         String::new()
     };
+    let pair = cap
+        .map(|cap| format!(" / {}", money(cap)))
+        .unwrap_or_default();
     let paren = match share {
         Some(p) => format!(" ({} of limit)", pct(p, 100.0)),
         None => String::new(),
     };
+    // Composed in pieces: the pair and the pro-rata figure are conditional, and
+    // one format string for both branches is a placeholder count waiting to drift.
+    let body = format!(
+        "{}{pair}{paren}{reset_text}{flag}{pace}{thru}{by_now}",
+        money(spec.used.cost)
+    );
     if ink.colour {
         // The gauge bar belongs to the share that gates: the account's own
         // when it answered. The local estimate has no share, so its rows
@@ -185,27 +223,24 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
             None => String::new(),
         };
         format!(
-            " {}{label:<8}{} {}{}{}{}{}{}{}{}{}\n",
-            ink.bold,
-            ink.reset,
-            bar,
-            ink.dim,
-            money(spec.used.cost),
-            ink.reset,
-            paren,
-            reset_text,
-            flag,
-            thru,
-            ink.reset,
+            " {}{label:<8}{} {}{}{body}{}\n",
+            ink.bold, ink.reset, bar, ink.dim, ink.reset,
         )
     } else {
         // The plain frame is the script-facing one: same field order,
         // no SGR (the Ink helpers are empty strings when colour is off).
-        format!(
-            "  {label:<8} {}{paren}{reset_text}{flag}{thru}\n",
-            money(spec.used.cost),
-        )
+        format!("  {label:<8} {body}\n")
     }
+}
+
+/// The ceiling a share implies, in this store's dollars: `spend / share`.
+///
+/// `None` below the display's own precision — the server rounds to one decimal,
+/// so a share under 0.05% would print a pair that disagrees with the percentage
+/// printed beside it, or divide by a zero the endpoint sent for a window it
+/// meters on another basis.
+fn implied_cap(spend: f64, share_pct: f64) -> Option<f64> {
+    (share_pct >= 0.05).then(|| spend * 100.0 / share_pct)
 }
 
 /// The account meter's own window boundary, when the endpoint gave one: its
@@ -218,8 +253,6 @@ fn meter_reset(meter: &crate::ocuse::api::Meter, dur_secs: Option<u64>) -> Optio
     }
 }
 
-/// Sum of `limit * share` over the models used this month — an aggregate ceiling
-/// across the models in play, since Go grants limits per model.
 /// Is any of this model's windows over its share of the limit? Go meters per
 /// model *and* per window, so being over the 5-hour cap counts like being over
 /// the month. One verdict, shared with the watch loop's cap notification.
@@ -335,15 +368,15 @@ pub fn render_text(
                 ink.bold,
                 ink.reset,
                 ink.dim_on(
-                    "(account meters — what opencode.ai/console reports; the $ beside them is this store's own)"
+                    "(account meters — what opencode.ai/console reports; the pair is this store's spend against the ceiling its share implies)"
                         .into()
                 ),
             ));
             // Every field that is true stays on the row: this store's money, the
-            // server's share labelled beside it, its reset instant, and the
-            // elapsed share measured against the server's clock. No money pair
-            // and no pace: Go grants limits per model, so no account-wide pool
-            // exists to divide by.
+            // ceiling the server's own share implies, the share labelled beside
+            // it, its reset instant, and the elapsed share measured against the
+            // server's clock. No account-wide pool is invented here — summing the
+            // per-model limits into one ceiling is where the old `$215` came from.
             let monthly_dur = report
                 .period_end_ms
                 .map(|end| ((end - report.since_ms) / 1000).max(0) as u64);
@@ -371,6 +404,9 @@ pub fn render_text(
                         reset: meter_reset(meter, dur_secs),
                         share_pct: Some(meter.percent),
                         status: Some(meter.status.as_str()),
+                        // The monthly window is the budget; the two throttles
+                        // above it would read a pro-rata figure as a target.
+                        pro_rata: label == "Monthly",
                     },
                     report.now_ms,
                 ));
@@ -410,6 +446,7 @@ pub fn render_text(
                     reset: None,
                     share_pct: None,
                     status: None,
+                    pro_rata: false,
                 },
                 report.now_ms,
             ));
@@ -421,6 +458,7 @@ pub fn render_text(
                     reset: None,
                     share_pct: None,
                     status: None,
+                    pro_rata: false,
                 },
                 report.now_ms,
             ));
@@ -432,6 +470,9 @@ pub fn render_text(
                     reset: report.period_end_ms.zip(monthly_dur),
                     share_pct: None,
                     status: None,
+                    // No account share, so no ceiling to pro-rate: this row keeps
+                    // its real reset and elapsed share and nothing invented.
+                    pro_rata: false,
                 },
                 report.now_ms,
             ));
@@ -1375,21 +1416,52 @@ mod tests {
             text.contains("resets 4h 31m"),
             "the 5h block's own end: {text}"
         );
-        // Every field that is true stays on the row: this store's money with the
-        // server's share labelled beside it. The two need not divide to each
-        // other (the server meters higher), so the share carries its "of limit"
-        // label — and no pair divides against a pool that does not exist.
-        assert!(text.contains("$30.00 (5.0% of limit)"), "{text}");
-        assert!(text.contains("$30.00 (29.0% of limit)"), "{text}");
+        // Every field that is true stays on the row: this store's money, the
+        // ceiling the server's share implies, and the share labelled beside it.
+        // The two need not divide to each other (the server meters higher), so
+        // the share carries its "of limit" label.
+        assert!(text.contains("$30.00 / $600.00 (5.0% of limit)"), "{text}");
+        assert!(text.contains("$30.00 / $103.45 (29.0% of limit)"), "{text}");
         assert!(text.contains("of limit"), "{text}");
-        assert!(!text.contains("$30.00 /"), "no money pair: {text}");
-        // The Monthly row measures against the period bounds, like cmduse's:
-        // an elapsed share and the server's reset, but no pro-rata — that
-        // figure needs a pool to divide by, and Go grants limits per model.
+        // The monthly window measures against the period bounds, like cmduse's:
+        // an elapsed share, the server's reset, and the even-burn figure — which
+        // only the budget window gets, because the two throttles above it would
+        // read it as a spend target.
         assert!(text.contains("elapsed"), "{text}");
-        assert!(!text.contains("by now"), "no pool, no pro-rata: {text}");
+        assert_eq!(text.matches("by now").count(), 1, "{text}");
         // …and the per-model columns are called out as local, not a second meter.
         assert!(text.contains("not the account's windows"), "{text}");
+    }
+
+    /// The denominator is the server's own percentage read backwards: whatever
+    /// this store spent, divided by the share the console prints, is the ceiling
+    /// that share is metering against. A share too small to imply one (the
+    /// endpoint rounds to one decimal, and sends 0.0 for a window it meters on
+    /// another basis) leaves the row with the share alone, never a division by
+    /// it.
+    #[test]
+    fn the_pair_is_the_ceiling_the_share_implies() {
+        // The $30 fixture spend at each of the fixture's shares.
+        assert_eq!(implied_cap(30.0, 5.0), Some(600.0));
+        assert_eq!(implied_cap(30.0, 59.0), Some(50.847457627118644));
+        // Under the display's precision there is no ceiling to print.
+        assert_eq!(implied_cap(20.45, 0.0), None);
+        assert_eq!(implied_cap(20.45, 0.04), None);
+        assert_eq!(implied_cap(20.45, 0.1), Some(20450.0));
+        assert_eq!(implied_cap(0.0, 1.0), Some(0.0));
+    }
+
+    /// A pace line needs a cap the burn can actually reach before the reset.
+    #[test]
+    fn a_reachable_cap_gets_the_pace_line() {
+        let mut report = report_with_account();
+        if let Some(account) = &mut report.account {
+            // 90% of the ceiling this store's $30 implies ($33.33), one hour into
+            // a 5-hour window with four left: the burn reaches it well inside.
+            account.rolling = meter("ok", 90.0, "2027-01-15T12:00:00.000Z");
+        }
+        let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        assert!(text.contains("on pace to hit cap in"), "{text}");
     }
 
     #[test]
