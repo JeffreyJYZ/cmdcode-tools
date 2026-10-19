@@ -581,11 +581,11 @@ and
 .B ocuse
 reads those for its window rows (the credential from
 .IR $OCUSE_API_KEY ", " $OPENCODE_API_KEY ,
-else the live credential opencode itself is using \\(em
+else the live credential opencode itself is using \(em
 .B credential
 in opencode's store, where v2 and
 .B /connect
-write it \\(em with the legacy
+write it \(em with the legacy
 .I auth.json
 as the fallback for a v1 install).
 It reports what actually ran on this machine from opencode's own store for
@@ -805,16 +805,17 @@ Anything else exits 2.
 .SS ocuse data and windows
 When Go's usage endpoint answers, the header's three window lines are the
 account's own meters (the shares and resets \fBopencode.ai/console\fR shows),
-each paired with the ceiling that share implies \(em the pair divides to
-exactly the printed share, while the two bases need not divide to each other,
-so the share carries an \fIof limit\fR label \(em and the billing period comes from the endpoint's monthly reset instant \(em
+each with this store's own recorded cost beside the server's share of the
+limit \(em the two need not agree, since the console meters at roughly twice
+the cost opencode records, so the share carries its own \fIof limit\fR label
+\(em and the billing period comes from the endpoint's monthly reset instant \(em
 the subscription anniversary, which is why the period line reads
-\fIGo billing month\fR.  A ceiling the burn can reach before the reset also
-gets an \fIon pace to hit cap in\fR ETA, and the monthly row \(em the one
-budget \(em its \fI$X by now\fR pro\-rata figure.  No account\-wide pool is
-invented: Go grants limits per model, and summing them into one ceiling (the
-old \fI$215\fR) read as a budget the console does not have.  A share under
-0.1% implies no ceiling, so that row keeps the share alone.
+\fIGo billing month\fR.  No dollar denominator is printed: any ceiling
+derived from one side contradicts the other \(em \fIspend / share\fR offered
+\fI$40\fR against a documented \fI$80\fR monthly allowance, and the summed
+per\-model limits were the old \fI$215\fR.  The burn still gets an \fIon pace
+to hit cap in\fR ETA, and the monthly row \(em the one budget \(em its
+\fI$X by now\fR pro\-rata figure.
 Each model's table row still compares its own spend
 against its monthly limit; the table's \fI5H\fR/\fIWK\fR columns are local
 rolling windows (this model's spend over the last 5 hours / 7 days), and the
@@ -852,7 +853,7 @@ Read\-only; opencode's own message store (v1 \fBmessage\fR, or v2
 Overrides the store path (equivalently, \fB\-\-db\fR).
 .TP
 .I ~/.local/share/opencode/auth.json
-Read (never written) as the fallback Go key \\(em the legacy v1 location of the
+Read (never written) as the fallback Go key \(em the legacy v1 location of the
 credential \fB/connect\fR stores; on v2 the live one is the \fBcredential\fR row
 of opencode's store, which is read first.  \fB$OCUSE_API_KEY\fR and
 \fB$OPENCODE_API_KEY\fR override both.

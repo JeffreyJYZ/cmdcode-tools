@@ -201,17 +201,19 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
     } else {
         String::new()
     };
-    let pair = cap
-        .map(|cap| format!(" / {}", money(cap)))
-        .unwrap_or_default();
+    // No denominator is printed. `cap` is spent ÷ share, so printing it offered
+    // a ceiling of ~$40 beside a documented $80 monthly limit and read as "my
+    // limit is $40" — the console meters roughly twice the cost this store
+    // records, so the two bases never meet. It stays a local value for the pace
+    // and the even-burn figure, both of which are ratios in this store's dollars.
     let paren = match share {
-        Some(p) => format!(" ({} of limit)", pct(p, 100.0)),
+        Some(p) => format!(" · {} of limit", pct(p, 100.0)),
         None => String::new(),
     };
     // Composed in pieces: the pair and the pro-rata figure are conditional, and
     // one format string for both branches is a placeholder count waiting to drift.
     let body = format!(
-        "{}{pair}{paren}{reset_text}{flag}{pace}{thru}{by_now}",
+        "{}{paren}{reset_text}{flag}{pace}{thru}{by_now}",
         money(spec.used.cost)
     );
     if ink.colour {
@@ -368,7 +370,7 @@ pub fn render_text(
                 ink.bold,
                 ink.reset,
                 ink.dim_on(
-                    "(account meters — what opencode.ai/console reports; the pair is this store's spend against the ceiling its share implies)"
+                    "(account meters — what opencode.ai/console reports; the $ is this store's own recorded cost, a lower basis than the console counts)"
                         .into()
                 ),
             ));
@@ -1426,12 +1428,13 @@ mod tests {
             text.contains("resets 4h 31m"),
             "the 5h block's own end: {text}"
         );
-        // Every field that is true stays on the row: this store's money, the
-        // ceiling the server's share implies, and the share labelled beside it.
-        // The two need not divide to each other (the server meters higher), so
-        // the share carries its "of limit" label.
-        assert!(text.contains("$30.00 / $600.00 (5.0% of limit)"), "{text}");
-        assert!(text.contains("$30.00 / $103.45 (29.0% of limit)"), "{text}");
+        // Every field that is true stays on the row: this store's own money and
+        // the server's share labelled beside it. No denominator is printed — it
+        // would have to be `spend / share`, which contradicted the documented
+        // allowance ($40 next to an $80 limit) because the console meters at
+        // roughly twice the cost this store records.
+        assert!(text.contains("$30.00 · 5.0% of limit"), "{text}");
+        assert!(text.contains("$30.00 · 29.0% of limit"), "{text}");
         assert!(text.contains("of limit"), "{text}");
         // The monthly window measures against the period bounds, like cmduse's:
         // an elapsed share, the server's reset, and the even-burn figure — which

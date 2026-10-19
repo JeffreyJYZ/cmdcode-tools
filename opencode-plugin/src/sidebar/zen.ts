@@ -274,38 +274,35 @@ function zenWindow(
 
 /**
  * One of the account's own meters as a panel row: the console's percentage —
- * the authentic figure, and the one that gates — with this store's spend pinned
- * to it, then the reset.
+ * the authentic figure, and the one that gates — with the dollars it accounts
+ * for, then the reset.
  *
- * The percentage is the server's and stays the only percentage on the row. The
- * money cannot be a second opinion beside it: printing `$18.16/$40 (3.0%)` put a
- * 45.4% pair next to an unrelated account-wide share, and naming the share
- * separately only moved the contradiction along the line. Here the ceiling is
- * back-solved from the share (`spend / share`), so the pair divides to exactly
- * the percentage printed beside it — the same rule the CLI's account rows use,
- * so the two surfaces agree with the console and with each other.
+ * The cap is the model's **documented** limit for that window (`limit ×
+ * windowShare`), never a back-solved one. Dividing this store's `cost` by the
+ * console's share produced a ceiling of ~$40 against a documented $80, which
+ * read as "my monthly limit is $40" next to the `Allowance` row saying $80; the
+ * two figures are in different bases (the console meters roughly twice the cost
+ * opencode records), so the only dollars consistent with its percentage are
+ * `percent × cap`. That pair divides to exactly the percentage printed beside
+ * it and agrees with the allowance below.
  *
- * A share under 0.05% implies no ceiling (the server rounds to one decimal, and
- * sends 0.0 for a window it meters on another basis), and the row then carries
- * the share alone rather than dividing by it.
+ * A missing cap, or a share too small to have a meaningful dollar figure, leaves
+ * the row with the share alone rather than inventing one.
  */
 function zenMeterRows(
 	label: string,
 	meter: ZenMeter,
 	now: number,
 	durSecs: number,
-	spent?: number,
+	cap?: number,
 ): SidebarRow[] {
 	const pct = meter.percent;
-	const pair =
-		typeof spent === "number" && pct >= 0.05
-			? { used: spent, cap: (spent * 100) / pct }
-			: undefined;
+	const paired = typeof cap === "number" && cap > 0;
 	return windowRows(
 		label,
 		{
-			cap: pair?.cap ?? 100,
-			used: pair?.used ?? pct,
+			cap: paired ? cap : 100,
+			used: paired ? (cap * pct) / 100 : pct,
 			resetAt: meter.resetsAt,
 			// The server's share is the row's percentage: it tones the row, drives
 			// the pace line and raises `LIMIT EXCEEDED`.
@@ -315,7 +312,7 @@ function zenMeterRows(
 		now,
 		durSecs,
 		undefined,
-		pair
+		paired
 			? (used, cap) => `${money(used)}/${money(cap)} (${pct.toFixed(1)}%)`
 			: () => `${pct.toFixed(1)}% of limit`,
 	);
@@ -360,6 +357,12 @@ export function zenRows(
 	// and dividing them by one model's allowance would report the whole account
 	// against a single cap; the meter row then keeps the share alone.
 	const cap = mine ? limit : undefined;
+	/** This model's documented cap for one window, when the catalogue gives one. */
+	const documented = (
+		allowance: number | undefined,
+		share: number,
+	): number | undefined =>
+		typeof allowance === "number" && allowance > 0 ? allowance * share : undefined;
 	// Monthly is a billing period, not a rolling window: its length and reset
 	// come from the bounds ocuse publishes. "Monthly" matches the CommandCode
 	// panel's label.
@@ -377,10 +380,10 @@ export function zenRows(
 				usage.account.rolling,
 				now,
 				FIVE_HOUR_SECS,
-				// The account's spend inside this window: the endpoint meters the
-				// account, so the pair that carries its share must be the account's
-				// too (ocuse cuts these totals at the server's own bounds).
-				usage.totals.fiveHour.cost,
+				// The model's documented cap for this window: the dollars the
+				// console's percentage accounts for are a fraction of it, and it is
+				// the same `Allowance` the panel prints below.
+				documented(limit, GO_WINDOW_SHARE.fiveHour),
 			),
 		);
 		rows.push(
@@ -389,7 +392,7 @@ export function zenRows(
 				usage.account.weekly,
 				now,
 				WEEKLY_SECS,
-				usage.totals.weekly.cost,
+				documented(limit, GO_WINDOW_SHARE.weekly),
 			),
 		);
 		rows.push(
@@ -398,7 +401,7 @@ export function zenRows(
 				usage.account.monthly,
 				now,
 				period?.durSecs ?? 0,
-				usage.totals.month.cost,
+				documented(limit, GO_WINDOW_SHARE.month),
 			),
 		);
 	} else {
