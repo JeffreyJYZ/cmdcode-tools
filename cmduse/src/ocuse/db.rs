@@ -74,7 +74,8 @@ struct Cache {
 pub const PROVIDERS: [&str; 2] = ["opencode-go", "opencode"];
 
 /// opencode's own directory: `$XDG_DATA_HOME/opencode`, else
-/// `~/.local/share/opencode`. Holds the store and `auth.json` (the Go key).
+/// `~/.local/share/opencode`. Holds the store — which carries the Go credential
+/// in v2's `credential` table — and `auth.json`, the legacy v1 file.
 pub fn opencode_home() -> String {
     let base = std::env::var("XDG_DATA_HOME").unwrap_or_else(|_| {
         let home = std::env::var("HOME").unwrap_or_default();
@@ -89,6 +90,49 @@ pub fn default_path() -> String {
         return path;
     }
     format!("{}/opencode.db", opencode_home())
+}
+
+/// The Go credential opencode itself is using.
+///
+/// v2 keeps provider credentials in the store's `credential` table; `auth.json`
+/// is the legacy v1 file. Reading the file alone produced a dashboard that said
+/// `api_key_expired` while Go inference worked: `/connect` had written the
+/// replacement key to the store, and the file still held the superseded one.
+/// `opencode-go` is the Go subscription and `opencode` is Zen — the same
+/// account, and the endpoint answers an entitlement refusal for a Zen key
+/// rather than silence, which is more useful than no key at all.
+pub fn credential_key() -> Option<String> {
+    credential_key_at(&default_path())
+}
+
+fn credential_key_at(path: &str) -> Option<String> {
+    let connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY).ok()?;
+    let mut statement = connection
+        .prepare(
+            // The boolean ordering puts `opencode-go` ahead of `opencode`, then
+            // newest first: a re-connected key supersedes the row it replaced.
+            "SELECT value FROM credential WHERE integration_id IN ('opencode-go', 'opencode') \
+             ORDER BY (integration_id = 'opencode-go') DESC, time_updated DESC",
+        )
+        .ok()?;
+    let values: Vec<String> = statement
+        .query_map([], |row| row.get::<_, String>(0))
+        .ok()?
+        .flatten()
+        .collect();
+    drop(statement);
+    values
+        .iter()
+        .filter_map(|value| serde_json::from_str::<Credential>(value).ok())
+        .filter_map(|credential| credential.key)
+        .find(|key| !key.is_empty())
+}
+
+/// `credential.value` is the connector's own JSON — `{"type":"key","key":"…"}`
+/// for a pasted API key. Only the key is read; the rest is its business.
+#[derive(Deserialize)]
+struct Credential {
+    key: Option<String>,
 }
 
 /// Every OpenCode-owned assistant row at or after `since_ms`, oldest first.
@@ -266,6 +310,56 @@ mod tests {
         let later = read_rows(&path, 1_500).unwrap();
         assert_eq!(later.len(), 1);
         assert_eq!(later[0].provider, "opencode");
+    }
+
+    /// v2 holds the live credential; the legacy file is only where a v1 install
+    /// kept one — and reading that alone is what reported `api_key_expired` while
+    /// Go inference worked.
+    #[test]
+    fn the_live_credential_comes_from_the_store() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("opencode.db");
+        let connection = Connection::open(&path).unwrap();
+        connection
+            .execute_batch(
+                "CREATE TABLE credential (\
+                 id TEXT, integration_id TEXT, value TEXT, time_updated INTEGER);",
+            )
+            .unwrap();
+        let insert = |integration: &str, key: &str, at: i64| {
+            connection
+                .execute(
+                    "INSERT INTO credential VALUES (?, ?, ?, ?)",
+                    (
+                        format!("cred_{at}"),
+                        integration,
+                        format!(r#"{{"type":"key","key":"{key}"}}"#),
+                        at,
+                    ),
+                )
+                .unwrap();
+        };
+        insert("opencode", "zen", 9_000);
+        insert("opencode-go", "go-old", 1_000);
+        insert("opencode-go", "go-new", 2_000);
+        let path = path.to_string_lossy().into_owned();
+        // Go beats Zen and the newest Go row beats the one it replaced, whatever
+        // the timestamps say (Zen's is the newest here).
+        assert_eq!(credential_key_at(&path).as_deref(), Some("go-new"));
+
+        // An empty key is not a key: nothing to send.
+        connection
+            .execute(
+                "INSERT INTO credential VALUES ('cred_empty', 'opencode-go', '{\"type\":\"key\",\"key\":\"\"}', 3_000)",
+                [],
+            )
+            .unwrap();
+        assert_eq!(credential_key_at(&path).as_deref(), Some("go-new"));
+
+        // A store with no such table (v1) reads as "ask the legacy file".
+        let legacy = dir.path().join("legacy.db");
+        Connection::open(&legacy).unwrap();
+        assert!(credential_key_at(&legacy.to_string_lossy()).is_none());
     }
 
     /// A v2 store: `session_message`, role in `type`, model ref nested.

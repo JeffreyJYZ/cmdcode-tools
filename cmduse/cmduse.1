@@ -581,10 +581,13 @@ and
 .B ocuse
 reads those for its window rows (the credential from
 .IR $OCUSE_API_KEY ", " $OPENCODE_API_KEY ,
-else the
-.I opencode\-go
-entry of opencode's
-.IR auth.json ).
+else the live credential opencode itself is using \\(em
+.B credential
+in opencode's store, where v2 and
+.B /connect
+write it \\(em with the legacy
+.I auth.json
+as the fallback for a v1 install).
 It reports what actually ran on this machine from opencode's own store for
 everything the endpoint does not carry \(em the per\-model table,
 \fBdaily\fR/\fBhourly\fR, tokens \(em priced by opencode itself, against the
@@ -844,10 +847,10 @@ Read\-only; opencode's own message store (v1 \fBmessage\fR, or v2
 Overrides the store path (equivalently, \fB\-\-db\fR).
 .TP
 .I ~/.local/share/opencode/auth.json
-Read (never written) for the
-.I opencode\-go
-key, the credential \fB/connect\fR stored; \fB$OCUSE_API_KEY\fR and
-\fB$OPENCODE_API_KEY\fR override it.
+Read (never written) as the fallback Go key \\(em the legacy v1 location of the
+credential \fB/connect\fR stores; on v2 the live one is the \fBcredential\fR row
+of opencode's store, which is read first.  \fB$OCUSE_API_KEY\fR and
+\fB$OPENCODE_API_KEY\fR override both.
 .SH SEE ALSO
 .BR cmd (1),
 the Command Code CLI for login and authentication.

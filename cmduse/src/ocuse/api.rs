@@ -29,6 +29,8 @@
 // leaves the caller on its local estimate — and with an [`Unavailable`] naming
 // which of the three it was, because only one of them is something a person can
 // act on (`api_key_expired` means "create a new key", not "try again later").
+// The key itself comes from opencode's own precedence — see [`key`], which reads
+// v2's credential table before the legacy `auth.json`.
 use serde::Deserialize;
 
 /// The Go usage endpoint — the same source the console reads.
@@ -131,6 +133,14 @@ impl Unavailable {
 
 /// The Go key: `OCUSE_API_KEY`, else `OPENCODE_API_KEY`, else the `opencode-go`
 /// entry of opencode's own auth file — the same credential `/connect` stores.
+/// The bearer token, in opencode's own order of precedence.
+///
+/// The store leads the legacy file because v2 writes provider credentials to
+/// `credential` and `/connect` is what actually replaces a key; `auth.json` is
+/// only where a v1 install keeps them. Reading the file first (or alone) is how
+/// the dashboard came to say `api_key_expired` while Go inference was working:
+/// the replacement key had gone to the store, and the file still held the old
+/// one.
 pub fn key() -> Option<String> {
     for var in ["OCUSE_API_KEY", "OPENCODE_API_KEY"] {
         if let Ok(value) = std::env::var(var) {
@@ -138,6 +148,9 @@ pub fn key() -> Option<String> {
                 return Some(value.trim().to_string());
             }
         }
+    }
+    if let Some(key) = crate::ocuse::db::credential_key() {
+        return Some(key);
     }
     let path = format!("{}/auth.json", crate::ocuse::db::opencode_home());
     let text = std::fs::read_to_string(path).ok()?;
