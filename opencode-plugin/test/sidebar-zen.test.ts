@@ -522,6 +522,33 @@ describe("the account's own meters", () => {
 		expect(parseZenJson(sample).account).toBeUndefined();
 	});
 
+	test("per-model usage is listed like the console's Go page", () => {
+		// The console's page shows per-model usage for the period; the panel only
+		// carried the active model. These are this store's dollars against the
+		// documented allowance, so their percent is per model and need not match
+		// the account meter above.
+		const body = JSON.parse(withAccount()) as {
+			models: Array<Record<string, unknown>>
+		}
+		body.models.push({
+			id: "deepseek-v4-pro",
+			provider: "opencode-go",
+			limit: 15,
+			fiveHour: { requests: 1, cost: 0.2 },
+			weekly: { requests: 2, cost: 0.4 },
+			month: { requests: 4, cost: 1.5 },
+		})
+		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta)
+		const head = rows.findIndex((row) => row[1] === "by model · this month")
+		expect(head).toBeGreaterThan(-1)
+		// Highest spend first, each against its own documented limit.
+		expect(rows[head + 1]?.[1]).toBe("$17/$60 (28.3%)")
+		expect(rows[head + 2]?.[1]).toBe("$1.50/$15 (10.0%)")
+		for (const row of rows.slice(head, head + 3)) {
+			expect((row[0] ?? "").length + 2 + (row[1] ?? "").length).toBeLessThanOrEqual(37)
+		}
+	})
+
 	test("the window rows carry the console share and a pair that divides to it", () => {
 		const rows = zenRows(parseZenJson(withAccount()), meta);
 		const find = (label: string) => rows.find((row) => row[0] === label);

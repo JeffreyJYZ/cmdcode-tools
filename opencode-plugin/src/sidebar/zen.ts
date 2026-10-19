@@ -446,6 +446,28 @@ export function zenRows(
 		`${count(usage.totals.month.requests)} requests · ${money(usage.totals.month.cost)}`,
 		"base",
 	]);
+	// Per-model usage for the period, the way the console's Go page lays it out —
+	// the top few by spend, each against its documented allowance. The console
+	// numbers here are its own scale; these are this store's, which is why the
+	// percent can differ from the account meter above.
+	const ranked = [...usage.models.values()]
+		.sort((a, b) => b.month.cost - a.month.cost)
+		.slice(0, 3)
+	if (ranked.length > 1) {
+		rows.push(["", "by model · this month", "muted"])
+		for (const entry of ranked) {
+			const allowance = entry.limit
+			const share =
+				typeof allowance === "number" && allowance > 0
+					? ` (${((entry.month.cost / allowance) * 100).toFixed(1)}%)`
+					: ""
+			const value =
+				typeof allowance === "number" && allowance > 0
+					? `${money(entry.month.cost)}/${money(allowance)}${share}`
+					: money(entry.month.cost)
+			rows.push([clip(entry.id, valueWidth("") - value.length - 1), value, "base"])
+		}
+	}
 	rows.push(separator());
 	const name = meta?.name ?? fallbackName;
 	if (!name) return rows;
