@@ -299,9 +299,9 @@ function zenMeterRows(
 	// The endpoint publishes whole percents (`"percent":53`); a tenth here would
 	// claim a precision the console's own rounding does not have.
 	const pctText = Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
-	// Named `model` because the share is per model: the same row would otherwise
-	// read as the account's money, which is a different number (`Period`).
-	const local = typeof spent === "number" ? ` · ${money(spent)} model` : "";
+	// `acct` because the share is account-wide: rows are short, and the word stops
+	// the dollars reading as one model's.
+	const local = typeof spent === "number" ? ` · ${money(spent)} acct` : "";
 	return windowRows(
 		label,
 		{
@@ -375,13 +375,12 @@ export function zenRows(
 				usage.account.rolling,
 				now,
 				FIVE_HOUR_SECS,
-				// The *active model's* spend in the same window: the console's
-				// percentage is per model against that model's limit, so an
-				// account-wide total here pairs two different scopes (and the
-				// account total also carries other models — $2.47 of v4-pro, muse
-				// and glm on real data). `Period` below stays account-wide and says
-				// so by name.
-				mine?.fiveHour.cost ?? usage.totals.fiveHour.cost,
+				// The *account's* spend in the same window: the console's share is
+				// account-wide, so the money beside it must be too. Verified against
+				// the endpoint — `$22.07 account × 2 / $80 = 55%`, the number it
+				// returned, while the active model's own `$19.60` would have read
+				// 49%; pairing the model's figure here was the error.
+				usage.totals.fiveHour.cost,
 			),
 		);
 		rows.push(
@@ -390,7 +389,7 @@ export function zenRows(
 				usage.account.weekly,
 				now,
 				WEEKLY_SECS,
-				mine?.weekly.cost ?? usage.totals.weekly.cost,
+				usage.totals.weekly.cost,
 			),
 		);
 		rows.push(
@@ -399,7 +398,7 @@ export function zenRows(
 				usage.account.monthly,
 				now,
 				period?.durSecs ?? 0,
-				mine?.month.cost ?? usage.totals.month.cost,
+				usage.totals.month.cost,
 			),
 		);
 	} else {
