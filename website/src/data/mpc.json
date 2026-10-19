@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-10-19T20:21:45.446Z",
+	"generatedAt": "2026-10-19T23:51:36.706Z",
 	"plans": [
 		{
 			"key": "go",
@@ -228,7 +228,7 @@
 							"payPerRequest": 0,
 							"multiplier": 10,
 							"ability": 30.3334426348039,
-							"tps": 324.01358122285,
+							"tps": 324.241005170183,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -1161,7 +1161,7 @@
 							"payPerRequest": 0.0009350000000000001,
 							"multiplier": 10,
 							"ability": 38.8666662997805,
-							"tps": 142.62126673121,
+							"tps": 142.179010888019,
 							"index": 17,
 							"valueIndex": 39,
 							"free": false
@@ -2439,7 +2439,7 @@
 							"payPerRequest": 0,
 							"multiplier": 10,
 							"ability": 30.3334426348039,
-							"tps": 324.01358122285,
+							"tps": 324.241005170183,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -3420,7 +3420,7 @@
 							"payPerRequest": 0.0009350000000000001,
 							"multiplier": 10,
 							"ability": 38.8666662997805,
-							"tps": 142.62126673121,
+							"tps": 142.179010888019,
 							"index": 16,
 							"valueIndex": 38,
 							"free": false
@@ -4604,7 +4604,7 @@
 							"payPerRequest": 0,
 							"multiplier": 2,
 							"ability": 30.3334426348039,
-							"tps": 324.01358122285,
+							"tps": 324.241005170183,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -5720,7 +5720,7 @@
 							"payPerRequest": 0.004675,
 							"multiplier": 2,
 							"ability": 38.8666662997805,
-							"tps": 142.62126673121,
+							"tps": 142.179010888019,
 							"index": 20,
 							"valueIndex": 42,
 							"free": false
@@ -7154,7 +7154,7 @@
 							"payPerRequest": 0,
 							"multiplier": 2,
 							"ability": 30.3334426348039,
-							"tps": 324.01358122285,
+							"tps": 324.241005170183,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -8414,7 +8414,7 @@
 							"payPerRequest": 0.004675,
 							"multiplier": 2,
 							"ability": 38.8666662997805,
-							"tps": 142.62126673121,
+							"tps": 142.179010888019,
 							"index": 19,
 							"valueIndex": 39,
 							"free": false
@@ -9706,7 +9706,7 @@
 							"payPerRequest": 0,
 							"multiplier": 1.5,
 							"ability": 30.3334426348039,
-							"tps": 324.01358122285,
+							"tps": 324.241005170183,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -10091,33 +10091,6 @@
 						}
 					},
 					{
-						"key": "gemini4argon",
-						"name": "Gemini 4 Argon",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": 2325.5813953488373,
-							"requestsPerFiveHour": 465.1162790697675,
-							"requestsPerWeek": 1162.7906976744187,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.0086,
-							"multiplier": 1,
-							"ability": 52.6,
-							"tps": null,
-							"index": 20,
-							"valueIndex": 72,
-							"free": false
-						}
-					},
-					{
 						"key": "mimov25",
 						"name": "MiMo V2.5",
 						"oc": {
@@ -10213,6 +10186,33 @@
 							"tps": null,
 							"index": 50,
 							"valueIndex": 69,
+							"free": false
+						}
+					},
+					{
+						"key": "gemini4argon",
+						"name": "Gemini 4 Argon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": 2325.5813953488373,
+							"requestsPerFiveHour": 465.1162790697675,
+							"requestsPerWeek": 1162.7906976744187,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 52.6,
+							"tps": 84.5864605586943,
+							"index": 20,
+							"valueIndex": 68,
 							"free": false
 						}
 					},
@@ -10777,7 +10777,7 @@
 							"payPerRequest": 0.006233333333333333,
 							"multiplier": 1.5,
 							"ability": 38.8666662997805,
-							"tps": 142.62126673121,
+							"tps": 142.179010888019,
 							"index": 24,
 							"valueIndex": 49,
 							"free": false
@@ -12661,7 +12661,7 @@
 							"payPerRequest": 0,
 							"multiplier": 1.5,
 							"ability": 30.3334426348039,
-							"tps": 324.01358122285,
+							"tps": 324.241005170183,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -13213,9 +13213,9 @@
 							"payPerRequest": 0.0086,
 							"multiplier": 1,
 							"ability": 52.6,
-							"tps": null,
+							"tps": 84.5864605586943,
 							"index": 19,
-							"valueIndex": 69,
+							"valueIndex": 65,
 							"free": false
 						}
 					},
@@ -13927,7 +13927,7 @@
 							"payPerRequest": 0.006233333333333333,
 							"multiplier": 1.5,
 							"ability": 38.8666662997805,
-							"tps": 142.62126673121,
+							"tps": 142.179010888019,
 							"index": 23,
 							"valueIndex": 46,
 							"free": false
@@ -15615,7 +15615,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 30.3334426348039,
-							"tps": 324.01358122285,
+							"tps": 324.241005170183,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -15922,33 +15922,6 @@
 						}
 					},
 					{
-						"key": "gemini4argon",
-						"name": "Gemini 4 Argon",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 100,
-							"requestsPerMonth": 11627.906976744185,
-							"requestsPerFiveHour": 3488.3720930232553,
-							"requestsPerWeek": 6976.744186046511,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.0086,
-							"multiplier": 1,
-							"ability": 52.6,
-							"tps": null,
-							"index": 34,
-							"valueIndex": 78,
-							"free": false
-						}
-					},
-					{
 						"key": "claudeopus55",
 						"name": "Claude Opus 5.5",
 						"oc": null,
@@ -16020,6 +15993,33 @@
 							"tps": 77.0234660135119,
 							"index": 56,
 							"valueIndex": 74,
+							"free": false
+						}
+					},
+					{
+						"key": "gemini4argon",
+						"name": "Gemini 4 Argon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 100,
+							"requestsPerMonth": 11627.906976744185,
+							"requestsPerFiveHour": 3488.3720930232553,
+							"requestsPerWeek": 6976.744186046511,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 52.6,
+							"tps": 84.5864605586943,
+							"index": 34,
+							"valueIndex": 73,
 							"free": false
 						}
 					},
@@ -16683,7 +16683,7 @@
 							"payPerRequest": 0.006233333333333334,
 							"multiplier": 1.5,
 							"ability": 38.8666662997805,
-							"tps": 142.62126673121,
+							"tps": 142.179010888019,
 							"index": 38,
 							"valueIndex": 52,
 							"free": false
@@ -18846,7 +18846,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 30.3334426348039,
-							"tps": 324.01358122285,
+							"tps": 324.241005170183,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -19201,33 +19201,6 @@
 						}
 					},
 					{
-						"key": "gemini4argon",
-						"name": "Gemini 4 Argon",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 100,
-							"requestsPerMonth": 11627.906976744185,
-							"requestsPerFiveHour": 3488.3720930232553,
-							"requestsPerWeek": 6976.744186046511,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.0086,
-							"multiplier": 1,
-							"ability": 52.6,
-							"tps": null,
-							"index": 26,
-							"valueIndex": 76,
-							"free": false
-						}
-					},
-					{
 						"key": "claudeopus55",
 						"name": "Claude Opus 5.5",
 						"oc": null,
@@ -19298,6 +19271,33 @@
 							"ability": 37.3,
 							"tps": null,
 							"index": 53,
+							"valueIndex": 71,
+							"free": false
+						}
+					},
+					{
+						"key": "gemini4argon",
+						"name": "Gemini 4 Argon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 100,
+							"requestsPerMonth": 11627.906976744185,
+							"requestsPerFiveHour": 3488.3720930232553,
+							"requestsPerWeek": 6976.744186046511,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 52.6,
+							"tps": 84.5864605586943,
+							"index": 26,
 							"valueIndex": 71,
 							"free": false
 						}
@@ -19914,7 +19914,7 @@
 							"payPerRequest": 0.006233333333333334,
 							"multiplier": 1.5,
 							"ability": 38.8666662997805,
-							"tps": 142.62126673121,
+							"tps": 142.179010888019,
 							"index": 30,
 							"valueIndex": 51,
 							"free": false
@@ -22079,7 +22079,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 30.3334426348039,
-							"tps": 324.01358122285,
+							"tps": 324.241005170183,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -22386,33 +22386,6 @@
 						}
 					},
 					{
-						"key": "gemini4argon",
-						"name": "Gemini 4 Argon",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 200,
-							"requestsPerMonth": 23255.81395348837,
-							"requestsPerFiveHour": 6976.744186046511,
-							"requestsPerWeek": 13953.488372093021,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.0086,
-							"multiplier": 1,
-							"ability": 52.6,
-							"tps": null,
-							"index": 39,
-							"valueIndex": 79,
-							"free": false
-						}
-					},
-					{
 						"key": "claudeopus55",
 						"name": "Claude Opus 5.5",
 						"oc": null,
@@ -22436,6 +22409,33 @@
 							"tps": 94.3604179958584,
 							"index": 32,
 							"valueIndex": 78,
+							"free": false
+						}
+					},
+					{
+						"key": "gemini4argon",
+						"name": "Gemini 4 Argon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 200,
+							"requestsPerMonth": 23255.81395348837,
+							"requestsPerFiveHour": 6976.744186046511,
+							"requestsPerWeek": 13953.488372093021,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 52.6,
+							"tps": 84.5864605586943,
+							"index": 39,
+							"valueIndex": 75,
 							"free": false
 						}
 					},
@@ -23222,7 +23222,7 @@
 							"payPerRequest": 0.006233333333333334,
 							"multiplier": 1.5,
 							"ability": 38.8666662997805,
-							"tps": 142.62126673121,
+							"tps": 142.179010888019,
 							"index": 42,
 							"valueIndex": 53,
 							"free": false
@@ -25310,7 +25310,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 30.3334426348039,
-							"tps": 324.01358122285,
+							"tps": 324.241005170183,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -25617,33 +25617,6 @@
 						}
 					},
 					{
-						"key": "gemini4argon",
-						"name": "Gemini 4 Argon",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 200,
-							"requestsPerMonth": 23255.81395348837,
-							"requestsPerFiveHour": 6976.744186046511,
-							"requestsPerWeek": 13953.488372093021,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.0086,
-							"multiplier": 1,
-							"ability": 52.6,
-							"tps": null,
-							"index": 29,
-							"valueIndex": 76,
-							"free": false
-						}
-					},
-					{
 						"key": "claudeopus55",
 						"name": "Claude Opus 5.5",
 						"oc": null,
@@ -25715,6 +25688,33 @@
 							"tps": 77.0234660135119,
 							"index": 53,
 							"valueIndex": 74,
+							"free": false
+						}
+					},
+					{
+						"key": "gemini4argon",
+						"name": "Gemini 4 Argon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 200,
+							"requestsPerMonth": 23255.81395348837,
+							"requestsPerFiveHour": 6976.744186046511,
+							"requestsPerWeek": 13953.488372093021,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 52.6,
+							"tps": 84.5864605586943,
+							"index": 29,
+							"valueIndex": 72,
 							"free": false
 						}
 					},
@@ -26378,7 +26378,7 @@
 							"payPerRequest": 0.006233333333333334,
 							"multiplier": 1.5,
 							"ability": 38.8666662997805,
-							"tps": 142.62126673121,
+							"tps": 142.179010888019,
 							"index": 32,
 							"valueIndex": 51,
 							"free": false
