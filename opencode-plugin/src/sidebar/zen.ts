@@ -86,6 +86,13 @@ export interface ZenUsage {
 	totals: { fiveHour: ZenTotals; weekly: ZenTotals; month: ZenTotals };
 	/** The account's own meters, when ocuse could ask for them. */
 	account?: ZenAccount;
+	/**
+	 * Why `account` is absent, when ocuse could name it: `HTTP 401
+	 * api_key_expired`, `no Go key`, a transport fault (`ocuse` 0.7.14+). The
+	 * panel shows it, because "estimated locally" alone cannot tell a missing key
+	 * from an expired one — and only the expired one is something to act on.
+	 */
+	accountError?: string;
 	/** Keyed by canonical model key, the same normalisation the CC side matches on. */
 	models: Map<string, ZenModel>;
 }
@@ -160,6 +167,12 @@ export function parseZenJson(text: string): ZenUsage {
 					),
 				}
 			: undefined,
+		// Absent on an ocuse older than 0.7.14, which published no reason; the
+		// panel then shows the estimate without naming why, as it always did.
+		accountError:
+			typeof body.accountError === "string" && body.accountError
+				? body.accountError
+				: undefined,
 		totals: {
 			fiveHour: totals(top.fiveHour),
 			weekly: totals(top.weekly),
@@ -320,6 +333,12 @@ export function zenRows(
 	const rows: SidebarRow[] = [
 		["Plan", `${oc?.plan ?? "Go"} · limits per model`, "base"],
 	];
+	// The reason the console's own numbers are missing belongs with the Plan row,
+	// not buried under the local rows: an expired key means the panel below is an
+	// estimate, and nothing else on screen says so.
+	if (usage.accountError) {
+		rows.push(["", clip(`usage API: ${usage.accountError}`, valueWidth("")), "warn"]);
+	}
 	// Go's limits are per model, so the windows read the active model's row
 	// rather than the account totals: the caps belong to that model's allowance.
 	// ocuse keys its per-model rows by model id, so the session's own id resolves

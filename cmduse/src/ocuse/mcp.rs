@@ -26,6 +26,10 @@ pub struct Settings<'a> {
     pub plan: &'a str,
     pub period_start: Option<i64>,
     pub account: Option<&'a Usage>,
+    /// Why the account's meters are missing, when the CLI resolved it — the same
+    /// line the dashboard prints, so a `usage` call through MCP explains itself
+    /// too instead of showing bare local estimates.
+    pub account_error: Option<&'a str>,
 }
 
 /// Serve stdin -> stdout until the host closes the pipe.
@@ -86,6 +90,7 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
         plan,
         period_start,
         account,
+        account_error,
     } = *settings;
     let name = msg
         .pointer("/params/name")
@@ -110,8 +115,10 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
             let mut report =
                 window::build(&rows, &zen::catalog(), &plan_id, window::now_ms(), None);
             // The account's own meters when the caller resolved them, so a `usage`
-            // call renders the same window rows the dashboard does.
+            // call renders the same window rows the dashboard does — and the same
+            // reason when a key was refused.
             report.account = account.cloned();
+            report.account_error = account_error.map(str::to_string);
             render::render_text(&report, db_path, 15, colour, render::DEFAULT_BAR_WIDTH)
         }),
         "plans" => Ok(render::plans_text(colour)),
@@ -219,6 +226,7 @@ mod tests {
                 // No account: the tests never reach the network, and the local
                 // estimate is what the fixtures below are written against.
                 account: None,
+                account_error: None,
             },
         )
         .expect("notification")

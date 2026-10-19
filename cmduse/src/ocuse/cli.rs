@@ -289,16 +289,22 @@ pub fn run() {
     let period_inferred = period_start.is_none();
 
     // OpenCode Go's own meters: the console's numbers, straight from the account
-    // (see `ocuse::api`). A missing key, a key without the subscription, or no
-    // network leaves `None`, and every window row falls back to the local
+    // (see `ocuse::api`). A missing key, a refused key, or no network leaves
+    // `None` and a named reason, and every window row falls back to the local
     // derivation.
-    let fetch_account = || {
+    let fetch_account = || -> Result<api::Usage, api::Unavailable> {
         if args.no_api {
-            return None;
+            return Err(api::Unavailable::Disabled);
         }
-        api::key().and_then(|key| api::fetch(&key).ok())
+        match api::key() {
+            Some(key) => api::fetch(&key),
+            None => Err(api::Unavailable::NoKey),
+        }
     };
-    let mut account = fetch_account();
+    let (mut account, mut account_error) = match fetch_account() {
+        Ok(usage) => (Some(usage), None),
+        Err(why) => (None, why.reason()),
+    };
     // The endpoint knows the billing anniversary; the calendar month is a guess,
     // and slicing the totals by it would disagree with the monthly meter printed
     // in the same frame. So when the endpoint answered and nothing pinned the
@@ -332,7 +338,7 @@ pub fn run() {
     };
     // The report's own read window: an explicit --since pins it, else --days.
     let report_window = since_override.unwrap_or(now - days * 86_400_000);
-    let build_at = |t: i64, account: Option<&api::Usage>| {
+    let build_at = |t: i64, account: Option<&api::Usage>, account_error: Option<&str>| {
         let mut report = build(
             &read_since(report_window),
             &catalog,
@@ -342,6 +348,7 @@ pub fn run() {
         );
         report.period_label = period_label.clone();
         report.account = account.cloned();
+        report.account_error = account_error.map(str::to_string);
         report.period_end_ms = account_month
             .map(|(_, reset)| reset)
             .or_else(|| period_end(&report, &window_mode, period_inferred));
@@ -350,7 +357,7 @@ pub fn run() {
 
     match args.subcmd {
         Some(SubCmd::Statusline) => {
-            let report = build_at(now, account.as_ref());
+            let report = build_at(now, account.as_ref(), account_error.as_deref());
             if args.json {
                 println!("{}", render::statusline_json(&report, &plan_id));
             } else {
@@ -415,11 +422,12 @@ pub fn run() {
                 plan: &plan_id,
                 period_start,
                 account: account.as_ref(),
+                account_error: account_error.as_deref(),
             });
             return;
         }
         Some(SubCmd::Model) => {
-            let report = build_at(now, account.as_ref());
+            let report = build_at(now, account.as_ref(), account_error.as_deref());
             if fmt == Fmt::Table {
                 match &model_id {
                     Some(id) => print!("{}", render::model_text(&report, id, colours)),
@@ -463,7 +471,7 @@ pub fn run() {
         if let Some(msg) = &update {
             eprintln!("{msg}");
         }
-        let report = build_at(now, account.as_ref());
+        let report = build_at(now, account.as_ref(), account_error.as_deref());
         if args.json {
             println!("{}", render::render_json(&report));
         } else {
@@ -489,11 +497,20 @@ pub fn run() {
     loop {
         // Re-ask each tick, keeping the last answer through a blip so the frame
         // cannot flip back and forth between the account's meters and the local
-        // estimate.
-        if let Some(fresh) = fetch_account() {
-            account = Some(fresh);
+        // estimate. A blip's *reason* is dropped with it, for the same reason: the
+        // rows on screen are still the account's, so nothing was unavailable.
+        match fetch_account() {
+            Ok(fresh) => {
+                account = Some(fresh);
+                account_error = None;
+            }
+            Err(why) => {
+                if account.is_none() {
+                    account_error = why.reason();
+                }
+            }
         }
-        let report = build_at(window::now_ms(), account.as_ref());
+        let report = build_at(window::now_ms(), account.as_ref(), account_error.as_deref());
         let (term_rows, cols) = crate::term_size().unwrap_or((0, 0));
         let cols_opt = (cols > 0).then_some(cols);
         let compact = compact_frame(term_rows, cols);
@@ -674,6 +691,7 @@ mod tests {
             period_end_ms: None,
             month_inferred: false,
             account: None,
+            account_error: None,
             five_hour: Default::default(),
             weekly: Default::default(),
             month: Default::default(),

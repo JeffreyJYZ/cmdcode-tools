@@ -396,6 +396,12 @@ pub fn render_text(
                     "(estimated locally: limits are per model, so no pool: spend alone)".into()
                 ),
             ));
+            // Why the console's own numbers are missing, when there is a reason:
+            // "estimated locally" alone cannot tell a missing key from an expired
+            // one, and only the second is something a person can act on.
+            if let Some(why) = &report.account_error {
+                out.push_str(&format!("{}   usage API: {why}{}\n", ink.dim, ink.reset));
+            }
             out.push_str(&window_line(
                 &ink,
                 &RowSpec {
@@ -660,6 +666,11 @@ pub fn render_json(report: &Report) -> String {
             "weekly": meter(&a.weekly),
             "monthly": meter(&a.monthly),
         })),
+        // Why `account` is null, when that is worth saying — `HTTP 401
+        // api_key_expired`, `no Go key`, a transport fault. `null` when the
+        // endpoint answered, and for `--no-api`. Consumers otherwise show the
+        // local estimate without being able to tell the three apart.
+        "accountError": report.account_error,
         "models": report.models.iter().map(model).collect::<Vec<_>>(),
     }))
     .expect("json")

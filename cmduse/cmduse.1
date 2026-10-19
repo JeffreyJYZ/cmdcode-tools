@@ -596,7 +596,13 @@ a block with its own reset, its week is anchored to Monday 00:00 UTC, its month
 is the subscription anniversary, and it meters with its own price basis, none
 of which is reproducible from the store.  With no key, no network, or
 \fB\-\-no\-api\fR, the windows fall back to a local estimate and the dashboard
-labels them as such.
+labels them as such \(em and names the reason under the \fBGO\fR heading when
+there is one (\fIusage API: HTTP 401 api_key_expired\fR), because the estimate
+alone cannot tell a missing key from an expired one.  The same line rides in
+\fB\-\-json\fR as \fIaccountError\fR (\fBnull\fR when the endpoint answered, and
+for \fB\-\-no\-api\fR, which is a choice rather than a fault).  An expired Go
+key is not renewed by signing in again: it has to be replaced in the OpenCode
+console.
 .PP
 Go meters per model: each model has a monthly dollar limit, and its 5\-hour,
 weekly, and monthly windows are fixed shares of that limit (20%, 50%, and

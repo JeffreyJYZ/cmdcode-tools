@@ -89,6 +89,12 @@ pub struct Report {
     /// because only the server's numbers agree with the console; the store's are
     /// the fallback. `None` also keeps every existing caller working.
     pub account: Option<crate::ocuse::api::Usage>,
+    /// Why the account's meters are absent, when that is worth saying — a refused
+    /// key, a missing one, a dead network. `None` when the endpoint answered, and
+    /// also for `--no-api` (a deliberate choice is not a fault). Without it the
+    /// dashboard's "estimated locally" says nothing about which it was, and only
+    /// one of those is something to act on.
+    pub account_error: Option<String>,
     pub five_hour: Totals,
     pub weekly: Totals,
     pub month: Totals,
@@ -231,6 +237,7 @@ pub fn build(
         period_end_ms: None,
         month_inferred: since_override.is_none() && month_inferred,
         account: None,
+        account_error: None,
         five_hour: Totals::default(),
         weekly: Totals::default(),
         month: Totals::default(),

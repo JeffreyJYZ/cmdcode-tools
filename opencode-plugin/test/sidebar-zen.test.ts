@@ -561,4 +561,17 @@ describe("the account's own meters", () => {
 			"$0.50/$12 (4.2%)",
 		);
 	});
+
+	test("a named reason rides directly under Plan", () => {
+		// ocuse 0.7.14+: the local estimate alone cannot tell a missing key from
+		// an expired one, and only the expired one is actable.
+		const body = JSON.parse(sample) as Record<string, unknown>;
+		body.accountError = "HTTP 401 api_key_expired";
+		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
+		expect(rows[0]).toEqual(["Plan", "Go · limits per model", "base"]);
+		expect(rows[1]).toEqual(["", "usage API: HTTP 401 api_key_expired", "warn"]);
+		// An older ocuse names nothing, so the panel is exactly as it was.
+		const quiet = zenRows(parseZenJson(sample), meta);
+		expect(quiet.some((row) => row[1].includes("usage API"))).toBe(false);
+	});
 });

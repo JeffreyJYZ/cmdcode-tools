@@ -25,9 +25,10 @@
 // same account at the same minute, local derivation said 9.4% / 42.5% / 21.3%
 // where the console said 2% / 58% / 29%.
 //
-// No key (an opencode install without Go), a non-Go key (entitlement error), or
-// any network failure returns `None` at the call site, and the caller keeps its
-// local estimate.
+// No key (an opencode install without Go), a refused key, or any network failure
+// leaves the caller on its local estimate — and with an [`Unavailable`] naming
+// which of the three it was, because only one of them is something a person can
+// act on (`api_key_expired` means "create a new key", not "try again later").
 use serde::Deserialize;
 
 /// The Go usage endpoint — the same source the console reads.
@@ -75,6 +76,59 @@ struct Envelope {
     usage: Usage,
 }
 
+/// The endpoint's refusal body: `{"error":{"type":"authentication_error",
+/// "code":"api_key_expired","message":"…"}}`. Both halves are optional because
+/// the shape is not ours; whichever arrives is read, since the code alone is the
+/// actionable part and a `type` is all an entitlement refusal carries.
+#[derive(Deserialize)]
+struct ErrorBody {
+    error: Option<ErrorDetail>,
+}
+
+#[derive(Deserialize)]
+struct ErrorDetail {
+    code: Option<String>,
+    #[serde(rename = "type")]
+    kind: Option<String>,
+}
+
+/// Why the account's meters are absent.
+///
+/// `None` meters are a normal state — an opencode install without a Go
+/// subscription has no key — so the *fault* cases are the ones worth a line on
+/// the dashboard: "estimated locally" on its own cannot distinguish a missing
+/// key from a refused one, and the console's own numbers are what that section
+/// exists to show.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Unavailable {
+    /// No key in the environment and none in opencode's auth file.
+    NoKey,
+    /// `--no-api`: the account route was switched off on purpose.
+    Disabled,
+    /// The endpoint refused the key. `kind` is its own word for why
+    /// (`api_key_expired`), which is the part a person can act on; `status` is
+    /// the HTTP status behind it.
+    Rejected { status: u16, kind: Option<String> },
+    /// No network, a timeout, or a body that would not parse.
+    Transport(String),
+}
+
+impl Unavailable {
+    /// The line to show, or `None` when the account route was switched off on
+    /// purpose: a deliberate choice is not a fault to report.
+    pub fn reason(&self) -> Option<String> {
+        match self {
+            Unavailable::Disabled => None,
+            Unavailable::NoKey => Some("no Go key".into()),
+            Unavailable::Rejected { status, kind } => Some(match kind {
+                Some(kind) => format!("HTTP {status} {kind}"),
+                None => format!("HTTP {status}"),
+            }),
+            Unavailable::Transport(why) => Some(why.clone()),
+        }
+    }
+}
+
 /// The Go key: `OCUSE_API_KEY`, else `OPENCODE_API_KEY`, else the `opencode-go`
 /// entry of opencode's own auth file — the same credential `/connect` stores.
 pub fn key() -> Option<String> {
@@ -97,7 +151,7 @@ pub fn key() -> Option<String> {
 /// Fetch the account's meters. One attempt: the caller always has a local
 /// fallback, and in watch mode a previous answer, so a retry ladder would only
 /// stall the frame it is drawn into.
-pub fn fetch(key: &str) -> Result<Usage, String> {
+pub fn fetch(key: &str) -> Result<Usage, Unavailable> {
     let response = ureq::get(USAGE_URL)
         .set("Authorization", &format!("Bearer {key}"))
         // Go's docs ask clients to identify themselves rather than arrive as an
@@ -112,17 +166,25 @@ pub fn fetch(key: &str) -> Result<Usage, String> {
         Ok(response) => {
             let body = response
                 .into_string()
-                .map_err(|e| format!("usage: read: {e}"))?;
+                .map_err(|e| Unavailable::Transport(format!("usage: read: {e}")))?;
             serde_json::from_str::<Envelope>(&body)
                 .map(|envelope| envelope.usage)
-                .map_err(|e| format!("usage: {e}"))
+                .map_err(|e| Unavailable::Transport(format!("usage: {e}")))
         }
-        // A key without a Go subscription is an entitlement refusal, not a
-        // transport fault: say so, since the fallback is otherwise silent.
-        Err(ureq::Error::Status(code, _)) if code == 401 || code == 403 => {
-            Err(format!("usage: HTTP {code} (key has no Go subscription)"))
+        // A refused key, and the body says which refusal: an expired key and a
+        // key without the Go subscription are the same status, and only the
+        // server's own code tells them apart (`api_key_expired` is the one that
+        // means "create a new key").
+        Err(ureq::Error::Status(status, response)) if status == 401 || status == 403 => {
+            let kind = response
+                .into_string()
+                .ok()
+                .and_then(|body| serde_json::from_str::<ErrorBody>(&body).ok())
+                .and_then(|body| body.error)
+                .and_then(|detail| detail.code.or(detail.kind));
+            Err(Unavailable::Rejected { status, kind })
         }
-        Err(e) => Err(format!("usage: {e}")),
+        Err(e) => Err(Unavailable::Transport(format!("usage: {e}"))),
     }
 }
 
@@ -186,6 +248,52 @@ mod tests {
         assert!(usage.rolling.exceeded(), "status is not ok");
         assert!(!usage.weekly.exceeded(), "99.9% is not over");
         assert!(usage.monthly.exceeded(), "100% is over");
+    }
+
+    /// The endpoint's own refusal, verbatim from the live 401 on 2026-10-19.
+    #[test]
+    fn a_refusal_names_the_servers_own_code() {
+        let body: ErrorBody = serde_json::from_str(
+            r#"{"error":{"type":"authentication_error","code":"api_key_expired","message":"This API key has expired. Create a new API key in OpenCode Console and replace it in your client or secret store."}}"#,
+        )
+        .expect("the refusal body parses");
+        let kind = body.error.and_then(|detail| detail.code.or(detail.kind));
+        let refused = Unavailable::Rejected { status: 401, kind };
+        // The code is the actionable half: it is the difference between "create a
+        // new key" and "try again later".
+        assert_eq!(
+            refused.reason().as_deref(),
+            Some("HTTP 401 api_key_expired")
+        );
+    }
+
+    /// A refusal with no `code` still names what it can: an entitlement error
+    /// carries only a `type`.
+    #[test]
+    fn a_refusal_without_a_code_falls_back_to_its_type() {
+        let body: ErrorBody =
+            serde_json::from_str(r#"{"error":{"type":"EntitlementError"}}"#).expect("parses");
+        let kind = body.error.and_then(|detail| detail.code.or(detail.kind));
+        assert_eq!(
+            Unavailable::Rejected { status: 403, kind }
+                .reason()
+                .as_deref(),
+            Some("HTTP 403 EntitlementError")
+        );
+    }
+
+    /// Only a fault earns a line: a missing key is worth saying, `--no-api` is a
+    /// choice the person already made.
+    #[test]
+    fn only_a_fault_gets_a_reason() {
+        assert_eq!(Unavailable::NoKey.reason().as_deref(), Some("no Go key"));
+        assert_eq!(Unavailable::Disabled.reason(), None);
+        assert_eq!(
+            Unavailable::Transport("usage: timed out".into())
+                .reason()
+                .as_deref(),
+            Some("usage: timed out")
+        );
     }
 
     #[test]
