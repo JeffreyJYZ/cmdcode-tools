@@ -299,9 +299,9 @@ function zenMeterRows(
 	// The endpoint publishes whole percents (`"percent":53`); a tenth here would
 	// claim a precision the console's own rounding does not have.
 	const pctText = Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
-	// `acct` because the share is account-wide: rows are short, and the word stops
+	// `local` because the share is account-wide while the dollars are this store's
 	// the dollars reading as one model's.
-	const local = typeof spent === "number" ? ` · ${money(spent)} acct` : "";
+	const local = typeof spent === "number" ? ` · ${money(spent)} local` : "";
 	return windowRows(
 		label,
 		{
