@@ -796,25 +796,24 @@ Anything else exits 2.
 .SS ocuse data and windows
 When Go's usage endpoint answers, the header's three window lines are the
 account's own meters (the shares and resets \fBopencode.ai/console\fR shows),
-each paired with this store's own spend against the same ceiling \(em the two
-need not divide to each other, so the share carries an \fIof limit\fR label
-\(em and the billing period comes from the endpoint's monthly reset instant \(em
+each with this store's own spend beside them \(em the two need not divide to
+each other, so the share carries an \fIof limit\fR label \(em and the billing period comes from the endpoint's monthly reset instant \(em
 the subscription anniversary, which is why the period line reads
-\fIGo billing month\fR.  Each model's table row still compares its own spend
+\fIGo billing month\fR.  There is no money pair, pace or pro\-rata figure:
+Go grants limits per model, so no account\-wide pool exists to divide by.
+Each model's table row still compares its own spend
 against its monthly limit; the table's \fI5H\fR/\fIWK\fR columns are local
 rolling windows (this model's spend over the last 5 hours / 7 days), and the
 dashboard says so rather than letting them read as a second opinion.
 .TP
 Without the endpoint \(em no Go key, no network, or \fB\-\-no\-api\fR \(em the
-window lines are a local estimate and are labelled as one: the header compares
-5\-hour and weekly spend against the model's monthly limit times 20% and 50%
-(the docs' shares), and the period defaults to the calendar month, with
+window lines are a local estimate and are labelled as one: the rows carry
+spend alone, since limits are per model and no account\-wide pool exists to
+divide by.  Only the monthly period has a real end, so that row alone gains
+a reset countdown and its \fIwindow N% elapsed\fR share; the rolling 5\-hour
+and weekly rows show no countdown.  The period defaults to the calendar month, with
 \fB\-\-period\-start\fR pinning the real anniversary and
-\fB\-\-infer\-anniversary\fR guessing it from history.  On that path only the
-monthly period has a real end, so that row alone gains a reset countdown, its
-\fIwindow N% elapsed\fR share and a pro\-rata \fB$\fR by\-now figure; the
-rolling 5\-hour and weekly rows have no boundary to measure against and show
-spend alone.  The header splits period tokens
+\fB\-\-infer\-anniversary\fR guessing it from history.  The header splits period tokens
 \fIin / out\fR and names the resolved end date.  A model whose spend
 crosses its limit is flagged \fILIMIT EXCEEDED\fR.  There is no
 \fISuccess N%\fR figure \(em opencode's store records no per\-request success

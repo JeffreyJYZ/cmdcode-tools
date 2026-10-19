@@ -107,36 +107,24 @@ impl Ink {
 /// One window row's inputs. The account's own meters and the local estimate both
 /// go through this one builder, so the two branches cannot drift apart in which
 /// fields a window row carries or in the order it carries them.
-/// One account-metered window row's inputs, before they become a `RowSpec`:
-/// the label, the meter, this store's totals, the window's share of the
-/// monthly limit, the window length in seconds, and the pro-rata flag.
-type MeterRow<'a> = (
-    &'a str,
-    &'a crate::ocuse::api::Meter,
-    &'a Totals,
-    f64,
-    Option<u64>,
-    bool,
-);
-
+///
+/// There is deliberately no cap anywhere here: Go grants limits per model, so
+/// no account-wide pool exists to divide by. Summing the per-model limits into
+/// one ceiling read as a budget the console does not have (it meters each
+/// window on its own basis), so the rows carry this store's spend with the
+/// server's share labelled beside it — never a money pair against a pool.
 struct RowSpec<'a> {
     label: &'a str,
     /// This store's own totals for the window.
     used: &'a Totals,
-    /// The ceiling the window is a share of; `None` on a row with no limit.
-    cap: Option<f64>,
     /// The window's reset instant and its length in seconds. `None` on the local
     /// estimate's rolling 5h/weekly windows: those are cut at `now - window`, so
-    /// they have no boundary to measure an elapsed share or a pace against.
+    /// they have no boundary to measure an elapsed share against.
     reset: Option<(i64, u64)>,
     /// The account's own share of the limit, when it answered — the console's
-    /// figure, and the reason the endpoint is read at all. `None` falls back to
-    /// `used / cap`, the only share this machine can compute.
+    /// figure, and the reason the endpoint is read at all. `None` on the local
+    /// estimate, whose rows then show spend alone.
     share_pct: Option<f64>,
-    /// `cmduse`'s pro-rata flag: monthly is a budget, so it alone gets the
-    /// "by now" figure; the rolling windows are throttles, where that number
-    /// would read as a spend target.
-    pro_rata: bool,
     /// The account's own verdict: a status it does not call `ok` rides beside
     /// the limit flag.
     status: Option<&'a str>,
@@ -155,111 +143,68 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
         format!(" · resets {reset}")
     };
     // cmduse's field order is importance order, so a clipped watch frame keeps
-    // the actionable parts: limit flag, pace warning, elapsed share, then the
-    // informational pro-rata figure. Percentages come from core (one decimal);
-    // duration (never rel_time) formats the ETA.
+    // the actionable parts: limit flag, then the informational elapsed share.
+    // Percentages come from core (one decimal); duration (never rel_time)
+    // formats the countdown.
     let now_secs = (now_ms / 1000).max(0) as u64;
     let reset_at = spec.reset.map(|(at, _)| at as f64);
     let dur_secs = spec.reset.map(|(_, dur)| dur);
     let elapsed = dur_secs.and_then(|d| cmduse_core::elapsed_pct(reset_at, d, Some(now_secs)));
-    let pace = dur_secs
-        .and_then(|d| {
-            cmduse_core::pace_eta(
-                reset_at,
-                d,
-                spec.used.cost,
-                spec.cap.unwrap_or(0.0),
-                now_secs,
-            )
-            .map(|secs| duration(secs as u64))
-        })
-        .map(|eta| format!(" · {}on pace to hit cap in {eta}{}", ink.yellow, ink.reset))
-        .unwrap_or_default();
     let thru = elapsed
         .map(|p| format!(" · {}window {p:.1}% elapsed{}", ink.dim, ink.reset))
         .unwrap_or_default();
-    let by_now = match (spec.pro_rata, elapsed) {
-        (true, Some(p)) => format!(
-            " · {}{} by now{}",
-            ink.dim,
-            money(spec.cap.unwrap_or(0.0) * p / 100.0),
-            ink.reset
-        ),
-        _ => String::new(),
-    };
     let label = spec.label;
-    match spec.cap {
-        Some(cap) if cap > 0.0 => {
-            // The account's own share leads and is labelled, because it is the
-            // figure its console prints and the one it meters with; the money
-            // beside it is this store's spend against the same ceiling, so the
-            // two need not divide to each other (the server meters higher).
-            let share = spec.share_pct.map(|p| p.max(0.0));
-            // Without an account answer the computed share is all there is, and
-            // it reads as the plain percentage cmduse prints.
-            let local_pct = spec.used.cost / cap * 100.0;
-            let share_value = share.unwrap_or(local_pct);
-            // Same placement cmduse uses for the flag: on the window it belongs
-            // to. Either meter can raise it — the account's own verdict, or this
-            // store's spend past the ceiling.
-            let flag = if share_value >= 100.0 {
-                format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
-            } else if spec.status.is_some_and(|s| !s.eq_ignore_ascii_case("ok")) {
-                format!(
-                    " {}{}{}{}",
-                    ink.red,
-                    spec.status.unwrap_or_default(),
-                    ink.reset,
-                    ""
-                )
-            } else {
-                String::new()
-            };
-            // The layout is cmduse's own (bar, money pair, then the tail), with
-            // the bar, its tone and the flag driven by the share that gates:
-            // the account's own when it answered, else the computed one. The
-            // account's share is labelled, because the money beside it is this
-            // store's and the two need not divide to each other.
-            let paren = match share {
-                Some(p) => format!(" ({} of limit)", pct(p, 100.0)),
-                None => format!(" ({})", pct(spec.used.cost, cap)),
-            };
-            if ink.colour {
-                format!(
-                    " {}{label:<8}{} {} {}{} / {}{}{}{}{}{}{}{}\n",
-                    ink.bold,
-                    ink.reset,
-                    ink.bar(share_value, 100.0),
-                    ink.dim,
-                    money(spec.used.cost),
-                    money(cap),
-                    match share {
-                        Some(_) => paren,
-                        None => String::new(),
-                    },
-                    reset_text,
-                    flag,
-                    pace,
-                    thru,
-                    by_now,
-                    ink.reset,
-                )
-            } else {
-                // The plain frame is the script-facing one: same field order,
-                // no SGR (the Ink helpers are empty strings when colour is off).
-                format!(
-                    "  {label:<8} {} / {}{paren}{reset_text}{flag}{pace}{thru}{by_now}\n",
-                    money(spec.used.cost),
-                    money(cap),
-                )
-            }
-        }
-        // No cap to measure against (free models, Zen-only rows): secondary, so
-        // dim it the way cmduse dims its pay-as-you-go line.
-        _ => format!(
-            "  {label:<8} {}\n",
-            ink.dim_on(format!("{}{}", money(spec.used.cost), reset_text))
-        ),
+    // The account's own share is labelled, because the money beside it is this
+    // store's spend and the two need not divide to each other (the server
+    // meters higher). Same placement cmduse uses for the flag: on the window
+    // it belongs to.
+    let share = spec.share_pct.map(|p| p.max(0.0));
+    let flag = if share.is_some_and(|p| p >= 100.0) {
+        format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
+    } else if spec.status.is_some_and(|s| !s.eq_ignore_ascii_case("ok")) {
+        format!(
+            " {}{}{}{}",
+            ink.red,
+            spec.status.unwrap_or_default(),
+            ink.reset,
+            ""
+        )
+    } else {
+        String::new()
+    };
+    let paren = match share {
+        Some(p) => format!(" ({} of limit)", pct(p, 100.0)),
+        None => String::new(),
+    };
+    if ink.colour {
+        // The gauge bar belongs to the share that gates: the account's own
+        // when it answered. The local estimate has no share, so its rows
+        // carry no bar — spend alone, never a gauge against a pool.
+        let bar = match share {
+            Some(p) => format!("{} ", ink.bar(p, 100.0)),
+            None => String::new(),
+        };
+        format!(
+            " {}{label:<8}{} {}{}{}{}{}{}{}{}{}\n",
+            ink.bold,
+            ink.reset,
+            bar,
+            ink.dim,
+            money(spec.used.cost),
+            ink.reset,
+            paren,
+            reset_text,
+            flag,
+            thru,
+            ink.reset,
+        )
+    } else {
+        // The plain frame is the script-facing one: same field order,
+        // no SGR (the Ink helpers are empty strings when colour is off).
+        format!(
+            "  {label:<8} {}{paren}{reset_text}{flag}{thru}\n",
+            money(spec.used.cost),
+        )
     }
 }
 
@@ -275,17 +220,6 @@ fn meter_reset(meter: &crate::ocuse::api::Meter, dur_secs: Option<u64>) -> Optio
 
 /// Sum of `limit * share` over the models used this month — an aggregate ceiling
 /// across the models in play, since Go grants limits per model.
-fn aggregate_cap(report: &Report, share: f64) -> Option<f64> {
-    let total: f64 = report
-        .models
-        .iter()
-        .filter(|m| m.month.cost > 0.0)
-        .filter_map(|m| m.limit)
-        .map(|limit| limit * share)
-        .sum();
-    (total > 0.0).then_some(total)
-}
-
 /// Is any of this model's windows over its share of the limit? Go meters per
 /// model *and* per window, so being over the 5-hour cap counts like being over
 /// the month. One verdict, shared with the watch loop's cap notification.
@@ -365,7 +299,6 @@ pub fn render_text(
 ) -> String {
     let ink = Ink::new(colour).width(bar_width);
     let c = |text: String| ink.cyan_on(text);
-    let shares = &zen::catalog().go.window_share;
     let mut out = String::new();
     out.push_str(&format!(
         "{}OpenCode usage{} — go + zen, from {}{}{}\n",
@@ -406,50 +339,37 @@ pub fn render_text(
                         .into()
                 ),
             ));
-            // Every field cmduse shows stays on the row — money, elapsed share,
-            // pace, the monthly pro-rata — with the server's own share leading,
-            // and its own reset instant replacing the local guess. The account's
-            // window lengths are the documented shares of the monthly limit:
-            // 5h = 20%, weekly = 50%, monthly = 100%.
+            // Every field that is true stays on the row: this store's money, the
+            // server's share labelled beside it, its reset instant, and the
+            // elapsed share measured against the server's clock. No money pair
+            // and no pace: Go grants limits per model, so no account-wide pool
+            // exists to divide by.
             let monthly_dur = report
                 .period_end_ms
                 .map(|end| ((end - report.since_ms) / 1000).max(0) as u64);
-            let rows: [MeterRow; 3] = [
+            let rows = [
                 (
                     "5-hour",
                     &account.rolling,
                     &report.five_hour,
-                    shares.five_hour,
                     Some(crate::ocuse::window::FIVE_HOUR_SECS as u64),
-                    false,
                 ),
                 (
                     "Weekly",
                     &account.weekly,
                     &report.weekly,
-                    shares.weekly,
                     Some(crate::ocuse::window::WEEKLY_SECS as u64),
-                    false,
                 ),
-                (
-                    "Monthly",
-                    &account.monthly,
-                    &report.month,
-                    shares.monthly,
-                    monthly_dur,
-                    true,
-                ),
+                ("Monthly", &account.monthly, &report.month, monthly_dur),
             ];
-            for (label, meter, used, share, dur_secs, pro_rata) in rows {
+            for (label, meter, used, dur_secs) in rows {
                 out.push_str(&window_line(
                     &ink,
                     &RowSpec {
                         label,
                         used,
-                        cap: aggregate_cap(report, share),
                         reset: meter_reset(meter, dur_secs),
                         share_pct: Some(meter.percent),
-                        pro_rata,
                         status: Some(meter.status.as_str()),
                     },
                     report.now_ms,
@@ -457,8 +377,9 @@ pub fn render_text(
             }
         }
         // No Go key, no network, or a key without the subscription: the store's
-        // own estimate, which says so. Its windows are the local ones (`now -
-        // 5h` / `now - 7d` / the period), so they can disagree with the account.
+        // own spend, which says so. Limits are per model, so the rows carry
+        // no pool to divide by -- spend alone, with the Monthly row's real
+        // reset and elapsed share. They can disagree with the account.
         None if report.month.requests > 0 => {
             // Only the monthly period has a boundary of its own (`period_end_ms`).
             // The rolling 5h/weekly windows are cut at `now - window`, so they get
@@ -472,8 +393,7 @@ pub fn render_text(
                 ink.bold,
                 ink.reset,
                 ink.dim_on(
-                    "(estimated locally — limits are per model: 5h = 20%, weekly = 50%, monthly = 100%)"
-                        .into()
+                    "(estimated locally: limits are per model, so no pool: spend alone)".into()
                 ),
             ));
             out.push_str(&window_line(
@@ -481,10 +401,8 @@ pub fn render_text(
                 &RowSpec {
                     label: "5-hour",
                     used: &report.five_hour,
-                    cap: aggregate_cap(report, shares.five_hour),
                     reset: None,
                     share_pct: None,
-                    pro_rata: false,
                     status: None,
                 },
                 report.now_ms,
@@ -494,10 +412,8 @@ pub fn render_text(
                 &RowSpec {
                     label: "Weekly",
                     used: &report.weekly,
-                    cap: aggregate_cap(report, shares.weekly),
                     reset: None,
                     share_pct: None,
-                    pro_rata: false,
                     status: None,
                 },
                 report.now_ms,
@@ -507,10 +423,8 @@ pub fn render_text(
                 &RowSpec {
                     label: "Monthly",
                     used: &report.month,
-                    cap: aggregate_cap(report, shares.monthly),
                     reset: report.period_end_ms.zip(monthly_dur),
                     share_pct: None,
-                    pro_rata: true,
                     status: None,
                 },
                 report.now_ms,
@@ -640,34 +554,22 @@ pub fn statusline_template(
     bar_width: usize,
 ) -> String {
     let ink = Ink::new(colours);
-    let shares = &zen::catalog().go.window_share;
-    let month_cap = aggregate_cap(report, shares.monthly);
-    let five_cap = aggregate_cap(report, shares.five_hour);
-    let week_cap = aggregate_cap(report, shares.weekly);
     let cash = |v: f64| ink.cyan_on(money(v));
-    let pct_of = |used: f64, cap: Option<f64>| match cap {
-        Some(cap) => pct(used, cap),
+    // The account's own share outranks the local one wherever both exist: it is
+    // what opencode.ai/console shows. Money tokens stay local either way — the
+    // endpoint publishes shares and instants, not dollars. Without an account
+    // there is no pool to divide by (Go grants limits per model), so the share
+    // placeholders degrade to the money-less dash instead of a ratio against a
+    // summed ceiling that reads as a budget the console does not have.
+    let account = report.account.as_ref();
+    let share_of = |meter: Option<&crate::ocuse::api::Meter>| match meter {
+        Some(meter) => pct(meter.percent, 100.0),
         None => "—".into(),
     };
-    let bar_of = |used: f64, cap: Option<f64>| match cap.filter(|c| *c > 0.0) {
-        Some(cap) => crate::report_render::bar(used / cap * 100.0, bar_width, ascii, colours),
+    let share_bar = |meter: Option<&crate::ocuse::api::Meter>| match meter {
+        Some(meter) => crate::report_render::bar(meter.percent, bar_width, ascii, colours),
         None => String::new(),
     };
-    // The account's own share outranks the local one wherever both exist: it is
-    // what opencode.ai/console shows, and the local estimate's window anchors are
-    // not the server's (see `ocuse::api`). Money tokens stay local either way —
-    // the endpoint publishes shares and instants, not dollars.
-    let account = report.account.as_ref();
-    let share_of =
-        |meter: Option<&crate::ocuse::api::Meter>, used: f64, cap: Option<f64>| match meter {
-            Some(meter) => pct(meter.percent, 100.0),
-            None => pct_of(used, cap),
-        };
-    let share_bar =
-        |meter: Option<&crate::ocuse::api::Meter>, used: f64, cap: Option<f64>| match meter {
-            Some(meter) => crate::report_render::bar(meter.percent, bar_width, ascii, colours),
-            None => bar_of(used, cap),
-        };
     let top_model = || {
         report
             .models
@@ -679,22 +581,14 @@ pub fn statusline_template(
         "plan" => plan_id.to_string(),
         "period" => report.period_label.clone(),
         "month" => cash(report.month.cost),
-        "month_pct" => share_of(account.map(|a| &a.monthly), report.month.cost, month_cap),
-        "month_bar" => share_bar(account.map(|a| &a.monthly), report.month.cost, month_cap),
+        "month_pct" => share_of(account.map(|a| &a.monthly)),
+        "month_bar" => share_bar(account.map(|a| &a.monthly)),
         "five_hour" | "5h" => cash(report.five_hour.cost),
-        "five_hour_pct" | "5h_pct" => {
-            share_of(account.map(|a| &a.rolling), report.five_hour.cost, five_cap)
-        }
-        "five_hour_bar" | "5h_bar" => {
-            share_bar(account.map(|a| &a.rolling), report.five_hour.cost, five_cap)
-        }
+        "five_hour_pct" | "5h_pct" => share_of(account.map(|a| &a.rolling)),
+        "five_hour_bar" | "5h_bar" => share_bar(account.map(|a| &a.rolling)),
         "weekly" | "wk" => cash(report.weekly.cost),
-        "weekly_pct" | "wk_pct" => {
-            share_of(account.map(|a| &a.weekly), report.weekly.cost, week_cap)
-        }
-        "weekly_bar" | "wk_bar" => {
-            share_bar(account.map(|a| &a.weekly), report.weekly.cost, week_cap)
-        }
+        "weekly_pct" | "wk_pct" => share_of(account.map(|a| &a.weekly)),
+        "weekly_bar" | "wk_bar" => share_bar(account.map(|a| &a.weekly)),
         "models" => top_model(),
         _ => String::new(),
     })
@@ -702,19 +596,19 @@ pub fn statusline_template(
 
 /// `ocuse statusline --json`: the same numbers the template resolves, in one
 /// object — plan and period label, period/month spend, the two rolling windows,
-/// and the top model. Caps are the aggregate ceilings `aggregate_cap` uses for
-/// the template's `{…_pct}`/`{…_bar}` placeholders (null when nothing is capped).
+/// and the top model. The `*Cap` keys are retired (always null): Go grants
+/// limits per model, so no account-wide pool exists, and the summed ceiling
+/// they carried read as a budget the console does not have.
 pub fn statusline_json(report: &Report, plan_id: &str) -> String {
-    let shares = &zen::catalog().go.window_share;
     serde_json::json!({
         "plan": plan_id,
         "period": report.period_label,
         "monthSpent": report.month.cost,
-        "monthCap": aggregate_cap(report, shares.monthly),
+        "monthCap": serde_json::Value::Null,
         "fiveHourSpent": report.five_hour.cost,
-        "fiveHourCap": aggregate_cap(report, shares.five_hour),
+        "fiveHourCap": serde_json::Value::Null,
         "weeklySpent": report.weekly.cost,
-        "weeklyCap": aggregate_cap(report, shares.weekly),
+        "weeklyCap": serde_json::Value::Null,
         "model": report.models.first().map(|m| m.id.clone()),
     })
     .to_string()
@@ -1420,7 +1314,10 @@ mod tests {
         let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         assert!(text.contains("glm-5.3-flash"), "{text}");
         assert!(text.contains("$60"), "the model's monthly limit: {text}");
-        assert!(text.contains("50%"), "30 of 60 is half: {text}");
+        assert!(
+            text.contains("50.0%"),
+            "the model table keeps its own USE: {text}"
+        );
     }
 
     fn meter(status: &str, percent: f64, resets_at: &str) -> crate::ocuse::api::Meter {
@@ -1467,17 +1364,19 @@ mod tests {
             text.contains("resets 4h 31m"),
             "the 5h block's own end: {text}"
         );
-        // Every field cmduse shows stays on the row: this store's money against
-        // the aggregate ceiling, with the server's share labelled beside it.
-        // The two need not divide to each other (the server meters higher), so
-        // the share carries its "of limit" label.
-        assert!(text.contains("$30.00 / $12.00 (5.0% of limit)"), "{text}");
-        assert!(text.contains("$30.00 / $60.00 (29.0% of limit)"), "{text}");
+        // Every field that is true stays on the row: this store's money with the
+        // server's share labelled beside it. The two need not divide to each
+        // other (the server meters higher), so the share carries its "of limit"
+        // label — and no pair divides against a pool that does not exist.
+        assert!(text.contains("$30.00 (5.0% of limit)"), "{text}");
+        assert!(text.contains("$30.00 (29.0% of limit)"), "{text}");
         assert!(text.contains("of limit"), "{text}");
+        assert!(!text.contains("$30.00 /"), "no money pair: {text}");
         // The Monthly row measures against the period bounds, like cmduse's:
-        // an elapsed share, the server's reset, and the pro-rata figure.
+        // an elapsed share and the server's reset, but no pro-rata — that
+        // figure needs a pool to divide by, and Go grants limits per model.
         assert!(text.contains("elapsed"), "{text}");
-        assert!(text.contains("$0.00 by now"), "{text}");
+        assert!(!text.contains("by now"), "no pool, no pro-rata: {text}");
         // …and the per-model columns are called out as local, not a second meter.
         assert!(text.contains("not the account's windows"), "{text}");
     }
@@ -1486,7 +1385,11 @@ mod tests {
     fn without_an_account_the_rows_say_they_are_local() {
         let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         assert!(text.contains("estimated locally"), "{text}");
-        assert!(text.contains("$60.00"), "the local monthly cap: {text}");
+        assert!(text.contains("no pool"), "no aggregate ceiling: {text}");
+        // Spend alone: no pair, no share, no countdown without a boundary.
+        assert!(!text.contains("of limit"), "{text}");
+        assert!(!text.contains("resets"), "{text}");
+        assert!(!text.contains("elapsed"), "{text}");
         // Nothing claims to be the account's own view.
         assert!(!text.contains("account meters"), "{text}");
         assert!(!text.contains("not the account's windows"), "{text}");
@@ -1850,7 +1753,11 @@ mod tests {
         assert_eq!(json["plan"], "go");
         assert_eq!(json["period"], "calendar month");
         assert_eq!(json["monthSpent"], 30.0);
-        assert_eq!(json["monthCap"], 60.0);
+        // No account-wide pool exists (limits are per model), so the cap keys
+        // stay null; the per-model limits live on the models array.
+        assert_eq!(json["monthCap"], serde_json::Value::Null);
+        assert_eq!(json["fiveHourCap"], serde_json::Value::Null);
+        assert_eq!(json["weeklyCap"], serde_json::Value::Null);
         assert_eq!(json["model"], "glm-5.3-flash");
     }
 
@@ -1861,13 +1768,14 @@ mod tests {
             !text.contains('\x1b'),
             "piped output must stay plain: {text}"
         );
-        // The gauge is colour-only; the plain frame keeps the old percentage text.
-        assert!(text.contains("50%"), "{text}");
+        // The header rows carry no gauge and no share without an account; the
+        // plain frame keeps the money the colour frame shows.
+        assert!(text.contains("$30.00"), "{text}");
     }
 
     /// The monthly row is the only one with a real period end, so it alone gains
-    /// the reset, the elapsed share and the pro-rata "$X by now"; the rolling
-    /// windows have no boundary and must not invent one.
+    /// the reset and the elapsed share; the rolling windows have no boundary
+    /// and must not invent one. Nothing divides by a pool: limits are per model.
     #[test]
     fn monthly_row_carries_the_real_period_metrics() {
         let mut r = report();
@@ -1883,10 +1791,6 @@ mod tests {
             monthly.contains("window") && monthly.contains("% elapsed"),
             "the real period gives an elapsed share: {monthly}"
         );
-        assert!(
-            monthly.contains("by now"),
-            "monthly is the pro-rata budget: {monthly}"
-        );
 
         for label in ["5-hour", "Weekly"] {
             let row = text
@@ -1894,7 +1798,7 @@ mod tests {
                 .find(|line| line.trim_start().starts_with(label))
                 .unwrap_or_else(|| panic!("the {label} row"));
             assert!(!row.contains("elapsed"), "{label} has no boundary: {row}");
-            assert!(!row.contains("by now"), "{label} is a throttle: {row}");
+            assert!(!row.contains("resets"), "{label} has no boundary: {row}");
         }
     }
 
@@ -1991,26 +1895,26 @@ mod tests {
 
     #[test]
     fn colour_frames_get_the_palette_and_a_gauge() {
-        // The local estimate's rolling rows carry no reset (their countdown was
-        // a fabricated `now + window`); only the Monthly row has a real end, so
-        // the fixture borrows one to pin the countdown's presence.
-        let mut dated = report();
-        dated.period_end_ms = Some(1_802_678_400_000); // 2027-02-15T08:00:00Z
-        dated.since_ms = crate::ocuse::window::prev_month(1_802_678_400_000);
-        let text = render_text(&dated, "/tmp/opencode.db", 10, true, DEFAULT_BAR_WIDTH);
+        // Gauge bars exist only where a share gates: the account's own rows.
+        // The local estimate divides by no pool, so its rows carry no bar —
+        // spend alone, never a gauge against a fiction. Palette assertions live
+        // on the model table, whose per-model limits are real.
+        let text = render_text(
+            &report_with_account(),
+            "/tmp/opencode.db",
+            10,
+            true,
+            DEFAULT_BAR_WIDTH,
+        );
         assert!(text.contains(crate::render::BOLD), "{text}");
         assert!(text.contains(crate::render::CYAN), "{text}");
         assert!(
             text.contains(crate::render::GREEN),
-            "the 50% monthly gauge and USE cell are green: {text}"
-        );
-        assert!(
-            text.contains(crate::render::RED),
-            "the over-cap 5-hour gauge (30 of 12) is red: {text}"
+            "the 50% USE cell is green: {text}"
         );
         assert!(
             text.contains('━') && text.contains('╱'),
-            "gauge bar: {text}"
+            "the account share's gauge bar: {text}"
         );
         assert!(text.contains("resets in"), "{text}");
     }
@@ -2078,11 +1982,13 @@ mod tests {
         assert_eq!(line("{weekly}"), "$30.00");
         // {models} is the top model by spend
         assert_eq!(line("{models}"), "glm-5.3-flash");
-        // percentages are one decimal; the fixture is 50% of its $60 limit
-        assert_eq!(line("{month_pct}"), "50.0%");
-        // bars render at the requested width (non-ascii default gauge glyphs)
-        let bar = line("{month_bar}");
-        assert!(bar.contains("50.0%") && bar.contains('━'), "{bar}");
+        // without an account there is no pool to divide by (limits are per
+        // model), so the share placeholders degrade to the dash; the account's
+        // own shares resolve when it answers (pinned by the account test above)
+        assert_eq!(line("{month_pct}"), "—");
+        assert_eq!(line("{month_bar}"), "");
+        assert_eq!(line("{five_hour_pct}"), "—");
+        assert_eq!(line("{weekly_pct}"), "—");
 
         // the default template resolves as a whole
         let default = line("{period} {month} · 5h {five_hour} · wk {weekly}");
@@ -2096,7 +2002,7 @@ mod tests {
         assert!(!line("{plan} {month} {month_pct} {month_bar}").contains('\x1b'));
     }
 
-    /// A period with no spend has no aggregate cap to divide by, so the pct
+    /// A period with no spend resolves no shares either way, so the pct
     /// placeholders degrade to the money-less dash instead of NaN.
     #[test]
     fn statusline_without_caps_degrades_gracefully() {
