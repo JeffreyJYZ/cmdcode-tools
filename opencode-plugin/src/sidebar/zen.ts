@@ -297,6 +297,9 @@ function zenMeterRows(
 	cap?: number,
 ): SidebarRow[] {
 	const pct = meter.percent;
+	// The endpoint publishes whole percents (`"percent":53`); a tenth here would
+	// claim a precision the console's own rounding does not have.
+	const pctText = Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
 	const paired = typeof cap === "number" && cap > 0;
 	return windowRows(
 		label,
@@ -313,8 +316,8 @@ function zenMeterRows(
 		durSecs,
 		undefined,
 		paired
-			? (used, cap) => `${money(used)}/${money(cap)} (${pct.toFixed(1)}%)`
-			: () => `${pct.toFixed(1)}% of limit`,
+			? (used, cap) => `${money(used)}/${money(cap)} (${pctText}%)`
+			: () => `${pctText}% of limit`,
 	);
 }
 

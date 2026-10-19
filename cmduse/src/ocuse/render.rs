@@ -203,11 +203,11 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
     };
     // No denominator is printed. `cap` is spent ÷ share, so printing it offered
     // a ceiling of ~$40 beside a documented $80 monthly limit and read as "my
-    // limit is $40" — the console meters roughly twice the cost this store
+    // limit is $40" — the console meters at roughly twice the cost this store
     // records, so the two bases never meet. It stays a local value for the pace
     // and the even-burn figure, both of which are ratios in this store's dollars.
     let paren = match share {
-        Some(p) => format!(" · {} of limit", pct(p, 100.0)),
+        Some(p) => format!(" · {}% of limit", given_pct(p)),
         None => String::new(),
     };
     // Composed in pieces: the pair and the pro-rata figure are conditional, and
@@ -235,12 +235,25 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
     }
 }
 
+/// A percentage exactly as the endpoint published it.
+///
+/// The server sends integers (`"percent":53`), so `{:.1}` invented a decimal the
+/// console never reports — and a tenth implies a precision its rounding does not
+/// have. Local, computed percentages keep `pct`'s one decimal; this is only for
+/// the values we are handed.
+fn given_pct(value: f64) -> String {
+    if (value - value.round()).abs() < f64::EPSILON {
+        format!("{}", value.round() as i64)
+    } else {
+        format!("{:.1}", value)
+    }
+}
+
 /// The ceiling a share implies, in this store's dollars: `spend / share`.
 ///
-/// `None` below the display's own precision — the server rounds to one decimal,
-/// so a share under 0.05% would print a pair that disagrees with the percentage
-/// printed beside it, or divide by a zero the endpoint sent for a window it
-/// meters on another basis.
+/// Kept for the pace and even-burn figures only — never printed, because it
+/// contradicts the documented allowance. `None` on a zero share, which would
+/// divide by it.
 fn implied_cap(spend: f64, share_pct: f64) -> Option<f64> {
     (share_pct >= 0.05).then(|| spend * 100.0 / share_pct)
 }
@@ -1419,10 +1432,11 @@ mod tests {
             false,
             DEFAULT_BAR_WIDTH,
         );
-        // The console's three shares, and its reset instants.
-        assert!(text.contains("5.0%"), "{text}");
-        assert!(text.contains("59.0%"), "{text}");
-        assert!(text.contains("29.0%"), "{text}");
+        // The console's three shares, and its reset instants. Whole percents, as
+        // the endpoint publishes them: `"percent":53`, never `53.0`.
+        assert!(text.contains("· 5% of limit"), "{text}");
+        assert!(text.contains("· 59% of limit"), "{text}");
+        assert!(text.contains("· 29% of limit"), "{text}");
         assert!(text.contains("account meters"), "{text}");
         assert!(
             text.contains("resets 4h 31m"),
@@ -1433,8 +1447,8 @@ mod tests {
         // would have to be `spend / share`, which contradicted the documented
         // allowance ($40 next to an $80 limit) because the console meters at
         // roughly twice the cost this store records.
-        assert!(text.contains("$30.00 · 5.0% of limit"), "{text}");
-        assert!(text.contains("$30.00 · 29.0% of limit"), "{text}");
+        assert!(text.contains(".00 · 5% of limit"), "{text}");
+        assert!(text.contains(".00 · 29% of limit"), "{text}");
         assert!(text.contains("of limit"), "{text}");
         // The monthly window measures against the period bounds, like cmduse's:
         // an elapsed share, the server's reset, and the even-burn figure — which

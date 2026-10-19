@@ -529,9 +529,9 @@ describe("the account's own meters", () => {
 		// documented window limit (60 × 20%/50%/100%), and the dollars are the
 		// share of it the console accounts for — so the pair divides to the
 		// percentage and agrees with the `Allowance` row below.
-		expect(find("5-hour")?.[1]).toBe("$0.60/$12 (5.0%)");
-		expect(find("Weekly")?.[1]).toBe("$17.70/$30 (59.0%)");
-		expect(find("Monthly")?.[1]).toBe("$17.40/$60 (29.0%)");
+		expect(find("5-hour")?.[1]).toBe("$0.60/$12 (5%)");
+		expect(find("Weekly")?.[1]).toBe("$17.70/$30 (59%)");
+		expect(find("Monthly")?.[1]).toBe("$17.40/$60 (29%)");
 		expect(find("Allowance")?.[1]).toBe("$60/mo");
 		// Every row stays inside the sidebar's budget: label + 2 + value.
 		for (const label of ["5-hour", "Weekly", "Monthly", "Period"]) {
@@ -553,7 +553,7 @@ describe("the account's own meters", () => {
 		};
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		const five = rows.findIndex((row) => row[0] === "5-hour");
-		expect(rows[five]).toEqual(["5-hour", "$12/$12 (100.0%)", "crit"]);
+		expect(rows[five]).toEqual(["5-hour", "$12/$12 (100%)", "crit"]);
 		expect(rows[five + 1]?.[1]).toContain("LIMIT EXCEEDED");
 	});
 

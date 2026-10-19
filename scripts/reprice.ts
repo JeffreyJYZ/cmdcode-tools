@@ -131,9 +131,13 @@ type Mode = "peak-aware" | "off-peak" | "peak"
 function rateFor(model: Model, atMs: number, mode: Mode): Variant | undefined {
 	const peak = model.variants.find((v) => v.peak === "peak")
 	const offPeak = model.variants.find((v) => v.peak === "off-peak")
+	// Models with no time-of-day split (everything but DeepSeek) have a single
+	// flat sheet: every reading prices them the same, or the off-peak/peak columns
+	// report 0 for spend that is really there.
+	const flat = model.variants.find((v) => v.peak === null) ?? model.variants[0]
+	if (!peak && !offPeak) return flat
 	if (mode === "off-peak") return offPeak ?? peak
 	if (mode === "peak") return peak ?? offPeak
-	if (!peak && !offPeak) return model.variants.find((v) => v.peak === null) ?? model.variants[0]
 	return isPeak(atMs) ? (peak ?? offPeak) : (offPeak ?? peak)
 }
 
@@ -195,7 +199,22 @@ if (asJson) {
 
 console.log(`reprice ${new Date(since).toISOString()} → now · ${rows.length} turns · plan ${planId}`)
 console.log(`  recorded (opencode's cost) ${recorded.toFixed(2)}`)
-for (const mode of MODES) {
+// How much of the traffic actually lands in a peak window: the question behind
+// "the console looks like it bills peak regardless", and the difference between
+// a peak-aware total that is close to all-peak (everything really is peak) and
+// one that is not.
+const inPeak = rows.filter((row) => isPeak(row.at))
+const peakRecorded = inPeak.reduce((sum, row) => sum + row.cost, 0)
+if (rows.length > 0) {
+	console.log(
+		`  turns in peak windows       ${inPeak.length}/${rows.length} (${((inPeak.length / rows.length) * 100).toFixed(1)}%)`,
+	)
+}
+if (recorded > 0) {
+	console.log(
+		`  recorded cost in peak       ${peakRecorded.toFixed(2)}/${recorded.toFixed(2)} (${((peakRecorded / recorded) * 100).toFixed(1)}%)`,
+	)
+}for (const mode of MODES) {
 	const ratio = recorded > 0 ? ` (${(totals[mode] / recorded).toFixed(3)}x recorded)` : ""
 	console.log(`  ${mode.padEnd(18)} ${totals[mode].toFixed(2).padStart(9)}${ratio}`)
 }
