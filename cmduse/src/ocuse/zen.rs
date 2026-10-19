@@ -124,8 +124,12 @@ pub fn window_cap(limit: f64, share: f64) -> f64 {
 /// instead of trusting `cost`.
 pub fn is_peak(at_ms: i64) -> bool {
     let secs = at_ms.div_euclid(1000);
-    let weekday = (secs.div_euclid(86_400) + 4).rem_euclid(7); // 1970-01-01 was a Thursday
-    if weekday >= 5 {
+    // Sunday = 0 (`+ 4` because 1970-01-01 was a Thursday), so the weekend is
+    // 0 and 6 — not `>= 5`, which is Friday and Saturday under this base and
+    // silently priced every Friday turn at the off-peak sheet (and every Sunday
+    // at the peak one).
+    let weekday = (secs.div_euclid(86_400) + 4).rem_euclid(7);
+    if weekday == 0 || weekday == 6 {
         return false;
     }
     let hour = secs.rem_euclid(86_400) / 3600;
@@ -175,6 +179,30 @@ impl Catalog {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn peak_window_is_weekday_utc_hours_only() {
+        let at = |s: &str| cmduse_core::dates::parse_iso_utc(s).expect(s) as i64;
+        // Friday 2026-10-16 is a weekday: both windows apply, edges exclusive.
+        assert!(is_peak(at("2026-10-16T02:00:00Z")));
+        assert!(is_peak(at("2026-10-16T09:59:00Z")));
+        assert!(!is_peak(at("2026-10-16T10:00:00Z")));
+        assert!(!is_peak(at("2026-10-16T05:00:00Z")), "gap between windows");
+        assert!(!is_peak(at("2026-10-16T00:59:00Z")));
+        // Weekends are off-peak whatever the hour — Sunday included, which a
+        // `weekday >= 5` test left inside the peak branch.
+        assert!(!is_peak(at("2026-10-17T02:00:00Z")), "Saturday");
+        assert!(!is_peak(at("2026-10-18T02:00:00Z")), "Sunday");
+        // Monday is a weekday again.
+        assert!(is_peak(at("2026-10-19T02:00:00Z")));
+
+        // And the price follows it: 1M input tokens on Flash is the peak sheet
+        // ($0.30) on Friday, the off-peak one ($0.15) on Sunday.
+        let c = catalog();
+        let flash = |ts: &str| c.price("deepseek-v4.1-flash", at(ts), 1_000_000, 0, 0, 0, 0);
+        assert_eq!(flash("2026-10-16T02:00:00Z"), Some(0.3));
+        assert_eq!(flash("2026-10-18T02:00:00Z"), Some(0.15));
+    }
 
     #[test]
     fn catalogue_parses_and_carries_both_plans() {
