@@ -25,10 +25,17 @@
 // Checking an *older* release needs --no-pack (or --expected <published sha>):
 // this checkout can only reproduce the crate its manifest is at, and a stale
 // local pack is exactly the mismatch this script exists to report.
+//
+// A mismatch right after publishing is usually the *checkout* moving, not the
+// upload: `cargo package` stamps `.cargo_vcs_info.json` with the commit it ran
+// at, so one commit landing after `cargo publish` changes the local pack's bytes
+// while the served crate stays ours. So a mismatch is not reported until the
+// served crate is repacked at the commit it records — matching that proves the
+// bytes, and a genuinely foreign crate matches neither.
 
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 
 const REPO = new URL("../../", import.meta.url).pathname;
 const REGISTRY = "https://crates.io/api/v1/crates";
@@ -209,6 +216,74 @@ async function packLocalSha256(version: string): Promise<string | undefined> {
 	return sha256Hex(new Uint8Array(await file.arrayBuffer()));
 }
 
+/** `git rev-parse <rev>` in the working checkout. */
+function git(rev: string): string | undefined {
+	const out = spawnSync("git", ["rev-parse", rev], {
+		cwd: REPO,
+		encoding: "utf8",
+	});
+	return out.status === 0 ? out.stdout.trim() : undefined;
+}
+
+/** The commit a served `.crate` records in its `.cargo_vcs_info.json`. */
+async function servedCommit(
+	bytes: Uint8Array,
+	version: string,
+): Promise<string | undefined> {
+	const file = join(REPO, "target", "package", `served-${version}.crate`);
+	await Bun.write(file, bytes);
+	const out = spawnSync(
+		"tar",
+		["-xzOf", file, `${PKG}-${version}/.cargo_vcs_info.json`],
+		{ encoding: "utf8" },
+	);
+	if (out.status !== 0) return undefined;
+	try {
+		return JSON.parse(out.stdout)?.git?.sha1;
+	} catch {
+		return undefined;
+	}
+}
+
+/** Repack at `sha` in a detached worktree and hash the result. */
+async function repackAt(
+	sha: string,
+	version: string,
+): Promise<string | undefined> {
+	const dir = join(
+		process.env.HOME ?? "",
+		"dev/worktrees",
+		basename(REPO),
+		`repack-${version}`,
+	);
+	// A detached worktree, so the checkout being verified is never written to —
+	// and the same path every time, so a leftover from an interrupted run cannot
+	// silently be the tree that gets packed.
+	spawnSync("git", ["worktree", "remove", "--force", dir], { cwd: REPO });
+	const added = spawnSync("git", ["worktree", "add", "--detach", dir, sha], {
+		cwd: REPO,
+		encoding: "utf8",
+	});
+	if (added.status !== 0) return undefined;
+	try {
+		// `--no-verify` skips the build: only the archive's bytes are wanted, and
+		// it keeps the check from depending on a published `cmduse-core`.
+		const packaged = spawnSync(
+			"cargo",
+			["package", "-p", PKG, "--no-verify", "--quiet"],
+			{ cwd: dir, encoding: "utf8" },
+		);
+		if (packaged.status !== 0) return undefined;
+		const file = Bun.file(
+			join(dir, "target", "package", `${PKG}-${version}.crate`),
+		);
+		if (!(await file.exists())) return undefined;
+		return sha256Hex(new Uint8Array(await file.arrayBuffer()));
+	} finally {
+		spawnSync("git", ["worktree", "remove", "--force", dir], { cwd: REPO });
+	}
+}
+
 /** Link 2. Release shape checks against SHA256SUMS; crate shape against the crate. */
 async function verifyFormula(
 	version: string,
@@ -323,15 +398,25 @@ async function main(): Promise<number> {
 		const response = await fetch(facts.tarballUrl).catch(() => undefined);
 		const status = response?.status ?? 0;
 		if (facts.versionPresent && status === 200 && response) {
-			const sha256 = sha256Hex(
-				new Uint8Array(await response.arrayBuffer()),
-			);
+			const bytes = new Uint8Array(await response.arrayBuffer());
+			const sha256 = sha256Hex(bytes);
 			console.log(verdict(version, facts, status, sha256, expected));
 			if (expected && sha256 !== expected) {
-				console.error(
-					`served crate is not what this checkout packs — do not ship it`,
+				const packedAt = await servedCommit(bytes, version);
+				const head = git("HEAD");
+				const repacked =
+					packedAt && head && packedAt !== head
+						? await repackAt(packedAt, version)
+						: undefined;
+				if (repacked !== sha256) {
+					console.error(
+						`served crate is not what this checkout packs — do not ship it`,
+					);
+					return 1;
+				}
+				console.log(
+					`note: served crate packs from ${packedAt?.slice(0, 7)} — HEAD (${head?.slice(0, 7)}) moved after the publish, bytes are still ours`,
 				);
-				return 1;
 			}
 			if (!formula) {
 				console.error(
