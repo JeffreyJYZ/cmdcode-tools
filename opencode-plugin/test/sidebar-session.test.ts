@@ -3,9 +3,11 @@ import {
 	rememberMeta,
 	rememberModelUsage,
 	rememberSnapshot,
+	rememberZen,
 	seededMeta,
 	seededModelUsage,
 	seededRows,
+	seededZen,
 	sessionKind,
 } from "../src/sidebar/useRows";
 
@@ -28,6 +30,23 @@ describe("session kind", () => {
 });
 
 describe("account snapshot cache", () => {
+	test("the Go/Zen snapshot survives a remount, unlike before", () => {
+		// A tab switch remounts the panel; without this the whole Go/Zen section
+		// went blank until `ocuse` returned, which read as a reload on every
+		// session switch. Same rule as `lastSnapshot`: account-wide, so one copy
+		// serves every session.
+		const usage = {
+			totals: {
+				fiveHour: { requests: 1, cost: 0.5 },
+				weekly: { requests: 2, cost: 1.5 },
+				month: { requests: 3, cost: 17 },
+			},
+			models: new Map(),
+		} as Parameters<typeof rememberZen>[0];
+		expect(seededZen()).not.toBe(usage);
+		rememberZen(usage);
+		expect(seededZen()).toBe(usage);
+	});
 	test("seeds nothing before the first snapshot, then the account rows", () => {
 		const before = seededRows();
 		rememberSnapshot({

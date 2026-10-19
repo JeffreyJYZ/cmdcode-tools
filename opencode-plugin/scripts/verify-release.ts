@@ -132,8 +132,7 @@ async function main(): Promise<number> {
 		const i = args.indexOf(flag);
 		return i >= 0 ? args[i + 1] : undefined;
 	};
-	const dir = resolveTargetDir(value("--dir"));
-	const manifest = await readManifest(dir);
+	const dir = resolveTargetDir(value("--dir"));	const manifest = await readManifest(dir);
 	const name = manifest.name ?? PKG;
 	const encoded = name.replace("/", "%2F");
 	// Flags that take a value must not have it mistaken for the version.
@@ -158,9 +157,21 @@ async function main(): Promise<number> {
 	if (!explicitVersion)
 		console.log(`no version given; using package.json (${version})`);
 	// Default: pack the target dir and compare — the publish-time shasum, no copy-paste.
-	const expected =
-		value("--expected") ??
-		(args.includes("--no-pack") ? undefined : await packLocalShasum(dir));
+	//
+	// That only holds for a publish made from this working copy. Since
+	// `.github/workflows/npm-plugin.yml` builds `dist/` in the runner, the served
+	// tarball can never equal a local pack, so `--source` compares the things that
+	// must still be true instead: the version, and that the manifest inside the
+	// tarball declares the repository provenance is validated against.
+	const sourceGate = args.includes("--source");
+	const expected = sourceGate
+		? undefined
+		: (value("--expected") ??
+			(args.includes("--no-pack") ? undefined : await packLocalShasum(dir)));
+	if (sourceGate)
+		console.log(
+			"source gate: checking version + repository in the served tarball (no local-pack comparison)",
+		);
 	if (expected)
 		console.log(
 			`expected sha1: ${expected}${value("--expected") ? " (supplied)" : " (local npm pack)"}`,
@@ -176,15 +187,32 @@ async function main(): Promise<number> {
 		const status = response?.status ?? 0;
 		if (facts.versionPresent && status === 200 && response) {
 			const sha1 = sha1Hex(await response.arrayBuffer());
-			const tarballVersion = await versionFromTarball(
-				await (await fetch(facts.tarballUrl)).arrayBuffer(),
-			);
+			const tarballBytes = await (await fetch(facts.tarballUrl)).arrayBuffer();
+			const manifest = await manifestFromTarball(tarballBytes);
+			const tarballVersion = manifest?.version;
 			console.log(verdict(version, facts, status, sha1, expected));
 			if (tarballVersion && tarballVersion !== version) {
 				console.error(
 					`tarball package.json says ${tarballVersion}, not ${version}`,
 				);
 				return 1;
+			}
+			if (sourceGate) {
+				// The two things a CI-built tarball can still be judged on: it names
+				// the same version, and it declares the repository provenance is
+				// validated against. Without the latter npm refuses the publish, so a
+				// served tarball lacking it means the manifest regressed.
+				const declared =
+					typeof manifest?.repository === "string"
+						? manifest.repository
+						: manifest?.repository?.url;
+				if (!declared) {
+					console.error(
+						"served tarball declares no repository — provenance would be rejected",
+					);
+					return 1;
+				}
+				console.log(`repository declared: ${declared}`);
 			}
 			if (expected && sha1 !== expected) {
 				console.error(
@@ -205,9 +233,17 @@ async function main(): Promise<number> {
 }
 
 /** `package/package.json` inside the tarball, without unpacking the whole thing. */
-async function versionFromTarball(
+/**
+ * The tarball's own `package.json`.
+ *
+ * Needed for two checks the served bytes cannot answer any more: the version it
+ * carries, and the `repository.url` npm's provenance validation requires — the
+ * registry rejects a publish (E422) whose manifest does not name the repo the
+ * provenance was signed for, so an installable tarball must declare it.
+ */
+async function manifestFromTarball(
 	bytes: ArrayBuffer,
-): Promise<string | undefined> {
+): Promise<{ version?: string; repository?: { url?: string } | string } | undefined> {
 	try {
 		const { mkdtemp, writeFile, readFile } = await import(
 			"node:fs/promises"
@@ -225,10 +261,9 @@ async function versionFromTarball(
 			"package/package.json",
 		]);
 		if (tar.exitCode !== 0) return undefined;
-		const pkg = JSON.parse(
+		return JSON.parse(
 			await readFile(join(dir, "package", "package.json"), "utf8"),
-		) as { version?: string };
-		return pkg.version;
+		) as { version?: string; repository?: { url?: string } | string };
 	} catch {
 		return undefined;
 	}

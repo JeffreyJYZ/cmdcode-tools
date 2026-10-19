@@ -154,13 +154,36 @@ export function seededMeta(): Map<string, ModelMeta> {
 	return lastMeta ?? new Map();
 }
 
+/**
+ * The last Go/Zen snapshot this process loaded.
+ *
+ * The Command Code block seeds from `lastSnapshot` on remount, but the Go/Zen
+ * block did not: `zen` started `undefined` and only filled after `ocuse` ran, so
+ * every tab switch blanked the whole section — plan, the three account rows and
+ * the model block — until the spawn returned. Switching sessions is common, so
+ * that read as the panel reloading each time. Same memory, same rule: the
+ * snapshot is account-wide and keyed by nothing, so one copy serves every
+ * session; a failed load never overwrites it.
+ */
+let lastZen: ZenUsage | undefined;
+
+/** Keep a Go/Zen snapshot for the next panel that needs it. */
+export function rememberZen(usage: ZenUsage): void {
+	lastZen = usage;
+}
+
+/** The remembered Go/Zen snapshot, or undefined on the first panel. */
+export function seededZen(): ZenUsage | undefined {
+	return lastZen;
+}
+
 export function useRows(
 	activeModelId: () => string | undefined,
 	providerID: () => string | undefined,
 	sessionID: () => string | undefined,
 ) {
 	const [usage, setUsage] = createSignal<SidebarRow[]>(seededRows());
-	const [zen, setZen] = createSignal<ZenUsage | undefined>();
+	const [zen, setZen] = createSignal<ZenUsage | undefined>(seededZen());
 	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(seededMeta());
 	const [modelUsage, setModelUsage] = createSignal<
 		{ key: string; session?: string; usage: ModelUsage } | undefined
@@ -248,7 +271,9 @@ export function useRows(
 				setUsage(usageRows(snapshot));
 				refreshModelUsage(activeModelId());
 			} else if (kind === "go" || kind === "zen") {
-				setZen(await loadZen(loadPrefs().ocPlan));
+				const snapshot = await loadZen(loadPrefs().ocPlan);
+				rememberZen(snapshot);
+				setZen(snapshot);
 				// The store scan is provider-agnostic and needs no network, so the
 				// Go/Zen panel gets the same `Usage (this model)` row.
 				refreshModelUsage(activeModelId());
