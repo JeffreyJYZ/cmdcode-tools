@@ -522,18 +522,19 @@ describe("the account's own meters", () => {
 		expect(parseZenJson(sample).account).toBeUndefined();
 	});
 
-	test("the window rows keep the pair and the console share apart", () => {
+	test("the window rows carry the console share and a pair that divides to it", () => {
 		const rows = zenRows(parseZenJson(withAccount()), meta);
 		const find = (label: string) => rows.find((row) => row[0] === label);
-		// The pair's own percentage, computed from the two dollars beside it, and
-		// then the console's account-wide figure, named — they are different
-		// measurements, and printing one inside the other's parentheses read as a
-		// contradiction ($0.50/$12 is 4.2%, not the server's 5.0%).
-		expect(find("5-hour")?.[1]).toBe(
-			"$0.50/$12 (4.2%) · console 5.0%",
-		);
-		expect(find("Weekly")?.[1]).toBe("$1.50/$30 (5.0%) · console 59.0%");
-		expect(find("Monthly")?.[1]).toBe("$17/$60 (28.3%) · console 29.0%");
+		// One percentage on the row: the server's. The ceiling is back-solved from
+		// it, so the dollars cannot contradict the share they sit beside.
+		expect(find("5-hour")?.[1]).toBe("$0.50/$10 (5.0%)");
+		expect(find("Weekly")?.[1]).toBe("$1.50/$2.54 (59.0%)");
+		expect(find("Monthly")?.[1]).toBe("$17/$58.62 (29.0%)");
+		// Every row stays inside the sidebar's budget: label + 2 + value.
+		for (const label of ["5-hour", "Weekly", "Monthly", "Period"]) {
+			const row = find(label);
+			expect((row?.[0] ?? "").length + 2 + (row?.[1] ?? "").length).toBeLessThanOrEqual(37);
+		}
 		// The reset countdown rides on the continuation, as on the CC side.
 		expect(find("5-hour")?.[2]).toBe("ok");
 		const five = rows.findIndex((row) => row[0] === "5-hour");
@@ -549,11 +550,7 @@ describe("the account's own meters", () => {
 		};
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		const five = rows.findIndex((row) => row[0] === "5-hour");
-		expect(rows[five]).toEqual([
-			"5-hour",
-			"$0.50/$12 (4.2%) · console 100.0%",
-			"crit",
-		]);
+		expect(rows[five]).toEqual(["5-hour", "$0.50/$0.50 (100.0%)", "crit"]);
 		expect(rows[five + 1]?.[1]).toContain("LIMIT EXCEEDED");
 	});
 
