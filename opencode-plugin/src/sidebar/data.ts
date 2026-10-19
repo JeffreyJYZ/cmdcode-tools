@@ -6,11 +6,22 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { type RunOptions, runCmduse, runMpc, runOcuse } from "../cli";
+import {
+	type RunOptions,
+	runArkuse,
+	runCmduse,
+	runMpc,
+	runOcuse,
+} from "../cli";
 import { SPAWN_OPTIONS } from "../constants/cli";
 import { CACHE_DIR, ccCatalogFile } from "../constants/paths";
 import { OC_PLAN_DEFAULT, type OcPlan } from "../constants/sidebar";
-import { CATALOG_CACHE_TTL_MS, CHILD_TIMEOUT_MS } from "../constants/timing";
+import {
+	ARK_SNAPSHOT_TTL_MS,
+	CATALOG_CACHE_TTL_MS,
+	CHILD_TIMEOUT_MS,
+} from "../constants/timing";
+import { type ArkUsage, parseArkJson } from "./ark";
 import { type ModelMeta, modelKey, type Usage } from "./rows";
 import { parseZenJson, type ZenUsage } from "./zen";
 
@@ -234,4 +245,25 @@ export async function loadZen(
 	plan: OcPlan = OC_PLAN_DEFAULT,
 ): Promise<ZenUsage> {
 	return parseZenJson(await runOcuse(zenArgs(plan), SIDEBAR_OPTS));
+}
+
+/** Process-lifetime cache for the ARK snapshot — see `ARK_SNAPSHOT_TTL_MS`:
+ *  every `arkuse` run asks the control plane, so the 5s poll must not spawn one
+ *  per tick. */
+let arkCache: { at: number; usage: ArkUsage } | undefined;
+
+/**
+ * One Volcengine ARK snapshot from `arkuse -1 --json`: the plan's own meters
+ * (through `arkcli`) plus this store's AFP per model. Cached for a minute
+ * because the spawn costs a control-plane round-trip; throws when `arkuse` is
+ * missing or fails, and the caller then keeps the last snapshot.
+ */
+export async function loadArk(): Promise<ArkUsage> {
+	const now = Date.now();
+	if (arkCache && now - arkCache.at < ARK_SNAPSHOT_TTL_MS) {
+		return arkCache.usage;
+	}
+	const usage = parseArkJson(await runArkuse("-1 --json", SIDEBAR_OPTS));
+	arkCache = { at: now, usage };
+	return usage;
 }

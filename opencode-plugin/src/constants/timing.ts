@@ -17,3 +17,9 @@ export const CATALOG_CACHE_TTL_MS = 60 * 60 * 1000;
 
 /** Re-read window for the sidebar colour prefs file (src/sidebar/prefs.ts). */
 export const PREFS_CACHE_MS = 5_000;
+
+/** Process-lifetime cache for the ARK sidebar snapshot: every `arkuse` run
+ * shells out to `arkcli` for the plan meters, so polling it at the 5s cadence
+ * would be one control-plane round-trip per tick. A minute keeps the meters
+ * fresh enough while the store-backed rows still update on the poll. */
+export const ARK_SNAPSHOT_TTL_MS = 60_000;

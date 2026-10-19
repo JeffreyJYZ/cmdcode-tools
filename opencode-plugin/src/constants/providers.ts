@@ -19,6 +19,9 @@ export const GO_PROVIDER_ID = "opencode-go";
 export const ZEN_PROVIDER_ID = "opencode";
 export const ZEN_PROVIDER_PREFIX = "opencode-zen";
 
+/** Volcengine ARK Agent Plan provider id (what opencode records for its rows). */
+export const ARK_PROVIDER_ID = "agent-plan";
+
 /** TUI plugin id (stable contract; test/tui.test.ts pins it). */
 export const TUI_ID = "command-code.tui";
 

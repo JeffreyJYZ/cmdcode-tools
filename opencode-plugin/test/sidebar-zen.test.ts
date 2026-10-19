@@ -528,8 +528,8 @@ describe("the account's own meters", () => {
 		// documented allowance, so their percent is per model and need not match
 		// the account meter above.
 		const body = JSON.parse(withAccount()) as {
-			models: Array<Record<string, unknown>>
-		}
+			models: Array<Record<string, unknown>>;
+		};
 		body.models.push({
 			id: "deepseek-v4-pro",
 			provider: "opencode-go",
@@ -537,17 +537,21 @@ describe("the account's own meters", () => {
 			fiveHour: { requests: 1, cost: 0.2 },
 			weekly: { requests: 2, cost: 0.4 },
 			month: { requests: 4, cost: 1.5 },
-		})
-		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta)
-		const head = rows.findIndex((row) => row[1] === "by model · this month")
-		expect(head).toBeGreaterThan(-1)
+		});
+		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
+		const head = rows.findIndex(
+			(row) => row[1] === "by model · this month",
+		);
+		expect(head).toBeGreaterThan(-1);
 		// Highest spend first, each against its own documented limit.
-		expect(rows[head + 1]?.[1]).toBe("$17/$60 (28.3%)")
-		expect(rows[head + 2]?.[1]).toBe("$1.50/$15 (10.0%)")
+		expect(rows[head + 1]?.[1]).toBe("$17/$60 (28.3%)");
+		expect(rows[head + 2]?.[1]).toBe("$1.50/$15 (10.0%)");
 		for (const row of rows.slice(head, head + 3)) {
-			expect((row[0] ?? "").length + 2 + (row[1] ?? "").length).toBeLessThanOrEqual(37)
+			expect(
+				(row[0] ?? "").length + 2 + (row[1] ?? "").length,
+			).toBeLessThanOrEqual(37);
 		}
-	})
+	});
 
 	test("the window rows carry the console share and a pair that divides to it", () => {
 		const rows = zenRows(parseZenJson(withAccount()), meta);
@@ -563,7 +567,9 @@ describe("the account's own meters", () => {
 		// Every row stays inside the sidebar's budget: label + 2 + value.
 		for (const label of ["5-hour", "Weekly", "Monthly", "Period"]) {
 			const row = find(label);
-			expect((row?.[0] ?? "").length + 2 + (row?.[1] ?? "").length).toBeLessThanOrEqual(37);
+			expect(
+				(row?.[0] ?? "").length + 2 + (row?.[1] ?? "").length,
+			).toBeLessThanOrEqual(37);
 		}
 		// The reset countdown rides on the continuation, as on the CC side.
 		expect(find("5-hour")?.[2]).toBe("ok");
@@ -603,7 +609,11 @@ describe("the account's own meters", () => {
 		body.accountError = "HTTP 401 api_key_expired";
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		expect(rows[0]).toEqual(["Plan", "Go · limits per model", "base"]);
-		expect(rows[1]).toEqual(["", "usage API: HTTP 401 api_key_expired", "warn"]);
+		expect(rows[1]).toEqual([
+			"",
+			"usage API: HTTP 401 api_key_expired",
+			"warn",
+		]);
 		// An older ocuse names nothing, so the panel is exactly as it was.
 		const quiet = zenRows(parseZenJson(sample), meta);
 		expect(quiet.some((row) => row[1].includes("usage API"))).toBe(false);

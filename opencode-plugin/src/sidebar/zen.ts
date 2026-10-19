@@ -342,7 +342,11 @@ export function zenRows(
 	// not buried under the local rows: an expired key means the panel below is an
 	// estimate, and nothing else on screen says so.
 	if (usage.accountError) {
-		rows.push(["", clip(`usage API: ${usage.accountError}`, valueWidth("")), "warn"]);
+		rows.push([
+			"",
+			clip(`usage API: ${usage.accountError}`, valueWidth("")),
+			"warn",
+		]);
 	}
 	// Go's limits are per model, so the windows read the active model's row
 	// rather than the account totals: the caps belong to that model's allowance.
@@ -452,20 +456,24 @@ export function zenRows(
 	// percent can differ from the account meter above.
 	const ranked = [...usage.models.values()]
 		.sort((a, b) => b.month.cost - a.month.cost)
-		.slice(0, 3)
+		.slice(0, 3);
 	if (ranked.length > 1) {
-		rows.push(["", "by model · this month", "muted"])
+		rows.push(["", "by model · this month", "muted"]);
 		for (const entry of ranked) {
-			const allowance = entry.limit
+			const allowance = entry.limit;
 			const share =
 				typeof allowance === "number" && allowance > 0
 					? ` (${((entry.month.cost / allowance) * 100).toFixed(1)}%)`
-					: ""
+					: "";
 			const value =
 				typeof allowance === "number" && allowance > 0
 					? `${money(entry.month.cost)}/${money(allowance)}${share}`
-					: money(entry.month.cost)
-			rows.push([clip(entry.id, valueWidth("") - value.length - 1), value, "base"])
+					: money(entry.month.cost);
+			rows.push([
+				clip(entry.id, valueWidth("") - value.length - 1),
+				value,
+				"base",
+			]);
 		}
 	}
 	rows.push(separator());

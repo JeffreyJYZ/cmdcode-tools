@@ -6,6 +6,7 @@
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { minPlan } from "../catalog";
 import {
+	ARK_PROVIDER_ID,
 	GO_PROVIDER_ID,
 	PROVIDER_ID_PREFIX,
 	ZEN_PROVIDER_ID,
@@ -13,7 +14,8 @@ import {
 } from "../constants/providers";
 import { FIVE_HOUR_SECS, WEEKLY_SECS } from "../constants/sidebar";
 import { POLL_MS } from "../constants/timing";
-import { loadMeta, loadUsage, loadZen } from "./data";
+import { type ArkUsage, arkRows } from "./ark";
+import { loadArk, loadMeta, loadUsage, loadZen } from "./data";
 import { loadPrefs } from "./prefs";
 import {
 	type ModelMeta,
@@ -40,7 +42,7 @@ import { type ZenUsage, type ZenWindowStarts, zenRows } from "./zen";
  * resolved the new session's model; it must not be read as someone else's, or
  * the panel blanks and refetches on every tab change.
  */
-export type SessionKind = "ours" | "go" | "zen" | "other" | "unknown";
+export type SessionKind = "ours" | "go" | "zen" | "ark" | "other" | "unknown";
 
 export function sessionKind(providerID: string | undefined): SessionKind {
 	if (!providerID) return "unknown";
@@ -51,18 +53,20 @@ export function sessionKind(providerID: string | undefined): SessionKind {
 		providerID.startsWith(ZEN_PROVIDER_PREFIX)
 	)
 		return "zen";
+	if (providerID.startsWith(ARK_PROVIDER_ID)) return "ark";
 	return "other";
 }
 
 /** Whether the panel has anything to say about this session at all. */
 function shows(kind: SessionKind): boolean {
-	return kind === "ours" || kind === "go" || kind === "zen";
+	return kind === "ours" || kind === "go" || kind === "zen" || kind === "ark";
 }
 
 /** The section's title, per family. */
 export function panelTitle(kind: SessionKind): string {
 	if (kind === "ours") return "Command Code";
 	if (kind === "zen") return "OpenCode Zen";
+	if (kind === "ark") return "Volcengine ARK";
 	return "OpenCode Go";
 }
 
@@ -177,6 +181,21 @@ export function seededZen(): ZenUsage | undefined {
 	return lastZen;
 }
 
+/** The last ARK snapshot this process loaded. Same rule as the Go/Zen one: the
+ *  figures are account-wide, one copy serves every session, and only a
+ *  successful load overwrites it. */
+let lastArk: ArkUsage | undefined;
+
+/** Keep an ARK snapshot for the next panel that needs it. */
+export function rememberArk(usage: ArkUsage): void {
+	lastArk = usage;
+}
+
+/** The remembered ARK snapshot, or undefined on the first panel. */
+export function seededArk(): ArkUsage | undefined {
+	return lastArk;
+}
+
 export function useRows(
 	activeModelId: () => string | undefined,
 	providerID: () => string | undefined,
@@ -184,6 +203,7 @@ export function useRows(
 ) {
 	const [usage, setUsage] = createSignal<SidebarRow[]>(seededRows());
 	const [zen, setZen] = createSignal<ZenUsage | undefined>(seededZen());
+	const [ark, setArk] = createSignal<ArkUsage | undefined>(seededArk());
 	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(seededMeta());
 	const [modelUsage, setModelUsage] = createSignal<
 		{ key: string; session?: string; usage: ModelUsage } | undefined
@@ -278,6 +298,10 @@ export function useRows(
 				// Go/Zen panel gets the same `Usage (this model)` row.
 				refreshModelUsage(activeModelId());
 				refreshModelWindows(activeModelId());
+			} else if (kind === "ark") {
+				const snapshot = await loadArk();
+				rememberArk(snapshot);
+				setArk(snapshot);
 			}
 		} catch {
 			// the CLI is missing, offline, or returned its errored defaults: keep
@@ -352,6 +376,9 @@ export function useRows(
 				fallbackName,
 				modelWindows(),
 			);
+		}
+		if (kind === "ark") {
+			return arkRows(ark(), fallbackName);
 		}
 		// gating keys are model ids, not display names, so tier comes from the
 		// session's id rather than the catalog row.
