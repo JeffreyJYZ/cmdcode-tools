@@ -6,6 +6,7 @@
 
 import { spawn } from "node:child_process";
 import {
+	ARKUSE_BIN_CANDIDATES,
 	CMDUSE_BIN_CANDIDATES,
 	MPC_BIN_CANDIDATES,
 	OCUSE_BIN_CANDIDATES,
@@ -46,6 +47,17 @@ export function ocuseCandidates(
 }
 
 const OCUSE_CANDIDATES = ocuseCandidates();
+
+/** Same lookup for arkuse, the Volcengine ARK Agent Plan reader in the same
+ * crate: `ARKUSE_BIN` wins when set, then the homebrew fallbacks. */
+export function arkuseCandidates(
+	env: Record<string, string | undefined> = process.env,
+): string[] {
+	const candidates = [env.ARKUSE_BIN, ...ARKUSE_BIN_CANDIDATES];
+	return candidates.filter((bin): bin is string => Boolean(bin));
+}
+
+const ARKUSE_CANDIDATES = arkuseCandidates();
 
 /** Shell-words split: whitespace-separated, with single/double quoting and
  * backslash escapes ("--tz +05:30", arg='a b'). Unterminated quotes close at
@@ -113,6 +125,13 @@ export function buildMpcArgs(arg: string): string[] {
  * watch loop and would never return, so empty input never passes through.
  */
 export function ocuseArgs(arg: string | undefined): string {
+	return arg !== undefined && arg.trim() !== "" ? arg : "-1";
+}
+
+/** The arg the arkuse_usage tool and the /arkuse-usage dialog pass on: the
+ *  agent's (or slash) args when given, else `-1`. A bare arkuse is the live
+ *  watch loop and would never return. */
+export function arkuseArgs(arg: string | undefined): string {
 	return arg !== undefined && arg.trim() !== "" ? arg : "-1";
 }
 
@@ -279,6 +298,30 @@ export async function runOcuse(
 	}
 	throw new Error(
 		`ocuse binary not found (install: brew install JeffreyJYZ/tap/cmduse)${last instanceof Error && last.message !== last.name ? ` — ${last.message}` : ""}`,
+		{ cause: last },
+	);
+}
+
+/** Run arkuse and return its plain-text stdout (Volcengine ARK usage). Same
+ *  contract as runCmduse; arkuse ships in the cmd-usage crate, so its install
+ *  hint is the same brew formula. */
+export async function runArkuse(
+	arg: string | readonly string[],
+	opts: RunOptions = {},
+): Promise<string> {
+	const args = resolveArgs(arg, splitCliArgs);
+	const candidates = opts.candidates ?? ARKUSE_CANDIDATES;
+	let last: unknown;
+	for (const bin of candidates) {
+		try {
+			return await runOnce(bin, args, opts, "arkuse");
+		} catch (e) {
+			last = e;
+			if ((e as NodeJS.ErrnoException)?.code !== "ENOENT") throw e;
+		}
+	}
+	throw new Error(
+		`arkuse binary not found (install: brew install JeffreyJYZ/tap/cmduse)${last instanceof Error && last.message !== last.name ? ` — ${last.message}` : ""}`,
 		{ cause: last },
 	);
 }

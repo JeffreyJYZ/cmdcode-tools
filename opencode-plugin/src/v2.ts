@@ -17,7 +17,14 @@
 // window math and formatting (see ./cli.ts).
 import type { Plugin as PluginNs } from "@opencode/plugin";
 import { inputModalities, modelCost, reasoningVariants } from "./catalog";
-import { ocuseArgs, runCmduse, runMpc, runOcuse } from "./cli";
+import {
+	arkuseArgs,
+	ocuseArgs,
+	runArkuse,
+	runCmduse,
+	runMpc,
+	runOcuse,
+} from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import { KNOWN_MODELS } from "./constants/gating";
 import {
@@ -25,6 +32,8 @@ import {
 	DEFAULT_OUTPUT_TOKENS,
 } from "./constants/models";
 import {
+	ARKUSE_TOOL_ARG_DESCRIPTION,
+	ARKUSE_TOOL_DESCRIPTION,
 	INTEGRATION_ID,
 	INTEGRATION_NAME,
 	LANES,
@@ -392,6 +401,31 @@ export const commandCodeV2: PluginNs.Plugin = {
 							: undefined;
 					return {
 						content: await runOcuse(ocuseArgs(arg)),
+					};
+				},
+			} as never);
+			// arkuse_usage: the same pattern for the Volcengine ARK side. Empty
+			// arg means `-1`, never the watch loop.
+			editor.add({
+				name: "arkuse_usage",
+				description: ARKUSE_TOOL_DESCRIPTION,
+				input: {
+					type: "object",
+					properties: {
+						arg: {
+							type: "string",
+							description: ARKUSE_TOOL_ARG_DESCRIPTION,
+						},
+					},
+					additionalProperties: false,
+				},
+				async execute(input: unknown) {
+					const arg =
+						typeof (input as { arg?: unknown })?.arg === "string"
+							? (input as { arg: string }).arg
+							: undefined;
+					return {
+						content: await runArkuse(arkuseArgs(arg)),
 					};
 				},
 			} as never);

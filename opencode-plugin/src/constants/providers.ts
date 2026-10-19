@@ -28,6 +28,9 @@ export const CMD_USAGE_COMMAND_ID = "command-code.cmd-usage";
 /** The v2 /ocuse-usage slash command id (registered and bound in tui.tsx). */
 export const OCUSE_USAGE_COMMAND_ID = "command-code.ocuse-usage";
 
+/** The v2 /arkuse-usage slash command id (registered and bound in tui.tsx). */
+export const ARKUSE_USAGE_COMMAND_ID = "command-code.arkuse-usage";
+
 /** The cmd_usage tool description, shared by the v1 and v2 halves. */
 export const TOOL_DESCRIPTION =
 	"Fetch live Command Code plan/usage: plan name, monthly credits, 5-hour & weekly windows, billing-period summary. Pass arg='plans' for the plan comparison table only, or extra cmduse flags (e.g. '--tz +05:30 daily').";
@@ -47,6 +50,14 @@ export const OCUSE_TOOL_DESCRIPTION =
 /** The ocuse_usage `arg` description, shared by the v1 and v2 halves. */
 export const OCUSE_TOOL_ARG_DESCRIPTION =
 	"Optional: extra ocuse flags (e.g. '--plan go-plus', 'daily', '--json'); empty means the one-shot dashboard";
+
+/** The arkuse_usage tool description, shared by the v1 and v2 halves. */
+export const ARKUSE_TOOL_DESCRIPTION =
+	"Fetch live Volcengine ARK Agent Plan usage in AFP: the plan's 5-hour/weekly/monthly meters from arkcli, this machine's per-model AFP, and the reconciliation between them. Defaults to the one-shot dashboard; pass extra arkuse flags for more (e.g. 'daily', '--plan medium', '--json').";
+
+/** The arkuse_usage `arg` description, shared by the v1 and v2 halves. */
+export const ARKUSE_TOOL_ARG_DESCRIPTION =
+	"Optional: extra arkuse flags (e.g. '--plan medium', '--profile <name>', 'daily', '--json'); empty means the one-shot dashboard";
 
 export type Lane = {
 	id: "command-code-anthropic" | "command-code-openai";

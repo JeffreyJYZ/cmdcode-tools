@@ -6,6 +6,8 @@ import { z } from "zod";
 import { canonicalizeModelId, evaluateModelAccess } from "../src/access";
 import { MODEL_CATEGORIES, PLAN_RULES } from "../src/constants/gating";
 import {
+	ARKUSE_TOOL_ARG_DESCRIPTION,
+	ARKUSE_TOOL_DESCRIPTION,
 	MPC_TOOL_ARG_DESCRIPTION,
 	MPC_TOOL_DESCRIPTION,
 	OCUSE_TOOL_ARG_DESCRIPTION,
@@ -140,12 +142,13 @@ describe("tool registrations", () => {
 		const plugin = await (
 			CommandCodePlugin as unknown as (input: unknown) => Promise<{
 				tool: Record<
-					"cmd_usage" | "mpc_prices" | "ocuse_usage",
+					"cmd_usage" | "mpc_prices" | "ocuse_usage" | "arkuse_usage",
 					ToolEntry
 				>;
 			}>
 		)({});
 		expect(Object.keys(plugin.tool).sort()).toEqual([
+			"arkuse_usage",
 			"cmd_usage",
 			"mpc_prices",
 			"ocuse_usage",
@@ -154,6 +157,9 @@ describe("tool registrations", () => {
 		expect(plugin.tool.mpc_prices.description).toBe(MPC_TOOL_DESCRIPTION);
 		expect(plugin.tool.ocuse_usage.description).toBe(
 			OCUSE_TOOL_DESCRIPTION,
+		);
+		expect(plugin.tool.arkuse_usage.description).toBe(
+			ARKUSE_TOOL_DESCRIPTION,
 		);
 		const schema = z.object(plugin.tool.mpc_prices.args);
 		expect(schema.parse({})).toEqual({});
@@ -195,6 +201,7 @@ describe("tool registrations", () => {
 			"cmd_usage",
 			"mpc_prices",
 			"ocuse_usage",
+			"arkuse_usage",
 		]);
 		const mpc = added.find((t) => t.name === "mpc_prices");
 		expect(mpc?.description).toBe(MPC_TOOL_DESCRIPTION);
@@ -205,6 +212,11 @@ describe("tool registrations", () => {
 		expect(ocuse?.description).toBe(OCUSE_TOOL_DESCRIPTION);
 		expect(ocuse?.input.properties.arg.description).toBe(
 			OCUSE_TOOL_ARG_DESCRIPTION,
+		);
+		const arkuse = added.find((t) => t.name === "arkuse_usage");
+		expect(arkuse?.description).toBe(ARKUSE_TOOL_DESCRIPTION);
+		expect(arkuse?.input.properties.arg.description).toBe(
+			ARKUSE_TOOL_ARG_DESCRIPTION,
 		);
 	});
 	test("mpc_prices description answers cost per request and per month", () => {

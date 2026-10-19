@@ -13,8 +13,9 @@
 import type { Plugin as TuiPluginNs } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
 import type { JSX } from "@opentui/solid";
-import { ocuseArgs, runCmduse, runOcuse } from "./cli";
+import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runOcuse } from "./cli";
 import {
+	ARKUSE_USAGE_COMMAND_ID,
 	CMD_USAGE_COMMAND_ID,
 	OCUSE_USAGE_COMMAND_ID,
 	TUI_ID,
@@ -184,8 +185,42 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 								});
 							},
 						},
+						{
+							id: ARKUSE_USAGE_COMMAND_ID,
+							title: "Volcengine ARK usage",
+							group: "Command Code",
+							slash: { name: "arkuse-usage", arguments: true },
+							enabled: () => true,
+							suggested: true,
+							// Empty input means `-1` (see `arkuseArgs`): a bare
+							// arkuse is the live watch loop.
+							run: async (input) => {
+								let text: string;
+								try {
+									text = await runArkuse(arkuseArgs(input));
+								} catch (error) {
+									ctx.ui.toast.show({
+										title: "arkuse-usage failed",
+										message:
+											error instanceof Error
+												? error.message
+												: String(error),
+										variant: "error",
+									});
+									return;
+								}
+								await ctx.ui.dialog.alert({
+									title: "Volcengine ARK usage",
+									message: text.trimEnd(),
+								});
+							},
+						},
 					],
-					bindings: [CMD_USAGE_COMMAND_ID, OCUSE_USAGE_COMMAND_ID],
+					bindings: [
+						CMD_USAGE_COMMAND_ID,
+						OCUSE_USAGE_COMMAND_ID,
+						ARKUSE_USAGE_COMMAND_ID,
+					],
 				}));
 			}) as unknown as () => JSX.Element,
 		});

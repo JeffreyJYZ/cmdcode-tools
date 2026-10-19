@@ -9,7 +9,14 @@ import { z } from "zod";
 import pkg from "../package.json";
 import { whoami } from "./api";
 import { modelCost, supportsImage } from "./catalog";
-import { ocuseArgs, runCmduse, runMpc, runOcuse } from "./cli";
+import {
+	arkuseArgs,
+	ocuseArgs,
+	runArkuse,
+	runCmduse,
+	runMpc,
+	runOcuse,
+} from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import {
 	DEFAULT_CONTEXT_LENGTH,
@@ -17,6 +24,8 @@ import {
 	MODEL_CAPABILITIES,
 } from "./constants/models";
 import {
+	ARKUSE_TOOL_ARG_DESCRIPTION,
+	ARKUSE_TOOL_DESCRIPTION,
 	LANES,
 	MPC_TOOL_ARG_DESCRIPTION,
 	MPC_TOOL_DESCRIPTION,
@@ -312,6 +321,14 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 				template:
 					"Call the ocuse_usage tool and present its markdown output verbatim to the user. If the tool errors, the Go key is missing or has no subscription — usage still shows where the store has it. $ARGUMENTS",
 			};
+			// /arkuse-usage command -> agent calls the arkuse_usage tool, for the
+			// Volcengine ARK side. Same shape again.
+			cfg.command["arkuse-usage"] = {
+				description:
+					"Show Volcengine ARK Agent Plan usage: AFP meters per model",
+				template:
+					"Call the arkuse_usage tool and present its markdown output verbatim to the user. If the tool errors, arkcli or its agent-plan profile is missing — usage still shows where the store has it. $ARGUMENTS",
+			};
 		},
 
 		// opencode >=1.14.49 resolves the model list here, with auth injected.
@@ -379,6 +396,20 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 				// `ocuseArgs`): a bare ocuse is the watch loop.
 				async execute(args) {
 					return runOcuse(ocuseArgs(args.arg));
+				},
+			}),
+			arkuse_usage: tool({
+				description: ARKUSE_TOOL_DESCRIPTION,
+				args: {
+					arg: z
+						.string()
+						.optional()
+						.describe(ARKUSE_TOOL_ARG_DESCRIPTION),
+				},
+				// Same thin-spawn contract for ARK: empty arg means `-1`, never
+				// the watch loop.
+				async execute(args) {
+					return runArkuse(arkuseArgs(args.arg));
 				},
 			}),
 		},

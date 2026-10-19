@@ -25,3 +25,10 @@ export const OCUSE_BIN_CANDIDATES: readonly string[] = [
 	"/opt/homebrew/bin/ocuse",
 	"/usr/local/bin/ocuse",
 ];
+
+/** Fallback lookup paths for arkuse (ARKUSE_BIN wins when set). */
+export const ARKUSE_BIN_CANDIDATES: readonly string[] = [
+	"arkuse",
+	"/opt/homebrew/bin/arkuse",
+	"/usr/local/bin/arkuse",
+];
