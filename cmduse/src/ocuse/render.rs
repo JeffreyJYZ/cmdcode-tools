@@ -286,7 +286,52 @@ fn exceeded(model: &ModelUsage) -> bool {
     crate::ocuse::window::over_window(model).is_some()
 }
 
-fn model_row(ink: &Ink, model: &ModelUsage, total_cost: f64) -> String {
+/// The period's three biggest models, with their share of *all* use — money in
+/// one column pair, tokens (input + output) in the other.
+///
+/// The share used to hang off each model row as a single trailing `%` of spend.
+/// It moved here because a share only means something against the whole, and
+/// the whole is what this block states; the row table below is per model
+/// against its own limit, which is a different denominator. Tokens are counted
+/// without cache reads: those run an order of magnitude larger and would make
+/// every money share look like a rounding error.
+fn top_models(ink: &Ink, report: &Report, count: usize) -> String {
+    let tokens = |model: &ModelUsage| model.month.input + model.month.output;
+    let total_cost = report.month.cost;
+    let total_tokens: u64 = report.models.iter().map(tokens).sum();
+    if report.models.is_empty() || (total_cost <= 0.0 && total_tokens == 0) {
+        return String::new();
+    }
+    let mut out = format!(
+        "\n{}TOP {} MODELS{} {} {} {} {}\n",
+        ink.bold,
+        count,
+        ink.reset,
+        ink.dim_on(format!("{:<15}", "by period spend")),
+        ink.dim_on(format!("{:>10}", "MONEY")),
+        ink.dim_on(format!("{:>8}", "SHARE")),
+        ink.dim_on(format!("{:>10} {:>8}", "TOKENS", "SHARE")),
+    );
+    for model in report.models.iter().take(count) {
+        let money_cell = ink.cyan_on(format!(
+            "{:>10} {:>8}",
+            money(model.month.cost),
+            pct(model.month.cost, total_cost),
+        ));
+        out.push_str(&format!(
+            "{:<28} {money_cell} {:>10} {:>8}\n",
+            model.id,
+            compact(tokens(model)),
+            pct(tokens(model) as f64, total_tokens as f64),
+        ));
+    }
+    out
+}
+
+/// One row of the model table: limit, spend, share of that limit used, the two
+/// rolling windows, and requests. The share of *period* spend moved to
+/// `top_models`, so this row stays a per-model-vs-its-own-limit line.
+fn model_row(ink: &Ink, model: &ModelUsage) -> String {
     let limit = match model.limit {
         Some(limit) => money(limit),
         None => ink.dim_on("—".into()),
@@ -309,19 +354,14 @@ fn model_row(ink: &Ink, model: &ModelUsage, total_cost: f64) -> String {
         None => ink.dim_on(format!("{use_text:>7}")),
     };
     // Actionable before informational (cmduse's ordering): the flag sits beside
-    // the model so a clipped frame keeps it; the share is the first thing to go.
+    // the model so a clipped frame keeps it.
     let flag = if exceeded(model) {
         format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
     } else {
         String::new()
     };
-    let share = if total_cost > 0.0 {
-        ink.dim_on(format!(" {:>5.1}%", model.month.cost / total_cost * 100.0))
-    } else {
-        String::new()
-    };
     format!(
-        "{:<28}{flag} {:>7} {spent} {use_cell} {} {} {:>7}{share}\n",
+        "{:<28}{flag} {:>7} {spent} {use_cell} {} {} {:>7}\n",
         model.id,
         limit,
         // Go windows are per model too: 5h = 20% of the limit, weekly = 50%.
@@ -374,8 +414,18 @@ pub fn render_text(
         .period_end_ms
         .map(|ms| format!(" · ends {}", date_of(ms / 86_400_000)))
         .unwrap_or_default();
+    // The period line leads with the one share the whole dashboard is about:
+    // how much of the account's monthly limit this period has eaten. It is the
+    // server's own number, so it prints as it arrived (`56`, never `56.0`) and
+    // is absent — not estimated — when no account answered, because Go's limits
+    // are per model and there is no period-wide pool to divide by.
+    let used = report
+        .account
+        .as_ref()
+        .map(|account| format!(" · {}% of limit", c(given_pct(account.monthly.percent))))
+        .unwrap_or_default();
     out.push_str(&format!(
-        "period: {}{end} · {} requests · {} · {} in / {} out tokens\n",
+        "period: {}{end} · {} requests · {} · {} in / {} out tokens{used}\n",
         report.period_label,
         c(compact(report.month.requests)),
         c(money(report.month.cost)),
@@ -506,13 +556,13 @@ pub fn render_text(
         None => {}
     }
 
+    out.push_str(&top_models(&ink, report, 3));
     out.push_str(&format!(
         "\n{}MODEL                            LIMIT      SPENT     USE       5H       WK     REQ{}\n",
         ink.bold, ink.reset
     ));
-    let total_cost = report.month.cost;
     for model in report.models.iter().take(rows) {
-        out.push_str(&model_row(&ink, model, total_cost));
+        out.push_str(&model_row(&ink, model));
     }
     if report.models.len() > rows {
         out.push_str(&format!(
@@ -2047,13 +2097,87 @@ mod tests {
         // The fixture is at 50% of the month but over the 5-hour share, and Go
         // meters per model per window: the row must say so, not just glow red.
         let plain = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        // The TOP 3 block above the table also opens with the model id, so the
+        // row under test is the first one *after* the table's own header.
         let row = plain
             .lines()
+            .skip_while(|line| !line.starts_with("MODEL "))
             .find(|line| line.starts_with("glm-5.3-flash"))
             .expect("the model row");
         assert!(row.contains("LIMIT EXCEEDED"), "{row}");
-        // Share last, flag early: the informational column is clipped first.
-        assert!(row.trim_end().ends_with('%'), "share ends the row: {row}");
+        // The share of period spend moved to the TOP 3 block, so a model row
+        // ends on its own request count and carries no trailing `%`.
+        assert!(!row.trim_end().ends_with('%'), "no trailing share: {row}");
+        assert!(row.trim_end().ends_with(char::is_numeric), "{row}");
+    }
+
+    /// The period line states the one share the whole dashboard is about — the
+    /// server's own monthly percentage — and states nothing when no account
+    /// answered (Go's limits are per model; there is no period-wide pool).
+    #[test]
+    fn period_line_carries_the_account_monthly_share() {
+        let with = render_text(
+            &report_with_account(),
+            "/tmp/opencode.db",
+            10,
+            false,
+            DEFAULT_BAR_WIDTH,
+        );
+        let header = with
+            .lines()
+            .find(|line| line.starts_with("period:"))
+            .expect("the period line");
+        assert!(header.contains("% of limit"), "{header}");
+        assert!(
+            header.contains("29%"),
+            "the fixture's monthly meter: {header}"
+        );
+
+        let without = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        let header = without
+            .lines()
+            .find(|line| line.starts_with("period:"))
+            .expect("the period line");
+        assert!(
+            !header.contains("of limit"),
+            "no account, no share: {header}"
+        );
+    }
+
+    /// The TOP 3 block splits the period between money and tokens, and both
+    /// shares are of the whole — not of the model's own limit.
+    #[test]
+    fn top_models_state_their_share_of_money_and_tokens() {
+        // Tokens, so both columns have a real denominator: the store prices a
+        // row from its tokens, and the shared fixture's $30 is a recorded
+        // figure with no tokens behind it.
+        let now = 1_800_000_000_000;
+        let rows = vec![Row {
+            at_ms: now - 60_000,
+            provider: "opencode-go".into(),
+            model: "glm-5.3-flash".into(),
+            input: 1_200_000,
+            output: 400_000,
+            ..Default::default()
+        }];
+        let report =
+            crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
+        let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        let block = text
+            .lines()
+            .skip_while(|line| !line.starts_with("TOP 3 MODELS"))
+            .take_while(|line| !line.starts_with("MODEL "))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(block.contains("glm-5.3-flash"), "{block}");
+        assert!(
+            block.contains("MONEY") && block.contains("TOKENS"),
+            "{block}"
+        );
+        // One model takes the whole period, so both shares are 100%.
+        assert_eq!(block.matches("100.0%").count(), 2, "{block}");
+        // A single-model period renders no share on the row table above it.
+        assert!(!text.contains("of period spend"), "{text}");
     }
 
     #[test]

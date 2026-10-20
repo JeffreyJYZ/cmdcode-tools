@@ -338,8 +338,21 @@ pub fn render(s: &Snapshot, bar_width: usize) -> String {
     }
 
     o.push_str(&format!("\n{BOLD}This billing period{RESET}\n"));
+    // The dashboard's one period-wide share: how much of the plan's monthly
+    // credit pool this period has eaten. Only a plan with a published cap has a
+    // denominator, and the figure is computed here — so it keeps `pct`'s one
+    // decimal rather than the server's whole percent.
+    let credit_share = plan_monthly_cap(&s.sub.plan_id)
+        .filter(|cap| *cap > 0.0)
+        .map(|cap| {
+            format!(
+                " · {CYAN}{}{RESET} of credits",
+                cmduse_core::pct(s.summary.total_cost.unwrap_or(0.0), cap)
+            )
+        })
+        .unwrap_or_default();
     o.push_str(&format!(
-        " Requests {CYAN}{}{RESET} · Cost {CYAN}{}{RESET} · Tokens {CYAN}{}{RESET} in / {CYAN}{}{RESET} out · Success {CYAN}{:.0}%{RESET}\n",
+        " Requests {CYAN}{}{RESET} · Cost {CYAN}{}{RESET} · Tokens {CYAN}{}{RESET} in / {CYAN}{}{RESET} out · Success {CYAN}{:.0}%{RESET}{credit_share}\n",
         compact(s.summary.total_count.unwrap_or(0)),
         money(s.summary.total_cost.unwrap_or(0.0)),
         compact(s.summary.total_tokens_in.unwrap_or(0)),
@@ -409,8 +422,19 @@ pub fn render_plain(s: &Snapshot) -> String {
             false,
         ));
     }
+    // The same period-wide share the coloured dashboard prints: this period's
+    // cost against the plan's monthly credit pool, when the plan publishes one.
+    let credit_share = plan_monthly_cap(&s.sub.plan_id)
+        .filter(|cap| *cap > 0.0)
+        .map(|cap| {
+            format!(
+                " · {} of credits",
+                cmduse_core::pct(s.summary.total_cost.unwrap_or(0.0), cap)
+            )
+        })
+        .unwrap_or_default();
     o.push_str(&format!(
-        "Period: {} requests, {}, {} in/{} out tokens\n",
+        "Period: {} requests, {}, {} in/{} out tokens{credit_share}\n",
         s.summary.total_count.unwrap_or(0),
         money(s.summary.total_cost.unwrap_or(0.0)),
         compact(s.summary.total_tokens_in.unwrap_or(0)),

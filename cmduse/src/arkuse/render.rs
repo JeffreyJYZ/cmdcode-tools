@@ -8,7 +8,7 @@
 use crate::arkuse::ark;
 use crate::arkuse::window::{Report, Totals};
 use crate::report_render::Fmt;
-use cmduse_core::{compact, duration};
+use cmduse_core::{compact, duration, pct};
 
 /// Gauge width for the window bars when neither config nor `--bar-width` says
 /// otherwise — cmduse's own default.
@@ -348,27 +348,65 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64, catalog: &ark::Catalo
     }
 }
 
-/// One model's row: id, coefficient in force, AFP and requests this period, and
-/// its share of the period's AFP. No per-model limit exists on ARK — the quota is
-/// plan-level — so there is no USE column to invent.
-fn model_row(ink: &Ink, model: &crate::arkuse::window::ModelUsage, total_afp: f64) -> String {
+/// One model's row: id, coefficient in force, AFP and requests this period. No
+/// per-model limit exists on ARK — the quota is plan-level — so there is no USE
+/// column to invent. The share of *period* AFP moved to `top_models`, so this
+/// row states only what this model itself did.
+fn model_row(ink: &Ink, model: &crate::arkuse::window::ModelUsage) -> String {
     let coef = format!("{:>5.2}", model.coef);
     let coef_cell = if ink.colour {
         format!("{}{coef}{}", ink.cyan, ink.reset)
     } else {
         coef
     };
-    let share = if total_afp > 0.0 {
-        ink.dim_on(format!(" {:>5.1}%", model.month.afp / total_afp * 100.0))
-    } else {
-        String::new()
-    };
     format!(
-        "{:<28} {coef_cell} {:>9} {:>7}{share}\n",
+        "{:<28} {coef_cell} {:>9} {:>7}\n",
         model.id,
         afp(model.month.afp),
         compact(model.month.requests),
     )
+}
+
+/// The period's three biggest models, with their share of *all* use — month AFP
+/// in one column pair, tokens (input + output) in the other.
+///
+/// The share used to hang off each model row as a single trailing `%` of AFP.
+/// It moved here because a share only means something against the whole, and
+/// the whole is what this block states; the row table below is per model with no
+/// limit to divide by (the quota is plan-level, not per model). Tokens are
+/// counted without cache reads: those run an order of magnitude larger and
+/// would make every AFP share look like a rounding error.
+fn top_models(ink: &Ink, report: &Report, count: usize) -> String {
+    let tokens = |model: &crate::arkuse::window::ModelUsage| model.month.input + model.month.output;
+    let total_afp = report.month.afp;
+    let total_tokens: u64 = report.models.iter().map(tokens).sum();
+    if report.models.is_empty() || (total_afp <= 0.0 && total_tokens == 0) {
+        return String::new();
+    }
+    let mut out = format!(
+        "\n{}TOP {} MODELS{} {} {} {} {}\n",
+        ink.bold,
+        count,
+        ink.reset,
+        ink.dim_on(format!("{:<15}", "by month AFP")),
+        ink.dim_on(format!("{:>9}", "AFP")),
+        ink.dim_on(format!("{:>8}", "SHARE")),
+        ink.dim_on(format!("{:>10} {:>8}", "TOKENS", "SHARE")),
+    );
+    for model in report.models.iter().take(count) {
+        let afp_cell = ink.cyan_on(format!(
+            "{:>9} {:>8}",
+            afp(model.month.afp),
+            pct(model.month.afp, total_afp),
+        ));
+        out.push_str(&format!(
+            "{:<28} {afp_cell} {:>10} {:>8}\n",
+            model.id,
+            compact(tokens(model)),
+            pct(tokens(model) as f64, total_tokens as f64),
+        ));
+    }
+    out
 }
 
 /// `limit` rows to show; `usize::MAX` for all.
@@ -406,8 +444,18 @@ pub fn render_text(
         })
         .unwrap_or_default();
     let start = date_of((report.since_ms + report.offset_secs * 1000).div_euclid(86_400_000));
+    // The period line states the one share the whole dashboard is about: how
+    // much of the plan's monthly quota is gone. It is the control plane's own
+    // number, so it prints as it arrived (`53`, never `53.0`) and is absent —
+    // not estimated — when no account answered, because the local cut has no
+    // quota of its own to divide by.
+    let used = report
+        .account
+        .as_ref()
+        .map(|account| format!(" · {}% of limit", c(given_pct(account.monthly.percent))))
+        .unwrap_or_default();
     out.push_str(&format!(
-        "period: {start}{end} · {} requests · {} AFP ({}) · {} in / {} out tokens\n",
+        "period: {start}{end} · {} requests · {} AFP ({}) · {} in / {} out tokens{used}\n",
         c(compact(report.month.requests)),
         c(afp(report.month.afp)),
         c(yuan(catalog.yuan(report.month.afp))),
@@ -586,13 +634,13 @@ pub fn render_text(
         }
     }
 
+    out.push_str(&top_models(&ink, report, 3));
     out.push_str(&format!(
-        "\n{}MODEL                            COEF       AFP     REQ  SHARE{}\n",
+        "\n{}MODEL                            COEF       AFP     REQ{}\n",
         ink.bold, ink.reset
     ));
-    let total_afp = report.month.afp;
     for model in report.models.iter().take(rows) {
-        out.push_str(&model_row(&ink, model, total_afp));
+        out.push_str(&model_row(&ink, model));
     }
     if report.models.len() > rows {
         out.push_str(&format!(
@@ -1660,6 +1708,16 @@ mod tests {
         crate::arkuse::api::Meter::from_parts("ok", percent, used, quota, reset, None)
     }
 
+    /// The shape `cli.rs` assembles once the control plane answered: `build`
+    /// cuts the windows from the meters, then the account itself rides on the
+    /// report for the header and the AGENT PLAN rows.
+    fn metered_account(account: &crate::arkuse::api::Usage) -> Report {
+        let mut report = metered(account);
+        report.account = Some(account.clone());
+        report.period_end_ms = account.monthly.reset_ms();
+        report
+    }
+
     #[test]
     fn a_local_row_still_reads_used_over_quota_and_a_reset() {
         // Without the control plane the plan's published split stands in for the
@@ -1713,6 +1771,72 @@ mod tests {
             "the server's own share: {five}"
         );
         assert!(five.contains("resets"), "a derived countdown: {five}");
+    }
+
+    /// The period line states the one share the whole dashboard is about — the
+    /// control plane's own monthly percentage — and states nothing when no
+    /// account answered (the local rows carry their own labelled estimate).
+    #[test]
+    fn period_line_carries_the_account_monthly_share() {
+        // 53,000 of 100,000 AFP: the server's own figure, printed as a whole
+        // percent — `53`, never `53.0`.
+        let account = crate::arkuse::api::Usage {
+            five_hour: meter(0.0, 10_000.0, None),
+            daily: None,
+            weekly: meter(2_975.67, 35_000.0, Some("2026-10-26T00:00:00+08:00")),
+            monthly: meter(53_000.0, 100_000.0, Some("2026-11-19T23:59:59+08:00")),
+            tier: Some("medium".into()),
+            profile: "agent-plan_cn-beijing_medium".into(),
+        };
+        let with = render_text(
+            &metered_account(&account),
+            "/tmp/opencode.db",
+            10,
+            false,
+            DEFAULT_BAR_WIDTH,
+        );
+        let header = with
+            .lines()
+            .find(|line| line.starts_with("period:"))
+            .expect("the period line");
+        assert!(header.contains("53% of limit"), "{header}");
+        assert!(!header.contains("53.0"), "no invented decimal: {header}");
+
+        let without = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        let header = without
+            .lines()
+            .find(|line| line.starts_with("period:"))
+            .expect("the period line");
+        assert!(
+            !header.contains("of limit"),
+            "no account, no share: {header}"
+        );
+    }
+
+    /// The TOP 3 block splits the period between AFP and tokens, and both shares
+    /// are of the whole — not of one model's own window.
+    #[test]
+    fn top_models_state_their_share_of_afp_and_tokens() {
+        let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        let block = text
+            .lines()
+            .skip_while(|line| !line.starts_with("TOP 3 MODELS"))
+            .take_while(|line| !line.starts_with("MODEL "))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(block.contains("deepseek-v4.1-flash"), "{block}");
+        assert!(block.contains("AFP") && block.contains("TOKENS"), "{block}");
+        // One model takes the whole period, so both shares are 100%.
+        assert_eq!(block.matches("100.0%").count(), 2, "{block}");
+        // The row under the table header ends on its requests: the share of
+        // period AFP moved into the block above it.
+        let row = text
+            .lines()
+            .skip_while(|line| !line.starts_with("MODEL "))
+            .find(|line| line.starts_with("deepseek-v4.1-flash"))
+            .expect("the model row");
+        assert!(!row.trim_end().ends_with('%'), "no trailing share: {row}");
+        assert!(row.trim_end().ends_with(char::is_numeric), "{row}");
     }
 
     #[test]

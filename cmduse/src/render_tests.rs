@@ -220,6 +220,35 @@ fn render_free_plan_no_monthly_cap() {
     assert!(out_plain.contains("$61.44 monthly"));
 }
 
+/// The period line carries the one period-wide share the dashboard has: this
+/// period's cost against the plan's monthly credit pool. It is computed here,
+/// so it keeps one decimal, and it is absent on a plan with no published cap.
+#[test]
+fn period_line_carries_the_share_of_monthly_credits() {
+    let s = snapshot_fixture();
+    let cap = plan_monthly_cap(&s.sub.plan_id).expect("GOAT publishes a monthly cap");
+    let share = cmduse_core::pct(s.summary.total_cost.unwrap_or(0.0), cap);
+    // Colour sits between the figure and its label on the coloured frame, so
+    // the contiguous sentence is asserted on plain and the parts on both.
+    let coloured = render(&s, 20);
+    assert!(coloured.contains(&share), "{coloured}");
+    assert!(coloured.contains("of credits"), "{coloured}");
+    let plain = render_plain(&s);
+    assert!(plain.contains(&format!("{share} of credits")), "{plain}");
+    assert!(!plain.contains('\x1b'), "plain must carry no SGR: {plain}");
+
+    let mut free = snapshot_fixture();
+    free.sub.plan_id = "free".into();
+    assert!(
+        !render(&free, 20).contains("of credits"),
+        "no cap, no share"
+    );
+    assert!(
+        !render_plain(&free).contains("of credits"),
+        "no cap, no share"
+    );
+}
+
 #[test]
 fn plain_window_line_has_elapsed_and_pace() {
     // 10% elapsed, spend rate on track to hit cap before reset — same shape

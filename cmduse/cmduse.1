@@ -317,7 +317,7 @@ Usage windows
  Weekly    55.7% <bar> $19.61 / $35.00 . resets in 1d 18h . window 75% elapsed
 
 This billing period
- Requests 2.7K . Cost $26.63 . Tokens 402.1M in / 721.2K out . Success 100%
+ Requests 2.7K . Cost $26.63 . Tokens 402.1M in / 721.2K out . Success 100% . 38.0% of credits
 .fi
 .RE
 When enabled and there was nonzero spend in the last samples, an extra
@@ -360,7 +360,10 @@ assumes a flat spend rate; bursty sessions shift it.
 .TP
 This billing period
 Cumulative request count, cost, input/output tokens (human K/M compact) and
-success rate, from the usage summary endpoint.
+success rate, from the usage summary endpoint.  When the plan table publishes a
+monthly cap, the line ends with this period's share of it,
+\fIN% of credits\fR (cost / cap, computed locally and rounded to one decimal);
+a plan without a published cap omits it rather than invent a denominator.
 .SS Window math (exact)
 A window of length L seconds ends at instant R (epoch ms, from the API or,
 for monthly, the subscription period end parsed as ISO 8601 UTC).  Its start
@@ -843,7 +846,14 @@ to hit cap in\fR ETA, and the monthly row \(em the one budget \(em its
 Each model's table row still compares its own spend
 against its monthly limit; the table's \fI5H\fR/\fIWK\fR columns are local
 rolling windows (this model's spend over the last 5 hours / 7 days), and the
-dashboard says so rather than letting them read as a second opinion.
+dashboard says so rather than letting them read as a second opinion.  Above the
+table a \fITOP 3 MODELS\fR block states the period's own split: each model's
+period spend and its share of all period spend, then its tokens (input +
+output) and their share of all tokens (cache reads excluded).  The row table
+below carries no share of its own \(em a share needs a whole, and that block is
+the whole.  When the endpoint answered, the \fIperiod:\fR line also ends with
+the account's monthly share, \fIN% of limit\fR, exactly as the server published
+it (a whole \fI53\fR, never \fI53.0\fR).
 .TP
 Without the endpoint \(em no Go key, no network, or \fB\-\-no\-api\fR \(em the
 window lines are a local estimate and are labelled as one: the rows carry
@@ -1014,7 +1024,12 @@ upgrade the monthly quota is pro\-rated while the 5\-hour and weekly windows
 reset to the new tier immediately; plain API calls against the plan base URL
 are forbidden (ban risk); the quota is shared across every harness; and
 postpaid overflow is opt\-in.  Because ARK limits the plan rather than a model,
-\fInotify_on_cap\fR fires per window meter.
+\fInotify_on_cap\fR fires per window meter.  The model block states each
+model's month AFP and tokens without a share of its own: a \fITOP 3 MODELS\fR
+block above the table carries the period's split (AFP and its share of period
+AFP, then tokens and their share of all tokens), and the \fIperiod:\fR line
+ends with the control plane's own monthly share, \fIN% of limit\fR, verbatim
+(\fI53\fR, never \fI53.0\fR), whenever an account answered.
 .SS arkuse files
 .TP
 .I ~/.config/arkuse/config.json
