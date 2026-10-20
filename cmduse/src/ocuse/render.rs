@@ -92,14 +92,21 @@ impl Ink {
         }
     }
 
-    /// Pct + gauge, exactly cmduse's `render::bar`; empty when colour is off so
-    /// the plain frame keeps its script-friendly column layout.
-    fn bar(&self, used: f64, cap: f64) -> String {
-        if self.colour {
-            crate::render::bar(used, cap, self.bar_width)
-        } else {
-            String::new()
+    /// The share plus cmduse's gauge, and the row's only percentage in colour
+    /// mode — the body drops its own `x% of limit` so the figure is not printed
+    /// twice. The label is passed in because the endpoint's own percentage is
+    /// printed verbatim (`53`, never `53.0`). Empty when colour is off, so the
+    /// plain frame keeps its script-friendly layout and its own share.
+    fn bar_label(&self, pct_used: f64, label: &str) -> String {
+        if !self.colour {
+            return String::new();
         }
+        format!(
+            "{}{label:>5}%{} {}",
+            self.for_pct(pct_used),
+            self.reset,
+            crate::render::gauge(pct_used, 100.0, self.bar_width),
+        )
     }
 }
 
@@ -206,9 +213,13 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
     // limit is $40" — the console meters at roughly twice the cost this store
     // records, so the two bases never meet. It stays a local value for the pace
     // and the even-burn figure, both of which are ratios in this store's dollars.
-    let paren = match share {
-        Some(p) => format!(" · {}% of limit", given_pct(p)),
-        None => String::new(),
+    let paren = match (share, ink.colour) {
+        // The gauge carries the share in colour mode; repeating it here read as
+        // `5% ━━━━━ 12.34 · 5% of limit`. The plain frame has no gauge, so it
+        // keeps the figure.
+        (Some(_), true) => String::new(),
+        (Some(p), false) => format!(" · {}% of limit", given_pct(p)),
+        (None, _) => String::new(),
     };
     // Composed in pieces: the pair and the pro-rata figure are conditional, and
     // one format string for both branches is a placeholder count waiting to drift.
@@ -221,7 +232,7 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
         // when it answered. The local estimate has no share, so its rows
         // carry no bar — spend alone, never a gauge against a pool.
         let bar = match share {
-            Some(p) => format!("{} ", ink.bar(p, 100.0)),
+            Some(p) => format!("{} ", ink.bar_label(p, &given_pct(p))),
             None => String::new(),
         };
         format!(
@@ -1477,6 +1488,38 @@ mod tests {
         assert_eq!(implied_cap(20.45, 0.04), None);
         assert_eq!(implied_cap(20.45, 0.1), Some(20450.0));
         assert_eq!(implied_cap(0.0, 1.0), Some(0.0));
+    }
+
+    /// The colour frame prints the share once. It used to read
+    /// `5% ━━━━━━ $30.00 · 5% of limit`: the gauge and the body each printed the
+    /// same percentage, and the gauge's own `{:.1}` also turned the endpoint's
+    /// whole `5` into `5.0`. The plain frame has no gauge, so it keeps the figure.
+    #[test]
+    fn the_gauge_carries_the_share_and_the_body_does_not_repeat_it() {
+        let colour = render_text(
+            &report_with_account(),
+            "/tmp/opencode.db",
+            10,
+            true,
+            DEFAULT_BAR_WIDTH,
+        );
+        let five = colour
+            .lines()
+            .find(|line| line.contains("5-hour"))
+            .expect("a 5-hour row");
+        assert!(!five.contains("of limit"), "no repeated share: {five}");
+        assert!(
+            five.contains("    5%"),
+            "the endpoint's whole figure: {five}"
+        );
+        let plain = render_text(
+            &report_with_account(),
+            "/tmp/opencode.db",
+            10,
+            false,
+            DEFAULT_BAR_WIDTH,
+        );
+        assert!(plain.contains("· 5% of limit"), "{plain}");
     }
 
     /// A pace line needs a cap the burn can actually reach before the reset.
