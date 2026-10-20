@@ -16,3 +16,11 @@ export const STATE_VERSION = 2;
 
 /** Real rc files a nested interactive/login shell would look for under ZDOTDIR. */
 export const LINKED = [".zshrc", ".zprofile", ".zlogin"] as const;
+
+/**
+ * The global instruction file the alias index is written into, and the markers
+ * that fence it. Everything outside the pair belongs to the user.
+ */
+export const AGENTS_FILE = "AGENTS.md";
+export const ALIAS_BLOCK_BEGIN = "<!-- shell-rc-aliases-begin -->";
+export const ALIAS_BLOCK_END = "<!-- shell-rc-aliases-end -->";

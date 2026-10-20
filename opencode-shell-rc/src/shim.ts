@@ -24,6 +24,7 @@ import {
 } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { agentsFile, hasBlock, syncAliases } from "./aliases";
 import { CAPTURE_MARKER, LINKED, STATE_VERSION } from "./constants/shell-rc";
 
 /** Read `HOME` per call so tests can point it at a temp directory. */
@@ -218,5 +219,17 @@ export function prepare(): void {
 		}
 	}
 
-	refreshIfStale();
+	// The rc that just changed is also the source of the alias index in the
+	// global AGENTS.md: rebuild it on the same trigger, so a new alias reaches
+	// the agent without a restart. Reading the state file's mtime is the only
+	// per-command cost — the extraction itself runs only when the rc moved (or
+	// the block was deleted by hand).
+	const refreshed = refreshIfStale();
+	if (refreshed || !hasBlock(agentsFile())) {
+		try {
+			syncAliases();
+		} catch {
+			// The index is documentation; never fail a shell over it.
+		}
+	}
 }

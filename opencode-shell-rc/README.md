@@ -59,6 +59,29 @@ Per-command cost is ~0ms: the generated state is sourced from `.zshenv`, and the
 
 Non-zsh shells are left completely untouched. If zsh is missing or generation fails, `ZDOTDIR` is not set and the agent shell behaves exactly as before.
 
+## The alias index
+
+The agent shell *has* your aliases, but the model does not know their names — so it types `bun` where `b` would do. The plugin therefore mirrors the aliases **you wrote in `~/.zshrc`** into the bottom of the global `~/.config/opencode/AGENTS.md`, between `<!-- shell-rc-aliases-begin -->` and `<!-- shell-rc-aliases-end -->`:
+
+```markdown
+<!-- shell-rc-aliases-begin -->
+## Shell aliases (auto-generated from ~/.zshrc)
+
+- `b` = `bun`
+- `gs` = `git status`
+- `ls` = `eza --icons=always`
+<!-- shell-rc-aliases-end -->
+```
+
+Only `alias …` statements in `~/.zshrc` itself are indexed — the hundreds of aliases oh-my-zsh adds stay out, and so do zsh's two built-in defaults (`run-help`, `which-command`). The values are still zsh's own: the extracted lines are replayed in a clean `zsh -f` and read back with `alias -L`, so quoting comes out canonical.
+
+Behaviour worth knowing:
+
+- **Idempotent.** The block is rewritten only when its content changes, so an unchanged rc leaves `AGENTS.md`'s mtime alone — opencode watches that file and would otherwise inject an instruction update for nothing.
+- **Yours stays yours.** Everything outside the markers is preserved byte for byte; the block is appended when the markers are absent.
+- **Not exhaustive by design.** An alias defined inside a conditional, a loop, a function, or a sourced file is not indexed — the rc is read as text for *where*, zsh is asked only for *what*.
+- **Always present.** If the block is deleted by hand, the next shell puts it back.
+
 ## Development
 
 ```sh

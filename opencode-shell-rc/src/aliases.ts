@@ -1,0 +1,205 @@
+/**
+ * The alias index: the `alias` commands written in the user's own `~/.zshrc`,
+ * mirrored into the global `AGENTS.md` inside a delimited block.
+ *
+ * The shell state (`state.zsh`) is zsh's serialization of a *loaded* interactive
+ * shell, so it carries every alias oh-my-zsh adds — hundreds of them, which is
+ * not guidance. This answers a narrower question: which aliases did the user
+ * write by hand? Those are the ones worth telling the agent about, so it reaches
+ * for `b`, `ls`, `gs` instead of hard-coding `bun`, `eza`, `git status`.
+ *
+ * Scope is textual on purpose: only `alias …` lines in `~/.zshrc` itself.
+ * Aliases defined inside a conditional, a loop, a function, or a sourced file
+ * are not detected — an honest limit, and the reason this cannot reuse the state
+ * capture, which cannot say where an alias came from.
+ *
+ * The *values* are still zsh's: the extracted lines are replayed in a clean
+ * shell (`zsh -f`, no rc) and read back with `alias -L`, so quoting, several
+ * assignments on one line and `alias -- -` all come out canonical.
+ */
+import { execFileSync } from "node:child_process";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	renameSync,
+	writeFileSync,
+} from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+import {
+	AGENTS_FILE,
+	ALIAS_BLOCK_BEGIN,
+	ALIAS_BLOCK_END,
+} from "./constants/shell-rc";
+
+/** Read `HOME` per call so tests can point it at a temporary directory. */
+const home = (): string => process.env.HOME ?? homedir();
+
+/** The user's own rc — the only file whose aliases this feature reports. */
+export function rcFile(): string {
+	return join(home(), ".zshrc");
+}
+
+/** The global instruction file every opencode session loads. */
+export function agentsFile(): string {
+	const config = process.env.XDG_CONFIG_HOME ?? join(home(), ".config");
+	return join(config, "opencode", AGENTS_FILE);
+}
+
+export interface Alias {
+	name: string;
+	value: string;
+}
+
+/**
+ * Every `alias …` statement in an rc's text, in file order.
+ *
+ * Comment lines are skipped; so is a bare `alias` (which prints, defines
+ * nothing). A line may define several aliases (`alias a=1 b=2`) — zsh splits
+ * those when the lines are replayed, so nothing is parsed here beyond finding
+ * the statements.
+ */
+export function aliasCommands(rc: string): string[] {
+	const commands: string[] = [];
+	for (const line of rc.split("\n")) {
+		const match = line.match(/^\s*alias\s+(.+?)\s*$/);
+		if (!match) continue;
+		const body = match[1];
+		if (!body || body.startsWith("#")) continue;
+		commands.push(`alias ${body}`);
+	}
+	return commands;
+}
+
+/**
+ * `alias -L` output → definitions. Handles the option forms zsh emits for the
+ * awkward names (`alias -- -='cd -'`, `alias -g …=../..`) and unescapes the
+ * single-quoted values (`'\''`).
+ */
+export function parseAliasListing(output: string): Alias[] {
+	const aliases: Alias[] = [];
+	for (const line of output.split("\n")) {
+		if (!line.startsWith("alias ")) continue;
+		let rest = line.slice("alias ".length);
+		// Option words are not part of the definition: `-L`, `-g`, `-r`, `--`.
+		for (;;) {
+			const option = rest.match(/^(-[A-Za-z]+|--)\s+/);
+			if (!option) break;
+			rest = rest.slice(option[0].length);
+		}
+		const equals = rest.indexOf("=");
+		if (equals <= 0) continue;
+		aliases.push({
+			name: rest.slice(0, equals),
+			value: unquote(rest.slice(equals + 1).trim()),
+		});
+	}
+	return aliases;
+}
+
+/** zsh quotes with `'…'` and escapes an inner quote as `'\''`. */
+function unquote(raw: string): string {
+	if (raw.length < 2 || !raw.startsWith("'") || !raw.endsWith("'")) return raw;
+	return raw.slice(1, -1).replaceAll("'\\''", "'");
+}
+
+/**
+ * Replay the extracted statements in a shell with no rc and read the result
+ * back. A statement that fails (it referenced a variable or function the rc
+ * defines later) prints to stderr, which is discarded; the rest still define.
+ */
+function normalize(commands: string[]): Alias[] {
+	if (commands.length === 0) return [];
+	// `unalias -m '*'` first: zsh ships two default aliases (`run-help=man`,
+	// `which-command=whence`) in every shell, and they are not the user's rc.
+	const script = `unalias -m '*' 2>/dev/null\n${commands.join("\n")}\nalias -L`;
+	let output: string;
+	try {
+		output = execFileSync("zsh", ["-f", "-c", script], {
+			encoding: "utf8",
+			stdio: ["ignore", "pipe", "ignore"],
+			env: { ...process.env, ZDOTDIR: home() },
+			timeout: 20_000,
+		});
+	} catch {
+		// No zsh (or it failed): the feature is best effort, like the shim.
+		return [];
+	}
+	return parseAliasListing(output);
+}
+
+/**
+ * The managed block: one bullet per alias, between the markers the writer
+ * replaces. Everything outside the markers belongs to the user and is never
+ * touched.
+ */
+export function renderBlock(aliases: Alias[]): string {
+	const lines = [
+		ALIAS_BLOCK_BEGIN,
+		"## Shell aliases (auto-generated from ~/.zshrc)",
+		"",
+		"Regenerated by `opencode-shell-rc` when the rc changes — edits inside this block are overwritten.",
+		"",
+		...aliases.map((alias) => `- \`${alias.name}\` = \`${alias.value}\``),
+		ALIAS_BLOCK_END,
+	];
+	return lines.join("\n");
+}
+
+/**
+ * Put `block` where the markers say, or append it when they are absent.
+ * Idempotent: the caller compares the result to the current text before writing,
+ * so a file whose aliases have not changed keeps its mtime (opencode watches
+ * this file and would otherwise inject an instruction update for nothing).
+ */
+export function upsertBlock(text: string, block: string): string {
+	const begin = text.indexOf(ALIAS_BLOCK_BEGIN);
+	const end = begin < 0 ? -1 : text.indexOf(ALIAS_BLOCK_END, begin);
+	if (begin >= 0 && end >= 0) {
+		return (
+			text.slice(0, begin) + block + text.slice(end + ALIAS_BLOCK_END.length)
+		);
+	}
+	const base = text.replace(/\s+$/, "");
+	return base.length > 0 ? `${base}\n\n${block}\n` : `${block}\n`;
+}
+
+/**
+ * Read the rc, extract its aliases and make the global `AGENTS.md` say so.
+ * Returns whether the file changed. Best effort throughout: a missing rc, no
+ * zsh or an unwritable file leaves everything exactly as it was.
+ */
+export function syncAliases(): boolean {
+	let rc: string;
+	try {
+		rc = readFileSync(rcFile(), "utf8");
+	} catch {
+		return false;
+	}
+	const block = renderBlock(normalize(aliasCommands(rc)));
+	const path = agentsFile();
+	let current = "";
+	try {
+		current = readFileSync(path, "utf8");
+	} catch {
+		// No global AGENTS.md yet: create it with the block alone.
+	}
+	const next = upsertBlock(current, block);
+	if (next === current) return false;
+	try {
+		mkdirSync(dirname(path), { recursive: true });
+		const temporary = `${path}.tmp`;
+		writeFileSync(temporary, next);
+		renameSync(temporary, path);
+	} catch {
+		return false;
+	}
+	return true;
+}
+
+/** Whether the block is currently in the file (used by tests and `--check`). */
+export function hasBlock(path: string): boolean {
+	if (!existsSync(path)) return false;
+	return readFileSync(path, "utf8").includes(ALIAS_BLOCK_BEGIN);
+}
