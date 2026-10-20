@@ -27,22 +27,34 @@ pub fn color_for(pct: f64) -> &'static str {
     }
 }
 
-pub fn bar(used: f64, cap: f64, width: usize) -> String {
+/// The gauge glyphs alone — no percentage label — for a caller that prints a
+/// figure this helper cannot format: ARK's meter is the control plane's own
+/// number, and `given_pct` must print `53`, never `53.0`.
+pub fn gauge(used: f64, cap: f64, width: usize) -> String {
     let pct = if cap > 0.0 {
         (used / cap).clamp(0.0, 1.0)
     } else {
         0.0
     };
     let filled = (pct * width as f64).round() as usize;
-    let pct_val = pct * 100.0;
     format!(
-        "{}{pct_val:>5.1}%{} {}{}{}{}",
+        "{GREEN}{}{DIM}{}",
+        "━".repeat(filled),
+        "╱".repeat(width - filled)
+    )
+}
+
+pub fn bar(used: f64, cap: f64, width: usize) -> String {
+    let pct_val = if cap > 0.0 {
+        (used / cap).clamp(0.0, 1.0) * 100.0
+    } else {
+        0.0
+    };
+    format!(
+        "{}{pct_val:>5.1}%{} {}",
         color_for(pct_val),
         RESET,
-        GREEN,
-        "━".repeat(filled),
-        DIM,
-        "╱".repeat(width - filled)
+        gauge(used, cap, width)
     )
 }
 

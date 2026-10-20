@@ -89,14 +89,22 @@ impl Ink {
         }
     }
 
-    /// Pct + gauge, exactly cmduse's `render::bar`; empty when colour is off so
-    /// the plain frame keeps its script-friendly column layout.
-    fn bar(&self, used: f64, cap: f64) -> String {
-        if self.colour {
-            crate::render::bar(used, cap, self.bar_width)
-        } else {
-            String::new()
+    /// The percentage plus cmduse's gauge, and the row's only percentage in
+    /// colour mode — the body drops its own `x% of limit` so the figure is not
+    /// printed twice. The label is passed in because ARK's meter is the control
+    /// plane's own figure (`given_pct`, so `53` never becomes `53.0`) while a
+    /// local estimate carries our one decimal. Empty when colour is off, so the
+    /// plain frame keeps its script-friendly column layout and its own share.
+    fn bar_label(&self, pct_used: f64, label: &str) -> String {
+        if !self.colour {
+            return String::new();
         }
+        format!(
+            "{}{label:>5}%{} {}",
+            self.for_pct(pct_used),
+            self.reset,
+            crate::render::gauge(pct_used, 100.0, self.bar_width),
+        )
     }
 }
 
@@ -258,14 +266,23 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64, catalog: &ark::Catalo
                 String::new()
             };
             let pct_tone = ink.for_pct(meter.percent);
+            let share = if ink.colour {
+                // The gauge already carries the share; printing it again here is
+                // the duplication this row used to read as `28.5% ━━━ 28.5% of limit`.
+                String::new()
+            } else {
+                format!(
+                    " · {}{}% of limit{}",
+                    pct_tone,
+                    given_pct(meter.percent),
+                    ink.reset
+                )
+            };
             let tail = format!("{reset_text}{flag}{pace}{thru}{by_now}");
             let body = format!(
-                "{} / {} AFP · {}{}% of limit{} · {}{} local{}{tail}",
+                "{} / {} AFP{share} · {}{} local{}{tail}",
                 afp(meter.used),
                 afp(meter.quota),
-                pct_tone,
-                given_pct(meter.percent),
-                ink.reset,
                 ink.dim,
                 afp(spec.used.afp),
                 ink.reset,
@@ -275,13 +292,14 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64, catalog: &ark::Catalo
         None => {
             let quota = spec.quota.filter(|quota| *quota > 0.0);
             let head = match (quota, local_pct) {
-                (Some(quota), Some(p)) => format!(
-                    "{} / {} AFP · {}{p:.1}% of limit (est.){}",
-                    afp(spec.used.afp),
-                    afp(quota),
-                    ink.for_pct(p),
-                    ink.reset,
-                ),
+                (Some(quota), Some(p)) => {
+                    let share = if ink.colour {
+                        format!("{}(est.){}", ink.dim, ink.reset)
+                    } else {
+                        format!(" · {}{p:.1}% of limit (est.){}", ink.for_pct(p), ink.reset)
+                    };
+                    format!("{} / {} AFP{share}", afp(spec.used.afp), afp(quota),)
+                }
                 _ => format!("{} AFP", afp(spec.used.afp)),
             };
             let pace = match (spec.reset, quota, local_pct) {
@@ -322,7 +340,13 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64, catalog: &ark::Catalo
     };
     if ink.colour {
         let bar = pct
-            .map(|p| format!("{} ", ink.bar(p, 100.0)))
+            .map(|p| {
+                let label = match spec.meter {
+                    Some(meter) => given_pct(meter.percent),
+                    None => format!("{p:.1}"),
+                };
+                format!("{} ", ink.bar_label(p, &label))
+            })
             .unwrap_or_default();
         format!(
             " {}{:<8}{} {}{}{body}{}\n",
@@ -1687,6 +1711,24 @@ mod tests {
             "the server's own share: {five}"
         );
         assert!(five.contains("resets"), "a derived countdown: {five}");
+    }
+
+    #[test]
+    fn the_bar_carries_the_share_so_the_body_does_not_repeat_it() {
+        // The row used to read `28.5% ━━━━━━━ 9,976 / 35,000 AFP · 28.5% of
+        // limit`: one figure, twice, because the gauge and the body each printed
+        // it. The gauge owns the percentage; the body prints the quota pair.
+        let text = render_text(&report(), "/tmp/opencode.db", 10, true, DEFAULT_BAR_WIDTH);
+        let weekly = text
+            .lines()
+            .find(|line| line.contains("Weekly"))
+            .expect("a weekly row");
+        assert!(!weekly.contains("of limit"), "no repeated share: {weekly}");
+        assert!(weekly.contains("/ 35,000 AFP"), "the pair: {weekly}");
+        assert!(
+            weekly.contains("(est.)"),
+            "still marked an estimate: {weekly}"
+        );
     }
 
     #[test]
