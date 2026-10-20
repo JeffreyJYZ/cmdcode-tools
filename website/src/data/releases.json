@@ -1,6 +1,27 @@
 {
-	"generatedAt": "2026-10-19T20:11:32.881Z",
+	"generatedAt": "2026-10-20T02:10:35.528Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.7.24",
+			"name": "cmduse-v0.7.24",
+			"publishedAt": "2026-10-20T02:03:22Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.24",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.23...cmduse-v0.7.24"
+		},
+		{
+			"tag": "cmduse-v0.7.23",
+			"name": "cmduse-v0.7.23",
+			"publishedAt": "2026-10-20T01:58:20Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.23",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.22...cmduse-v0.7.23"
+		},
+		{
+			"tag": "cmduse-v0.7.22",
+			"name": "cmduse-v0.7.22",
+			"publishedAt": "2026-10-20T00:52:57Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.22",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.21...cmduse-v0.7.22"
+		},
 		{
 			"tag": "cmduse-v0.7.21",
 			"name": "cmduse-v0.7.21",
@@ -494,6 +515,12 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.18"
 		},
 		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.19",
+			"date": "2026-10-20T00:51:15.137Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.19"
+		},
+		{
 			"package": "@jeffreyjyz/opencode-context",
 			"version": "0.1.0",
 			"date": "2026-10-04T06:05:56.479Z",
@@ -531,6 +558,24 @@
 		}
 	],
 	"crates": [
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.24",
+			"date": "2026-10-20T01:57:43.639557Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.24"
+		},
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.23",
+			"date": "2026-10-20T01:54:57.818908Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.23"
+		},
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.22",
+			"date": "2026-10-20T00:49:49.173836Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.22"
+		},
 		{
 			"crate": "cmd-usage",
 			"version": "0.7.21",
