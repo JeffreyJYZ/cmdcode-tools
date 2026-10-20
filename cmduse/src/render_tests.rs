@@ -165,6 +165,11 @@ fn render_json_carries_the_period_bounds() {
         parse_iso_utc("2026-09-27T12:23:00.000Z")
     );
     assert_eq!(v["periodEnd"], "2026-09-27");
+    // The family names: `source` says where the figures came from, and
+    // `periodStart` is the start instant under the name the other two binaries
+    // use (they carry it beside `periodStartAt`).
+    assert_eq!(v["source"], "api");
+    assert_eq!(v["periodStart"], v["periodStartAt"]);
 }
 
 #[test]
@@ -321,6 +326,28 @@ fn snapshot_fixture() -> Snapshot {
         now: 1_789_368_000_000 / 1000,
         err: None,
     }
+}
+
+#[test]
+fn statusline_json_uses_the_family_window_names() {
+    // The pool is exhausted (nothing left), so the whole cap counts as spent —
+    // the same arithmetic the dashboard prints as `$70.00 / $70.00`.
+    let v = crate::statusline_json("GOAT", 70.0, 0.0, (1.0, 14.0), (2.0, 35.0));
+    assert_eq!(v["monthSpent"], 70.0);
+    assert_eq!(v["monthCap"], 70.0);
+    assert_eq!(v["fiveHourSpent"], 1.0);
+    assert_eq!(v["weeklyCap"], 35.0);
+    // A partly used pool reports the difference, and never a negative spend.
+    let v = crate::statusline_json("GOAT", 70.0, 30.0, (0.0, 0.0), (0.0, 0.0));
+    assert_eq!(v["monthSpent"], 40.0);
+    let v = crate::statusline_json("GOAT", 70.0, 90.0, (0.0, 0.0), (0.0, 0.0));
+    assert_eq!(v["monthSpent"], 0.0);
+    // The older names keep their old values, as aliases.
+    let v = crate::statusline_json("GOAT", 70.0, 30.0, (1.0, 14.0), (2.0, 35.0));
+    assert_eq!(v["monthlyRemaining"], 30.0);
+    assert_eq!(v["monthlyCap"], 70.0);
+    assert_eq!(v["fiveHourUsed"], 1.0);
+    assert_eq!(v["weeklyUsed"], 2.0);
 }
 
 #[test]

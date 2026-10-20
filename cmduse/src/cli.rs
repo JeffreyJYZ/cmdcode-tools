@@ -462,7 +462,8 @@ Options:
                         version; same as config set dismissed_update=<ver>)
       --tz <±HH:MM>     daily/hourly: bucket by this UTC offset instead of UTC
                         (applies to local logs too)
-      --days <n>        daily: number of days back (default 7, max 365)
+      -l, --days <n>    daily: days back (same as --last; default 7 because the
+                        account API answers 7 days, max 365)
       --hours <n>       hourly: number of hours back (default 24, max 168)
       --since <ISO>     model/session: count from this instant instead of --days
       --rows <n>        table rows to print (0 = all)
@@ -512,7 +513,8 @@ Options:
                         version; same as config set dismissed_update=<ver>)
       --tz <±HH:MM>     daily/hourly: bucket by this UTC offset instead of UTC
                         (applies to local logs too)
-      --days <n>        daily: number of days back (default 120, max 365)
+      -l, --days <n>    daily: days back (same as --last; default 120 because the
+                        store is local, max 365)
       --hours <n>       hourly: number of hours back (default 24, max 168)
       --since <ISO>     model/session: count from this instant instead of --days
       --gated           models: filter to what the selected plan grants
@@ -569,7 +571,8 @@ Options:
                         version; same as config set dismissed_update=<ver>)
       --tz <±HH:MM>     daily/hourly: bucket by this UTC offset instead of UTC
                         (applies to local logs too)
-      --days <n>        daily: number of days back (default 120, max 365)
+      -l, --days <n>    daily: days back (same as --last; default 120 because the
+                        store is local, max 365)
       --hours <n>       hourly: number of hours back (default 24, max 168)
       --since <ISO>     model/session: count from this instant instead of --days
       --gated           models: filter to what the selected tier grants

@@ -730,7 +730,16 @@ pub fn render_json(report: &Report) -> String {
         // (`--window all`).
         "periodStartAt": report.since_ms,
         "periodEndAt": report.period_end_ms,
+        // The family's display date (`cmduse` and `arkuse` both carry it);
+        // `null` when the period has no boundary, as `periodEndAt` is.
+        "periodEnd": report
+            .period_end_ms
+            .map(|ms| date_of(ms.div_euclid(86_400_000))),
         "periodInferred": report.month_inferred,
+        // The period's own aggregate under the name `cmduse` and `arkuse` use
+        // (`summary`); `totals` stays the existing shape, and its `month` member
+        // is exactly this figure, so the two cannot disagree.
+        "summary": totals(&report.month),
         "totals": {
             "month": totals(&report.month),
             "fiveHour": totals(&report.five_hour),
@@ -1369,20 +1378,10 @@ impl Bucket {
     }
 }
 
-/// `YYYY-MM-DD` for a Unix day number (civil-from-days, same helper family as
-/// the window module's).
+/// `YYYY-MM-DD` for a Unix day number — `cmduse_core::dates::civil_from_days`,
+/// so the three binaries cannot drift on the calendar.
 pub fn date_of(day: i64) -> String {
-    let z = day + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z.rem_euclid(146_097);
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let y = yoe + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = doy - (153 * mp + 2) / 5 + 1;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    let year = if m <= 2 { y + 1 } else { y };
-    format!("{year:04}-{m:02}-{d:02}")
+    cmduse_core::dates::civil_from_days(day)
 }
 
 #[cfg(test)]
@@ -1614,6 +1613,10 @@ mod tests {
         let json = render_json(&report());
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed["totals"]["month"]["cost"], 30.0);
+        // `summary` is the period's own aggregate under the name cmduse and
+        // arkuse use; it is the same object as `totals.month`, so the two keys
+        // can never disagree.
+        assert_eq!(parsed["summary"], parsed["totals"]["month"]);
         assert_eq!(parsed["models"][0]["id"], "glm-5.3-flash");
         let line = statusline_template(&report(), "go", "{plan} {models}", false, false, 20);
         assert_eq!(line, "go glm-5.3-flash");

@@ -311,6 +311,23 @@ pub fn hourly_table(
     }
 }
 
+/// Rows in the order the other two binaries print them: biggest spend first,
+/// name as the tiebreak. A `BTreeMap` iterates alphabetically, which buried the
+/// top spender — `ocuse` and `arkuse` have always sorted by spend.
+fn by_spend<'a, M>(map: &'a M) -> Vec<(&'a String, &'a crate::reports::Totals)>
+where
+    &'a M: IntoIterator<Item = (&'a String, &'a crate::reports::Totals)>,
+{
+    let mut rows: Vec<_> = map.into_iter().collect();
+    rows.sort_by(|a, b| {
+        b.1.usage
+            .cost_usd
+            .total_cmp(&a.1.usage.cost_usd)
+            .then_with(|| a.0.cmp(b.0))
+    });
+    rows
+}
+
 /// `rows` caps the table only: the machine formats (`--json`/`--csv`) always
 /// carry every row, because a report is data and truncating it would silently
 /// change what a consumer reads. `usize::MAX` (and `--rows 0`) means all.
@@ -324,7 +341,7 @@ pub fn project_table(
         Fmt::Json => serde_json::json!({ "projects": totals_map(by_project.iter()) }).to_string(),
         Fmt::Csv => {
             let mut o = String::from("project,requests,tokens,cost_usd\n");
-            for (p, t) in by_project {
+            for (p, t) in by_spend(by_project) {
                 o.push_str(&format!(
                     "{},{},{},{:.2}\n",
                     csv_field(p),
@@ -343,7 +360,7 @@ pub fn project_table(
                 " {b}{:<32}{r} {:>6} {:>10} {:>10}\n",
                 "Project", "Reqs", "Tokens", "Cost"
             ));
-            for (p, t) in by_project.iter().take(rows) {
+            for (p, t) in by_spend(by_project).into_iter().take(rows) {
                 o.push_str(&format!(
                     " {:<32} {:>6} {:>10} {:>10}\n",
                     p,
@@ -376,7 +393,7 @@ pub fn model_table(
         .to_string(),
         Fmt::Csv => {
             let mut o = String::from("model,requests,tokens,cost_usd\n");
-            for (m, t) in by_model {
+            for (m, t) in by_spend(by_model) {
                 o.push_str(&format!(
                     "{},{},{},{:.2}\n",
                     csv_field(m),
@@ -396,7 +413,7 @@ pub fn model_table(
                 "Model", "Reqs", "Tokens", "Cost"
             ));
             let total_cost: f64 = by_model.values().map(|t| t.usage.cost_usd).sum();
-            for (m, t) in by_model.iter().take(rows) {
+            for (m, t) in by_spend(by_model).into_iter().take(rows) {
                 let share = if total_cost > 0.0 {
                     format!(" {d}{:>5.1}%{dr}", t.usage.cost_usd / total_cost * 100.0)
                 } else {
@@ -559,6 +576,69 @@ mod tests {
         let csv = model_detail(&by, "other", Fmt::Csv, false, None);
         assert_eq!(csv.lines().count(), 2);
         assert_eq!(csv.lines().nth(1).unwrap(), "other,1,0,1.00");
+    }
+
+    #[test]
+    fn tables_put_the_biggest_spender_first() {
+        // ocuse and arkuse sort their reports by spend; cmduse's BTreeMap used
+        // to iterate alphabetically, which buried the top spender under `z-ai`.
+        let mut by: ByModel = ByModel::new();
+        by.insert(
+            "aaa-small".into(),
+            Totals {
+                requests: 1,
+                usage: Usage {
+                    cost_usd: 0.5,
+                    ..Default::default()
+                },
+            },
+        );
+        by.insert(
+            "zzz-big".into(),
+            Totals {
+                requests: 2,
+                usage: Usage {
+                    cost_usd: 9.5,
+                    ..Default::default()
+                },
+            },
+        );
+        let text = model_table(&by, Fmt::Table, false, None, usize::MAX);
+        let first_row = text.lines().nth(3).expect("header then a row");
+        assert!(first_row.trim_start().starts_with("zzz-big"), "{text}");
+        let csv = model_table(&by, Fmt::Csv, false, None, usize::MAX);
+        assert!(csv.lines().nth(1).unwrap().starts_with("zzz-big"), "{csv}");
+        // Same rule for the project table.
+        let mut by_project = ByProject::new();
+        by_project.insert(
+            "a-project".into(),
+            Totals {
+                requests: 1,
+                usage: Usage {
+                    cost_usd: 0.5,
+                    ..Default::default()
+                },
+            },
+        );
+        by_project.insert(
+            "z-project".into(),
+            Totals {
+                requests: 2,
+                usage: Usage {
+                    cost_usd: 9.5,
+                    ..Default::default()
+                },
+            },
+        );
+        let text = project_table(&by_project, Fmt::Table, false, usize::MAX);
+        assert!(
+            text.lines()
+                .nth(3)
+                .unwrap()
+                .trim_start()
+                .starts_with("z-project"),
+            "{text}"
+        );
     }
 
     #[test]

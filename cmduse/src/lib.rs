@@ -782,6 +782,35 @@ fn output_fmt(args: &cli::Args) -> report_render::Fmt {
     }
 }
 
+/// The statusline's machine view. The window names are the family's
+/// (`*Spent`/`*Cap`, which `ocuse` and `arkuse` already used): CommandCode's
+/// month is a credit pool, so its spent half is the pool minus what the account
+/// reports left, clamped at zero. `fiveHourUsed`/`weeklyUsed`/`monthlyRemaining`
+/// ride along as aliases so an existing prompt keeps working.
+fn statusline_json(
+    plan: &str,
+    month_cap: f64,
+    month_remaining: f64,
+    five_hour: (f64, f64),
+    weekly: (f64, f64),
+) -> serde_json::Value {
+    let (h5u, h5c) = five_hour;
+    let (wku, wkc) = weekly;
+    serde_json::json!({
+        "plan": plan,
+        "monthSpent": (month_cap - month_remaining).max(0.0),
+        "monthCap": month_cap,
+        "fiveHourSpent": h5u,
+        "fiveHourCap": h5c,
+        "weeklySpent": wku,
+        "weeklyCap": wkc,
+        "monthlyRemaining": month_remaining,
+        "monthlyCap": month_cap,
+        "fiveHourUsed": h5u,
+        "weeklyUsed": wku,
+    })
+}
+
 fn statusline_cmd(args: &cli::Args) {
     let cfg = config::load(cli::Binary::Cmduse);
     let s = snapshot::snapshot(false);
@@ -798,17 +827,13 @@ fn statusline_cmd(args: &cli::Args) {
                 o.as_ref().map(|w| w.cap).unwrap_or(0.0),
             )
         };
-        let (h5u, h5c) = w(&s.credits.window_limits.five_hour);
-        let (wku, wkc) = w(&s.credits.window_limits.weekly);
-        let out = serde_json::json!({
-            "plan": plan,
-            "monthlyRemaining": s.credits.credits.monthly_credits,
-            "monthlyCap": cap,
-            "fiveHourUsed": h5u,
-            "fiveHourCap": h5c,
-            "weeklyUsed": wku,
-            "weeklyCap": wkc,
-        });
+        let out = statusline_json(
+            plan,
+            cap,
+            s.credits.credits.monthly_credits,
+            w(&s.credits.window_limits.five_hour),
+            w(&s.credits.window_limits.weekly),
+        );
         print!("{out}");
         return;
     }

@@ -136,11 +136,16 @@ pub fn render_json(s: &Snapshot) -> String {
     json!({
         "plan": plan_name(&s.sub.plan_id),
         "status": s.sub.status,
+        // Where the figures come from, as the other two binaries name theirs
+        // (`opencode.db`, `opencode`): here it is the account API.
+        "source": "api",
         "periodEnd": s.sub.current_period_end.as_ref().map(|e| &e[..10.min(e.len())]),
         // Full period bounds in epoch ms, the same units as `resetAt`, so a
         // consumer can render the monthly window's resets countdown and elapsed
         // share without re-deriving them from a date. `periodEnd` stays the
-        // display date.
+        // display date, and `periodStart` is the family's name for the start
+        // instant (`ocuse`/`arkuse` carry both that and `periodStartAt`).
+        "periodStart": s.sub.current_period_start.as_deref().and_then(cmduse_core::dates::parse_iso_utc),
         "periodStartAt": s.sub.current_period_start.as_deref().and_then(cmduse_core::dates::parse_iso_utc),
         "periodEndAt": s.sub.current_period_end.as_deref().and_then(cmduse_core::dates::parse_iso_utc),
         "monthlyCredits": s.credits.credits.monthly_credits,
