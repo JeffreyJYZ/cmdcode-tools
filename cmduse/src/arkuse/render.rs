@@ -167,6 +167,15 @@ fn meter_reset(meter: &crate::arkuse::api::Meter, dur_secs: Option<u64>) -> Opti
     }
 }
 
+/// A locally cut window's boundary: the oldest row still inside the cut plus the
+/// window's length, matching the Go side's rolling reset. `None` when the window
+/// holds no rows, because `now + length` is not a reset the data supports.
+fn rolling(report: &Report, totals: &Totals, dur_secs: i64) -> Option<(i64, u64)> {
+    report
+        .rolling_reset(totals, dur_secs)
+        .map(|at| (at, dur_secs as u64))
+}
+
 #[allow(clippy::too_many_arguments)]
 /// One window row's inputs. The control plane's meters and the local estimate
 /// both go through this one builder, so the two branches cannot drift apart in
@@ -183,6 +192,10 @@ struct RowSpec<'a> {
     meter: Option<&'a crate::arkuse::api::Meter>,
     /// The window's reset instant and its length in seconds.
     reset: Option<(i64, u64)>,
+    /// The plan's published quota for this window, used only when no meter
+    /// answered — ARK publishes the split, so the local estimate can print the
+    /// same `used / quota` pair the console does instead of AFP alone.
+    quota: Option<f64>,
     /// Whether an even-burn figure belongs on this row: the monthly window alone
     /// is a budget, where "what even burn would have spent by now" is a fair
     /// comparison; the throttles above it would read as a spend target.
@@ -208,10 +221,17 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64, catalog: &ark::Catalo
     let thru = elapsed
         .map(|p| format!(" · {}window {p:.1}% elapsed{}", ink.dim, ink.reset))
         .unwrap_or_default();
+    // This store's AFP against the plan's published quota: the local branch's
+    // percentage. It under-reads the console (the meter counts every client and
+    // bills at its own coefficient), which is why the row says `est.`.
+    let local_pct = spec
+        .quota
+        .filter(|quota| *quota > 0.0)
+        .map(|quota| spec.used.afp / quota * 100.0);
 
     // Server branch: the quota is the server's own, so the pair and the pace are
-    // exact. Local branch: AFP alone.
-    let (body, tone) = match spec.meter {
+    // exact. Local branch: the catalogue's quota, labelled as the estimate it is.
+    let (body, tone, pct) = match spec.meter {
         Some(meter) => {
             let pace = spec
                 .reset
@@ -250,25 +270,60 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64, catalog: &ark::Catalo
                 afp(spec.used.afp),
                 ink.reset,
             );
-            (body, pct_tone)
+            (body, pct_tone, Some(meter.percent))
         }
         None => {
+            let quota = spec.quota.filter(|quota| *quota > 0.0);
+            let head = match (quota, local_pct) {
+                (Some(quota), Some(p)) => format!(
+                    "{} / {} AFP · {}{p:.1}% of limit (est.){}",
+                    afp(spec.used.afp),
+                    afp(quota),
+                    ink.for_pct(p),
+                    ink.reset,
+                ),
+                _ => format!("{} AFP", afp(spec.used.afp)),
+            };
+            let pace = match (spec.reset, quota, local_pct) {
+                (Some((at, d)), Some(quota), Some(_)) => {
+                    cmduse_core::pace_eta(Some(at as f64), d, spec.used.afp, quota, now_secs)
+                        .map(|secs| {
+                            format!(
+                                " · {}on pace to hit cap in {}{}",
+                                ink.yellow,
+                                duration(secs as u64),
+                                ink.reset
+                            )
+                        })
+                        .unwrap_or_default()
+                }
+                _ => String::new(),
+            };
+            let by_now = match (spec.pro_rata, quota, elapsed) {
+                (true, Some(quota), Some(p)) => {
+                    format!(
+                        " · {}{} by now{}",
+                        ink.dim,
+                        afp(quota * p / 100.0),
+                        ink.reset
+                    )
+                }
+                _ => String::new(),
+            };
             let body = format!(
-                "{} AFP · {}{} · {} requests{}",
-                afp(spec.used.afp),
+                "{head} · {}{} · {} requests{}{pace}{reset_text}{thru}{by_now}",
                 ink.dim,
                 yuan(catalog.yuan(spec.used.afp)),
                 compact(spec.used.requests),
                 ink.reset,
             );
-            (format!("{body}{reset_text}{thru}"), ink.for_pct(0.0))
+            (body, ink.for_pct(local_pct.unwrap_or(0.0)), local_pct)
         }
     };
     if ink.colour {
-        let bar = match spec.meter {
-            Some(meter) => format!("{} ", ink.bar(meter.percent, 100.0)),
-            None => String::new(),
-        };
+        let bar = pct
+            .map(|p| format!("{} ", ink.bar(p, 100.0)))
+            .unwrap_or_default();
         format!(
             " {}{:<8}{} {}{}{body}{}\n",
             ink.bold, spec.label, ink.reset, bar, tone, ink.reset,
@@ -409,13 +464,20 @@ pub fn render_text(
                 true,
             ));
             for (label, meter, used, dur, pro_rata) in windows {
+                // A just-reset block answers without `reset_at` (measured
+                // 2026-10-20: `{"label":"5h","total":10000,"percent":0}`), so
+                // fall back to the store's own rolling boundary rather than
+                // drop the countdown the row is asked for.
+                let reset = meter_reset(meter, dur)
+                    .or_else(|| dur.and_then(|dur| rolling(report, used, dur as i64)));
                 out.push_str(&window_line(
                     &ink,
                     &RowSpec {
                         label,
                         used,
                         meter: Some(meter),
-                        reset: meter_reset(meter, dur),
+                        reset,
+                        quota: None,
                         pro_rata,
                     },
                     report.now_ms,
@@ -458,13 +520,23 @@ pub fn render_text(
             let monthly_dur = report
                 .period_end_ms
                 .map(|end| ((end - report.since_ms) / 1000).max(0) as u64);
+            // No meter: the catalogue's published split stands in for the
+            // quota, and the reset comes from the oldest row still inside the
+            // rolling cut — never a fabricated `now + length`.
+            let five_reset = rolling(
+                report,
+                &report.five_hour,
+                crate::arkuse::window::FIVE_HOUR_SECS,
+            );
+            let week_reset = rolling(report, &report.weekly, crate::arkuse::window::WEEKLY_SECS);
             out.push_str(&window_line(
                 &ink,
                 &RowSpec {
                     label: "5-hour",
                     used: &report.five_hour,
                     meter: None,
-                    reset: None,
+                    reset: five_reset,
+                    quota: report.window_quota(&catalog, catalog.windows.five_hour),
                     pro_rata: false,
                 },
                 report.now_ms,
@@ -476,7 +548,8 @@ pub fn render_text(
                     label: "Weekly",
                     used: &report.weekly,
                     meter: None,
-                    reset: None,
+                    reset: week_reset,
+                    quota: report.window_quota(&catalog, catalog.windows.weekly),
                     pro_rata: false,
                 },
                 report.now_ms,
@@ -489,7 +562,8 @@ pub fn render_text(
                     used: &report.month,
                     meter: None,
                     reset: report.period_end_ms.zip(monthly_dur),
-                    pro_rata: false,
+                    quota: report.window_quota(&catalog, catalog.windows.monthly),
+                    pro_rata: true,
                 },
                 report.now_ms,
                 &catalog,
@@ -620,14 +694,80 @@ pub fn statusline_template(
     let ink = Ink::new(colours);
     let catalog = ark::catalog();
     let account = report.account.as_ref();
-    let share_of = |meter: Option<&crate::arkuse::api::Meter>| match meter {
-        Some(meter) => format!("{}%", given_pct(meter.percent)),
+    let quota_of = |share: f64| report.window_quota(&catalog, share);
+    // The console's own percentage when it answered, else this store's AFP
+    // against the plan's published split — never a dash for a window we can
+    // measure ourselves. The plan's quota is public, so this is not a guess.
+    let pct_of = |meter: Option<&crate::arkuse::api::Meter>, used: f64, share: f64| match meter {
+        Some(meter) => Some(meter.percent),
+        None => quota_of(share)
+            .filter(|quota| *quota > 0.0)
+            .map(|quota| used / quota * 100.0),
+    };
+    let share_of = |pct: Option<f64>| match pct {
+        Some(pct) => format!("{}%", given_pct(pct)),
         None => "—".into(),
     };
-    let share_bar = |meter: Option<&crate::arkuse::api::Meter>| match meter {
-        Some(meter) => crate::report_render::bar(meter.percent, bar_width, ascii, colours),
+    let share_bar = |pct: Option<f64>| match pct {
+        Some(pct) => crate::report_render::bar(pct, bar_width, ascii, colours),
         None => String::new(),
     };
+    // A window's boundary: the server's reset, else the oldest row still inside
+    // the rolling cut plus the window's length.
+    let reset_of =
+        |meter: Option<&crate::arkuse::api::Meter>, totals: &Totals, dur: i64| match meter
+            .and_then(|m| m.reset_ms())
+        {
+            Some(at) => Some((at, dur as u64)),
+            None => report.rolling_reset(totals, dur).map(|at| (at, dur as u64)),
+        };
+    let eta_of = |reset: Option<(i64, u64)>, used: f64, quota: Option<f64>| -> Option<String> {
+        let (at, dur) = reset?;
+        let quota = quota?;
+        let secs = cmduse_core::pace_eta(
+            Some(at as f64),
+            dur,
+            used,
+            quota,
+            (report.now_ms / 1000).max(0) as u64,
+        )?;
+        Some(format!("on pace to hit cap in {}", duration(secs as u64)))
+    };
+    let h5_pct = pct_of(
+        account.map(|a| &a.five_hour),
+        report.five_hour.afp,
+        catalog.windows.five_hour,
+    );
+    let wk_pct = pct_of(
+        account.map(|a| &a.weekly),
+        report.weekly.afp,
+        catalog.windows.weekly,
+    );
+    let month_pct = pct_of(
+        account.map(|a| &a.monthly),
+        report.month.afp,
+        catalog.windows.monthly,
+    );
+    let h5_eta = eta_of(
+        reset_of(
+            account.map(|a| &a.five_hour),
+            &report.five_hour,
+            crate::arkuse::window::FIVE_HOUR_SECS,
+        ),
+        report.five_hour.afp,
+        quota_of(catalog.windows.five_hour),
+    )
+    .unwrap_or_default();
+    let wk_eta = eta_of(
+        reset_of(
+            account.map(|a| &a.weekly),
+            &report.weekly,
+            crate::arkuse::window::WEEKLY_SECS,
+        ),
+        report.weekly.afp,
+        quota_of(catalog.windows.weekly),
+    )
+    .unwrap_or_default();
     let cash = |value: f64| ink.cyan_on(afp(value));
     let top = report
         .models
@@ -639,20 +779,22 @@ pub fn statusline_template(
         ("tier", plan_id.to_string()),
         ("period", report.period_label.clone()),
         ("month", cash(report.month.afp)),
-        ("month_pct", share_of(account.map(|a| &a.monthly))),
-        ("month_bar", share_bar(account.map(|a| &a.monthly))),
+        ("month_pct", share_of(month_pct)),
+        ("month_bar", share_bar(month_pct)),
         ("five_hour", cash(report.five_hour.afp)),
         ("5h", cash(report.five_hour.afp)),
-        ("five_hour_pct", share_of(account.map(|a| &a.five_hour))),
-        ("5h_pct", share_of(account.map(|a| &a.five_hour))),
-        ("five_hour_bar", share_bar(account.map(|a| &a.five_hour))),
-        ("5h_bar", share_bar(account.map(|a| &a.five_hour))),
+        ("five_hour_pct", share_of(h5_pct)),
+        ("5h_pct", share_of(h5_pct)),
+        ("five_hour_bar", share_bar(h5_pct)),
+        ("5h_bar", share_bar(h5_pct)),
+        ("5h_eta", h5_eta),
         ("weekly", cash(report.weekly.afp)),
         ("wk", cash(report.weekly.afp)),
-        ("weekly_pct", share_of(account.map(|a| &a.weekly))),
-        ("wk_pct", share_of(account.map(|a| &a.weekly))),
-        ("weekly_bar", share_bar(account.map(|a| &a.weekly))),
-        ("wk_bar", share_bar(account.map(|a| &a.weekly))),
+        ("weekly_pct", share_of(wk_pct)),
+        ("wk_pct", share_of(wk_pct)),
+        ("weekly_bar", share_bar(wk_pct)),
+        ("wk_bar", share_bar(wk_pct)),
+        ("wk_eta", wk_eta),
         ("yuan", yuan(catalog.yuan(report.month.afp))),
         ("yuan_month", yuan(catalog.yuan(report.month.afp))),
         ("models", top),
@@ -669,18 +811,21 @@ pub fn statusline_template(
 
 pub fn statusline_json(report: &Report, plan_id: &str) -> String {
     let catalog = ark::catalog();
+    let quota_of = |share: f64| report.window_quota(&catalog, share);
     serde_json::json!({
         "plan": plan_id,
         "period": report.period_label,
         "source": "opencode",
         // The shared names a statusline consumer already reads; here they carry
-        // AFP, because AFP is this plan's currency.
+        // AFP, because AFP is this plan's currency. The caps are the plan's
+        // published split of its monthly AFP, so a consumer never has to hold a
+        // table of its own.
         "monthSpent": report.month.afp,
-        "monthCap": serde_json::Value::Null,
+        "monthCap": quota_of(catalog.windows.monthly),
         "fiveHourSpent": report.five_hour.afp,
-        "fiveHourCap": serde_json::Value::Null,
+        "fiveHourCap": quota_of(catalog.windows.five_hour),
         "weeklySpent": report.weekly.afp,
-        "weeklyCap": serde_json::Value::Null,
+        "weeklyCap": quota_of(catalog.windows.weekly),
         "model": report.models.first().map(|m| m.id.clone()),
         "afp": {
             "fiveHour": report.five_hour.afp,
@@ -697,6 +842,20 @@ pub fn statusline_json(report: &Report, plan_id: &str) -> String {
 
 /// One meter as JSON, with the server's own figures preserved — the percentage
 /// is the console's, not a recomputation.
+/// One window as this store measures it: AFP, the plan's published quota, the
+/// percentage against it, and the boundary its row counts down to.
+fn window_json(totals: &Totals, quota: Option<f64>, reset_ms: Option<i64>) -> serde_json::Value {
+    serde_json::json!({
+        "afp": totals.afp,
+        "requests": totals.requests,
+        "quota": quota,
+        "percent": quota
+            .filter(|quota| *quota > 0.0)
+            .map(|quota| totals.afp / quota * 100.0),
+        "resetAt": reset_ms,
+    })
+}
+
 fn meter_json(meter: &crate::arkuse::api::Meter) -> serde_json::Value {
     serde_json::json!({
         "used": meter.used,
@@ -722,6 +881,7 @@ fn usage_json(usage: &crate::arkuse::api::Usage) -> serde_json::Value {
 }
 
 pub fn render_json(report: &Report) -> String {
+    let catalog = ark::catalog();
     let totals = |t: &Totals| {
         serde_json::json!({
             "afp": t.afp,
@@ -769,6 +929,26 @@ pub fn render_json(report: &Report) -> String {
         "weekly": totals(&report.weekly),
         "monthly": totals(&report.month),
         "daily": report.daily.as_ref().map(totals),
+        // This store's view of each window against the plan's published quota —
+        // the same pair the dashboard prints, so a consumer without the account
+        // answer still gets a percentage and a boundary.
+        "windows": {
+            "fiveHour": window_json(
+                &report.five_hour,
+                report.window_quota(&catalog, catalog.windows.five_hour),
+                report.rolling_reset(&report.five_hour, crate::arkuse::window::FIVE_HOUR_SECS),
+            ),
+            "weekly": window_json(
+                &report.weekly,
+                report.window_quota(&catalog, catalog.windows.weekly),
+                report.rolling_reset(&report.weekly, crate::arkuse::window::WEEKLY_SECS),
+            ),
+            "monthly": window_json(
+                &report.month,
+                report.window_quota(&catalog, catalog.windows.monthly),
+                report.period_end_ms,
+            ),
+        },
         "account": report.account.as_ref().map(|account| {
             let mut body = serde_json::json!({
                 "profile": account.profile,
@@ -1421,6 +1601,92 @@ mod tests {
         assert!(all.lines().count() >= gated.lines().count());
         assert!(all.contains("kimi-k3"), "{all}");
         assert!(!gated.contains("kimi-k3"), "{gated}");
+    }
+
+    /// A report measured against the control plane's own meters.
+    fn metered(account: &crate::arkuse::api::Usage) -> Report {
+        let now = 1_800_000_000_000;
+        let rows = vec![Row {
+            at_ms: now - 60_000,
+            session: "ses_a".into(),
+            provider: "agent-plan".into(),
+            model: "deepseek-v4.1-flash".into(),
+            input: 10_000,
+            output: 2_000,
+            ..Default::default()
+        }];
+        crate::arkuse::window::build(
+            &rows,
+            &ark::catalog(),
+            ark::DEFAULT_PLAN,
+            now,
+            None,
+            Some(account),
+        )
+    }
+
+    fn meter(used: f64, quota: f64, reset: Option<&str>) -> crate::arkuse::api::Meter {
+        let percent = if quota > 0.0 {
+            used / quota * 100.0
+        } else {
+            0.0
+        };
+        crate::arkuse::api::Meter::from_parts("ok", percent, used, quota, reset, None)
+    }
+
+    #[test]
+    fn a_local_row_still_reads_used_over_quota_and_a_reset() {
+        // Without the control plane the plan's published split stands in for the
+        // quota, so the row is never AFP alone — the parity the user expects.
+        let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        let five = text
+            .lines()
+            .find(|line| line.contains("5-hour"))
+            .expect("a 5-hour row");
+        assert!(
+            five.contains("/ 10,000 AFP"),
+            "the plan's own quota: {five}"
+        );
+        assert!(five.contains("% of limit (est.)"), "a percentage: {five}");
+        let weekly = text
+            .lines()
+            .find(|line| line.contains("Weekly"))
+            .expect("a weekly row");
+        assert!(weekly.contains("resets"), "a countdown: {weekly}");
+        assert!(weekly.contains("window "), "an elapsed share: {weekly}");
+        let json: serde_json::Value = serde_json::from_str(&render_json(&report())).unwrap();
+        assert_eq!(json["windows"]["fiveHour"]["quota"], 10_000.0);
+        assert!(json["windows"]["weekly"]["resetAt"].is_i64());
+    }
+
+    #[test]
+    fn a_meter_without_its_reset_falls_back_to_the_stores_boundary() {
+        // The measured shape: a just-reset 5-hour block answers 0% with no
+        // `reset_at`, and the row still owes the countdown.
+        let account = crate::arkuse::api::Usage {
+            five_hour: meter(0.0, 10_000.0, None),
+            daily: None,
+            weekly: meter(2_975.67, 35_000.0, Some("2026-10-26T00:00:00+08:00")),
+            monthly: meter(2_975.67, 100_000.0, Some("2026-11-19T23:59:59+08:00")),
+            tier: Some("medium".into()),
+            profile: "agent-plan_cn-beijing_medium".into(),
+        };
+        let text = render_text(
+            &metered(&account),
+            "/tmp/opencode.db",
+            10,
+            false,
+            DEFAULT_BAR_WIDTH,
+        );
+        let five = text
+            .lines()
+            .find(|line| line.contains("5-hour"))
+            .expect("a 5-hour row");
+        assert!(
+            five.contains("0% of limit"),
+            "the server's own share: {five}"
+        );
+        assert!(five.contains("resets"), "a derived countdown: {five}");
     }
 
     #[test]

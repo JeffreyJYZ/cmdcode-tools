@@ -109,6 +109,44 @@ describe("arkRows", () => {
 		expect(five?.[1]).not.toContain("/");
 	});
 
+	test("without an account answer the store's own quota still yields a pair", () => {
+		// The measured failure that prompted this: the control plane's answer
+		// stopped parsing, and every window row degraded to AFP alone. The plan's
+		// published split is enough for a pair, a share and a countdown.
+		const body = JSON.parse(withAccount()) as Record<string, unknown>;
+		delete body.account;
+		body.accountError = "parse: missing field `used`";
+		const now = Date.now();
+		body.windows = {
+			fiveHour: {
+				afp: 4_300,
+				requests: 231,
+				quota: 10_000,
+				percent: 43,
+				resetAt: now + 3_600_000,
+			},
+			weekly: {
+				afp: 4_300,
+				requests: 231,
+				quota: 35_000,
+				percent: 12.3,
+				resetAt: now + 86_400_000,
+			},
+			monthly: {
+				afp: 4_300,
+				requests: 231,
+				quota: 100_000,
+				percent: 4.3,
+				resetAt: now + 20 * 86_400_000,
+			},
+		};
+		const rows = arkRows(parseArkJson(JSON.stringify(body)), undefined);
+		const five = rows.find((row) => row[0] === "5-hour");
+		expect(five?.[1]).toContain("/10K");
+		expect(five?.[1]).toContain("43.0% est.");
+		expect(rows.some((row) => row[1]?.includes("resets"))).toBe(true);
+	});
+
 	test("an unread model still gets a per-model row", () => {
 		const rows = arkRows(parseArkJson(withAccount()), "glm-5.3");
 		expect(rows.find((row) => row[0] === "AFP (this model)")?.[1]).toBe(

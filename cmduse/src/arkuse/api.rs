@@ -185,10 +185,36 @@ struct UsageItem {
 #[derive(Deserialize)]
 struct Period {
     label: String,
-    used: f64,
+    /// A window can be reported without its figures: measured 2026-10-20, the
+    /// just-reset 5-hour block answered `{"label":"5h","total":10000,
+    /// "percent":0}` — no `used`, no `reset_at`. Making these required turned
+    /// the whole answer into a parse error and dropped the dashboard to the
+    /// local estimate, so each is derived from the others when absent.
+    #[serde(default)]
+    used: Option<f64>,
+    #[serde(default)]
     total: f64,
-    percent: f64,
+    #[serde(default)]
+    percent: Option<f64>,
     reset_at: Option<String>,
+}
+
+impl Period {
+    /// `(used, percent)`; the server's own percentage wins whenever it is
+    /// present, because it is the figure the console prints.
+    fn figures(&self) -> (f64, f64) {
+        let used = self
+            .used
+            .unwrap_or_else(|| self.total * self.percent.unwrap_or(0.0) / 100.0);
+        let percent = self.percent.unwrap_or_else(|| {
+            if self.total > 0.0 {
+                used / self.total * 100.0
+            } else {
+                0.0
+            }
+        });
+        (used, percent)
+    }
 }
 
 /// Ask the control plane for the plan's meters.
@@ -221,15 +247,9 @@ fn parse_usage(raw: &str, profile: &str) -> Result<Usage, Unavailable> {
     }
     let meter = |label: &str| -> Option<Meter> {
         item.periods.iter().find(|p| p.label == label).map(|p| {
-            let status = if p.percent >= 100.0 { "exceeded" } else { "ok" };
-            Meter::from_parts(
-                status,
-                p.percent,
-                p.used,
-                p.total,
-                p.reset_at.as_deref(),
-                None,
-            )
+            let (used, percent) = p.figures();
+            let status = if percent >= 100.0 { "exceeded" } else { "ok" };
+            Meter::from_parts(status, percent, used, p.total, p.reset_at.as_deref(), None)
         })
     };
     let missing = |label: &str| Unavailable::Failed(format!("the answer has no {label} window"));
@@ -393,6 +413,36 @@ mod tests {
               {"label":"monthly","used":1,"total":20000,"percent":0.005,"reset_at":"2026-11-19T23:59:59+08:00"}]}]}"#;
         let usage = parse_usage(raw, "p").unwrap();
         assert!(usage.daily.is_none());
+    }
+
+    #[test]
+    fn a_window_without_figures_is_derived_not_rejected() {
+        // Measured 2026-10-20: the just-reset 5-hour block came back as
+        // `{"label":"5h","total":10000,"percent":0}` — no `used`, no `reset_at`.
+        // Requiring `used` made the whole answer a parse error, which silently
+        // dropped the dashboard to the local estimate.
+        let raw = r#"{"items":[{"edition":"personal","tier":"medium","subscribed":true,
+            "periods":[
+              {"label":"5h","total":10000,"percent":0},
+              {"label":"weekly","used":2975.67,"total":35000,"percent":8.5,"reset_at":"2026-10-26T00:00:00+08:00"},
+              {"label":"monthly","used":2975.67,"total":100000,"percent":2.98,"reset_at":"2026-11-19T23:59:59+08:00"}]}]}"#;
+        let usage = parse_usage(raw, "p").expect("a figureless window is still an answer");
+        assert_eq!(usage.five_hour.used, 0.0);
+        assert_eq!(usage.five_hour.quota, 10_000.0);
+        assert_eq!(usage.five_hour.percent, 0.0);
+        assert!(usage.five_hour.reset_ms().is_none());
+    }
+
+    #[test]
+    fn a_missing_percentage_is_computed_from_used_and_total() {
+        let raw = r#"{"items":[{"edition":"personal","tier":"medium","subscribed":true,
+            "periods":[
+              {"label":"5h","used":2500,"total":10000},
+              {"label":"weekly","used":1,"total":35000},
+              {"label":"monthly","used":1,"total":100000}]}]}"#;
+        let usage = parse_usage(raw, "p").unwrap();
+        assert_eq!(usage.five_hour.percent, 25.0);
+        assert_eq!(usage.five_hour.used, 2_500.0);
     }
 
     #[test]

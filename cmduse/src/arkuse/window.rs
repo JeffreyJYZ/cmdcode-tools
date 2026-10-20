@@ -33,6 +33,9 @@ pub struct Totals {
     pub output: u64,
     pub cache_read: u64,
     pub cache_write: u64,
+    /// The earliest row folded in — what a rolling window's next reset derives
+    /// from (oldest request + window length). Never a fabricated `now + length`.
+    pub oldest_ms: Option<i64>,
 }
 
 impl Totals {
@@ -46,6 +49,7 @@ impl Totals {
         self.output += row.output;
         self.cache_read += row.cache_read;
         self.cache_write += row.cache_write;
+        self.oldest_ms = Some(self.oldest_ms.map_or(row.at_ms, |at| at.min(row.at_ms)));
     }
 
     pub fn tokens(&self) -> u64 {
@@ -121,6 +125,21 @@ impl Report {
     pub fn burn_per_day(&self) -> Option<f64> {
         let account = self.account.as_ref()?;
         (account.five_hour.used > 0.0).then(|| account.five_hour.used / 5.0 * 24.0)
+    }
+
+    /// The plan's own quota for a window: its monthly AFP times the catalogue's
+    /// share of it. ARK publishes both, so the local estimate can print the same
+    /// pair the console does — medium's 10,000 / 35,000 / 100,000 AFP are exactly
+    /// what its meters reported on 2026-10-20.
+    pub fn window_quota(&self, catalog: &Catalog, share: f64) -> Option<f64> {
+        catalog.plan(&self.tier).map(|plan| plan.afp * share)
+    }
+
+    /// When a locally cut window turns over: its oldest in-window row plus the
+    /// window's length, the same derivation the Go side uses. `None` before the
+    /// window has rows — `now + length` is not a reset the data supports.
+    pub fn rolling_reset(&self, totals: &Totals, dur_secs: i64) -> Option<i64> {
+        totals.oldest_ms.map(|at| at + dur_secs * 1000)
     }
 }
 
@@ -429,6 +448,36 @@ mod tests {
         assert_eq!(report.weekly.requests, 2, "the block plus six hours back");
         assert_eq!(report.month.requests, 3, "all of them inside October");
         assert!(report.five_hour.afp > 0.0);
+    }
+
+    #[test]
+    fn a_rolling_window_borrows_its_boundary_from_its_oldest_row() {
+        // Without a meter the cut is `now - length`, so the next turnover is the
+        // oldest row inside it plus the length — the same derivation the Go side
+        // uses. `now + length` would be a fabricated countdown.
+        let now = days_from_civil(2026, 10, 19) * 86_400;
+        let rows = vec![
+            row(now - 4 * 3600, "deepseek-v4.1-flash"),
+            row(now - 60, "deepseek-v4.1-flash"),
+        ];
+        let catalog = crate::arkuse::ark::catalog();
+        let report = build(&rows, &catalog, "medium", now * 1000, None, None);
+        assert_eq!(report.five_hour.requests, 2);
+        assert_eq!(report.five_hour.oldest_ms, Some((now - 4 * 3600) * 1000));
+        assert_eq!(
+            report.rolling_reset(&report.five_hour, FIVE_HOUR_SECS),
+            Some((now + 3600) * 1000),
+            "four hours of the block already spent"
+        );
+        assert_eq!(
+            report.window_quota(&catalog, catalog.windows.five_hour),
+            Some(10_000.0),
+            "medium's published 5-hour split"
+        );
+        assert_eq!(
+            report.rolling_reset(&Totals::default(), FIVE_HOUR_SECS),
+            None
+        );
     }
 
     #[test]

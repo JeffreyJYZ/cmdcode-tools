@@ -47,6 +47,16 @@ export interface ArkModel {
 	month: ArkTotals;
 }
 
+/** This store's own view of one window (`arkuse`'s `windows` block): AFP against
+ *  the plan's published quota, the percentage that yields, and the boundary the
+ *  row counts down to. Present even when no meter answered, which is what keeps
+ *  a panel row from degrading to AFP alone. */
+export interface ArkWindow {
+	quota?: number;
+	percent?: number;
+	resetAt?: number;
+}
+
 export interface ArkUsage {
 	plan: string;
 	profile?: string;
@@ -57,6 +67,11 @@ export interface ArkUsage {
 	weekly: ArkTotals;
 	month: ArkTotals;
 	daily?: ArkTotals;
+	windows?: {
+		fiveHour?: ArkWindow;
+		weekly?: ArkWindow;
+		monthly?: ArkWindow;
+	};
 	account?: {
 		fiveHour: ArkMeter;
 		daily?: ArkMeter;
@@ -96,6 +111,17 @@ function meter(value: unknown): ArkMeter {
 	};
 }
 
+/** One of this store's own windows (`arkuse`'s `windows` block). */
+function storeWindow(value: unknown): ArkWindow | undefined {
+	if (!value || typeof value !== "object") return undefined;
+	const v = value as Record<string, unknown>;
+	return {
+		quota: typeof v.quota === "number" ? v.quota : undefined,
+		percent: typeof v.percent === "number" ? v.percent : undefined,
+		resetAt: typeof v.resetAt === "number" ? v.resetAt : undefined,
+	};
+}
+
 /** Parse `arkuse -1 --json`. A malformed body reads as an empty snapshot, never
  *  as a fabricated plan. */
 export function parseArkJson(text: string): ArkUsage {
@@ -119,6 +145,7 @@ export function parseArkJson(text: string): ArkUsage {
 		});
 	}
 	const summary = (body.summary ?? {}) as Record<string, unknown>;
+	const windows = (body.windows ?? {}) as Record<string, unknown>;
 	return {
 		plan: typeof body.plan === "string" ? body.plan : "medium",
 		profile: typeof body.profile === "string" ? body.profile : undefined,
@@ -134,6 +161,13 @@ export function parseArkJson(text: string): ArkUsage {
 		weekly: totals(body.weekly),
 		month: totals(body.monthly),
 		daily: body.daily ? totals(body.daily) : undefined,
+		windows: body.windows
+			? {
+					fiveHour: storeWindow(windows.fiveHour),
+					weekly: storeWindow(windows.weekly),
+					monthly: storeWindow(windows.monthly),
+				}
+			: undefined,
 		account: body.account
 			? {
 					fiveHour: meter(account.fiveHour),
@@ -229,11 +263,43 @@ function meterRows(
 	);
 }
 
-/** The local estimate for one window: AFP and requests, no fabricated cap. */
-function localRows(label: string, totals: ArkTotals): SidebarRow[] {
-	const detail =
-		totals.requests > 0 ? ` · ${count(totals.requests)} req` : "";
-	return [[label, `${afp(totals.afp)}${detail}`, "base"]];
+/** The store's own view of one window: `used / quota` against the plan's
+ *  published split, the percentage that division yields, its reset and pace.
+ *  Without a quota (an older `arkuse`) it degrades to AFP alone rather than
+ *  inventing a denominator. */
+function localRows(
+	label: string,
+	totals: ArkTotals,
+	window: ArkWindow | undefined,
+	now: number,
+	durSecs: number,
+): SidebarRow[] {
+	const quota = window?.quota;
+	const percent = window?.percent;
+	if (
+		typeof quota !== "number" ||
+		quota <= 0 ||
+		typeof percent !== "number"
+	) {
+		const detail =
+			totals.requests > 0 ? ` · ${count(totals.requests)} req` : "";
+		return [[label, `${afp(totals.afp)}${detail}`, "base"]];
+	}
+	const pctText = percent.toFixed(1);
+	return windowRows(
+		label,
+		{
+			cap: quota,
+			used: totals.afp,
+			resetAt: window?.resetAt,
+			sharePct: percent,
+			exceeded: percent >= 100,
+		},
+		now,
+		durSecs,
+		`${count(totals.requests)} req`,
+		(used, cap) => `${brief(used)}/${brief(cap)} (${pctText}% est.)`,
+	);
 }
 
 /**
@@ -310,9 +376,34 @@ export function arkRows(
 			),
 		);
 	} else {
-		rows.push(...localRows("5-hour", usage.fiveHour));
-		rows.push(...localRows("Weekly", usage.weekly));
-		rows.push(...localRows("Monthly", usage.month));
+		const windows = usage.windows;
+		rows.push(
+			...localRows(
+				"5-hour",
+				usage.fiveHour,
+				windows?.fiveHour,
+				now,
+				FIVE_HOUR_SECS,
+			),
+		);
+		rows.push(
+			...localRows(
+				"Weekly",
+				usage.weekly,
+				windows?.weekly,
+				now,
+				WEEKLY_SECS,
+			),
+		);
+		rows.push(
+			...localRows(
+				"Monthly",
+				usage.month,
+				windows?.monthly,
+				now,
+				period?.durSecs ?? 0,
+			),
+		);
 	}
 	const yuan =
 		typeof usage.summary.yuan === "number"

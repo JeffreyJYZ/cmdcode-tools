@@ -985,7 +985,13 @@ the month is the subscription anniversary, so rows are cut at
 \fIreset \(mi window\fR and period dates print in the server's own offset.
 A text\-only workload has no daily window; only media and Harness items do.
 When no meter answers the rows fall back to a rolling cut and the block is
-labelled \fIestimated locally\fR with the reason beside it.
+labelled \fIestimated locally\fR with the reason beside it \(em still as
+\fIused / quota\fR against the plan's published split (5\-hour 10%, daily 50%,
+weekly 35%, monthly 100% of its AFP), with a percentage and a countdown, so a
+window never degrades to AFP alone.  A meter served without figures (a
+just\-reset block carries only \fItotal\fR and \fIpercent\fR) is derived rather
+than rejected, and its countdown comes from the oldest row still inside the
+cut.
 .PP
 The plan's semantics are surfaced rather than assumed: no downgrade; on an
 upgrade the monthly quota is pro\-rated while the 5\-hour and weekly windows
