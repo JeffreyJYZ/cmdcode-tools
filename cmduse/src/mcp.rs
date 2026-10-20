@@ -123,6 +123,7 @@ fn tool_call(msg: &Value) -> Result<Value, (i64, String)> {
             opt_tz("tz")?,
             crate::report_render::Fmt::Table,
             false,
+            usize::MAX,
         )),
         "model" => Ok(crate::model_output(
             get("since").and_then(|v| v.as_str()),
@@ -130,6 +131,7 @@ fn tool_call(msg: &Value) -> Result<Value, (i64, String)> {
             opt_tz("tz")?,
             crate::report_render::Fmt::Table,
             false,
+            usize::MAX,
         )),
         _ => {
             return Ok(json!({

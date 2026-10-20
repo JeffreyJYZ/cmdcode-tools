@@ -311,7 +311,15 @@ pub fn hourly_table(
     }
 }
 
-pub fn project_table(by_project: &crate::reports::ByProject, fmt: Fmt, colors: bool) -> String {
+/// `rows` caps the table only: the machine formats (`--json`/`--csv`) always
+/// carry every row, because a report is data and truncating it would silently
+/// change what a consumer reads. `usize::MAX` (and `--rows 0`) means all.
+pub fn project_table(
+    by_project: &crate::reports::ByProject,
+    fmt: Fmt,
+    colors: bool,
+    rows: usize,
+) -> String {
     match fmt {
         Fmt::Json => serde_json::json!({ "projects": totals_map(by_project.iter()) }).to_string(),
         Fmt::Csv => {
@@ -329,12 +337,13 @@ pub fn project_table(by_project: &crate::reports::ByProject, fmt: Fmt, colors: b
         }
         Fmt::Table => {
             let (b, r) = if colors { (BOLD, RESET) } else { ("", "") };
+            let (d, dr) = if colors { (DIM, RESET) } else { ("", "") };
             let mut o = format!("\n{b}By project{r}\n");
             o.push_str(&format!(
                 " {b}{:<32}{r} {:>6} {:>10} {:>10}\n",
                 "Project", "Reqs", "Tokens", "Cost"
             ));
-            for (p, t) in by_project {
+            for (p, t) in by_project.iter().take(rows) {
                 o.push_str(&format!(
                     " {:<32} {:>6} {:>10} {:>10}\n",
                     p,
@@ -342,6 +351,9 @@ pub fn project_table(by_project: &crate::reports::ByProject, fmt: Fmt, colors: b
                     compact(tokens(t)),
                     money(t.usage.cost_usd),
                 ));
+            }
+            if by_project.len() > rows {
+                o.push_str(&format!(" {d}… {} more{dr}\n", by_project.len() - rows));
             }
             o
         }
@@ -353,6 +365,7 @@ pub fn model_table(
     fmt: Fmt,
     colors: bool,
     since: Option<&str>,
+    rows: usize,
 ) -> String {
     match fmt {
         Fmt::Json => serde_json::json!({
@@ -383,7 +396,7 @@ pub fn model_table(
                 "Model", "Reqs", "Tokens", "Cost"
             ));
             let total_cost: f64 = by_model.values().map(|t| t.usage.cost_usd).sum();
-            for (m, t) in by_model {
+            for (m, t) in by_model.iter().take(rows) {
                 let share = if total_cost > 0.0 {
                     format!(" {d}{:>5.1}%{dr}", t.usage.cost_usd / total_cost * 100.0)
                 } else {
@@ -396,6 +409,9 @@ pub fn model_table(
                     compact(tokens(t)),
                     money(t.usage.cost_usd),
                 ));
+            }
+            if by_model.len() > rows {
+                o.push_str(&format!(" {d}… {} more{dr}\n", by_model.len() - rows));
             }
             o
         }
@@ -418,7 +434,7 @@ mod tests {
             },
         };
         by.insert("we\"ird\\name".into(), t);
-        let out = project_table(&by, Fmt::Json, false);
+        let out = project_table(&by, Fmt::Json, false, usize::MAX);
         let v: serde_json::Value = serde_json::from_str(&out).unwrap();
         assert_eq!(v["projects"]["we\"ird\\name"]["requests"], 1);
     }
@@ -439,11 +455,35 @@ mod tests {
                 },
             },
         );
-        let out = project_table(&by, Fmt::Csv, false);
+        let out = project_table(&by, Fmt::Csv, false, usize::MAX);
         assert_eq!(
             out,
             "project,requests,tokens,cost_usd\n\"a,b\",2,100,1.50\n"
         );
+    }
+
+    #[test]
+    fn rows_cap_trims_the_table_and_never_the_machine_formats() {
+        // `--rows` is a display cap: `cmduse model/session --rows N` must not
+        // silently truncate `--json`, or a consumer reads a short report as the
+        // whole period.
+        let mut by: ByProject = ByProject::new();
+        for name in ["a", "b", "c"] {
+            by.insert(
+                name.into(),
+                Totals {
+                    requests: 1,
+                    ..Default::default()
+                },
+            );
+        }
+        let table = project_table(&by, Fmt::Table, false, 1);
+        assert!(table.contains("… 2 more"), "{table}");
+        let json = project_table(&by, Fmt::Json, false, 1);
+        let v: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(v["projects"].as_object().unwrap().len(), 3);
+        let csv = project_table(&by, Fmt::Csv, false, 1);
+        assert_eq!(csv.lines().count(), 4, "header + every row: {csv}");
     }
 
     #[test]

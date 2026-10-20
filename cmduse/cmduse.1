@@ -236,6 +236,14 @@ path and the \fB\-\-local\fR log path alike.  Accepts
 .B \-\-hours \fIn\fR
 .BR hourly : number of hours back (1\(en168).
 .TP
+.B \-\-rows \fIn\fR
+Table rows to print for \fBmodels\fR, \fBmodel\fR and \fBsession\fR.
+\fI0\fR means every row.  Without the flag the reports print every row
+(\fBsession\fR prints 20) and the live frame keeps its 15 row panel.  A trimmed
+table ends with \fI\[u2026] N more\fR; \fB\-\-json\fR and \fB\-\-csv\fR always
+carry every row, because a report is data and a short one would read as the
+whole period.
+.TP
 .B \-\-json
 Machine\-readable output where the subcommand supports it.  Conflicts with
 \fB\-\-csv\fR (supplying both exits 2).

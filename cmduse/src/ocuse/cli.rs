@@ -197,7 +197,7 @@ pub fn run() {
     let db_path = args.db.clone().unwrap_or_else(db::default_path);
     let days: i64 = args.last.unwrap_or(120) as i64;
     let hours: i64 = args.hours.unwrap_or(24) as i64;
-    let rows: usize = args.rows.unwrap_or(15);
+    let rows: usize = args.rows_cap(15);
     let now = window::now_ms();
     let tz_secs = args.tz.unwrap_or(0);
 
@@ -409,7 +409,7 @@ pub fn run() {
         Some(SubCmd::Session) => {
             print!(
                 "{}",
-                render::session_text(&read_since(report_window), 20, colours, fmt)
+                render::session_text(&read_since(report_window), args.rows_cap(20), colours, fmt)
             );
             return;
         }
@@ -437,7 +437,7 @@ pub fn run() {
                         render::render_text(
                             &report,
                             &db_path,
-                            usize::MAX,
+                            args.rows_cap(usize::MAX),
                             colours,
                             args.bar_width.unwrap_or(cfg.bar_width).clamp(5, 200),
                         )

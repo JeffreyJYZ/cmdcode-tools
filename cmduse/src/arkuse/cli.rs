@@ -417,7 +417,13 @@ pub fn run() {
         Some(SubCmd::Session) => {
             print!(
                 "{}",
-                render::session_text(&read_since(report_window), &catalog, 20, colours, fmt)
+                render::session_text(
+                    &read_since(report_window),
+                    &catalog,
+                    args.rows_cap(20),
+                    colours,
+                    fmt
+                )
             );
             return;
         }
@@ -443,11 +449,7 @@ pub fn run() {
                     Some(id) => print!("{}", render::model_text(&report, id, colours)),
                     None => print!(
                         "{}",
-                        render::models_period_text(
-                            &report,
-                            args.rows.unwrap_or(usize::MAX),
-                            colours
-                        )
+                        render::models_period_text(&report, args.rows_cap(usize::MAX), colours)
                     ),
                 }
             } else {

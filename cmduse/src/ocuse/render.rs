@@ -1291,7 +1291,6 @@ pub fn session_text(
     }
     let mut sessions: Vec<_> = by_session.into_iter().collect();
     sessions.sort_by_key(|(_, (_, _, _, _, _, last, _))| std::cmp::Reverse(*last));
-    sessions.truncate(limit);
 
     match fmt {
         Fmt::Json => {
@@ -1331,15 +1330,21 @@ pub fn session_text(
                 "{}session                          last        models   spend     req{}\n",
                 ink.bold, ink.reset
             );
-            for (id, (cost, requests, _, _, _, last, models)) in sessions {
-                let short = id.rsplit('_').next().unwrap_or(id);
+            for (id, (cost, requests, _, _, _, last, models)) in sessions.iter().take(limit) {
+                let short = id.rsplit('_').next().unwrap_or(*id);
                 out.push_str(&format!(
                     "{:<32} {:<11} {:>6} {} {:>6}\n",
                     short,
                     ink.dim_on(format!("{:<11}", date_of(last.div_euclid(86_400_000)))),
                     models.len(),
-                    ink.cyan_on(format!("{:>9}", cmduse_core::money(cost))),
+                    ink.cyan_on(format!("{:>9}", cmduse_core::money(*cost))),
                     requests,
+                ));
+            }
+            if sessions.len() > limit {
+                out.push_str(&format!(
+                    "{}\n",
+                    ink.dim_on(format!("… {} more", sessions.len() - limit))
                 ));
             }
             if out.lines().count() == 1 {
@@ -1713,7 +1718,6 @@ mod tests {
                 models_text("go", false, true),
             ),
         ];
-
         for (name, plain, coloured) in cases {
             assert!(
                 !plain.contains('\x1b'),
@@ -1771,6 +1775,36 @@ mod tests {
                 "{name} must never be coloured: {out}"
             );
         }
+    }
+
+    #[test]
+    fn session_rows_cap_the_table_and_never_the_machine_formats() {
+        // `--rows` is a display cap (the CLI passes it straight in). JSON/CSV
+        // must keep every session: a consumer that reads a short report as the
+        // whole window is worse than a long table.
+        let now = 1_800_000_000_000;
+        let rows: Vec<Row> = (0..25)
+            .map(|i| Row {
+                at_ms: now - i as i64 * 60_000,
+                provider: "opencode-go".into(),
+                model: "glm-5.3-flash".into(),
+                session: format!("ses_{i:02}"),
+                cost_usd: 0.1,
+                ..Default::default()
+            })
+            .collect();
+        let table = session_text(&rows, 2, false, Fmt::Table);
+        assert!(table.contains("… 23 more"), "{table}");
+        assert_eq!(
+            table.lines().count(),
+            4,
+            "header + 2 rows + the tail: {table}"
+        );
+        let json: serde_json::Value =
+            serde_json::from_str(&session_text(&rows, 2, false, Fmt::Json)).unwrap();
+        assert_eq!(json["sessions"].as_object().unwrap().len(), 25);
+        let csv = session_text(&rows, 2, false, Fmt::Csv);
+        assert_eq!(csv.lines().count(), 26, "header + every session: {csv}");
     }
 
     #[test]

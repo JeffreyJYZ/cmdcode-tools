@@ -65,6 +65,19 @@ pub struct Args {
     pub no_api: bool,
 }
 
+impl Args {
+    /// `--rows` resolved against a caller's default: `Some(0)` means every row,
+    /// absent means the caller's own default. One rule for all three binaries —
+    /// the report tables print all, the live frame keeps its own default.
+    pub fn rows_cap(&self, default: usize) -> usize {
+        match self.rows {
+            Some(0) => usize::MAX,
+            Some(n) => n,
+            None => default,
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct ConfigSet {
     pub interval: Option<u64>,
@@ -254,9 +267,6 @@ pub(crate) fn parse_args_from(
                 a.infer_anniversary = true;
             }
             Long("rows") => {
-                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
-                    return Err(unknown_long("rows"));
-                }
                 let v = need_value(&mut parser, "--rows needs a number")?;
                 match v.parse::<usize>() {
                     Ok(n) => a.rows = Some(n),
@@ -445,6 +455,7 @@ Options:
       --days <n>        daily: number of days back (default 7, max 365)
       --hours <n>       hourly: number of hours back (default 24, max 168)
       --since <ISO>     model/session: count from this instant instead of --days
+      --rows <n>        table rows to print (0 = all)
       --local           daily: use local CLI logs only (skip account API)
   -V, --version         Print version
   -h, --help            This help
@@ -480,7 +491,7 @@ Options:
   -1, --once            Fetch once, print, exit (no watch)
   -W, --watch           Force watch mode (default; conflicts with -1)
   -p, --plain           No colors / no live redraw (for scripts, pipes)
-  -i, --interval <dur>  Refresh interval (default: config or 10s). Accepts a
+  -i, --interval <dur>  Refresh interval (default: config or 5s). Accepts a
                         unit suffix: 30s, 5m, 1h (bare number = seconds)
   -w, --bar-width <n>   Progress bar width in chars (default: config or 20)
   -b, --bursts <n>      Spend-burst sparkline samples (default: 40; hide when
@@ -502,13 +513,13 @@ Options:
       --window <w>      report window: month (default), all, or <n>d
       --period-start <date>  pin the period start (YYYY-MM-DD, UTC)
       --infer-anniversary   infer the period start from the first Go request
-      --rows <n>        table rows to print (default 15)
+      --rows <n>        table rows to print (0 = all)
   -V, --version         Print version
   -h, --help            This help
   Respects NO_COLOR; colors auto-off when stdout is not a terminal.
 
 Config: ~/.config/ocuse/config.json
-  { \"interval_secs\": 10, \"bar_width\": 20, \"burst_enabled\": true,
+  { \"interval_secs\": 5, \"bar_width\": 20, \"burst_enabled\": true,
     \"burst_samples\": 40, \"notify_on_cap\": true, \"statusline_template\": \"…\",
     \"statusline_colors\": true, \"statusline_ascii\": false,
     \"check_updates\": true, \"dismissed_update\": null }
@@ -537,7 +548,7 @@ Options:
   -1, --once            Fetch once, print, exit (no watch)
   -W, --watch           Force watch mode (default; conflicts with -1)
   -p, --plain           No colors / no live redraw (for scripts, pipes)
-  -i, --interval <dur>  Refresh interval (default: config or 15s). Accepts a
+  -i, --interval <dur>  Refresh interval (default: config or 5s). Accepts a
                         unit suffix: 30s, 5m, 1h (bare number = seconds)
   -w, --bar-width <n>   Progress bar width in chars (default: config or 20)
   -b, --bursts <n>      AFP-burst sparkline samples (default: 40; hide when
@@ -561,13 +572,13 @@ Options:
       --window <w>      report window: month (default), all, or <n>d
       --period-start <date>  pin the period start (YYYY-MM-DD)
       --infer-anniversary   infer the period start from the first plan request
-      --rows <n>        table rows to print (default 15)
+      --rows <n>        table rows to print (0 = all)
   -V, --version         Print version
   -h, --help            This help
   Respects NO_COLOR; colors auto-off when stdout is not a terminal.
 
 Config: ~/.config/arkuse/config.json
-  { \"interval_secs\": 15, \"bar_width\": 20, \"burst_enabled\": true,
+  { \"interval_secs\": 5, \"bar_width\": 20, \"burst_enabled\": true,
     \"burst_samples\": 40, \"notify_on_cap\": true, \"statusline_template\": \"…\",
     \"statusline_colors\": true, \"statusline_ascii\": false,
     \"check_updates\": true, \"dismissed_update\": null }

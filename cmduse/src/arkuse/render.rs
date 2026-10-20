@@ -1306,6 +1306,12 @@ pub fn models_period_text(report: &Report, limit: usize, colour: bool) -> String
             ink.dim_on("(no agent-plan usage in the period)".into())
         ));
     } else if total > 0.0 {
+        if report.models.len() > limit {
+            out.push_str(&format!(
+                "{}\n",
+                ink.dim_on(format!("… {} more", report.models.len() - limit))
+            ));
+        }
         out.push_str(&format!(
             "{:<28} {:>5} {:>9} {:>7} {:>6}\n",
             ink.bold_on("TOTAL".into()),
@@ -1517,7 +1523,6 @@ pub fn session_text(
     }
     let mut sessions: Vec<_> = by_session.into_iter().collect();
     sessions.sort_by_key(|(_, (_, _, _, _, _, last, _))| std::cmp::Reverse(*last));
-    sessions.truncate(limit);
 
     match fmt {
         Fmt::Json => {
@@ -1556,15 +1561,21 @@ pub fn session_text(
                 "{}session                          last        models   AFP       req{}\n",
                 ink.bold, ink.reset
             );
-            for (id, (cost, requests, _, _, _, last, models)) in sessions {
-                let short = id.rsplit('_').next().unwrap_or(id);
+            for (id, (cost, requests, _, _, _, last, models)) in sessions.iter().take(limit) {
+                let short = id.rsplit('_').next().unwrap_or(*id);
                 out.push_str(&format!(
                     "{:<32} {:<11} {:>6} {} {:>6}\n",
                     short,
                     ink.dim_on(format!("{:<11}", date_of(last.div_euclid(86_400_000)))),
                     models.len(),
-                    ink.cyan_on(format!("{:>9}", afp(cost))),
+                    ink.cyan_on(format!("{:>9}", afp(*cost))),
                     requests,
+                ));
+            }
+            if sessions.len() > limit {
+                out.push_str(&format!(
+                    "{}\n",
+                    ink.dim_on(format!("… {} more", sessions.len() - limit))
                 ));
             }
             if out.lines().count() == 1 {

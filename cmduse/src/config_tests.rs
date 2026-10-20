@@ -30,26 +30,29 @@ fn config_defaults_when_missing() {
 }
 
 #[test]
-fn ocuse_default_differs_only_in_interval_and_statusline() {
+fn every_binary_keeps_the_same_defaults_but_its_own_statusline() {
+    // One family, one cadence: a per-binary refresh interval was drift, not a
+    // decision (the user asked for 5s everywhere).
     let c = default_for(Binary::Cmduse);
-    let o = default_for(Binary::Ocuse);
-    assert_ne!(c.statusline_template, o.statusline_template);
-    // ocuse's live frame has always redrawn every 10s (see OCUSE_HELP)
-    assert_eq!(c.interval_secs, 5);
-    assert_eq!(o.interval_secs, 10);
-    // every other field matches cmduse's defaults
-    let c2 = Config {
-        statusline_template: o.statusline_template.clone(),
-        ..c
-    };
-    assert_eq!(c2.bar_width, o.bar_width);
-    assert_eq!(c2.burst_enabled, o.burst_enabled);
-    assert_eq!(c2.burst_samples, o.burst_samples);
-    assert_eq!(c2.notify_on_cap, o.notify_on_cap);
-    assert_eq!(c2.statusline_colors, o.statusline_colors);
-    assert_eq!(c2.statusline_ascii, o.statusline_ascii);
-    assert_eq!(c2.check_updates, o.check_updates);
-    assert_eq!(c2.dismissed_update, o.dismissed_update);
+    for binary in [Binary::Ocuse, Binary::Arkuse] {
+        let o = default_for(binary);
+        assert_ne!(c.statusline_template, o.statusline_template, "{binary:?}");
+        assert_eq!(o.interval_secs, 5, "{binary:?}");
+        // every other field matches cmduse's defaults
+        let c2 = Config {
+            statusline_template: o.statusline_template.clone(),
+            ..c.clone()
+        };
+        assert_eq!(c2.interval_secs, o.interval_secs, "{binary:?}");
+        assert_eq!(c2.bar_width, o.bar_width, "{binary:?}");
+        assert_eq!(c2.burst_enabled, o.burst_enabled, "{binary:?}");
+        assert_eq!(c2.burst_samples, o.burst_samples, "{binary:?}");
+        assert_eq!(c2.notify_on_cap, o.notify_on_cap, "{binary:?}");
+        assert_eq!(c2.statusline_colors, o.statusline_colors, "{binary:?}");
+        assert_eq!(c2.statusline_ascii, o.statusline_ascii, "{binary:?}");
+        assert_eq!(c2.check_updates, o.check_updates, "{binary:?}");
+        assert_eq!(c2.dismissed_update, o.dismissed_update, "{binary:?}");
+    }
 }
 
 #[test]

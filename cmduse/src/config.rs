@@ -42,22 +42,20 @@ impl Default for Config {
 /// cmduse's `{plan} {credits}/{cap}` credit pool.
 const OCUSE_STATUSLINE: &str = "{period} {month} \u{b7} 5h {five_hour} \u{b7} wk {weekly}";
 
-/// The defaults for a given binary. Identical to cmduse's except the refresh
-/// interval (ocuse's live frame has always redrawn every 10s) and the statusline
-/// template, which follows what that binary's report actually carries.
+/// The defaults for a given binary. Identical to cmduse's — refresh interval
+/// included, by the family parity rule — except the statusline template, which
+/// follows what that binary's report actually carries.
 pub fn default_for(binary: Binary) -> Config {
     match binary {
         Binary::Cmduse => Config::default(),
         Binary::Ocuse => Config {
-            interval_secs: 10,
             statusline_template: OCUSE_STATUSLINE.into(),
             ..Config::default()
         },
-        // ARK's meters move on request boundaries too, but every refresh shells
-        // out to `arkcli` (a control-plane round-trip), so it is slower than
-        // ocuse's local sqlite read.
+        // ARK's meters move on request boundaries too, and every refresh shells
+        // out to `arkcli` (a control-plane round-trip) — the same 5s cadence is
+        // the family default; `interval_secs` is there to slow it down.
         Binary::Arkuse => Config {
-            interval_secs: 15,
             statusline_template: OCUSE_STATUSLINE.into(),
             ..Config::default()
         },

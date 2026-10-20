@@ -102,14 +102,28 @@ pub fn run() {
         Some(cli::SubCmd::Model) => {
             print!(
                 "{}",
-                model_output(args.since.as_deref(), args.last, tz, fmt, colors)
+                model_output(
+                    args.since.as_deref(),
+                    args.last,
+                    tz,
+                    fmt,
+                    colors,
+                    rows_cap(&args, usize::MAX)
+                )
             );
             return;
         }
         Some(cli::SubCmd::Session) => {
             print!(
                 "{}",
-                session_output(args.since.as_deref(), args.last, tz, fmt, colors)
+                session_output(
+                    args.since.as_deref(),
+                    args.last,
+                    tz,
+                    fmt,
+                    colors,
+                    rows_cap(&args, 20)
+                )
             );
             return;
         }
@@ -527,8 +541,12 @@ fn models_cmd(args: &cli::Args) {
                 })
                 .collect();
             rows.sort_by(|a, b| a.1.cmp(b.1));
-            for (id, name, ctx) in rows {
+            let more = rows.len().saturating_sub(rows_cap(args, usize::MAX));
+            for (id, name, ctx) in rows.into_iter().take(rows_cap(args, usize::MAX)) {
                 println!("{name:<36} {ctx:<10} {id}");
+            }
+            if more > 0 {
+                println!("… {more} more (--rows N to widen)");
             }
         }
         Err(e) => {
@@ -709,9 +727,10 @@ pub(crate) fn model_output(
     tz: i64,
     fmt: report_render::Fmt,
     colors: bool,
+    rows: usize,
 ) -> String {
     let d = reports::load_local_since(tz, local_since(since_iso, days));
-    report_render::model_table(&d.by_model, fmt, colors, since_iso)
+    report_render::model_table(&d.by_model, fmt, colors, since_iso, rows)
 }
 
 /// Local usage by project/session (offline CLI logs), same window as `model`.
@@ -721,9 +740,17 @@ pub(crate) fn session_output(
     tz: i64,
     fmt: report_render::Fmt,
     colors: bool,
+    rows: usize,
 ) -> String {
     let d = reports::load_local_since(tz, local_since(since_iso, days));
-    report_render::project_table(&d.by_project, fmt, colors)
+    report_render::project_table(&d.by_project, fmt, colors, rows)
+}
+
+/// Table rows to print, resolved against this command's own default. `--rows 0`
+/// means every row; absent falls back to `default`. Capping is a display concern
+/// only — the machine formats always carry the full set.
+fn rows_cap(args: &cli::Args, default: usize) -> usize {
+    args.rows_cap(default)
 }
 
 /// Report output format. `--json`/`--csv` are mutually exclusive (parse-guarded).
