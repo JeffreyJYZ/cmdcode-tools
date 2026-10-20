@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-10-20T07:37:55.337Z",
+	"generatedAt": "2026-10-20T12:59:56.519Z",
 	"github": [
 		{
 			"tag": "cmduse-v0.7.27",
@@ -570,6 +570,12 @@
 			"version": "0.1.2",
 			"date": "2026-10-19T14:06:08.125Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.1.2"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-shell-rc",
+			"version": "0.2.0",
+			"date": "2026-10-20T08:50:03.829Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.2.0"
 		},
 		{
 			"package": "@jeffreyjyz/opencode-session-dir",
