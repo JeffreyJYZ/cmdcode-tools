@@ -1,6 +1,27 @@
 {
-	"generatedAt": "2026-10-20T02:10:35.528Z",
+	"generatedAt": "2026-10-20T07:37:55.337Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.7.27",
+			"name": "cmduse-v0.7.27",
+			"publishedAt": "2026-10-20T03:11:02Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.27",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.26...cmduse-v0.7.27"
+		},
+		{
+			"tag": "cmduse-v0.7.26",
+			"name": "cmduse-v0.7.26",
+			"publishedAt": "2026-10-20T02:53:52Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.26",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.25...cmduse-v0.7.26"
+		},
+		{
+			"tag": "cmduse-v0.7.25",
+			"name": "cmduse-v0.7.25",
+			"publishedAt": "2026-10-20T02:22:00Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.25",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.24...cmduse-v0.7.25"
+		},
 		{
 			"tag": "cmduse-v0.7.24",
 			"name": "cmduse-v0.7.24",
@@ -558,6 +579,24 @@
 		}
 	],
 	"crates": [
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.27",
+			"date": "2026-10-20T03:03:44.004438Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.27"
+		},
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.26",
+			"date": "2026-10-20T02:50:16.246142Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.26"
+		},
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.25",
+			"date": "2026-10-20T02:16:41.541044Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.25"
+		},
 		{
 			"crate": "cmd-usage",
 			"version": "0.7.24",
