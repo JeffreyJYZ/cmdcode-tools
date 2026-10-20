@@ -57,6 +57,7 @@ cmduse daily --local --tz +05:30  # ...the local-log path honors --tz too
 cmduse hourly --hours 6      # account usage by hour (default 24, max 168)
 cmduse hourly --local        # hourly from local CLI logs (offline)
 cmduse model                 # local usage by model (all time)
+cmduse model 'zai-org/GLM-5.2'   # one model's row: requests, tokens, cost, share
 cmduse model --days 30       # ...only the last 30 days
 cmduse model --since 2026-08-27T00:00:00Z   # ...or since a billing-period start
 cmduse model --rows 10       # trim the table (0 = every row, which is the default)
@@ -81,11 +82,13 @@ Color: SGR escapes are suppressed when stdout is not a terminal or when `NO_COLO
 |---|---|
 | `usage` | one-shot dashboard (same as `cmduse -1`) |
 | `plans` | plan comparison table (same as `cmduse plans`) |
-| `models` | live model list, filtered to the current plan (same as `cmduse models --gated`) |
+| `models` | live model list, filtered to the current plan (same as `cmduse models --gated`); args `gated` (default true) |
 | `daily` | account daily report; args `days`, `tz` (±HH:MM), `local` |
 | `hourly` | account hourly report; args `hours`, `tz`, `local` |
-| `session` | local usage by project/session; args `since` (ISO-8601), `days`, `tz` |
-| `model` | local usage by model; args `since` (ISO-8601), `days`, `tz` |
+| `session` | local usage by project/session; args `since` (ISO-8601), `days`, `tz`, `rows` |
+| `model` | local usage by model; args `since` (ISO-8601), `days`, `tz`, `rows`, and `id` for one model's detail instead of the table |
+
+The tool *names* and their arguments are the same in `ocuse` and `arkuse` (each adds `plan`, the plan its source needs); tests pin both lists per server.
 
 Auth is the same as the CLI (`CMD_API_KEY`, then `~/.commandcode/auth.json`). Tool errors come back as `isError: true` results; stdout carries protocol traffic only. Zed config:
 

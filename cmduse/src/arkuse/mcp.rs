@@ -102,6 +102,35 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
         .unwrap_or(json!({}));
     let number =
         |key: &str, fallback: i64| args.get(key).and_then(|v| v.as_i64()).unwrap_or(fallback);
+    // `--tz` per call: the bucket offset is the one thing a caller routinely
+    // wants different from the server's flag.
+    let tz = match args.get("tz").and_then(|v| v.as_str()) {
+        None => tz_secs,
+        Some(s) => crate::cli::parse_tz(s).ok_or((
+            -32602,
+            "tz needs an offset like +05:30 or -08:00".to_string(),
+        ))?,
+    };
+    // Rows to list: `rows` (the CLI flag's name), `limit` still accepted because
+    // it shipped first, and the server returns every row when neither is given.
+    let rows_cap = |fallback: usize| -> usize {
+        match args
+            .get("rows")
+            .or_else(|| args.get("limit"))
+            .and_then(|v| v.as_u64())
+        {
+            Some(0) | None => fallback,
+            Some(n) => n as usize,
+        }
+    };
+    // `since` pins the read window exactly, as in the CLI.
+    let since_ms = match args.get("since").and_then(|v| v.as_str()) {
+        None => None,
+        Some(s) => Some(cmduse_core::dates::parse_iso_utc(s).ok_or((
+            -32602,
+            format!("since needs an ISO-8601 instant, got '{s}'"),
+        ))? as i64),
+    };
     // The tier may be overridden per call; it defaults to the server's flag.
     let plan_id = args
         .get("plan")
@@ -110,7 +139,11 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
         .to_string();
     let catalog = ark::catalog();
 
-    let rows = || db::read_rows(db_path, window::now_ms() - days * 86_400_000);
+    let rows = || {
+        let cutoff =
+            since_ms.unwrap_or_else(|| window::now_ms() - number("days", days) * 86_400_000);
+        db::read_rows(db_path, cutoff)
+    };
     let text = match name {
         "usage" => rows().map(|rows| {
             // The same period the dashboard uses: the meter names the billing
@@ -151,7 +184,7 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
                 window::now_ms(),
                 number("days", days) * 86_400_000,
                 86_400_000,
-                tz_secs,
+                tz,
                 colour,
                 crate::report_render::Fmt::Table,
             )
@@ -163,7 +196,7 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
                 window::now_ms(),
                 number("hours", 24) * 3_600_000,
                 3_600_000,
-                tz_secs,
+                tz,
                 colour,
                 crate::report_render::Fmt::Table,
             )
@@ -172,29 +205,25 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
             render::session_text(
                 &rows,
                 &catalog,
-                number("limit", 20) as usize,
+                rows_cap(usize::MAX),
                 colour,
                 crate::report_render::Fmt::Table,
             )
         }),
-        "model" => {
-            let wanted = args
-                .get("id")
-                .and_then(|v| v.as_str())
-                .unwrap_or_default()
-                .to_string();
-            rows().map(|rows| {
-                let report = window::build(
-                    &rows,
-                    &catalog,
-                    &plan_id,
-                    window::now_ms(),
-                    period_start,
-                    account,
-                );
-                render::model_text(&report, &wanted, colour)
-            })
-        }
+        "model" => rows().map(|rows| {
+            let report = window::build(
+                &rows,
+                &catalog,
+                &plan_id,
+                window::now_ms(),
+                period_start,
+                account,
+            );
+            match args.get("id").and_then(|v| v.as_str()) {
+                Some(wanted) => render::model_text(&report, wanted, colour),
+                None => render::models_period_text(&report, rows_cap(usize::MAX), colour),
+            }
+        }),
         _ => {
             return Ok(json!({
                 "content": [{ "type": "text", "text": format!("unknown tool: {name}") }],
@@ -216,10 +245,10 @@ fn tools() -> Value {
         { "name": "usage", "description": "Volcengine ARK Agent Plan usage in AFP: the plan's own 5-hour / weekly / monthly meters, this machine's per-model AFP, and the reconciliation between them.", "inputSchema": { "type": "object", "properties": { "plan": { "type": "string", "description": "ARK tier: small, medium (default), large, or max" } } } },
         { "name": "plans", "description": "The ARK Agent Plan catalogue: each personal tier's price and monthly AFP quota, the window shares, and the enterprise price list.", "inputSchema": { "type": "object", "properties": {} } },
         { "name": "models", "description": "ARK model coefficients: AFP per 10,000 tokens, the yuan rate that implies, the minimum tier, and whether the given tier grants it.", "inputSchema": { "type": "object", "properties": { "plan": { "type": "string", "description": "ARK tier: small, medium (default), large, or max" }, "gated": { "type": "boolean", "description": "Only models the tier grants" } } } },
-        { "name": "daily", "description": "AFP, requests and tokens per day.", "inputSchema": { "type": "object", "properties": { "days": { "type": "integer", "description": "days of history (default 120)" } } } },
-        { "name": "hourly", "description": "AFP, requests and tokens per hour.", "inputSchema": { "type": "object", "properties": { "hours": { "type": "integer", "description": "hours of history (default 24)" } } } },
-        { "name": "session", "description": "AFP per opencode session, newest first.", "inputSchema": { "type": "object", "properties": { "limit": { "type": "integer", "description": "sessions to list (default 20)" } } } },
-        { "name": "model", "description": "One model's coefficient, tokens and AFP for the period, against the given tier.", "inputSchema": { "type": "object", "properties": { "id": { "type": "string", "description": "model id, e.g. deepseek-v4.1-flash" }, "plan": { "type": "string", "description": "ARK tier: small, medium (default), large, or max" } }, "required": ["id"] } },
+        { "name": "daily", "description": "AFP, requests and tokens per day.", "inputSchema": { "type": "object", "properties": { "days": { "type": "integer", "description": "days of history (default 120)" }, "tz": { "type": "string", "description": "UTC offset for the day buckets, e.g. +05:30" } } } },
+        { "name": "hourly", "description": "AFP, requests and tokens per hour.", "inputSchema": { "type": "object", "properties": { "hours": { "type": "integer", "description": "hours of history (default 24)" }, "tz": { "type": "string", "description": "UTC offset for the hour buckets, e.g. -08:00" } } } },
+        { "name": "session", "description": "AFP per opencode session, newest first.", "inputSchema": { "type": "object", "properties": { "since": { "type": "string", "description": "ISO-8601 instant to count from, e.g. 2026-08-27T00:00:00Z" }, "days": { "type": "integer", "description": "days back (used when since is absent)" }, "rows": { "type": "integer", "description": "sessions to list (0 = every row)" } } } },
+        { "name": "model", "description": "One model's coefficient, tokens and AFP for the period against the given tier; without id, the whole period table.", "inputSchema": { "type": "object", "properties": { "id": { "type": "string", "description": "model id, e.g. deepseek-v4.1-flash (omit for the table)" }, "plan": { "type": "string", "description": "ARK tier: small, medium (default), large, or max" }, "since": { "type": "string", "description": "ISO-8601 instant to count from" }, "days": { "type": "integer", "description": "days back (used when since is absent)" }, "rows": { "type": "integer", "description": "table rows to list (0 = every row)" } } } },
     ])
 }
 
@@ -293,6 +322,22 @@ mod tests {
             names,
             ["daily", "hourly", "model", "models", "plans", "session", "usage"]
         );
+    }
+
+    #[test]
+    fn tool_arguments_are_the_family_surface() {
+        let r = call("tools/list", json!({}), 40);
+        let tools = &r["result"]["tools"];
+        let params = |name: &str| crate::mcp_tests::tool_params(tools, name);
+        // The ARK source forces `plan` (the tier); the rest is the family
+        // surface cmduse and ocuse carry.
+        assert_eq!(params("usage"), "plan");
+        assert_eq!(params("plans"), "");
+        assert_eq!(params("models"), "gated plan");
+        assert_eq!(params("daily"), "days tz");
+        assert_eq!(params("hourly"), "hours tz");
+        assert_eq!(params("session"), "days rows since");
+        assert_eq!(params("model"), "days id plan rows since");
     }
 
     #[test]

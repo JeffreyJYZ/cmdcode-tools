@@ -86,6 +86,15 @@ fn tool_call(msg: &Value) -> Result<Value, (i64, String)> {
     let get = |k: &str| args.get(k);
     let opt_usize = |k: &str| get(k).and_then(|v| v.as_u64()).map(|n| n as usize);
     let opt_bool = |k: &str| get(k).and_then(|v| v.as_bool()).unwrap_or(false);
+    let opt_bool_default =
+        |k: &str, default: bool| get(k).and_then(|v| v.as_bool()).unwrap_or(default);
+    // Row cap: `rows` (the CLI flag's name), `0` = every row. The server always
+    // returns the full report — an MCP client is not a terminal, so an absent
+    // cap must not hide models.
+    let opt_rows = |k: &str| match get(k).and_then(|v| v.as_u64()) {
+        Some(0) | None => usize::MAX,
+        Some(n) => n as usize,
+    };
     let opt_tz = |k: &str| -> Result<i64, (i64, String)> {
         match get(k) {
             None => Ok(0),
@@ -98,7 +107,8 @@ fn tool_call(msg: &Value) -> Result<Value, (i64, String)> {
     let text = match name {
         "usage" => Ok(crate::usage_output()),
         "plans" => Ok(crate::plans_output(false)),
-        "models" => crate::models_output(true),
+        // Gated by default, as before; `gated: false` returns the raw list.
+        "models" => crate::models_output(opt_bool_default("gated", true)),
         "daily" => {
             let tz = opt_tz("tz")?;
             crate::daily_output(
@@ -123,16 +133,26 @@ fn tool_call(msg: &Value) -> Result<Value, (i64, String)> {
             opt_tz("tz")?,
             crate::report_render::Fmt::Table,
             false,
-            usize::MAX,
+            opt_rows("rows"),
         )),
-        "model" => Ok(crate::model_output(
-            get("since").and_then(|v| v.as_str()),
-            opt_usize("days"),
-            opt_tz("tz")?,
-            crate::report_render::Fmt::Table,
-            false,
-            usize::MAX,
-        )),
+        "model" => Ok(match get("id").and_then(|v| v.as_str()) {
+            Some(id) => crate::model_detail_output(
+                id,
+                get("since").and_then(|v| v.as_str()),
+                opt_usize("days"),
+                opt_tz("tz")?,
+                crate::report_render::Fmt::Table,
+                false,
+            ),
+            None => crate::model_output(
+                get("since").and_then(|v| v.as_str()),
+                opt_usize("days"),
+                opt_tz("tz")?,
+                crate::report_render::Fmt::Table,
+                false,
+                opt_rows("rows"),
+            ),
+        }),
         _ => {
             return Ok(json!({
                 "content": [{ "type": "text", "text": format!("unknown tool: {name}") }],
@@ -163,8 +183,14 @@ fn tools() -> Value {
     },
     {
         "name": "models",
-        "description": "Live Command Code model list from the API, filtered to what the current plan allows.",
-        "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+        "description": "Live Command Code model list from the API. Gated by default (only what the current plan allows); gated=false returns the raw list.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "gated": { "type": "boolean", "description": "Only models the current plan allows (default true)" },
+            },
+            "additionalProperties": false,
+        },
     },
     {
         "name": "daily",
@@ -201,19 +227,22 @@ fn tools() -> Value {
                 "since": { "type": "string", "description": "ISO-8601 instant to count from, e.g. 2026-08-27T00:00:00Z" },
                 "days": { "type": "integer", "description": "Days back (used when since is absent)" },
                 "tz": { "type": "string", "description": "UTC offset for the local buckets, e.g. +05:30" },
+                "rows": { "type": "integer", "description": "Rows to list (0 = every row)" },
             },
             "additionalProperties": false,
         },
     },
     {
         "name": "model",
-        "description": "Command Code local usage by model from the CLI logs in ~/.commandcode/projects, windowed by since or days.",
+        "description": "Command Code local usage by model from the CLI logs in ~/.commandcode/projects, windowed by since or days. Pass id for one model's detail.",
         "inputSchema": {
             "type": "object",
             "properties": {
+                "id": { "type": "string", "description": "One model's id for its detail row; absent returns the table" },
                 "since": { "type": "string", "description": "ISO-8601 instant to count from, e.g. 2026-08-27T00:00:00Z" },
                 "days": { "type": "integer", "description": "Days back (used when since is absent)" },
                 "tz": { "type": "string", "description": "UTC offset for the local buckets, e.g. -08:00" },
+                "rows": { "type": "integer", "description": "Table rows to list (0 = every row)" },
             },
             "additionalProperties": false,
         },

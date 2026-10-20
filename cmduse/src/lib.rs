@@ -102,14 +102,18 @@ pub fn run() {
         Some(cli::SubCmd::Model) => {
             print!(
                 "{}",
-                model_output(
-                    args.since.as_deref(),
-                    args.last,
-                    tz,
-                    fmt,
-                    colors,
-                    rows_cap(&args, usize::MAX)
-                )
+                match args.model_id.as_deref() {
+                    Some(id) =>
+                        model_detail_output(id, args.since.as_deref(), args.last, tz, fmt, colors),
+                    None => model_output(
+                        args.since.as_deref(),
+                        args.last,
+                        tz,
+                        fmt,
+                        colors,
+                        rows_cap(&args, usize::MAX)
+                    ),
+                }
             );
             return;
         }
@@ -731,6 +735,20 @@ pub(crate) fn model_output(
 ) -> String {
     let d = reports::load_local_since(tz, local_since(since_iso, days));
     report_render::model_table(&d.by_model, fmt, colors, since_iso, rows)
+}
+
+/// One model's row from the local logs (`model <id>`), same window flags as the
+/// table it sits in.
+pub(crate) fn model_detail_output(
+    id: &str,
+    since_iso: Option<&str>,
+    days: Option<usize>,
+    tz: i64,
+    fmt: report_render::Fmt,
+    colors: bool,
+) -> String {
+    let d = reports::load_local_since(tz, local_since(since_iso, days));
+    report_render::model_detail(&d.by_model, id, fmt, colors, since_iso)
 }
 
 /// Local usage by project/session (offline CLI logs), same window as `model`.

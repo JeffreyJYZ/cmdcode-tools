@@ -61,6 +61,9 @@ pub struct Args {
     pub infer_anniversary: bool,
     /// Table rows to print (`--rows`).
     pub rows: Option<usize>,
+    /// Optional model id after `model` (a plain positional, like ocuse's and
+    /// arkuse's): shows that one model instead of the table.
+    pub model_id: Option<String>,
     /// Skip OpenCode Go's usage endpoint (`--no-api`): stay local-only.
     pub no_api: bool,
 }
@@ -293,7 +296,14 @@ pub(crate) fn parse_args_from(
                 "mcp" => a.subcmd = Some(SubCmd::Mcp),
                 "statusline" => a.subcmd = Some(SubCmd::Statusline),
                 "config" => a.config_set = Some(parse_config_set(&mut parser)?),
-                other => return Err(format!("unknown arg: {other} (try --help)")),
+                other => {
+                    // `model <id>` — a plain positional, as in ocuse/arkuse.
+                    if a.subcmd == Some(SubCmd::Model) && a.model_id.is_none() {
+                        a.model_id = Some(other.to_string());
+                    } else {
+                        return Err(format!("unknown arg: {other} (try --help)"));
+                    }
+                }
             },
             Short(c) => return Err(format!("unknown arg: -{c} (try --help)")),
             Long(l) => return Err(unknown_long(l)),
@@ -428,7 +438,7 @@ Usage: cmduse [options]           Live plan dashboard (watch mode)
        cmduse -1                  One-shot dashboard
        cmduse daily [--days N] [--json]    Account usage by day (all harnesses)
        cmduse hourly [--hours N] [--json]  Account usage by hour (all harnesses)
-       cmduse model [--days N | --since ISO] [--json]   Local usage by model
+       cmduse model [<id>] [--days N | --since ISO] [--json]   Local usage by model
        cmduse session [--days N | --since ISO] [--json] Local usage by project/session
        cmduse models              Live model list from the Command Code API
        cmduse plans               Plan comparison table
@@ -479,7 +489,7 @@ Usage: ocuse [options]            Live plan dashboard (watch mode)
        ocuse -1                   One-shot dashboard
        ocuse daily [--days N] [--json]     Spend by day
        ocuse hourly [--hours N] [--json]   Spend by hour
-       ocuse model [--since ISO] [--json]  Local usage by model
+       ocuse model [<id>] [--since ISO] [--json]  Local usage by model
        ocuse session [--json]              Local usage by session
        ocuse models               Model list
        ocuse plans                The Go/Zen catalogue: both plans' limits and rates
@@ -536,7 +546,7 @@ Usage: arkuse [options]           Live plan dashboard (watch mode)
        arkuse -1                  One-shot dashboard
        arkuse daily [--days N] [--json]     AFP by day
        arkuse hourly [--hours N] [--json]   AFP by hour
-       arkuse model [--since ISO] [--json]  Local AFP by model
+       arkuse model [<id>] [--since ISO] [--json]  Local AFP by model
        arkuse session [--json]              Local AFP by session
        arkuse models              Model coefficients and tier gates
        arkuse plans               The Agent Plan catalogue: tiers, AFP, prices

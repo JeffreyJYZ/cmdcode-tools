@@ -418,10 +418,148 @@ pub fn model_table(
     }
 }
 
+/// One model's figures from the local report. `ocuse model <id>` and
+/// `arkuse model <id>` have had this since they gained a `model` positional;
+/// without it `cmduse model <id>` was the family's one missing capability.
+pub fn model_detail(
+    by_model: &crate::reports::ByModel,
+    id: &str,
+    fmt: Fmt,
+    colors: bool,
+    since: Option<&str>,
+) -> String {
+    let hit = by_model.get_key_value(id);
+    let total: f64 = by_model.values().map(|t| t.usage.cost_usd).sum();
+    let share = |t: &crate::reports::Totals| {
+        if total > 0.0 {
+            t.usage.cost_usd / total * 100.0
+        } else {
+            0.0
+        }
+    };
+    match fmt {
+        Fmt::Json => match hit {
+            None => {
+                serde_json::json!({ "source": "local", "since": since, "model": null }).to_string()
+            }
+            Some((name, t)) => {
+                let mut body = totals_json(t);
+                body["id"] = serde_json::json!(name);
+                body["share"] = serde_json::json!(share(t));
+                serde_json::json!({ "source": "local", "since": since, "model": body }).to_string()
+            }
+        },
+        Fmt::Csv => {
+            let mut out = String::from("model,requests,tokens,cost_usd\n");
+            if let Some((name, t)) = hit {
+                out.push_str(&format!(
+                    "{},{},{},{:.2}\n",
+                    csv_field(name),
+                    t.requests,
+                    tokens(t),
+                    t.usage.cost_usd,
+                ));
+            }
+            out
+        }
+        Fmt::Table => {
+            let (b, r) = if colors { (BOLD, RESET) } else { ("", "") };
+            let (d, dr) = if colors { (DIM, RESET) } else { ("", "") };
+            let Some((_, t)) = hit else {
+                return format!("no local usage for {id} in this window\n");
+            };
+            let mut o = format!("\n{b}{id}{r} {d}(local logs){dr}\n");
+            o.push_str(&format!("  window    {}\n", since_label(since)));
+            o.push_str(&format!("  requests  {}\n", compact(t.requests)));
+            o.push_str(&format!(
+                "  tokens    {} ({} in / {} out)\n",
+                compact(tokens(t)),
+                compact(t.usage.input_tokens),
+                compact(t.usage.output_tokens),
+            ));
+            if t.usage.cache_read_tokens + t.usage.cache_write_tokens > 0 {
+                o.push_str(&format!(
+                    "  cache     {} read / {} written\n",
+                    compact(t.usage.cache_read_tokens),
+                    compact(t.usage.cache_write_tokens),
+                ));
+            }
+            o.push_str(&format!("  cost      {}\n", money(t.usage.cost_usd)));
+            if total > 0.0 {
+                o.push_str(&format!(
+                    "  share     {:.1}% of the window's spend\n",
+                    share(t)
+                ));
+            }
+            o
+        }
+    }
+}
+
+/// The window line every detail view prints: the pinned instant when there is
+/// one, the all-time default otherwise.
+fn since_label(since: Option<&str>) -> String {
+    match since {
+        Some(s) => format!("from {s}"),
+        None => "all local logs".into(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::reports::{ByProject, Totals, Usage};
+    use crate::reports::{ByModel, ByProject, Totals, Usage};
+
+    #[test]
+    fn model_detail_prints_one_row_its_share_and_the_window() {
+        let mut by: ByModel = ByModel::new();
+        by.insert(
+            "zai-org/GLM-5.2".into(),
+            Totals {
+                requests: 4,
+                usage: Usage {
+                    input_tokens: 1_000,
+                    output_tokens: 500,
+                    cache_read_tokens: 2_000,
+                    cache_write_tokens: 0,
+                    cost_usd: 3.0,
+                },
+            },
+        );
+        by.insert(
+            "other".into(),
+            Totals {
+                requests: 1,
+                usage: Usage {
+                    cost_usd: 1.0,
+                    ..Default::default()
+                },
+            },
+        );
+        let text = model_detail(&by, "zai-org/GLM-5.2", Fmt::Table, false, None);
+        assert!(text.contains("zai-org/GLM-5.2 (local logs)"), "{text}");
+        assert!(text.contains("3.5K (1.0K in / 500 out)"), "{text}");
+        assert!(text.contains("2.0K read / 0 written"), "{text}");
+        assert!(text.contains("75.0% of the window's spend"), "{text}");
+        let text = model_detail(
+            &by,
+            "zai-org/GLM-5.2",
+            Fmt::Table,
+            false,
+            Some("2026-08-27T00:00:00Z"),
+        );
+        assert!(text.contains("from 2026-08-27T00:00:00Z"), "{text}");
+        // An id the window never saw is a message, not an empty frame.
+        let text = model_detail(&by, "nope", Fmt::Table, false, None);
+        assert_eq!(text, "no local usage for nope in this window\n");
+        let v: serde_json::Value =
+            serde_json::from_str(&model_detail(&by, "other", Fmt::Json, false, None)).unwrap();
+        assert_eq!(v["model"]["costUsd"], 1.0);
+        assert_eq!(v["model"]["share"], 25.0);
+        let csv = model_detail(&by, "other", Fmt::Csv, false, None);
+        assert_eq!(csv.lines().count(), 2);
+        assert_eq!(csv.lines().nth(1).unwrap(), "other,1,0,1.00");
+    }
 
     #[test]
     fn project_json_escapes_keys() {

@@ -11,6 +11,24 @@ fn call(method: &str, params: Value, id: i64) -> Value {
         .expect("request must get a response")
 }
 
+/// One tool's argument names, sorted and space-joined: exact, and readable when
+/// it fails. Shared with `ocuse`'s and `arkuse`'s schema tests, so a drift on one
+/// server fails all three suites instead of passing silently on the other two.
+pub(crate) fn tool_params(tools: &Value, name: &str) -> String {
+    let tool = tools
+        .as_array()
+        .expect("tools array")
+        .iter()
+        .find(|t| t["name"] == name)
+        .unwrap_or_else(|| panic!("no {name} tool"));
+    let mut keys: Vec<&str> = tool["inputSchema"]["properties"]
+        .as_object()
+        .map(|m| m.keys().map(String::as_str).collect())
+        .unwrap_or_default();
+    keys.sort_unstable();
+    keys.join(" ")
+}
+
 #[test]
 fn notification_gets_no_response() {
     // no "id" → notification → None (e.g. notifications/initialized)
@@ -62,6 +80,24 @@ fn tools_list_exposes_seven_tools() {
     for t in tools {
         assert_eq!(t["inputSchema"]["type"], "object");
     }
+}
+
+/// The *arguments* each tool takes, not just its name: the seven names were
+/// pinned from the start while the arguments drifted, so `models` could not gate
+/// and `session`/`model` could not be windowed on this server but could on the
+/// other two.
+#[test]
+fn tool_arguments_are_the_family_surface() {
+    let r = call("tools/list", json!({}), 40);
+    let tools = &r["result"]["tools"];
+    let params = |name: &str| crate::mcp_tests::tool_params(tools, name);
+    assert_eq!(params("usage"), "");
+    assert_eq!(params("plans"), "");
+    assert_eq!(params("models"), "gated");
+    assert_eq!(params("daily"), "days local tz");
+    assert_eq!(params("hourly"), "hours local tz");
+    assert_eq!(params("session"), "days rows since tz");
+    assert_eq!(params("model"), "days id rows since tz");
 }
 
 #[test]
