@@ -58,6 +58,7 @@ jobs:
             target/${{ matrix.target }}/release/ocuse
             target/${{ matrix.target }}/release/arkuse
             target/${{ matrix.target }}/release/cmdusedev
+            target/${{ matrix.target }}/release/ocusedev
             target/${{ matrix.target }}/release/arkusedev
 
   release:
@@ -78,7 +79,7 @@ jobs:
             target="$(basename "$dir")"
             stage="cmduse-${version}-${target}"
             mkdir -p "stage/${stage}"
-            install -m 0755 "${dir}/cmduse" "${dir}/ocuse" "${dir}/arkuse" "${dir}/cmdusedev" "${dir}/arkusedev" "stage/${stage}/"
+            install -m 0755 "${dir}/cmduse" "${dir}/ocuse" "${dir}/arkuse" "${dir}/cmdusedev" "${dir}/ocusedev" "${dir}/arkusedev" "stage/${stage}/"
             install -m 0644 cmduse/cmduse.1 cmduse/LICENSE-MIT "stage/${stage}/"
             # Deterministic archive, flattened: binaries at the archive root so
             # both the Homebrew formula and binstall's bin-dir stay simple.
