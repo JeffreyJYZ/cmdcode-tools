@@ -101,6 +101,20 @@ export const projects: Project[] = [
 		},
 		order: 5,
 	},
+	{
+		slug: "opencode-plugin",
+		name: "@jeffreyjyz/opencode-command-code",
+		tagline:
+			"Command Code provider, live model list and usage sidebar for opencode.",
+		kind: "npm-plugin",
+		repoPath: "opencode-plugin",
+		links: {
+			github: githubTree("opencode-plugin"),
+			npm: "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code",
+			source: REPO,
+		},
+		order: 6,
+	},
 ];
 
 export function projectBySlug(slug: string): Project | undefined {
