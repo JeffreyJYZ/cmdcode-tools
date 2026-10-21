@@ -111,7 +111,13 @@ export function renderGuards(blocked: Blocked): string {
 		const binary = replacement.split(/\s+/)[0];
 		if (!binary || !resolves(binary)) continue;
 		lines.push(
-			`${name}() {`,
+			// A loaded interactive shell often already has an alias of the same
+			// name (`grep='grep --color=auto'` ships with oh-my-zsh), and zsh
+			// refuses to define a function whose name is an alias. Both forms are
+			// needed: the unalias clears the alias, `function name {` is the one
+			// definition syntax zsh parses without alias expansion.
+			`unalias ${name} 2>/dev/null`,
+			`function ${name} {`,
 			`  print -u2 -- "${name} is blocked in agent shells — use ${replacement}"`,
 			"  return 127",
 			"}",

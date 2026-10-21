@@ -71,7 +71,7 @@ describe("loadConfig", () => {
 describe("renderGuards", () => {
 	test("writes a failing function that names the replacement", () => {
 		const script = renderGuards({ find: "fd" });
-		expect(script).toContain("find() {");
+		expect(script).toContain("function find {");
 		expect(script).toContain("use fd");
 		expect(script).toContain("return 127");
 	});
@@ -79,16 +79,18 @@ describe("renderGuards", () => {
 	test("skips a binary whose replacement is not installed", () => {
 		expect(
 			renderGuards({ find: "definitely-not-installed-xyz" }),
-		).not.toContain("find()");
+		).not.toContain("function find {");
 	});
 
 	test("skips names that cannot be zsh function names", () => {
-		expect(renderGuards({ "bad name": "fd" })).not.toContain("bad name()");
+		expect(renderGuards({ "bad name": "fd" })).not.toContain(
+			"function bad name",
+		);
 	});
 
 	test("never blocks cat, even when a config asks for it", () => {
 		// cat emits raw bytes; bat reformats, so the output stops being the file.
-		expect(renderGuards({ cat: "bat" })).not.toContain("cat()");
+		expect(renderGuards({ cat: "bat" })).not.toContain("function cat");
 	});
 });
 
@@ -106,7 +108,7 @@ describe("syncGuards", () => {
 		writeConfig({ blocked: { ack: "rg" } });
 		expect(syncGuards()).toBe(true);
 		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
-		expect(readFileSync(path, "utf8")).toContain("ack()");
+		expect(readFileSync(path, "utf8")).toContain("function ack {");
 	});
 });
 
@@ -121,6 +123,33 @@ test("the shim sources the guards after the alias state", async () => {
 
 describe("the generated script in a real shell", () => {
 	const hasZsh = Bun.which("zsh") !== null;
+
+	test.skipIf(!hasZsh)(
+		"still defines the function when the shell already aliased the name",
+		() => {
+			syncGuards();
+			const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+			// oh-my-zsh ships `alias grep='grep --color=auto'`; zsh refuses a
+			// function whose name is an alias, which silently left grep unblocked.
+			let stderr = "";
+			try {
+				execFileSync(
+					"zsh",
+					[
+						"-f",
+						"-c",
+						`alias grep='grep --color=auto'; source ${path}; grep --version`,
+					],
+					{ stdio: ["ignore", "pipe", "pipe"] },
+				);
+			} catch (error) {
+				stderr = (error as { stderr?: Buffer }).stderr?.toString() ?? "";
+			}
+			expect(stderr).toContain("use rg");
+			expect(stderr).not.toContain("parse error");
+			expect(stderr).not.toContain("based on alias");
+		},
+	);
 
 	test.skipIf(!hasZsh)(
 		"blocks the binary and leaves the real one reachable",
