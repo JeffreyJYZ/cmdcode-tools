@@ -113,9 +113,9 @@ The value is the tool named in the error message. `sed`'s names `read` too, sinc
 Three properties are deliberate:
 
 - **Opt-in.** No `blocked` entry means no guard, so the shim's `-f` test skips the file entirely — and a config you empty removes the file.
-- **Agent shells only.** zsh functions are not exported, so a real script, a `git` hook, a Makefile or any binary that shells out still runs the real `grep`. What changes is only what the model types into the shell tool.
+- **Agent shells only.** zsh functions are not exported, so a `git` hook, a Makefile, a binary or a `/bin/sh` script that shells out still runs the real `grep`. What changes is only what the model types into the shell tool. A `#!/bin/zsh` script is the one exception — it inherits the shim's `ZDOTDIR`, so it is guarded exactly like the shell tool itself.
 - **Skipped when the replacement is missing.** Blocking `find` on a machine without `fd` would leave the agent with no way to search, so a guard whose replacement is not on `PATH` is not written at all.
-- **Not a jail.** `command grep`, `/usr/bin/grep` and `\grep` all still work — the guard is a speed bump long enough for the model to reconsider, not a security boundary.
+- **Not a jail.** `command grep` and `/usr/bin/grep` still work — the guard is a speed bump long enough for the model to reconsider, not a security boundary.
 
 The user's escape hatch still wins: `~/.config/opencode/shell.zsh` is sourced after the guards, so a single machine can undo one.
 
