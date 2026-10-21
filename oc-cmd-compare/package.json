@@ -32,5 +32,12 @@
 	},
 	"dependencies": {
 		"cac": "^7.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/JeffreyJYZ/cmdcode-tools.git"
+	},
+	"bugs": {
+		"url": "https://github.com/JeffreyJYZ/cmdcode-tools/issues"
 	}
 }

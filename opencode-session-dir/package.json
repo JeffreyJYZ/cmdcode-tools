@@ -40,7 +40,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/JeffreyJYZ/opencode-session-dir.git"
+		"url": "git+https://github.com/JeffreyJYZ/cmdcode-tools.git"
 	},
 	"homepage": "https://github.com/JeffreyJYZ/opencode-session-dir#readme",
 	"bugs": "https://github.com/JeffreyJYZ/opencode-session-dir/issues",
