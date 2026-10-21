@@ -20,6 +20,7 @@ import {
 	WEEKLY_SECS,
 } from "../constants/sidebar";
 import {
+	actionableAccountError,
 	allowanceLabel,
 	clip,
 	count,
@@ -340,8 +341,9 @@ export function zenRows(
 	];
 	// The reason the console's own numbers are missing belongs with the Plan row,
 	// not buried under the local rows: an expired key means the panel below is an
-	// estimate, and nothing else on screen says so.
-	if (usage.accountError) {
+	// estimate, and nothing else on screen says so. A transport fault is not that
+	// — it heals on the next poll, so printing it made the line flicker.
+	if (usage.accountError && actionableAccountError(usage.accountError)) {
 		rows.push([
 			"",
 			clip(`usage API: ${usage.accountError}`, valueWidth("")),

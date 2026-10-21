@@ -618,4 +618,15 @@ describe("the account's own meters", () => {
 		const quiet = zenRows(parseZenJson(sample), meta);
 		expect(quiet.some((row) => row[1].includes("usage API"))).toBe(false);
 	});
+
+	test("a transport fault never reaches the panel", () => {
+		// The poll runs every 5s: a dropped request used to paint
+		// `usage API: error sending request for url (https://opencode.ai/…)` and
+		// wipe it again on the next success, which read as the line flickering.
+		const body = JSON.parse(sample) as Record<string, unknown>;
+		body.accountError =
+			"error sending request for url (https://opencode.ai/zen/go/v1/usage): connection closed before message completed";
+		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
+		expect(rows.some((row) => row[1].includes("usage API"))).toBe(false);
+	});
 });

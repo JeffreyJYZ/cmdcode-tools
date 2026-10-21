@@ -12,6 +12,7 @@
 // AFP alone, labelled as an estimate.
 import { FIVE_HOUR_SECS, ROW_WIDTH, WEEKLY_SECS } from "../constants/sidebar";
 import {
+	actionableAccountError,
 	clip,
 	count,
 	money,
@@ -327,7 +328,9 @@ export function arkRows(
 	];
 	// The reason the plan's own numbers are missing belongs here, not buried
 	// below: an expired profile means every window below is this store's guess.
-	if (usage.accountError) {
+	// Transport faults are excluded — they heal on the next poll, and printing
+	// them made the row flicker.
+	if (usage.accountError && actionableAccountError(usage.accountError)) {
 		rows.push([
 			"",
 			clip(`usage API: ${usage.accountError}`, valueWidth("")),

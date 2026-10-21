@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
+	type Accounted,
+	keepAccount,
 	rememberMeta,
 	rememberModelUsage,
 	rememberSnapshot,
@@ -46,6 +48,33 @@ describe("account snapshot cache", () => {
 		expect(seededZen()).not.toBe(usage);
 		rememberZen(usage);
 		expect(seededZen()).toBe(usage);
+	});
+
+	test("a dropped request keeps the last account meters", () => {
+		// The poll is 5s: without this, one failed request blinked the meters to
+		// the local estimate (and printed its URL) before the next poll restored
+		// them — the flicker the panel showed in the sidebar.
+		const last: Accounted = { account: { fiveHour: { percent: 12 } } };
+		const failed: Accounted = {
+			account: undefined,
+			accountError:
+				"error sending request for url (https://opencode.ai/zen/go/v1/usage)",
+		};
+		expect(keepAccount(failed, last)).toEqual({
+			account: last.account,
+			accountError: undefined,
+		});
+	});
+
+	test("an expired key drops the meters instead of hiding behind them", () => {
+		const last: Accounted = { account: { fiveHour: { percent: 12 } } };
+		const failed: Accounted = {
+			account: undefined,
+			accountError: "HTTP 401 api_key_expired",
+		};
+		const kept = keepAccount(failed, last);
+		expect(kept.account).toBeUndefined();
+		expect(kept.accountError).toBe("HTTP 401 api_key_expired");
 	});
 	test("seeds nothing before the first snapshot, then the account rows", () => {
 		const before = seededRows();

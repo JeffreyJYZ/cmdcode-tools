@@ -57,6 +57,23 @@ export function clip(text: string, width: number = ROW_WIDTH): string {
 	return text.length <= width ? text : `${text.slice(0, width - 1)}…`;
 }
 
+/**
+ * Whether a usage-API reason is worth a row in the panel.
+ *
+ * Only a reason that names something the user can fix is: a missing or expired
+ * key, a missing CLI/profile, a rejected request. Everything else — a dropped
+ * connection, a DNS blip, a timeout — is transport, heals on the next poll, and
+ * used to make an `usage API: …` line pop in and out of the sidebar every few
+ * seconds. The pattern list is a whitelist on purpose: a new transport wording
+ * must stay quiet by default.
+ */
+export function actionableAccountError(reason: string | undefined): boolean {
+	if (!reason) return false;
+	return /api_key_expired|no Go key|no agent-plan|not found on PATH|HTTP 40[13]|invalid.*key|unauthori[sz]ed/i.test(
+		reason,
+	);
+}
+
 /** Value budget for a labelled row: the panel draws `label: value`. */
 export function valueWidth(label: string): number {
 	return ROW_WIDTH - label.length - 2;

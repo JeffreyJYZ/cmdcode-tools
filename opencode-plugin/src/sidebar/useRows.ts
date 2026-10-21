@@ -18,6 +18,7 @@ import { type ArkUsage, arkRows } from "./ark";
 import { loadArk, loadMeta, loadUsage, loadZen } from "./data";
 import { loadPrefs } from "./prefs";
 import {
+	actionableAccountError,
 	type ModelMeta,
 	type ModelUsage,
 	modelKey,
@@ -196,6 +197,27 @@ export function seededArk(): ArkUsage | undefined {
 	return lastArk;
 }
 
+/** The account half both panels share. */
+export type Accounted = { account?: unknown; accountError?: string };
+
+/**
+ * Keep the previous account meters when this poll only failed on the wire.
+ *
+ * ocuse/arkuse answer with `accountError` and no `account` for *any* failure, so
+ * one dropped request blinked the whole meter block to the local estimate and
+ * back 5s later. Only a reason the user can act on may drop the old numbers;
+ * a transport fault keeps them, unlabelled, because the next poll restores them
+ * anyway.
+ */
+export function keepAccount<T extends Accounted>(
+	next: T,
+	last: Accounted | undefined,
+): T {
+	if (next.account || !last?.account) return next;
+	if (actionableAccountError(next.accountError)) return next;
+	return { ...next, account: last.account, accountError: undefined };
+}
+
 export function useRows(
 	activeModelId: () => string | undefined,
 	providerID: () => string | undefined,
@@ -291,7 +313,10 @@ export function useRows(
 				setUsage(usageRows(snapshot));
 				refreshModelUsage(activeModelId());
 			} else if (kind === "go" || kind === "zen") {
-				const snapshot = await loadZen(loadPrefs().ocPlan);
+				const snapshot = keepAccount(
+					await loadZen(loadPrefs().ocPlan),
+					lastZen,
+				);
 				rememberZen(snapshot);
 				setZen(snapshot);
 				// The store scan is provider-agnostic and needs no network, so the
@@ -299,7 +324,7 @@ export function useRows(
 				refreshModelUsage(activeModelId());
 				refreshModelWindows(activeModelId());
 			} else if (kind === "ark") {
-				const snapshot = await loadArk();
+				const snapshot = keepAccount(await loadArk(), lastArk);
 				rememberArk(snapshot);
 				setArk(snapshot);
 			}

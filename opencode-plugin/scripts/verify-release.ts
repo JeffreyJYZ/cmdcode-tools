@@ -132,7 +132,8 @@ async function main(): Promise<number> {
 		const i = args.indexOf(flag);
 		return i >= 0 ? args[i + 1] : undefined;
 	};
-	const dir = resolveTargetDir(value("--dir"));	const manifest = await readManifest(dir);
+	const dir = resolveTargetDir(value("--dir"));
+	const manifest = await readManifest(dir);
 	const name = manifest.name ?? PKG;
 	const encoded = name.replace("/", "%2F");
 	// Flags that take a value must not have it mistaken for the version.
@@ -167,7 +168,9 @@ async function main(): Promise<number> {
 	const expected = sourceGate
 		? undefined
 		: (value("--expected") ??
-			(args.includes("--no-pack") ? undefined : await packLocalShasum(dir)));
+			(args.includes("--no-pack")
+				? undefined
+				: await packLocalShasum(dir)));
 	if (sourceGate)
 		console.log(
 			"source gate: checking version + repository in the served tarball (no local-pack comparison)",
@@ -187,7 +190,9 @@ async function main(): Promise<number> {
 		const status = response?.status ?? 0;
 		if (facts.versionPresent && status === 200 && response) {
 			const sha1 = sha1Hex(await response.arrayBuffer());
-			const tarballBytes = await (await fetch(facts.tarballUrl)).arrayBuffer();
+			const tarballBytes = await (
+				await fetch(facts.tarballUrl)
+			).arrayBuffer();
 			const manifest = await manifestFromTarball(tarballBytes);
 			const tarballVersion = manifest?.version;
 			console.log(verdict(version, facts, status, sha1, expected));
@@ -243,7 +248,9 @@ async function main(): Promise<number> {
  */
 async function manifestFromTarball(
 	bytes: ArrayBuffer,
-): Promise<{ version?: string; repository?: { url?: string } | string } | undefined> {
+): Promise<
+	{ version?: string; repository?: { url?: string } | string } | undefined
+> {
 	try {
 		const { mkdtemp, writeFile, readFile } = await import(
 			"node:fs/promises"
