@@ -30,13 +30,8 @@ export const GUARDS_FILE = "guards.zsh";
 export const SHELL_RC_CONFIG = "shell-rc.json";
 
 /**
- * Blocked by default: the two commands an agent reaches for out of habit, with
- * the replacement this machine already uses everywhere else.
+ * Nothing is blocked until the config says so: shadowing `grep` is a strong
+ * opinion, and an agent shell that silently refuses a command is a surprise for
+ * anyone who did not ask for it. `~/.config/opencode/shell-rc.json` opts in.
  */
-export const DEFAULT_BLOCKED: Record<string, string> = {
-	find: "fd",
-	grep: "rg",
-	// `sd` replaces the substitution case; the message names `read` too, because
-	// `sed -n 'a,bp'` is a range read with no `sd` equivalent.
-	sed: "sd (or read for line ranges)",
-};
+export const DEFAULT_BLOCKED: Record<string, string> = {};

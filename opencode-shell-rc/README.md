@@ -84,7 +84,7 @@ Behaviour worth knowing:
 
 ## Blocked commands
 
-An agent that learned `grep` on another machine will keep typing it no matter what its instructions say. The plugin therefore shadows a small list of habit commands with a **function that fails and names the right tool**:
+An agent that learned `grep` on another machine will keep typing it no matter what its instructions say. The plugin can shadow a list of habit commands with a **function that fails and names the right tool**:
 
 ```console
 $ grep -r TODO src
@@ -93,25 +93,29 @@ $ echo $?
 127
 ```
 
-Defaults are `find` → `fd`, `grep` → `rg` and `sed` → `sd` (the message also names `read`, since `sed -n 'a,bp'` is a range read with no `sd` equivalent). Override them in `~/.config/opencode/shell-rc.json`:
+**Nothing is blocked by default** — an agent shell that silently refuses a command you never configured is a surprise, so the list starts empty and no guard file is written at all. Opt in per command in `~/.config/opencode/shell-rc.json`:
 
 ```json
 {
   "blocked": {
-    "find": "fd",
     "grep": "rg",
+    "find": "fd",
+    "sed": "sd (or read for line ranges)",
     "ack": "rg"
   }
 }
 ```
 
-`cat` is deliberately never on that list: it emits raw bytes, while `bat` reformats (headers, line numbers, decoration), so the output a pipeline or an agent reads would no longer be the file.
+The value is the tool named in the error message. `sed`'s names `read` too, since `sed -n 'a,bp'` is a range read with no `sd` equivalent.
+
+`cat` is deliberately never worth adding to that list: it emits raw bytes, while `bat` reformats (headers, line numbers, decoration), so the output a pipeline or an agent reads would no longer be the file.
 
 Three properties are deliberate:
 
+- **Opt-in.** No `blocked` entry means no guard, so the shim's `-f` test skips the file entirely — and a config you empty removes the file.
 - **Agent shells only.** zsh functions are not exported, so a real script, a `git` hook, a Makefile or any binary that shells out still runs the real `grep`. What changes is only what the model types into the shell tool.
 - **Skipped when the replacement is missing.** Blocking `find` on a machine without `fd` would leave the agent with no way to search, so a guard whose replacement is not on `PATH` is not written at all.
-- **Not a jail.** `command grep`, `/usr/bin/grep` and `\grep` all still work — the guard is a speed bump long enough for the model to reconsider, not a security boundary. A malformed config falls back to the defaults rather than to no guards, because "the agent quietly went back to grep" is a much quieter failure than a broken shell.
+- **Not a jail.** `command grep`, `/usr/bin/grep` and `\grep` all still work — the guard is a speed bump long enough for the model to reconsider, not a security boundary.
 
 The user's escape hatch still wins: `~/.config/opencode/shell.zsh` is sourced after the guards, so a single machine can undo one.
 

@@ -17,6 +17,7 @@ import {
 	mkdirSync,
 	readFileSync,
 	renameSync,
+	rmSync,
 	writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
@@ -133,17 +134,30 @@ export function syncGuards(
 ): boolean {
 	const script = renderGuards(loadConfig().blocked, installed);
 	const path = join(stateDirPath(), GUARDS_FILE);
+	// Nothing blocked (the default) means no file at all: the shim's `-f` test
+	// then skips the source entirely instead of reading a no-op script on every
+	// command.
+	const wanted = script.includes("function ") ? script : undefined;
+	if (!wanted) {
+		if (!existsSync(path)) return false;
+		try {
+			rmSync(path, { force: true });
+			return true;
+		} catch {
+			return false;
+		}
+	}
 	let current = "";
 	try {
 		current = readFileSync(path, "utf8");
 	} catch {
 		// first run
 	}
-	if (current === script) return false;
+	if (current === wanted) return false;
 	try {
 		mkdirSync(stateDirPath(), { recursive: true });
 		const temporary = `${path}.tmp`;
-		writeFileSync(temporary, script);
+		writeFileSync(temporary, wanted);
 		renameSync(temporary, path);
 	} catch {
 		return false;

@@ -43,10 +43,8 @@ const writeConfig = (body: unknown): void => {
 };
 
 describe("loadConfig", () => {
-	test("blocks find, grep and sed by default", () => {
-		expect(loadConfig()).toEqual({
-			blocked: { find: "fd", grep: "rg", sed: "sd (or read for line ranges)" },
-		});
+	test("blocks nothing by default — the guard layer is opt-in", () => {
+		expect(loadConfig()).toEqual({ blocked: {} });
 	});
 
 	test("reads a configured list", () => {
@@ -54,12 +52,10 @@ describe("loadConfig", () => {
 		expect(loadConfig()).toEqual({ blocked: { cat: "bat", find: "fd" } });
 	});
 
-	test("a malformed file falls back to the defaults, never to no guards", () => {
+	test("a malformed file blocks nothing rather than guessing", () => {
 		mkdirSync(join(dir, "config", "opencode"), { recursive: true });
 		writeFileSync(configFile(), "{not json");
-		expect(loadConfig()).toEqual({
-			blocked: { find: "fd", grep: "rg", sed: "sd (or read for line ranges)" },
-		});
+		expect(loadConfig()).toEqual({ blocked: {} });
 	});
 
 	test("ignores entries whose replacement is not a string", () => {
@@ -97,11 +93,22 @@ describe("renderGuards", () => {
 });
 
 describe("syncGuards", () => {
+	test("writes nothing when nothing is blocked, and removes a stale file", () => {
+		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+		// Default config: no guards, no file at all — the shim's `-f` test skips it.
+		expect(syncGuards(() => true)).toBe(false);
+		mkdirSync(join(dir, "state", "opencode", "shell-rc"), { recursive: true });
+		writeFileSync(path, "function grep { return 127 }\n");
+		expect(syncGuards(() => true)).toBe(true);
+		expect(() => readFileSync(path, "utf8")).toThrow();
+	});
+
 	test("writes the script and is idempotent", () => {
-		expect(syncGuards()).toBe(true);
+		writeConfig({ blocked: { grep: "rg" } });
+		expect(syncGuards(() => true)).toBe(true);
 		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
 		const first = readFileSync(path, "utf8");
-		expect(syncGuards()).toBe(false);
+		expect(syncGuards(() => true)).toBe(false);
 		expect(readFileSync(path, "utf8")).toBe(first);
 	});
 
@@ -129,6 +136,7 @@ describe("the generated script in a real shell", () => {
 	test.skipIf(!hasZsh)(
 		"still defines the function when the shell already aliased the name",
 		() => {
+			writeConfig({ blocked: { grep: "rg" } });
 			syncGuards();
 			const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
 			// oh-my-zsh ships `alias grep='grep --color=auto'`; zsh refuses a
@@ -156,6 +164,7 @@ describe("the generated script in a real shell", () => {
 	test.skipIf(!hasZsh)(
 		"blocks the binary and leaves the real one reachable",
 		() => {
+			writeConfig({ blocked: { grep: "rg" } });
 			syncGuards();
 			const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
 			// `grep` as a command is the function now; `command grep` is the binary.
