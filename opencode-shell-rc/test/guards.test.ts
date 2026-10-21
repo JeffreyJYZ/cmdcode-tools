@@ -70,7 +70,7 @@ describe("loadConfig", () => {
 
 describe("renderGuards", () => {
 	test("writes a failing function that names the replacement", () => {
-		const script = renderGuards({ find: "fd" });
+		const script = renderGuards({ find: "fd" }, () => true);
 		expect(script).toContain("function find {");
 		expect(script).toContain("use fd");
 		expect(script).toContain("return 127");
@@ -83,14 +83,16 @@ describe("renderGuards", () => {
 	});
 
 	test("skips names that cannot be zsh function names", () => {
-		expect(renderGuards({ "bad name": "fd" })).not.toContain(
+		expect(renderGuards({ "bad name": "fd" }, () => true)).not.toContain(
 			"function bad name",
 		);
 	});
 
 	test("never blocks cat, even when a config asks for it", () => {
 		// cat emits raw bytes; bat reformats, so the output stops being the file.
-		expect(renderGuards({ cat: "bat" })).not.toContain("function cat");
+		expect(renderGuards({ cat: "bat" }, () => true)).not.toContain(
+			"function cat",
+		);
 	});
 });
 
@@ -104,9 +106,9 @@ describe("syncGuards", () => {
 	});
 
 	test("follows a config edit", () => {
-		syncGuards();
+		syncGuards(() => true);
 		writeConfig({ blocked: { ack: "rg" } });
-		expect(syncGuards()).toBe(true);
+		expect(syncGuards(() => true)).toBe(true);
 		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
 		expect(readFileSync(path, "utf8")).toContain("function ack {");
 	});
