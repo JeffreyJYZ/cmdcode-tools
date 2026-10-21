@@ -26,6 +26,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { agentsFile, hasBlock, syncAliases } from "./aliases";
 import { CAPTURE_MARKER, LINKED, STATE_VERSION } from "./constants/shell-rc";
+import { syncGuards } from "./guards";
 
 /** Read `HOME` per call so tests can point it at a temp directory. */
 const home = (): string => process.env.HOME ?? homedir();
@@ -67,6 +68,9 @@ export function shimContent(): string {
 		// Non-interactive only: an interactive shell gets its aliases and
 		// functions from the real rc, symlinked below.
 		'if [[ ! -o interactive && -n "$ZDOTDIR" && -f "$ZDOTDIR/state.zsh" ]]; then source "$ZDOTDIR/state.zsh"; fi',
+		// Guard layer, agent shells only: `find`/`grep` fail here and name the
+		// tool to use instead. A real script still gets the real binaries.
+		'if [[ ! -o interactive && -n "$ZDOTDIR" && -f "$ZDOTDIR/guards.zsh" ]]; then source "$ZDOTDIR/guards.zsh"; fi',
 		'[[ -f "$HOME/.config/opencode/shell.zsh" ]] && source "$HOME/.config/opencode/shell.zsh"',
 		"",
 	].join("\n");
@@ -231,5 +235,13 @@ export function prepare(): void {
 		} catch {
 			// The index is documentation; never fail a shell over it.
 		}
+	}
+
+	// The guard file is cheap to keep current (one small read + compare) and
+	// must exist before the shim's `.zshenv` is next sourced.
+	try {
+		syncGuards();
+	} catch {
+		// No guards is the pre-feature behaviour: the real binaries run.
 	}
 }

@@ -8,7 +8,8 @@ Repository: `@jeffreyjyz/opencode-shell-rc` — opencode v2 plugin (server half 
 src/index.ts               server half (v2 `{ id, setup }`): the `shell.create.before` hook
 src/shim.ts                the shim: stateDir, shimContent, needsRefresh, prepare, refresh
 src/aliases.ts             the alias index: `~/.zshrc`'s own `alias` lines → a block in global AGENTS.md
-src/constants/shell-rc.ts  plugin id, linked rc file names, the alias block's markers
+src/guards.ts              the guard layer: `find`/`grep` fail in agent shells and name the replacement
+src/constants/shell-rc.ts  plugin id, linked rc file names, alias block markers, guard defaults
 index.js                   root shim for local-directory plugin loading (see Traps)
 ```
 
@@ -28,6 +29,9 @@ No TUI half, no runtime dependencies (node builtins only).
 - **State is the *whole interactive environment*, oh-my-zsh included.** Counts far larger than the hand-written `~/.zshrc` are **expected, not a bug** — the snapshot faithfully reproduces what sourcing the rc yields. A smaller payload would mean filtering serializer output to names defined in rc files; current choice deliberately "mirror the interactive shell".
 - **Fail open.** If zsh is missing or generation throws, `ZDOTDIR` is not set and shell behaves exactly as before. Never fail the shell command. `refreshIfStale` catches missing/failing `zsh` itself and returns false, so `prepare()` still lays down the shim (and the shim then sources nothing). CI runs on Ubuntu with no `zsh`; tests depend on this.
 - **PATH/env deliberately not snapshotted.** Agent inherits opencode's start-up environment. Document that a `.zshrc` `PATH` change needs an opencode restart; alias/function changes self-refresh.
+
+- **The guard layer is a speed bump, not a jail, and it is agent-shell-only on purpose.** `src/guards.ts` writes `guards.zsh` with a failing function per blocked name (`find`→`fd`, `grep`→`rg` by default, overridable in `~/.config/opencode/shell-rc.json`). zsh functions are **not exported**, so `git`, a Makefile or any script still gets the real binary — only the command the model types is shadowed. `command grep` and `/usr/bin/grep` bypass it by design; do not "harden" this into a wrapper that execs the real tool, or the block stops forcing the alternative.
+- **A guard whose replacement is not on PATH is not written.** Blocking `find` on a machine without `fd` leaves the agent unable to search at all. A malformed config falls back to the **defaults**, never to no guards: an agent quietly reverting to `grep` is a far quieter failure than a broken shell. **`cat` is never on the list** — it emits raw bytes, while `bat` reformats (headers, line numbers, decoration), so the blocked command would return something that is not the file.
 
 ## Traps
 

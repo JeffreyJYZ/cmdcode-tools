@@ -24,3 +24,19 @@ export const LINKED = [".zshrc", ".zprofile", ".zlogin"] as const;
 export const AGENTS_FILE = "AGENTS.md";
 export const ALIAS_BLOCK_BEGIN = "<!-- shell-rc-aliases-begin -->";
 export const ALIAS_BLOCK_END = "<!-- shell-rc-aliases-end -->";
+
+/** The guard layer: the generated script's file name and its config file. */
+export const GUARDS_FILE = "guards.zsh";
+export const SHELL_RC_CONFIG = "shell-rc.json";
+
+/**
+ * Blocked by default: the two commands an agent reaches for out of habit, with
+ * the replacement this machine already uses everywhere else.
+ */
+export const DEFAULT_BLOCKED: Record<string, string> = {
+	find: "fd",
+	grep: "rg",
+	// `sd` replaces the substitution case; the message names `read` too, because
+	// `sed -n 'a,bp'` is a range read with no `sd` equivalent.
+	sed: "sd (or read for line ranges)",
+};
