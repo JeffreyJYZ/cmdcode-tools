@@ -35,9 +35,11 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/JeffreyJYZ/cmdcode-tools.git"
+		"url": "git+https://github.com/JeffreyJYZ/cmdcode-tools.git",
+		"directory": "oc-cmd-compare"
 	},
 	"bugs": {
 		"url": "https://github.com/JeffreyJYZ/cmdcode-tools/issues"
-	}
+	},
+	"homepage": "https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/oc-cmd-compare#readme"
 }

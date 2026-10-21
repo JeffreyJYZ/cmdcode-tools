@@ -33,10 +33,13 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/JeffreyJYZ/cmdcode-tools.git"
+		"url": "git+https://github.com/JeffreyJYZ/cmdcode-tools.git",
+		"directory": "opencode-shell-rc"
 	},
-	"homepage": "https://github.com/JeffreyJYZ/opencode-shell-rc#readme",
-	"bugs": "https://github.com/JeffreyJYZ/opencode-shell-rc/issues",
+	"homepage": "https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/opencode-shell-rc#readme",
+	"bugs": {
+		"url": "https://github.com/JeffreyJYZ/cmdcode-tools/issues"
+	},
 	"publishConfig": {
 		"access": "public"
 	}

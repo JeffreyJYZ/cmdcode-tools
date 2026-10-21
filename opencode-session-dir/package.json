@@ -40,10 +40,13 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/JeffreyJYZ/cmdcode-tools.git"
+		"url": "git+https://github.com/JeffreyJYZ/cmdcode-tools.git",
+		"directory": "opencode-session-dir"
 	},
-	"homepage": "https://github.com/JeffreyJYZ/opencode-session-dir#readme",
-	"bugs": "https://github.com/JeffreyJYZ/opencode-session-dir/issues",
+	"homepage": "https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/opencode-session-dir#readme",
+	"bugs": {
+		"url": "https://github.com/JeffreyJYZ/cmdcode-tools/issues"
+	},
 	"publishConfig": {
 		"access": "public"
 	}
