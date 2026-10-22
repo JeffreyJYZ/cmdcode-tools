@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-10-22T20:06:17.713Z",
+	"generatedAt": "2026-10-22T23:22:19.599Z",
 	"plans": [
 		{
 			"key": "go",
@@ -177,7 +177,7 @@
 							"payPerRequest": 0,
 							"multiplier": 10,
 							"ability": 30.3334426348039,
-							"tps": 326.900120158351,
+							"tps": 326.652829774166,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -281,7 +281,7 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 61,
 							"valueIndex": 82,
 							"free": false
@@ -303,7 +303,7 @@
 							"payPerRequest": 0.000099,
 							"multiplier": 10,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 51,
 							"valueIndex": 77,
 							"free": false
@@ -329,9 +329,9 @@
 							"payPerRequest": 0.0002866666666666667,
 							"multiplier": 6,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 69,
-							"valueIndex": 80,
+							"valueIndex": 79,
 							"free": false
 						},
 						"cc": {
@@ -351,7 +351,7 @@
 							"payPerRequest": 0.000172,
 							"multiplier": 10,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 42,
 							"valueIndex": 67,
 							"free": false
@@ -487,57 +487,6 @@
 						}
 					},
 					{
-						"key": "mimov25",
-						"name": "MiMo V2.5",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 194805.1948051948,
-							"requestsPerFiveHour": 38961.03896103896,
-							"requestsPerWeek": 97402.5974025974,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00005133333333333334,
-							"multiplier": 6,
-							"ability": 21.8,
-							"tps": null,
-							"index": 95,
-							"valueIndex": 68,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": 32467.532467532466,
-							"requestsPerFiveHour": 9740.25974025974,
-							"requestsPerWeek": 19480.51948051948,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.0000308,
-							"multiplier": 10,
-							"ability": 21.8,
-							"tps": null,
-							"index": 68,
-							"valueIndex": 56,
-							"free": false,
-							"deal": {
-								"badge": "-98%"
-							}
-						}
-					},
-					{
 						"key": "gpt56luna",
 						"name": "GPT-5.6 Luna",
 						"oc": {
@@ -586,6 +535,54 @@
 						}
 					},
 					{
+						"key": "step5preview",
+						"name": "Step 5 Preview",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 2365.930599369085,
+							"requestsPerFiveHour": 473.186119873817,
+							"requestsPerWeek": 1182.9652996845425,
+							"costPerRequest": 0.00634,
+							"payPerRequest": 0.004226666666666667,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 29,
+							"valueIndex": 57,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.05,
+								"cacheWrite": null
+							},
+							"allowance": 10,
+							"requestsPerMonth": 2604.1666666666665,
+							"requestsPerFiveHour": 781.2499999999999,
+							"requestsPerWeek": 1562.4999999999998,
+							"costPerRequest": 0.00384,
+							"payPerRequest": 0.000384,
+							"multiplier": 10,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 30,
+							"valueIndex": 61,
+							"free": false
+						}
+					},
+					{
 						"key": "ling31flash",
 						"name": "Ling 3.1 Flash",
 						"oc": null,
@@ -613,54 +610,6 @@
 						}
 					},
 					{
-						"key": "step5preview",
-						"name": "Step 5 Preview",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 2365.930599369085,
-							"requestsPerFiveHour": 473.186119873817,
-							"requestsPerWeek": 1182.9652996845425,
-							"costPerRequest": 0.00634,
-							"payPerRequest": 0.004226666666666667,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 29,
-							"valueIndex": 55,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.05,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": 2604.1666666666665,
-							"requestsPerFiveHour": 781.2499999999999,
-							"requestsPerWeek": 1562.4999999999998,
-							"costPerRequest": 0.00384,
-							"payPerRequest": 0.000384,
-							"multiplier": 10,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 30,
-							"valueIndex": 58,
-							"free": false
-						}
-					},
-					{
 						"key": "glm53flashx",
 						"name": "GLM-5.3 FlashX",
 						"oc": null,
@@ -681,7 +630,7 @@
 							"payPerRequest": 0.00042960000000000003,
 							"multiplier": 10,
 							"ability": 41.8,
-							"tps": 137.058175934907,
+							"tps": 133.9085792909378,
 							"index": 29,
 							"valueIndex": 58,
 							"free": false
@@ -733,57 +682,6 @@
 							"index": 40,
 							"valueIndex": 54,
 							"free": false
-						}
-					},
-					{
-						"key": "mimov25pro",
-						"name": "MiMo V2.5 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 21329.54141485958,
-							"requestsPerFiveHour": 4265.908282971916,
-							"requestsPerWeek": 10664.77070742979,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 62,
-							"valueIndex": 56,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": 14245.014245014245,
-							"requestsPerFiveHour": 4273.504273504273,
-							"requestsPerWeek": 8547.008547008547,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.0000702,
-							"multiplier": 10,
-							"ability": 26,
-							"tps": null,
-							"index": 56,
-							"valueIndex": 53,
-							"free": false,
-							"deal": {
-								"badge": "-99%"
-							}
 						}
 					},
 					{
@@ -954,7 +852,7 @@
 							"payPerRequest": 0.000226,
 							"multiplier": 10,
 							"ability": 26.5,
-							"tps": 427.573277414639,
+							"tps": 429.870914506856,
 							"index": 38,
 							"valueIndex": 47,
 							"free": false
@@ -1007,7 +905,7 @@
 							"payPerRequest": 0.01,
 							"multiplier": 1.5,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 16,
 							"valueIndex": 44,
 							"free": false
@@ -1029,7 +927,7 @@
 							"payPerRequest": 0.0015,
 							"multiplier": 10,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 10,
 							"valueIndex": 41,
 							"free": false
@@ -1158,7 +1056,7 @@
 							"payPerRequest": 0.0009350000000000001,
 							"multiplier": 10,
 							"ability": 38.9,
-							"tps": 140.685548649308,
+							"tps": 142.325036557937,
 							"index": 17,
 							"valueIndex": 39,
 							"free": false
@@ -1185,7 +1083,7 @@
 							"payPerRequest": 0.0008924,
 							"multiplier": 10,
 							"ability": 38.4,
-							"tps": 78.2873953261029,
+							"tps": 79.5628630886507,
 							"index": 18,
 							"valueIndex": 35,
 							"free": false
@@ -1212,7 +1110,7 @@
 							"payPerRequest": 0.000292,
 							"multiplier": 10,
 							"ability": 33.7,
-							"tps": 41.7690855154168,
+							"tps": 42.1198081418443,
 							"index": 35,
 							"valueIndex": 35,
 							"free": false
@@ -1388,7 +1286,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 12,
 							"valueIndex": 28,
 							"free": false
@@ -1410,7 +1308,7 @@
 							"payPerRequest": 0.00204,
 							"multiplier": 10,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 5,
 							"valueIndex": 25,
 							"free": false
@@ -1701,7 +1599,7 @@
 							"payPerRequest": 0.001011,
 							"multiplier": 10,
 							"ability": 25,
-							"tps": 168.41907902528,
+							"tps": 170.999838534698,
 							"index": 16,
 							"valueIndex": 12,
 							"free": false
@@ -1920,6 +1818,60 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25",
+						"name": "MiMo-V2.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.14,
+								"output": 0.28,
+								"cacheRead": 0.0028,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 194805.1948051948,
+							"requestsPerFiveHour": 38961.03896103896,
+							"requestsPerWeek": 97402.5974025974,
+							"costPerRequest": 0.000308,
+							"payPerRequest": 0.00005133333333333334,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 95,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25pro",
+						"name": "MiMo-V2.5-Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 21329.54141485958,
+							"requestsPerFiveHour": 4265.908282971916,
+							"requestsPerWeek": 10664.77070742979,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 62,
+							"valueIndex": null,
+							"free": false
 						},
 						"cc": null
 					},
@@ -2285,11 +2237,11 @@
 					}
 				],
 				"tally": {
-					"headToHead": 24,
+					"headToHead": 22,
 					"ocWins": 1,
-					"ccWins": 23,
+					"ccWins": 21,
 					"ties": 0,
-					"ocOnly": 5,
+					"ocOnly": 7,
 					"ccOnly": 34
 				}
 			},
@@ -2412,7 +2364,7 @@
 							"payPerRequest": 0,
 							"multiplier": 10,
 							"ability": 30.3334426348039,
-							"tps": 326.900120158351,
+							"tps": 326.652829774166,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -2516,7 +2468,7 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 74,
 							"valueIndex": 87,
 							"free": false
@@ -2538,7 +2490,7 @@
 							"payPerRequest": 0.000099,
 							"multiplier": 10,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 46,
 							"valueIndex": 75,
 							"free": false
@@ -2564,7 +2516,7 @@
 							"payPerRequest": 0.0003822222222222222,
 							"multiplier": 4.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 78,
 							"valueIndex": 83,
 							"free": false
@@ -2586,7 +2538,7 @@
 							"payPerRequest": 0.000172,
 							"multiplier": 10,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 38,
 							"valueIndex": 65,
 							"free": false
@@ -2770,54 +2722,51 @@
 						}
 					},
 					{
-						"key": "mimov25",
-						"name": "MiMo V2.5",
+						"key": "step5preview",
+						"name": "Step 5 Preview",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
 							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.1,
 								"cacheWrite": null
 							},
-							"allowance": 120,
-							"requestsPerMonth": 389610.3896103896,
-							"requestsPerFiveHour": 77922.07792207792,
-							"requestsPerWeek": 194805.1948051948,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00010266666666666668,
-							"multiplier": 3,
-							"ability": 21.8,
-							"tps": null,
-							"index": 95,
-							"valueIndex": 69,
+							"allowance": 60,
+							"requestsPerMonth": 9463.72239747634,
+							"requestsPerFiveHour": 1892.744479495268,
+							"requestsPerWeek": 4731.86119873817,
+							"costPerRequest": 0.00634,
+							"payPerRequest": 0.004226666666666667,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 45,
+							"valueIndex": 64,
 							"free": false
 						},
 						"cc": {
 							"provider": "cc",
 							"plan": "Go",
 							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.05,
 								"cacheWrite": null
 							},
 							"allowance": 10,
-							"requestsPerMonth": 32467.532467532466,
-							"requestsPerFiveHour": 9740.25974025974,
-							"requestsPerWeek": 19480.51948051948,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.0000308,
+							"requestsPerMonth": 2604.1666666666665,
+							"requestsPerFiveHour": 781.2499999999999,
+							"requestsPerWeek": 1562.4999999999998,
+							"costPerRequest": 0.00384,
+							"payPerRequest": 0.000384,
 							"multiplier": 10,
-							"ability": 21.8,
-							"tps": null,
-							"index": 62,
-							"valueIndex": 53,
-							"free": false,
-							"deal": {
-								"badge": "-98%"
-							}
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 28,
+							"valueIndex": 59,
+							"free": false
 						}
 					},
 					{
@@ -2869,105 +2818,6 @@
 						}
 					},
 					{
-						"key": "step5preview",
-						"name": "Step 5 Preview",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 9463.72239747634,
-							"requestsPerFiveHour": 1892.744479495268,
-							"requestsPerWeek": 4731.86119873817,
-							"costPerRequest": 0.00634,
-							"payPerRequest": 0.004226666666666667,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 45,
-							"valueIndex": 62,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.05,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": 2604.1666666666665,
-							"requestsPerFiveHour": 781.2499999999999,
-							"requestsPerWeek": 1562.4999999999998,
-							"costPerRequest": 0.00384,
-							"payPerRequest": 0.000384,
-							"multiplier": 10,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 28,
-							"valueIndex": 57,
-							"free": false
-						}
-					},
-					{
-						"key": "mimov25pro",
-						"name": "MiMo V2.5 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 85318.16565943832,
-							"requestsPerFiveHour": 17063.633131887666,
-							"requestsPerWeek": 42659.08282971916,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 75,
-							"valueIndex": 61,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": 14245.014245014245,
-							"requestsPerFiveHour": 4273.504273504273,
-							"requestsPerWeek": 8547.008547008547,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.0000702,
-							"multiplier": 10,
-							"ability": 26,
-							"tps": null,
-							"index": 51,
-							"valueIndex": 50,
-							"free": false,
-							"deal": {
-								"badge": "-99%"
-							}
-						}
-					},
-					{
 						"key": "ling31flash",
 						"name": "Ling 3.1 Flash",
 						"oc": null,
@@ -3015,7 +2865,7 @@
 							"payPerRequest": 0.00042960000000000003,
 							"multiplier": 10,
 							"ability": 41.8,
-							"tps": 137.058175934907,
+							"tps": 133.9085792909378,
 							"index": 26,
 							"valueIndex": 57,
 							"free": false
@@ -3041,7 +2891,7 @@
 							"payPerRequest": 0.005,
 							"multiplier": 3,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 43,
 							"valueIndex": 56,
 							"free": false
@@ -3063,9 +2913,9 @@
 							"payPerRequest": 0.0015,
 							"multiplier": 10,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 9,
-							"valueIndex": 41,
+							"valueIndex": 40,
 							"free": false
 						}
 					},
@@ -3339,7 +3189,7 @@
 							"payPerRequest": 0.000226,
 							"multiplier": 10,
 							"ability": 26.5,
-							"tps": 427.573277414639,
+							"tps": 429.870914506856,
 							"index": 35,
 							"valueIndex": 45,
 							"free": false
@@ -3441,7 +3291,7 @@
 							"payPerRequest": 0.0009350000000000001,
 							"multiplier": 10,
 							"ability": 38.9,
-							"tps": 140.685548649308,
+							"tps": 142.325036557937,
 							"index": 16,
 							"valueIndex": 38,
 							"free": false
@@ -3515,7 +3365,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 29,
 							"valueIndex": 36,
 							"free": false
@@ -3537,7 +3387,7 @@
 							"payPerRequest": 0.00204,
 							"multiplier": 10,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 5,
 							"valueIndex": 25,
 							"free": false
@@ -3564,7 +3414,7 @@
 							"payPerRequest": 0.0008924,
 							"multiplier": 10,
 							"ability": 38.4,
-							"tps": 78.2873953261029,
+							"tps": 79.5628630886507,
 							"index": 16,
 							"valueIndex": 34,
 							"free": false
@@ -3591,7 +3441,7 @@
 							"payPerRequest": 0.000292,
 							"multiplier": 10,
 							"ability": 33.7,
-							"tps": 41.7690855154168,
+							"tps": 42.1198081418443,
 							"index": 31,
 							"valueIndex": 34,
 							"free": false
@@ -3916,6 +3766,33 @@
 						}
 					},
 					{
+						"key": "inkling",
+						"name": "Inkling",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 1,
+								"output": 4.05,
+								"cacheRead": 0.17,
+								"cacheWrite": null
+							},
+							"allowance": 10,
+							"requestsPerMonth": 989.1196834817014,
+							"requestsPerFiveHour": 296.7359050445104,
+							"requestsPerWeek": 593.4718100890208,
+							"costPerRequest": 0.01011,
+							"payPerRequest": 0.001011,
+							"multiplier": 10,
+							"ability": 25,
+							"tps": 170.999838534698,
+							"index": 14,
+							"valueIndex": 12,
+							"free": false
+						}
+					},
+					{
 						"key": "nemotron3ultra",
 						"name": "Nemotron 3 Ultra",
 						"oc": null,
@@ -3939,33 +3816,6 @@
 							"tps": null,
 							"index": 20,
 							"valueIndex": 12,
-							"free": false
-						}
-					},
-					{
-						"key": "inkling",
-						"name": "Inkling",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 1,
-								"output": 4.05,
-								"cacheRead": 0.17,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": 989.1196834817014,
-							"requestsPerFiveHour": 296.7359050445104,
-							"requestsPerWeek": 593.4718100890208,
-							"costPerRequest": 0.01011,
-							"payPerRequest": 0.001011,
-							"multiplier": 10,
-							"ability": 25,
-							"tps": 168.41907902528,
-							"index": 14,
-							"valueIndex": 11,
 							"free": false
 						}
 					},
@@ -4155,6 +4005,60 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25",
+						"name": "MiMo-V2.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.14,
+								"output": 0.28,
+								"cacheRead": 0.0028,
+								"cacheWrite": null
+							},
+							"allowance": 120,
+							"requestsPerMonth": 389610.3896103896,
+							"requestsPerFiveHour": 77922.07792207792,
+							"requestsPerWeek": 194805.1948051948,
+							"costPerRequest": 0.000308,
+							"payPerRequest": 0.00010266666666666668,
+							"multiplier": 3,
+							"ability": null,
+							"tps": null,
+							"index": 95,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25pro",
+						"name": "MiMo-V2.5-Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 85318.16565943832,
+							"requestsPerFiveHour": 17063.633131887666,
+							"requestsPerWeek": 42659.08282971916,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 75,
+							"valueIndex": null,
+							"free": false
 						},
 						"cc": null
 					},
@@ -4520,11 +4424,11 @@
 					}
 				],
 				"tally": {
-					"headToHead": 24,
+					"headToHead": 22,
 					"ocWins": 0,
-					"ccWins": 24,
+					"ccWins": 22,
 					"ties": 0,
-					"ocOnly": 5,
+					"ocOnly": 7,
 					"ccOnly": 34
 				}
 			}
@@ -4601,7 +4505,7 @@
 							"payPerRequest": 0,
 							"multiplier": 2,
 							"ability": 30.3334426348039,
-							"tps": 326.900120158351,
+							"tps": 326.652829774166,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -4828,7 +4732,7 @@
 							"payPerRequest": 0.0002866666666666667,
 							"multiplier": 6,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 60,
 							"valueIndex": 76,
 							"free": false
@@ -4850,7 +4754,7 @@
 							"payPerRequest": 0.000215,
 							"multiplier": 8,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 64,
 							"valueIndex": 79,
 							"free": false
@@ -4876,7 +4780,7 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 52,
 							"valueIndex": 77,
 							"free": false
@@ -4898,7 +4802,7 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 52,
 							"valueIndex": 77,
 							"free": false
@@ -4980,7 +4884,7 @@
 							"ability": 38.1,
 							"tps": 124.243295617977,
 							"index": 53,
-							"valueIndex": 72,
+							"valueIndex": 73,
 							"free": false
 						},
 						"cc": {
@@ -5027,9 +4931,57 @@
 							"payPerRequest": 0.0086,
 							"multiplier": 1,
 							"ability": 56,
-							"tps": 132.653071700514,
+							"tps": 132.86432220917,
 							"index": 11,
 							"valueIndex": 72,
+							"free": false
+						}
+					},
+					{
+						"key": "step5preview",
+						"name": "Step 5 Preview",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 2365.930599369085,
+							"requestsPerFiveHour": 473.186119873817,
+							"requestsPerWeek": 1182.9652996845425,
+							"costPerRequest": 0.00634,
+							"payPerRequest": 0.004226666666666667,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 21,
+							"valueIndex": 55,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.05,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": 5208.333333333333,
+							"requestsPerFiveHour": 1041.6666666666667,
+							"requestsPerWeek": 2604.1666666666665,
+							"costPerRequest": 0.00384,
+							"payPerRequest": 0.0019200000000000003,
+							"multiplier": 2,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 32,
+							"valueIndex": 65,
 							"free": false
 						}
 					},
@@ -5082,105 +5034,6 @@
 						}
 					},
 					{
-						"key": "mimov25",
-						"name": "MiMo V2.5",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 194805.1948051948,
-							"requestsPerFiveHour": 38961.03896103896,
-							"requestsPerWeek": 97402.5974025974,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00005133333333333334,
-							"multiplier": 6,
-							"ability": 21.8,
-							"tps": null,
-							"index": 84,
-							"valueIndex": 62,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": 97402.5974025974,
-							"requestsPerFiveHour": 19480.51948051948,
-							"requestsPerWeek": 48701.2987012987,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00010266666666666668,
-							"multiplier": 3,
-							"ability": 21.8,
-							"tps": null,
-							"index": 74,
-							"valueIndex": 55,
-							"free": false,
-							"deal": {
-								"badge": "-98%"
-							}
-						}
-					},
-					{
-						"key": "step5preview",
-						"name": "Step 5 Preview",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 2365.930599369085,
-							"requestsPerFiveHour": 473.186119873817,
-							"requestsPerWeek": 1182.9652996845425,
-							"costPerRequest": 0.00634,
-							"payPerRequest": 0.004226666666666667,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 21,
-							"valueIndex": 52,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.05,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": 5208.333333333333,
-							"requestsPerFiveHour": 1041.6666666666667,
-							"requestsPerWeek": 2604.1666666666665,
-							"costPerRequest": 0.00384,
-							"payPerRequest": 0.0019200000000000003,
-							"multiplier": 2,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 32,
-							"valueIndex": 61,
-							"free": false
-						}
-					},
-					{
 						"key": "musespark13",
 						"name": "Muse Spark 1.3",
 						"oc": null,
@@ -5228,9 +5081,9 @@
 							"payPerRequest": 0.002148,
 							"multiplier": 2,
 							"ability": 41.8,
-							"tps": 137.058175934907,
+							"tps": 133.9085792909378,
 							"index": 31,
-							"valueIndex": 60,
+							"valueIndex": 59,
 							"free": false
 						}
 					},
@@ -5337,57 +5190,6 @@
 						}
 					},
 					{
-						"key": "mimov25pro",
-						"name": "MiMo V2.5 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 21329.54141485958,
-							"requestsPerFiveHour": 4265.908282971916,
-							"requestsPerWeek": 10664.77070742979,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 52,
-							"valueIndex": 47,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": 28490.02849002849,
-							"requestsPerFiveHour": 5698.005698005698,
-							"requestsPerWeek": 14245.014245014245,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.000351,
-							"multiplier": 2,
-							"ability": 26,
-							"tps": null,
-							"index": 57,
-							"valueIndex": 50,
-							"free": false,
-							"deal": {
-								"badge": "-99%"
-							}
-						}
-					},
-					{
 						"key": "qwen38max0902",
 						"name": "Qwen 3.8 Max 0902",
 						"oc": null,
@@ -5435,7 +5237,7 @@
 							"payPerRequest": 0.00113,
 							"multiplier": 2,
 							"ability": 26.5,
-							"tps": 427.573277414639,
+							"tps": 429.870914506856,
 							"index": 40,
 							"valueIndex": 47,
 							"free": false
@@ -5510,7 +5312,7 @@
 							"payPerRequest": 0.0004171428571428571,
 							"multiplier": 7,
 							"ability": 33.7,
-							"tps": 41.7690855154168,
+							"tps": 42.1198081418443,
 							"index": 54,
 							"valueIndex": 46,
 							"free": false
@@ -5641,7 +5443,7 @@
 							"payPerRequest": 0.01,
 							"multiplier": 1.5,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 9,
 							"valueIndex": 40,
 							"free": false
@@ -5663,7 +5465,7 @@
 							"payPerRequest": 0.0075,
 							"multiplier": 2,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 13,
 							"valueIndex": 43,
 							"free": false
@@ -5765,7 +5567,7 @@
 							"payPerRequest": 0.004675,
 							"multiplier": 2,
 							"ability": 38.9,
-							"tps": 140.685548649308,
+							"tps": 142.325036557937,
 							"index": 20,
 							"valueIndex": 42,
 							"free": false
@@ -5793,7 +5595,7 @@
 							"ability": 46.4,
 							"tps": 95.9265895482383,
 							"index": 0,
-							"valueIndex": 37,
+							"valueIndex": 38,
 							"free": false
 						},
 						"cc": {
@@ -5922,6 +5724,33 @@
 						}
 					},
 					{
+						"key": "mistrallarge4",
+						"name": "Mistral Large 4",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 1.36,
+								"output": 4.18,
+								"cacheRead": 0.14,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": 2241.147467503362,
+							"requestsPerFiveHour": 448.2294935006724,
+							"requestsPerWeek": 1120.573733751681,
+							"costPerRequest": 0.008924,
+							"payPerRequest": 0.004462,
+							"multiplier": 2,
+							"ability": 38.4,
+							"tps": 79.5628630886507,
+							"index": 20,
+							"valueIndex": 36,
+							"free": false
+						}
+					},
+					{
 						"key": "glm52",
 						"name": "GLM-5.2",
 						"oc": {
@@ -5970,33 +5799,6 @@
 						}
 					},
 					{
-						"key": "mistrallarge4",
-						"name": "Mistral Large 4",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 1.36,
-								"output": 4.18,
-								"cacheRead": 0.14,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": 2241.147467503362,
-							"requestsPerFiveHour": 448.2294935006724,
-							"requestsPerWeek": 1120.573733751681,
-							"costPerRequest": 0.008924,
-							"payPerRequest": 0.004462,
-							"multiplier": 2,
-							"ability": 38.4,
-							"tps": 78.2873953261029,
-							"index": 20,
-							"valueIndex": 35,
-							"free": false
-						}
-					},
-					{
 						"key": "kimik3",
 						"name": "Kimi K3",
 						"oc": {
@@ -6016,7 +5818,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 4,
 							"valueIndex": 24,
 							"free": false
@@ -6038,7 +5840,7 @@
 							"payPerRequest": 0.0102,
 							"multiplier": 2,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 9,
 							"valueIndex": 27,
 							"free": false
@@ -6458,7 +6260,7 @@
 							"payPerRequest": 0.005055,
 							"multiplier": 2,
 							"ability": 25,
-							"tps": 168.41907902528,
+							"tps": 170.999838534698,
 							"index": 19,
 							"valueIndex": 12,
 							"free": false
@@ -6650,6 +6452,60 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25",
+						"name": "MiMo-V2.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.14,
+								"output": 0.28,
+								"cacheRead": 0.0028,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 194805.1948051948,
+							"requestsPerFiveHour": 38961.03896103896,
+							"requestsPerWeek": 97402.5974025974,
+							"costPerRequest": 0.000308,
+							"payPerRequest": 0.00005133333333333334,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 84,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25pro",
+						"name": "MiMo-V2.5-Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 21329.54141485958,
+							"requestsPerFiveHour": 4265.908282971916,
+							"requestsPerWeek": 10664.77070742979,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 52,
+							"valueIndex": null,
+							"free": false
 						},
 						"cc": null
 					},
@@ -7096,11 +6952,11 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
-					"ocWins": 9,
-					"ccWins": 14,
+					"headToHead": 24,
+					"ocWins": 8,
+					"ccWins": 13,
 					"ties": 3,
-					"ocOnly": 3,
+					"ocOnly": 5,
 					"ccOnly": 45
 				}
 			},
@@ -7175,7 +7031,7 @@
 							"payPerRequest": 0,
 							"multiplier": 2,
 							"ability": 30.3334426348039,
-							"tps": 326.900120158351,
+							"tps": 326.652829774166,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -7348,7 +7204,7 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 71,
 							"valueIndex": 85,
 							"free": false
@@ -7370,9 +7226,9 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 51,
-							"valueIndex": 73,
+							"valueIndex": 72,
 							"free": false
 						}
 					},
@@ -7396,7 +7252,7 @@
 							"payPerRequest": 0.0003822222222222222,
 							"multiplier": 4.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 75,
 							"valueIndex": 81,
 							"free": false
@@ -7418,7 +7274,7 @@
 							"payPerRequest": 0.000215,
 							"multiplier": 8,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 63,
 							"valueIndex": 74,
 							"free": false
@@ -7468,7 +7324,7 @@
 							"ability": 38.1,
 							"tps": 124.243295617977,
 							"index": 57,
-							"valueIndex": 70,
+							"valueIndex": 71,
 							"free": false
 						}
 					},
@@ -7649,61 +7505,58 @@
 							"payPerRequest": 0.0086,
 							"multiplier": 1,
 							"ability": 56,
-							"tps": 132.653071700514,
+							"tps": 132.86432220917,
 							"index": 10,
 							"valueIndex": 68,
 							"free": false
 						}
 					},
 					{
-						"key": "mimov25",
-						"name": "MiMo V2.5",
+						"key": "step5preview",
+						"name": "Step 5 Preview",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
 							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.1,
 								"cacheWrite": null
 							},
-							"allowance": 120,
-							"requestsPerMonth": 389610.3896103896,
-							"requestsPerFiveHour": 77922.07792207792,
-							"requestsPerWeek": 194805.1948051948,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00010266666666666668,
-							"multiplier": 3,
-							"ability": 21.8,
-							"tps": null,
-							"index": 94,
-							"valueIndex": 65,
+							"allowance": 60,
+							"requestsPerMonth": 9463.72239747634,
+							"requestsPerFiveHour": 1892.744479495268,
+							"requestsPerWeek": 4731.86119873817,
+							"costPerRequest": 0.00634,
+							"payPerRequest": 0.004226666666666667,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 40,
+							"valueIndex": 64,
 							"free": false
 						},
 						"cc": {
 							"provider": "cc",
 							"plan": "GOAT",
 							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.05,
 								"cacheWrite": null
 							},
-							"allowance": 30,
-							"requestsPerMonth": 97402.5974025974,
-							"requestsPerFiveHour": 19480.51948051948,
-							"requestsPerWeek": 48701.2987012987,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00010266666666666668,
-							"multiplier": 3,
-							"ability": 21.8,
-							"tps": null,
-							"index": 74,
-							"valueIndex": 52,
-							"free": false,
-							"deal": {
-								"badge": "-98%"
-							}
+							"allowance": 20,
+							"requestsPerMonth": 5208.333333333333,
+							"requestsPerFiveHour": 1041.6666666666667,
+							"requestsPerWeek": 2604.1666666666665,
+							"costPerRequest": 0.00384,
+							"payPerRequest": 0.0019200000000000003,
+							"multiplier": 2,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 32,
+							"valueIndex": 60,
+							"free": false
 						}
 					},
 					{
@@ -7755,105 +7608,6 @@
 						}
 					},
 					{
-						"key": "step5preview",
-						"name": "Step 5 Preview",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 9463.72239747634,
-							"requestsPerFiveHour": 1892.744479495268,
-							"requestsPerWeek": 4731.86119873817,
-							"costPerRequest": 0.00634,
-							"payPerRequest": 0.004226666666666667,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 40,
-							"valueIndex": 61,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.05,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": 5208.333333333333,
-							"requestsPerFiveHour": 1041.6666666666667,
-							"requestsPerWeek": 2604.1666666666665,
-							"costPerRequest": 0.00384,
-							"payPerRequest": 0.0019200000000000003,
-							"multiplier": 2,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 32,
-							"valueIndex": 57,
-							"free": false
-						}
-					},
-					{
-						"key": "mimov25pro",
-						"name": "MiMo V2.5 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 85318.16565943832,
-							"requestsPerFiveHour": 17063.633131887666,
-							"requestsPerWeek": 42659.08282971916,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 72,
-							"valueIndex": 57,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": 28490.02849002849,
-							"requestsPerFiveHour": 5698.005698005698,
-							"requestsPerWeek": 14245.014245014245,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.000351,
-							"multiplier": 2,
-							"ability": 26,
-							"tps": null,
-							"index": 56,
-							"valueIndex": 47,
-							"free": false,
-							"deal": {
-								"badge": "-99%"
-							}
-						}
-					},
-					{
 						"key": "musespark13",
 						"name": "Muse Spark 1.3",
 						"oc": null,
@@ -7900,7 +7654,7 @@
 							"payPerRequest": 0.005,
 							"multiplier": 3,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 38,
 							"valueIndex": 56,
 							"free": false
@@ -7922,7 +7676,7 @@
 							"payPerRequest": 0.0075,
 							"multiplier": 2,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 12,
 							"valueIndex": 40,
 							"free": false
@@ -7949,7 +7703,7 @@
 							"payPerRequest": 0.002148,
 							"multiplier": 2,
 							"ability": 41.8,
-							"tps": 137.058175934907,
+							"tps": 133.9085792909378,
 							"index": 30,
 							"valueIndex": 56,
 							"free": false
@@ -8130,6 +7884,54 @@
 						}
 					},
 					{
+						"key": "grok47",
+						"name": "Grok 4.7",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 2,
+								"output": 6,
+								"cacheRead": 0.5,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 2158.273381294964,
+							"requestsPerFiveHour": 431.6546762589928,
+							"requestsPerWeek": 1079.136690647482,
+							"costPerRequest": 0.0278,
+							"payPerRequest": 0.018533333333333332,
+							"multiplier": 1.5,
+							"ability": 46.4,
+							"tps": 95.9265895482383,
+							"index": 19,
+							"valueIndex": 48,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 2,
+								"output": 6,
+								"cacheRead": 0.5,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": 719.4244604316547,
+							"requestsPerFiveHour": 143.88489208633095,
+							"requestsPerWeek": 359.71223021582733,
+							"costPerRequest": 0.0278,
+							"payPerRequest": 0.0139,
+							"multiplier": 2,
+							"ability": 46.4,
+							"tps": 95.9265895482383,
+							"index": 3,
+							"valueIndex": 38,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini38flash",
 						"name": "Gemini 3.8 Flash",
 						"oc": null,
@@ -8153,54 +7955,6 @@
 							"tps": 141.521760096549,
 							"index": 28,
 							"valueIndex": 48,
-							"free": false
-						}
-					},
-					{
-						"key": "grok47",
-						"name": "Grok 4.7",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 2,
-								"output": 6,
-								"cacheRead": 0.5,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 2158.273381294964,
-							"requestsPerFiveHour": 431.6546762589928,
-							"requestsPerWeek": 1079.136690647482,
-							"costPerRequest": 0.0278,
-							"payPerRequest": 0.018533333333333332,
-							"multiplier": 1.5,
-							"ability": 46.4,
-							"tps": 95.9265895482383,
-							"index": 19,
-							"valueIndex": 47,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 2,
-								"output": 6,
-								"cacheRead": 0.5,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": 719.4244604316547,
-							"requestsPerFiveHour": 143.88489208633095,
-							"requestsPerWeek": 359.71223021582733,
-							"costPerRequest": 0.0278,
-							"payPerRequest": 0.0139,
-							"multiplier": 2,
-							"ability": 46.4,
-							"tps": 95.9265895482383,
-							"index": 3,
-							"valueIndex": 38,
 							"free": false
 						}
 					},
@@ -8300,7 +8054,7 @@
 							"payPerRequest": 0.00113,
 							"multiplier": 2,
 							"ability": 26.5,
-							"tps": 427.573277414639,
+							"tps": 429.870914506856,
 							"index": 39,
 							"valueIndex": 44,
 							"free": false
@@ -8327,7 +8081,7 @@
 							"payPerRequest": 0.0004171428571428571,
 							"multiplier": 7,
 							"ability": 33.7,
-							"tps": 41.7690855154168,
+							"tps": 42.1198081418443,
 							"index": 54,
 							"valueIndex": 43,
 							"free": false
@@ -8483,7 +8237,7 @@
 							"payPerRequest": 0.004675,
 							"multiplier": 2,
 							"ability": 38.9,
-							"tps": 140.685548649308,
+							"tps": 142.325036557937,
 							"index": 19,
 							"valueIndex": 39,
 							"free": false
@@ -8563,7 +8317,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 24,
 							"valueIndex": 35,
 							"free": false
@@ -8585,7 +8339,7 @@
 							"payPerRequest": 0.0102,
 							"multiplier": 2,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 8,
 							"valueIndex": 25,
 							"free": false
@@ -8660,7 +8414,7 @@
 							"payPerRequest": 0.004462,
 							"multiplier": 2,
 							"ability": 38.4,
-							"tps": 78.2873953261029,
+							"tps": 79.5628630886507,
 							"index": 20,
 							"valueIndex": 33,
 							"free": false
@@ -9032,7 +8786,7 @@
 							"payPerRequest": 0.005055,
 							"multiplier": 2,
 							"ability": 25,
-							"tps": 168.41907902528,
+							"tps": 170.999838534698,
 							"index": 18,
 							"valueIndex": 11,
 							"free": false
@@ -9224,6 +8978,60 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25",
+						"name": "MiMo-V2.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.14,
+								"output": 0.28,
+								"cacheRead": 0.0028,
+								"cacheWrite": null
+							},
+							"allowance": 120,
+							"requestsPerMonth": 389610.3896103896,
+							"requestsPerFiveHour": 77922.07792207792,
+							"requestsPerWeek": 194805.1948051948,
+							"costPerRequest": 0.000308,
+							"payPerRequest": 0.00010266666666666668,
+							"multiplier": 3,
+							"ability": null,
+							"tps": null,
+							"index": 94,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25pro",
+						"name": "MiMo-V2.5-Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 85318.16565943832,
+							"requestsPerFiveHour": 17063.633131887666,
+							"requestsPerWeek": 42659.08282971916,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 72,
+							"valueIndex": null,
+							"free": false
 						},
 						"cc": null
 					},
@@ -9670,11 +9478,11 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
+					"headToHead": 24,
 					"ocWins": 8,
-					"ccWins": 16,
-					"ties": 2,
-					"ocOnly": 3,
+					"ccWins": 15,
+					"ties": 1,
+					"ocOnly": 5,
 					"ccOnly": 45
 				}
 			}
@@ -9751,7 +9559,7 @@
 							"payPerRequest": 0,
 							"multiplier": 1.5,
 							"ability": 30.3334426348039,
-							"tps": 326.900120158351,
+							"tps": 326.652829774166,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -9978,7 +9786,7 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 49,
 							"valueIndex": 78,
 							"free": false
@@ -10000,7 +9808,7 @@
 							"payPerRequest": 0.0006599999999999999,
 							"multiplier": 1.5,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 54,
 							"valueIndex": 82,
 							"free": false
@@ -10053,7 +9861,7 @@
 							"payPerRequest": 0.0002866666666666667,
 							"multiplier": 6,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 56,
 							"valueIndex": 77,
 							"free": false
@@ -10075,7 +9883,7 @@
 							"payPerRequest": 0.0003822222222222222,
 							"multiplier": 4.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 62,
 							"valueIndex": 80,
 							"free": false
@@ -10150,7 +9958,7 @@
 							"payPerRequest": 0.0086,
 							"multiplier": 1,
 							"ability": 56,
-							"tps": 132.653071700514,
+							"tps": 132.86432220917,
 							"index": 20,
 							"valueIndex": 80,
 							"free": false
@@ -10180,6 +9988,54 @@
 							"tps": null,
 							"index": 55,
 							"valueIndex": 78,
+							"free": false
+						}
+					},
+					{
+						"key": "step5preview",
+						"name": "Step 5 Preview",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 2365.930599369085,
+							"requestsPerFiveHour": 473.186119873817,
+							"requestsPerWeek": 1182.9652996845425,
+							"costPerRequest": 0.00634,
+							"payPerRequest": 0.004226666666666667,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 20,
+							"valueIndex": 58,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.05,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": 7812.5,
+							"requestsPerFiveHour": 1562.5,
+							"requestsPerWeek": 3906.25,
+							"costPerRequest": 0.00384,
+							"payPerRequest": 0.00256,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 36,
+							"valueIndex": 70,
 							"free": false
 						}
 					},
@@ -10286,54 +10142,6 @@
 						}
 					},
 					{
-						"key": "step5preview",
-						"name": "Step 5 Preview",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 2365.930599369085,
-							"requestsPerFiveHour": 473.186119873817,
-							"requestsPerWeek": 1182.9652996845425,
-							"costPerRequest": 0.00634,
-							"payPerRequest": 0.004226666666666667,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 20,
-							"valueIndex": 54,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.05,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": 7812.5,
-							"requestsPerFiveHour": 1562.5,
-							"requestsPerWeek": 3906.25,
-							"costPerRequest": 0.00384,
-							"payPerRequest": 0.00256,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 36,
-							"valueIndex": 66,
-							"free": false
-						}
-					},
-					{
 						"key": "glm53flashx",
 						"name": "GLM-5.3 FlashX",
 						"oc": null,
@@ -10354,61 +10162,10 @@
 							"payPerRequest": 0.0028640000000000002,
 							"multiplier": 1.5,
 							"ability": 41.8,
-							"tps": 137.058175934907,
+							"tps": 133.9085792909378,
 							"index": 35,
 							"valueIndex": 65,
 							"free": false
-						}
-					},
-					{
-						"key": "mimov25",
-						"name": "MiMo V2.5",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 194805.1948051948,
-							"requestsPerFiveHour": 38961.03896103896,
-							"requestsPerWeek": 97402.5974025974,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00005133333333333334,
-							"multiplier": 6,
-							"ability": 21.8,
-							"tps": null,
-							"index": 79,
-							"valueIndex": 64,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 40,
-							"requestsPerMonth": 129870.12987012987,
-							"requestsPerFiveHour": 25974.025974025975,
-							"requestsPerWeek": 64935.06493506493,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.000154,
-							"multiplier": 2,
-							"ability": 21.8,
-							"tps": null,
-							"index": 74,
-							"valueIndex": 61,
-							"free": false,
-							"deal": {
-								"badge": "-98%"
-							}
 						}
 					},
 					{
@@ -10484,57 +10241,6 @@
 							"index": 22,
 							"valueIndex": 62,
 							"free": false
-						}
-					},
-					{
-						"key": "mimov25pro",
-						"name": "MiMo V2.5 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 21329.54141485958,
-							"requestsPerFiveHour": 4265.908282971916,
-							"requestsPerWeek": 10664.77070742979,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 50,
-							"valueIndex": 50,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": 42735.042735042734,
-							"requestsPerFiveHour": 8547.008547008547,
-							"requestsPerWeek": 21367.521367521367,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.000468,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 59,
-							"valueIndex": 57,
-							"free": false,
-							"deal": {
-								"badge": "-99%"
-							}
 						}
 					},
 					{
@@ -10639,7 +10345,7 @@
 							"payPerRequest": 0.0015066666666666666,
 							"multiplier": 1.5,
 							"ability": 26.5,
-							"tps": 427.573277414639,
+							"tps": 429.870914506856,
 							"index": 43,
 							"valueIndex": 54,
 							"free": false
@@ -10719,7 +10425,7 @@
 							"payPerRequest": 0.01,
 							"multiplier": 1.5,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 8,
 							"valueIndex": 44,
 							"free": false
@@ -10741,7 +10447,7 @@
 							"payPerRequest": 0.01,
 							"multiplier": 1.5,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 18,
 							"valueIndex": 50,
 							"free": false
@@ -10816,7 +10522,7 @@
 							"payPerRequest": 0.00073,
 							"multiplier": 4,
 							"ability": 33.7,
-							"tps": 41.7690855154168,
+							"tps": 42.1198081418443,
 							"index": 53,
 							"valueIndex": 49,
 							"free": false
@@ -10870,7 +10576,7 @@
 							"payPerRequest": 0.006233333333333333,
 							"multiplier": 1.5,
 							"ability": 38.9,
-							"tps": 140.685548649308,
+							"tps": 142.325036557937,
 							"index": 24,
 							"valueIndex": 49,
 							"free": false
@@ -11125,7 +10831,7 @@
 							"payPerRequest": 0.005949333333333333,
 							"multiplier": 1.5,
 							"ability": 38.4,
-							"tps": 78.2873953261029,
+							"tps": 79.5628630886507,
 							"index": 25,
 							"valueIndex": 43,
 							"free": false
@@ -11274,7 +10980,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 4,
 							"valueIndex": 29,
 							"free": false
@@ -11296,7 +11002,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 14,
 							"valueIndex": 35,
 							"free": false
@@ -11831,6 +11537,33 @@
 						}
 					},
 					{
+						"key": "inkling",
+						"name": "Inkling",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 1,
+								"output": 4.05,
+								"cacheRead": 0.17,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": 2967.359050445104,
+							"requestsPerFiveHour": 593.4718100890208,
+							"requestsPerWeek": 1483.679525222552,
+							"costPerRequest": 0.01011,
+							"payPerRequest": 0.0067399999999999995,
+							"multiplier": 1.5,
+							"ability": 25,
+							"tps": 170.999838534698,
+							"index": 23,
+							"valueIndex": 22,
+							"free": false
+						}
+					},
+					{
 						"key": "kimik25",
 						"name": "Kimi K2.5",
 						"oc": null,
@@ -11880,33 +11613,6 @@
 							"ability": 24.1,
 							"tps": null,
 							"index": 26,
-							"valueIndex": 21,
-							"free": false
-						}
-					},
-					{
-						"key": "inkling",
-						"name": "Inkling",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 1,
-								"output": 4.05,
-								"cacheRead": 0.17,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": 2967.359050445104,
-							"requestsPerFiveHour": 593.4718100890208,
-							"requestsPerWeek": 1483.679525222552,
-							"costPerRequest": 0.01011,
-							"payPerRequest": 0.0067399999999999995,
-							"multiplier": 1.5,
-							"ability": 25,
-							"tps": 168.41907902528,
-							"index": 23,
 							"valueIndex": 21,
 							"free": false
 						}
@@ -12205,6 +11911,60 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25",
+						"name": "MiMo-V2.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.14,
+								"output": 0.28,
+								"cacheRead": 0.0028,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 194805.1948051948,
+							"requestsPerFiveHour": 38961.03896103896,
+							"requestsPerWeek": 97402.5974025974,
+							"costPerRequest": 0.000308,
+							"payPerRequest": 0.00005133333333333334,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 79,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25pro",
+						"name": "MiMo-V2.5-Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 21329.54141485958,
+							"requestsPerFiveHour": 4265.908282971916,
+							"requestsPerWeek": 10664.77070742979,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 50,
+							"valueIndex": null,
+							"free": false
 						},
 						"cc": null
 					},
@@ -12651,11 +12411,11 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
-					"ocWins": 15,
-					"ccWins": 3,
+					"headToHead": 24,
+					"ocWins": 14,
+					"ccWins": 2,
 					"ties": 8,
-					"ocOnly": 3,
+					"ocOnly": 5,
 					"ccOnly": 60
 				}
 			},
@@ -12730,7 +12490,7 @@
 							"payPerRequest": 0,
 							"multiplier": 1.5,
 							"ability": 30.3334426348039,
-							"tps": 326.900120158351,
+							"tps": 326.652829774166,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true,
@@ -12903,7 +12663,7 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 67,
 							"valueIndex": 86,
 							"free": false
@@ -12925,7 +12685,7 @@
 							"payPerRequest": 0.0006599999999999999,
 							"multiplier": 1.5,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 54,
 							"valueIndex": 78,
 							"free": false
@@ -12951,7 +12711,7 @@
 							"payPerRequest": 0.0003822222222222222,
 							"multiplier": 4.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 71,
 							"valueIndex": 82,
 							"free": false
@@ -12973,7 +12733,7 @@
 							"payPerRequest": 0.0003822222222222222,
 							"multiplier": 4.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 61,
 							"valueIndex": 76,
 							"free": false
@@ -13129,7 +12889,7 @@
 							"payPerRequest": 0.0086,
 							"multiplier": 1,
 							"ability": 56,
-							"tps": 132.653071700514,
+							"tps": 132.86432220917,
 							"index": 19,
 							"valueIndex": 76,
 							"free": false
@@ -13211,54 +12971,51 @@
 						}
 					},
 					{
-						"key": "mimov25",
-						"name": "MiMo V2.5",
+						"key": "step5preview",
+						"name": "Step 5 Preview",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
 							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.1,
 								"cacheWrite": null
 							},
-							"allowance": 120,
-							"requestsPerMonth": 389610.3896103896,
-							"requestsPerFiveHour": 77922.07792207792,
-							"requestsPerWeek": 194805.1948051948,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00010266666666666668,
-							"multiplier": 3,
-							"ability": 21.8,
-							"tps": null,
-							"index": 89,
-							"valueIndex": 67,
+							"allowance": 60,
+							"requestsPerMonth": 9463.72239747634,
+							"requestsPerFiveHour": 1892.744479495268,
+							"requestsPerWeek": 4731.86119873817,
+							"costPerRequest": 0.00634,
+							"payPerRequest": 0.004226666666666667,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 38,
+							"valueIndex": 66,
 							"free": false
 						},
 						"cc": {
 							"provider": "cc",
 							"plan": "Pro",
 							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.05,
 								"cacheWrite": null
 							},
-							"allowance": 40,
-							"requestsPerMonth": 129870.12987012987,
-							"requestsPerFiveHour": 25974.025974025975,
-							"requestsPerWeek": 64935.06493506493,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.000154,
-							"multiplier": 2,
-							"ability": 21.8,
-							"tps": null,
-							"index": 74,
-							"valueIndex": 58,
-							"free": false,
-							"deal": {
-								"badge": "-98%"
-							}
+							"allowance": 30,
+							"requestsPerMonth": 7812.5,
+							"requestsPerFiveHour": 1562.5,
+							"requestsPerWeek": 3906.25,
+							"costPerRequest": 0.00384,
+							"payPerRequest": 0.00256,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 36,
+							"valueIndex": 66,
+							"free": false
 						}
 					},
 					{
@@ -13337,54 +13094,6 @@
 						}
 					},
 					{
-						"key": "step5preview",
-						"name": "Step 5 Preview",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 9463.72239747634,
-							"requestsPerFiveHour": 1892.744479495268,
-							"requestsPerWeek": 4731.86119873817,
-							"costPerRequest": 0.00634,
-							"payPerRequest": 0.004226666666666667,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 38,
-							"valueIndex": 63,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.05,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": 7812.5,
-							"requestsPerFiveHour": 1562.5,
-							"requestsPerWeek": 3906.25,
-							"costPerRequest": 0.00384,
-							"payPerRequest": 0.00256,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 36,
-							"valueIndex": 63,
-							"free": false
-						}
-					},
-					{
 						"key": "musespark13",
 						"name": "Muse Spark 1.3",
 						"oc": null,
@@ -13432,61 +13141,10 @@
 							"payPerRequest": 0.0028640000000000002,
 							"multiplier": 1.5,
 							"ability": 41.8,
-							"tps": 137.058175934907,
+							"tps": 133.9085792909378,
 							"index": 34,
 							"valueIndex": 62,
 							"free": false
-						}
-					},
-					{
-						"key": "mimov25pro",
-						"name": "MiMo V2.5 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 85318.16565943832,
-							"requestsPerFiveHour": 17063.633131887666,
-							"requestsPerWeek": 42659.08282971916,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 68,
-							"valueIndex": 60,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": 42735.042735042734,
-							"requestsPerFiveHour": 8547.008547008547,
-							"requestsPerWeek": 21367.521367521367,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.000468,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 59,
-							"valueIndex": 54,
-							"free": false,
-							"deal": {
-								"badge": "-99%"
-							}
 						}
 					},
 					{
@@ -13509,7 +13167,7 @@
 							"payPerRequest": 0.005,
 							"multiplier": 3,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 36,
 							"valueIndex": 59,
 							"free": false
@@ -13531,7 +13189,7 @@
 							"payPerRequest": 0.01,
 							"multiplier": 1.5,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 17,
 							"valueIndex": 47,
 							"free": false
@@ -13813,7 +13471,7 @@
 							"payPerRequest": 0.0015066666666666666,
 							"multiplier": 1.5,
 							"ability": 26.5,
-							"tps": 427.573277414639,
+							"tps": 429.870914506856,
 							"index": 43,
 							"valueIndex": 52,
 							"free": false
@@ -13990,7 +13648,7 @@
 							"payPerRequest": 0.00073,
 							"multiplier": 4,
 							"ability": 33.7,
-							"tps": 41.7690855154168,
+							"tps": 42.1198081418443,
 							"index": 53,
 							"valueIndex": 47,
 							"free": false
@@ -14044,9 +13702,9 @@
 							"payPerRequest": 0.006233333333333333,
 							"multiplier": 1.5,
 							"ability": 38.9,
-							"tps": 140.685548649308,
+							"tps": 142.325036557937,
 							"index": 23,
-							"valueIndex": 46,
+							"valueIndex": 47,
 							"free": false
 						}
 					},
@@ -14200,7 +13858,7 @@
 							"payPerRequest": 0.005949333333333333,
 							"multiplier": 1.5,
 							"ability": 38.4,
-							"tps": 78.2873953261029,
+							"tps": 79.5628630886507,
 							"index": 24,
 							"valueIndex": 41,
 							"free": false
@@ -14226,7 +13884,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 22,
 							"valueIndex": 39,
 							"free": false
@@ -14248,7 +13906,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 13,
 							"valueIndex": 33,
 							"free": false
@@ -14298,7 +13956,7 @@
 							"ability": 40.2,
 							"tps": 40.2871380794536,
 							"index": 17,
-							"valueIndex": 31,
+							"valueIndex": 32,
 							"free": false
 						}
 					},
@@ -14810,6 +14468,33 @@
 						}
 					},
 					{
+						"key": "inkling",
+						"name": "Inkling",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 1,
+								"output": 4.05,
+								"cacheRead": 0.17,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": 2967.359050445104,
+							"requestsPerFiveHour": 593.4718100890208,
+							"requestsPerWeek": 1483.679525222552,
+							"costPerRequest": 0.01011,
+							"payPerRequest": 0.0067399999999999995,
+							"multiplier": 1.5,
+							"ability": 25,
+							"tps": 170.999838534698,
+							"index": 22,
+							"valueIndex": 21,
+							"free": false
+						}
+					},
+					{
 						"key": "kimik25",
 						"name": "Kimi K2.5",
 						"oc": null,
@@ -14859,33 +14544,6 @@
 							"ability": 24.1,
 							"tps": null,
 							"index": 26,
-							"valueIndex": 20,
-							"free": false
-						}
-					},
-					{
-						"key": "inkling",
-						"name": "Inkling",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 1,
-								"output": 4.05,
-								"cacheRead": 0.17,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": 2967.359050445104,
-							"requestsPerFiveHour": 593.4718100890208,
-							"requestsPerWeek": 1483.679525222552,
-							"costPerRequest": 0.01011,
-							"payPerRequest": 0.0067399999999999995,
-							"multiplier": 1.5,
-							"ability": 25,
-							"tps": 168.41907902528,
-							"index": 22,
 							"valueIndex": 20,
 							"free": false
 						}
@@ -15184,6 +14842,60 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25",
+						"name": "MiMo-V2.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.14,
+								"output": 0.28,
+								"cacheRead": 0.0028,
+								"cacheWrite": null
+							},
+							"allowance": 120,
+							"requestsPerMonth": 389610.3896103896,
+							"requestsPerFiveHour": 77922.07792207792,
+							"requestsPerWeek": 194805.1948051948,
+							"costPerRequest": 0.000308,
+							"payPerRequest": 0.00010266666666666668,
+							"multiplier": 3,
+							"ability": null,
+							"tps": null,
+							"index": 89,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25pro",
+						"name": "MiMo-V2.5-Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 85318.16565943832,
+							"requestsPerFiveHour": 17063.633131887666,
+							"requestsPerWeek": 42659.08282971916,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 68,
+							"valueIndex": null,
+							"free": false
 						},
 						"cc": null
 					},
@@ -15630,11 +15342,11 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
-					"ocWins": 14,
-					"ccWins": 4,
+					"headToHead": 24,
+					"ocWins": 13,
+					"ccWins": 3,
 					"ties": 8,
-					"ocOnly": 3,
+					"ocOnly": 5,
 					"ccOnly": 60
 				}
 			}
@@ -15662,7 +15374,7 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 40,
 							"valueIndex": 68,
 							"free": false
@@ -15684,7 +15396,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -15759,7 +15471,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 30.3334426348039,
-							"tps": 326.900120158351,
+							"tps": 326.652829774166,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -15930,36 +15642,9 @@
 							"payPerRequest": 0.005733333333333333,
 							"multiplier": 1.5,
 							"ability": 56,
-							"tps": 132.653071700514,
+							"tps": 132.86432220917,
 							"index": 39,
 							"valueIndex": 89,
-							"free": false
-						}
-					},
-					{
-						"key": "deepseekv4flashvisionexp",
-						"name": "DeepSeek V4 Flash Vision",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0.15,
-								"output": 0.6,
-								"cacheRead": 0.003,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 384615.3846153846,
-							"requestsPerFiveHour": 115384.61538461539,
-							"requestsPerWeek": 230769.23076923078,
-							"costPerRequest": 0.00039,
-							"payPerRequest": 0.00026,
-							"multiplier": 1.5,
-							"ability": 34.8,
-							"tps": null,
-							"index": 73,
-							"valueIndex": 82,
 							"free": false
 						}
 					},
@@ -16007,7 +15692,34 @@
 							"ability": 38.1,
 							"tps": 124.243295617977,
 							"index": 67,
-							"valueIndex": 81,
+							"valueIndex": 82,
+							"free": false
+						}
+					},
+					{
+						"key": "deepseekv4flashvisionexp",
+						"name": "DeepSeek V4 Flash Vision",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 0.15,
+								"output": 0.6,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 384615.3846153846,
+							"requestsPerFiveHour": 115384.61538461539,
+							"requestsPerWeek": 230769.23076923078,
+							"costPerRequest": 0.00039,
+							"payPerRequest": 0.00026,
+							"multiplier": 1.5,
+							"ability": 34.8,
+							"tps": null,
+							"index": 73,
+							"valueIndex": 82,
 							"free": false
 						}
 					},
@@ -16112,9 +15824,9 @@
 							"payPerRequest": 0.0002866666666666667,
 							"multiplier": 6,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 46,
-							"valueIndex": 66,
+							"valueIndex": 65,
 							"free": false
 						},
 						"cc": {
@@ -16134,8 +15846,56 @@
 							"payPerRequest": 0.0011466666666666665,
 							"multiplier": 1.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 56,
+							"valueIndex": 73,
+							"free": false
+						}
+					},
+					{
+						"key": "step5preview",
+						"name": "Step 5 Preview",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 2365.930599369085,
+							"requestsPerFiveHour": 473.186119873817,
+							"requestsPerWeek": 1182.9652996845425,
+							"costPerRequest": 0.00634,
+							"payPerRequest": 0.004226666666666667,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 16,
+							"valueIndex": 49,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.05,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 39062.5,
+							"requestsPerFiveHour": 11718.75,
+							"requestsPerWeek": 23437.5,
+							"costPerRequest": 0.00384,
+							"payPerRequest": 0.00256,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 47,
 							"valueIndex": 73,
 							"free": false
 						}
@@ -16297,54 +16057,6 @@
 						}
 					},
 					{
-						"key": "step5preview",
-						"name": "Step 5 Preview",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 2365.930599369085,
-							"requestsPerFiveHour": 473.186119873817,
-							"requestsPerWeek": 1182.9652996845425,
-							"costPerRequest": 0.00634,
-							"payPerRequest": 0.004226666666666667,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 16,
-							"valueIndex": 45,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.05,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 39062.5,
-							"requestsPerFiveHour": 11718.75,
-							"requestsPerWeek": 23437.5,
-							"costPerRequest": 0.00384,
-							"payPerRequest": 0.00256,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 47,
-							"valueIndex": 69,
-							"free": false
-						}
-					},
-					{
 						"key": "glm53flashx",
 						"name": "GLM-5.3 FlashX",
 						"oc": null,
@@ -16365,7 +16077,7 @@
 							"payPerRequest": 0.0028640000000000002,
 							"multiplier": 1.5,
 							"ability": 41.8,
-							"tps": 137.058175934907,
+							"tps": 133.9085792909378,
 							"index": 46,
 							"valueIndex": 69,
 							"free": false
@@ -16419,7 +16131,7 @@
 							"payPerRequest": 0.0086,
 							"multiplier": 1,
 							"ability": 51.8332597011541,
-							"tps": 54.3281820685133,
+							"tps": 54.7853181484417,
 							"index": 34,
 							"valueIndex": 67,
 							"free": false
@@ -16528,102 +16240,6 @@
 						}
 					},
 					{
-						"key": "mimov25",
-						"name": "MiMo V2.5",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 194805.1948051948,
-							"requestsPerFiveHour": 38961.03896103896,
-							"requestsPerWeek": 97402.5974025974,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00005133333333333334,
-							"multiplier": 6,
-							"ability": 21.8,
-							"tps": null,
-							"index": 65,
-							"valueIndex": 50,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 487012.987012987,
-							"requestsPerFiveHour": 146103.8961038961,
-							"requestsPerWeek": 292207.7922077922,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00020533333333333333,
-							"multiplier": 1.5,
-							"ability": 21.8,
-							"tps": null,
-							"index": 75,
-							"valueIndex": 57,
-							"free": false
-						}
-					},
-					{
-						"key": "mimov25pro",
-						"name": "MiMo V2.5 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 21329.54141485958,
-							"requestsPerFiveHour": 4265.908282971916,
-							"requestsPerWeek": 10664.77070742979,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 41,
-							"valueIndex": 38,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 213675.21367521366,
-							"requestsPerFiveHour": 64102.564102564094,
-							"requestsPerWeek": 128205.12820512819,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.000468,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 66,
-							"valueIndex": 57,
-							"free": false
-						}
-					},
-					{
 						"key": "claudefable51",
 						"name": "Claude Fable 5.1",
 						"oc": null,
@@ -16644,7 +16260,7 @@
 							"payPerRequest": 0.0305,
 							"multiplier": 1,
 							"ability": 53.3549259623252,
-							"tps": 69.1961051080191,
+							"tps": 68.7357105217778,
 							"index": 20,
 							"valueIndex": 57,
 							"free": false
@@ -16671,7 +16287,7 @@
 							"payPerRequest": 0.0015066666666666666,
 							"multiplier": 1.5,
 							"ability": 26.5,
-							"tps": 427.573277414639,
+							"tps": 429.870914506856,
 							"index": 53,
 							"valueIndex": 56,
 							"free": false
@@ -16705,54 +16321,6 @@
 						}
 					},
 					{
-						"key": "glm53",
-						"name": "GLM-5.3",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1.4,
-								"output": 4.4,
-								"cacheRead": 0.26,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 1000,
-							"requestsPerFiveHour": 200,
-							"requestsPerWeek": 500,
-							"costPerRequest": 0.015,
-							"payPerRequest": 0.01,
-							"multiplier": 1.5,
-							"ability": 44.8,
-							"tps": 79.0935967169625,
-							"index": 7,
-							"valueIndex": 35,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 1.4,
-								"output": 4.4,
-								"cacheRead": 0.26,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 10000,
-							"requestsPerFiveHour": 3000,
-							"requestsPerWeek": 6000,
-							"costPerRequest": 0.015,
-							"payPerRequest": 0.01,
-							"multiplier": 1.5,
-							"ability": 44.8,
-							"tps": 79.0935967169625,
-							"index": 32,
-							"valueIndex": 54,
-							"free": false
-						}
-					},
-					{
 						"key": "deepseekv4flashfast",
 						"name": "DeepSeek V4 Flash Fast",
 						"oc": null,
@@ -16776,6 +16344,54 @@
 							"tps": null,
 							"index": 47,
 							"valueIndex": 54,
+							"free": false
+						}
+					},
+					{
+						"key": "glm53",
+						"name": "GLM-5.3",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1.4,
+								"output": 4.4,
+								"cacheRead": 0.26,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 1000,
+							"requestsPerFiveHour": 200,
+							"requestsPerWeek": 500,
+							"costPerRequest": 0.015,
+							"payPerRequest": 0.01,
+							"multiplier": 1.5,
+							"ability": 44.8,
+							"tps": 77.7247128275094,
+							"index": 7,
+							"valueIndex": 35,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 1.4,
+								"output": 4.4,
+								"cacheRead": 0.26,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 10000,
+							"requestsPerFiveHour": 3000,
+							"requestsPerWeek": 6000,
+							"costPerRequest": 0.015,
+							"payPerRequest": 0.01,
+							"multiplier": 1.5,
+							"ability": 44.8,
+							"tps": 77.7247128275094,
+							"index": 32,
+							"valueIndex": 53,
 							"free": false
 						}
 					},
@@ -16875,7 +16491,7 @@
 							"payPerRequest": 0.006233333333333334,
 							"multiplier": 1.5,
 							"ability": 38.9,
-							"tps": 140.685548649308,
+							"tps": 142.325036557937,
 							"index": 38,
 							"valueIndex": 52,
 							"free": false
@@ -17010,9 +16626,9 @@
 							"payPerRequest": 0.005949333333333333,
 							"multiplier": 1.5,
 							"ability": 38.4,
-							"tps": 78.2873953261029,
+							"tps": 79.5628630886507,
 							"index": 38,
-							"valueIndex": 45,
+							"valueIndex": 46,
 							"free": false
 						}
 					},
@@ -17085,7 +16701,7 @@
 							"payPerRequest": 0.068,
 							"multiplier": 1,
 							"ability": 52.673669395513,
-							"tps": 56.2535705567599,
+							"tps": 56.4825166993174,
 							"index": 11,
 							"valueIndex": 43,
 							"free": false
@@ -17160,7 +16776,7 @@
 							"payPerRequest": 0.0019466666666666666,
 							"multiplier": 1.5,
 							"ability": 33.7,
-							"tps": 41.7690855154168,
+							"tps": 42.1198081418443,
 							"index": 51,
 							"valueIndex": 41,
 							"free": false
@@ -17288,7 +16904,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 3,
 							"valueIndex": 19,
 							"free": false
@@ -17310,7 +16926,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 29,
 							"valueIndex": 38,
 							"free": false
@@ -17569,7 +17185,7 @@
 							"ability": 25.2,
 							"tps": null,
 							"index": 41,
-							"valueIndex": 29,
+							"valueIndex": 30,
 							"free": false
 						},
 						"cc": {
@@ -17913,7 +17529,7 @@
 							"payPerRequest": 0.0067399999999999995,
 							"multiplier": 1.5,
 							"ability": 25,
-							"tps": 168.41907902528,
+							"tps": 170.999838534698,
 							"index": 37,
 							"valueIndex": 23,
 							"free": false
@@ -18288,6 +17904,60 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25",
+						"name": "MiMo-V2.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.14,
+								"output": 0.28,
+								"cacheRead": 0.0028,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 194805.1948051948,
+							"requestsPerFiveHour": 38961.03896103896,
+							"requestsPerWeek": 97402.5974025974,
+							"costPerRequest": 0.000308,
+							"payPerRequest": 0.00005133333333333334,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 65,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25pro",
+						"name": "MiMo-V2.5-Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 21329.54141485958,
+							"requestsPerFiveHour": 4265.908282971916,
+							"requestsPerWeek": 10664.77070742979,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 41,
+							"valueIndex": null,
+							"free": false
 						},
 						"cc": null
 					},
@@ -18890,11 +18560,11 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
-					"ocWins": 15,
-					"ccWins": 5,
+					"headToHead": 24,
+					"ocWins": 14,
+					"ccWins": 4,
 					"ties": 6,
-					"ocOnly": 3,
+					"ocOnly": 5,
 					"ccOnly": 71
 				}
 			},
@@ -18920,9 +18590,9 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 50,
-							"valueIndex": 79,
+							"valueIndex": 78,
 							"free": false
 						},
 						"cc": {
@@ -18942,7 +18612,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -19017,7 +18687,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 30.3334426348039,
-							"tps": 326.900120158351,
+							"tps": 326.652829774166,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -19141,7 +18811,7 @@
 							"ability": 46.3,
 							"tps": 52.2861352326125,
 							"index": 51,
-							"valueIndex": 83,
+							"valueIndex": 84,
 							"free": false
 						},
 						"cc": {
@@ -19163,7 +18833,7 @@
 							"ability": 46.3,
 							"tps": 52.2861352326125,
 							"index": 62,
-							"valueIndex": 91,
+							"valueIndex": 92,
 							"free": false
 						}
 					},
@@ -19188,7 +18858,7 @@
 							"payPerRequest": 0.005733333333333333,
 							"multiplier": 1.5,
 							"ability": 56,
-							"tps": 132.653071700514,
+							"tps": 132.86432220917,
 							"index": 31,
 							"valueIndex": 87,
 							"free": false
@@ -19343,7 +19013,7 @@
 							"payPerRequest": 0.0003822222222222222,
 							"multiplier": 4.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 53,
 							"valueIndex": 74,
 							"free": false
@@ -19365,9 +19035,9 @@
 							"payPerRequest": 0.0011466666666666665,
 							"multiplier": 1.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 51,
-							"valueIndex": 73,
+							"valueIndex": 72,
 							"free": false
 						}
 					},
@@ -19395,6 +19065,54 @@
 							"tps": 95.8510129559586,
 							"index": 17,
 							"valueIndex": 74,
+							"free": false
+						}
+					},
+					{
+						"key": "step5preview",
+						"name": "Step 5 Preview",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 9463.72239747634,
+							"requestsPerFiveHour": 1892.744479495268,
+							"requestsPerWeek": 4731.86119873817,
+							"costPerRequest": 0.00634,
+							"payPerRequest": 0.004226666666666667,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 23,
+							"valueIndex": 58,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.05,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 39062.5,
+							"requestsPerFiveHour": 11718.75,
+							"requestsPerWeek": 23437.5,
+							"costPerRequest": 0.00384,
+							"payPerRequest": 0.00256,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 41,
+							"valueIndex": 72,
 							"free": false
 						}
 					},
@@ -19474,54 +19192,6 @@
 						}
 					},
 					{
-						"key": "step5preview",
-						"name": "Step 5 Preview",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 9463.72239747634,
-							"requestsPerFiveHour": 1892.744479495268,
-							"requestsPerWeek": 4731.86119873817,
-							"costPerRequest": 0.00634,
-							"payPerRequest": 0.004226666666666667,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 23,
-							"valueIndex": 54,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.05,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 39062.5,
-							"requestsPerFiveHour": 11718.75,
-							"requestsPerWeek": 23437.5,
-							"costPerRequest": 0.00384,
-							"payPerRequest": 0.00256,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 41,
-							"valueIndex": 69,
-							"free": false
-						}
-					},
-					{
 						"key": "ling31flash",
 						"name": "Ling 3.1 Flash",
 						"oc": null,
@@ -19596,7 +19266,7 @@
 							"payPerRequest": 0.0028640000000000002,
 							"multiplier": 1.5,
 							"ability": 41.8,
-							"tps": 137.058175934907,
+							"tps": 133.9085792909378,
 							"index": 40,
 							"valueIndex": 68,
 							"free": false
@@ -19677,7 +19347,7 @@
 							"payPerRequest": 0.0086,
 							"multiplier": 1,
 							"ability": 51.8332597011541,
-							"tps": 54.3281820685133,
+							"tps": 54.7853181484417,
 							"index": 26,
 							"valueIndex": 65,
 							"free": false
@@ -19732,54 +19402,6 @@
 						}
 					},
 					{
-						"key": "mimov25",
-						"name": "MiMo V2.5",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 120,
-							"requestsPerMonth": 389610.3896103896,
-							"requestsPerFiveHour": 77922.07792207792,
-							"requestsPerWeek": 194805.1948051948,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00010266666666666668,
-							"multiplier": 3,
-							"ability": 21.8,
-							"tps": null,
-							"index": 70,
-							"valueIndex": 57,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 487012.987012987,
-							"requestsPerFiveHour": 146103.8961038961,
-							"requestsPerWeek": 292207.7922077922,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00020533333333333333,
-							"multiplier": 1.5,
-							"ability": 21.8,
-							"tps": null,
-							"index": 72,
-							"valueIndex": 59,
-							"free": false
-						}
-					},
-					{
 						"key": "gpt6sol",
 						"name": "GPT-6 Sol",
 						"oc": null,
@@ -19803,54 +19425,6 @@
 							"tps": null,
 							"index": 20,
 							"valueIndex": 59,
-							"free": false
-						}
-					},
-					{
-						"key": "mimov25pro",
-						"name": "MiMo V2.5 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 85318.16565943832,
-							"requestsPerFiveHour": 17063.633131887666,
-							"requestsPerWeek": 42659.08282971916,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 51,
-							"valueIndex": 50,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 213675.21367521366,
-							"requestsPerFiveHour": 64102.564102564094,
-							"requestsPerWeek": 128205.12820512819,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.000468,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 62,
-							"valueIndex": 58,
 							"free": false
 						}
 					},
@@ -19902,7 +19476,7 @@
 							"payPerRequest": 0.0015066666666666666,
 							"multiplier": 1.5,
 							"ability": 26.5,
-							"tps": 427.573277414639,
+							"tps": 429.870914506856,
 							"index": 48,
 							"valueIndex": 56,
 							"free": false
@@ -19929,7 +19503,7 @@
 							"payPerRequest": 0.0305,
 							"multiplier": 1,
 							"ability": 53.3549259623252,
-							"tps": 69.1961051080191,
+							"tps": 68.7357105217778,
 							"index": 10,
 							"valueIndex": 54,
 							"free": false
@@ -20009,7 +19583,7 @@
 							"payPerRequest": 0.005,
 							"multiplier": 3,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 21,
 							"valueIndex": 50,
 							"free": false
@@ -20031,7 +19605,7 @@
 							"payPerRequest": 0.01,
 							"multiplier": 1.5,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 24,
 							"valueIndex": 52,
 							"free": false
@@ -20058,7 +19632,7 @@
 							"payPerRequest": 0.006233333333333334,
 							"multiplier": 1.5,
 							"ability": 38.9,
-							"tps": 140.685548649308,
+							"tps": 142.325036557937,
 							"index": 30,
 							"valueIndex": 51,
 							"free": false
@@ -20135,7 +19709,7 @@
 							"ability": 46.4,
 							"tps": 95.9265895482383,
 							"index": 16,
-							"valueIndex": 49,
+							"valueIndex": 50,
 							"free": false
 						}
 					},
@@ -20296,6 +19870,33 @@
 						}
 					},
 					{
+						"key": "mistrallarge4",
+						"name": "Mistral Large 4",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 1.36,
+								"output": 4.18,
+								"cacheRead": 0.14,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 16808.606006275215,
+							"requestsPerFiveHour": 5042.581801882564,
+							"requestsPerWeek": 10085.163603765128,
+							"costPerRequest": 0.008924,
+							"payPerRequest": 0.005949333333333333,
+							"multiplier": 1.5,
+							"ability": 38.4,
+							"tps": 79.5628630886507,
+							"index": 30,
+							"valueIndex": 45,
+							"free": false
+						}
+					},
+					{
 						"key": "longcat20",
 						"name": "LongCat 2.0",
 						"oc": {
@@ -20392,33 +19993,6 @@
 						}
 					},
 					{
-						"key": "mistrallarge4",
-						"name": "Mistral Large 4",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 1.36,
-								"output": 4.18,
-								"cacheRead": 0.14,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 16808.606006275215,
-							"requestsPerFiveHour": 5042.581801882564,
-							"requestsPerWeek": 10085.163603765128,
-							"costPerRequest": 0.008924,
-							"payPerRequest": 0.005949333333333333,
-							"multiplier": 1.5,
-							"ability": 38.4,
-							"tps": 78.2873953261029,
-							"index": 30,
-							"valueIndex": 44,
-							"free": false
-						}
-					},
-					{
 						"key": "qwen3827b",
 						"name": "Qwen 3.8 27B",
 						"oc": null,
@@ -20439,9 +20013,9 @@
 							"payPerRequest": 0.0019466666666666666,
 							"multiplier": 1.5,
 							"ability": 33.7,
-							"tps": 41.7690855154168,
+							"tps": 42.1198081418443,
 							"index": 44,
-							"valueIndex": 41,
+							"valueIndex": 42,
 							"free": false
 						}
 					},
@@ -20466,7 +20040,7 @@
 							"payPerRequest": 0.068,
 							"multiplier": 1,
 							"ability": 52.673669395513,
-							"tps": 56.2535705567599,
+							"tps": 56.4825166993174,
 							"index": 0,
 							"valueIndex": 40,
 							"free": false
@@ -20594,7 +20168,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 9,
 							"valueIndex": 28,
 							"free": false
@@ -20616,7 +20190,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 20,
 							"valueIndex": 36,
 							"free": false
@@ -21151,6 +20725,33 @@
 						}
 					},
 					{
+						"key": "inkling",
+						"name": "Inkling",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 1,
+								"output": 4.05,
+								"cacheRead": 0.17,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 14836.79525222552,
+							"requestsPerFiveHour": 4451.038575667656,
+							"requestsPerWeek": 8902.077151335312,
+							"costPerRequest": 0.01011,
+							"payPerRequest": 0.0067399999999999995,
+							"multiplier": 1.5,
+							"ability": 25,
+							"tps": 170.999838534698,
+							"index": 29,
+							"valueIndex": 23,
+							"free": false
+						}
+					},
+					{
 						"key": "kimik27code",
 						"name": "Kimi K2.7 Code",
 						"oc": {
@@ -21221,33 +20822,6 @@
 							"ability": 24.1,
 							"tps": null,
 							"index": 32,
-							"valueIndex": 22,
-							"free": false
-						}
-					},
-					{
-						"key": "inkling",
-						"name": "Inkling",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 1,
-								"output": 4.05,
-								"cacheRead": 0.17,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 14836.79525222552,
-							"requestsPerFiveHour": 4451.038575667656,
-							"requestsPerWeek": 8902.077151335312,
-							"costPerRequest": 0.01011,
-							"payPerRequest": 0.0067399999999999995,
-							"multiplier": 1.5,
-							"ability": 25,
-							"tps": 168.41907902528,
-							"index": 29,
 							"valueIndex": 22,
 							"free": false
 						}
@@ -21546,6 +21120,60 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25",
+						"name": "MiMo-V2.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.14,
+								"output": 0.28,
+								"cacheRead": 0.0028,
+								"cacheWrite": null
+							},
+							"allowance": 120,
+							"requestsPerMonth": 389610.3896103896,
+							"requestsPerFiveHour": 77922.07792207792,
+							"requestsPerWeek": 194805.1948051948,
+							"costPerRequest": 0.000308,
+							"payPerRequest": 0.00010266666666666668,
+							"multiplier": 3,
+							"ability": null,
+							"tps": null,
+							"index": 70,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25pro",
+						"name": "MiMo-V2.5-Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 85318.16565943832,
+							"requestsPerFiveHour": 17063.633131887666,
+							"requestsPerWeek": 42659.08282971916,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 51,
+							"valueIndex": null,
+							"free": false
 						},
 						"cc": null
 					},
@@ -22148,11 +21776,11 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
-					"ocWins": 16,
-					"ccWins": 5,
+					"headToHead": 24,
+					"ocWins": 15,
+					"ccWins": 4,
 					"ties": 5,
-					"ocOnly": 3,
+					"ocOnly": 5,
 					"ccOnly": 71
 				}
 			}
@@ -22180,7 +21808,7 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 37,
 							"valueIndex": 63,
 							"free": false
@@ -22202,7 +21830,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -22277,7 +21905,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 30.3334426348039,
-							"tps": 326.900120158351,
+							"tps": 326.652829774166,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -22448,7 +22076,7 @@
 							"payPerRequest": 0.005733333333333333,
 							"multiplier": 1.5,
 							"ability": 56,
-							"tps": 132.653071700514,
+							"tps": 132.86432220917,
 							"index": 43,
 							"valueIndex": 90,
 							"free": false
@@ -22606,7 +22234,55 @@
 							"ability": 57.6223698102963,
 							"tps": 95.8510129559586,
 							"index": 32,
-							"valueIndex": 78,
+							"valueIndex": 79,
+							"free": false
+						}
+					},
+					{
+						"key": "step5preview",
+						"name": "Step 5 Preview",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 2365.930599369085,
+							"requestsPerFiveHour": 473.186119873817,
+							"requestsPerWeek": 1182.9652996845425,
+							"costPerRequest": 0.00634,
+							"payPerRequest": 0.004226666666666667,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 15,
+							"valueIndex": 46,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.05,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 78125,
+							"requestsPerFiveHour": 23437.5,
+							"requestsPerWeek": 46875,
+							"costPerRequest": 0.00384,
+							"payPerRequest": 0.00256,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 51,
+							"valueIndex": 74,
 							"free": false
 						}
 					},
@@ -22657,7 +22333,7 @@
 							"payPerRequest": 0.0002866666666666667,
 							"multiplier": 6,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 43,
 							"valueIndex": 61,
 							"free": false
@@ -22679,7 +22355,7 @@
 							"payPerRequest": 0.0011466666666666665,
 							"multiplier": 1.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 59,
 							"valueIndex": 73,
 							"free": false
@@ -22815,54 +22491,6 @@
 						}
 					},
 					{
-						"key": "step5preview",
-						"name": "Step 5 Preview",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 2365.930599369085,
-							"requestsPerFiveHour": 473.186119873817,
-							"requestsPerWeek": 1182.9652996845425,
-							"costPerRequest": 0.00634,
-							"payPerRequest": 0.004226666666666667,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 15,
-							"valueIndex": 42,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.05,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 78125,
-							"requestsPerFiveHour": 23437.5,
-							"requestsPerWeek": 46875,
-							"costPerRequest": 0.00384,
-							"payPerRequest": 0.00256,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 51,
-							"valueIndex": 70,
-							"free": false
-						}
-					},
-					{
 						"key": "ling31flash",
 						"name": "Ling 3.1 Flash",
 						"oc": null,
@@ -22910,7 +22538,7 @@
 							"payPerRequest": 0.0028640000000000002,
 							"multiplier": 1.5,
 							"ability": 41.8,
-							"tps": 137.058175934907,
+							"tps": 133.9085792909378,
 							"index": 50,
 							"valueIndex": 69,
 							"free": false
@@ -22937,7 +22565,7 @@
 							"payPerRequest": 0.0086,
 							"multiplier": 1,
 							"ability": 51.8332597011541,
-							"tps": 54.3281820685133,
+							"tps": 54.7853181484417,
 							"index": 39,
 							"valueIndex": 68,
 							"free": false
@@ -23066,105 +22694,9 @@
 							"payPerRequest": 0.0305,
 							"multiplier": 1,
 							"ability": 53.3549259623252,
-							"tps": 69.1961051080191,
+							"tps": 68.7357105217778,
 							"index": 26,
 							"valueIndex": 59,
-							"free": false
-						}
-					},
-					{
-						"key": "mimov25",
-						"name": "MiMo V2.5",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 194805.1948051948,
-							"requestsPerFiveHour": 38961.03896103896,
-							"requestsPerWeek": 97402.5974025974,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00005133333333333334,
-							"multiplier": 6,
-							"ability": 21.8,
-							"tps": null,
-							"index": 61,
-							"valueIndex": 44,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 974025.974025974,
-							"requestsPerFiveHour": 292207.7922077922,
-							"requestsPerWeek": 584415.5844155845,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00020533333333333333,
-							"multiplier": 1.5,
-							"ability": 21.8,
-							"tps": null,
-							"index": 77,
-							"valueIndex": 56,
-							"free": false
-						}
-					},
-					{
-						"key": "mimov25pro",
-						"name": "MiMo V2.5 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 21329.54141485958,
-							"requestsPerFiveHour": 4265.908282971916,
-							"requestsPerWeek": 10664.77070742979,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 38,
-							"valueIndex": 33,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 427350.4273504273,
-							"requestsPerFiveHour": 128205.12820512819,
-							"requestsPerWeek": 256410.25641025638,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.000468,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 69,
-							"valueIndex": 56,
 							"free": false
 						}
 					},
@@ -23189,7 +22721,7 @@
 							"payPerRequest": 0.0015066666666666666,
 							"multiplier": 1.5,
 							"ability": 26.5,
-							"tps": 427.573277414639,
+							"tps": 429.870914506856,
 							"index": 57,
 							"valueIndex": 56,
 							"free": false
@@ -23242,7 +22774,7 @@
 							"payPerRequest": 0.01,
 							"multiplier": 1.5,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 6,
 							"valueIndex": 32,
 							"free": false
@@ -23264,9 +22796,9 @@
 							"payPerRequest": 0.01,
 							"multiplier": 1.5,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 37,
-							"valueIndex": 55,
+							"valueIndex": 54,
 							"free": false
 						}
 					},
@@ -23393,7 +22925,7 @@
 							"payPerRequest": 0.006233333333333334,
 							"multiplier": 1.5,
 							"ability": 38.9,
-							"tps": 140.685548649308,
+							"tps": 142.325036557937,
 							"index": 42,
 							"valueIndex": 53,
 							"free": false
@@ -23528,7 +23060,7 @@
 							"payPerRequest": 0.005949333333333333,
 							"multiplier": 1.5,
 							"ability": 38.4,
-							"tps": 78.2873953261029,
+							"tps": 79.5628630886507,
 							"index": 43,
 							"valueIndex": 46,
 							"free": false
@@ -23555,7 +23087,7 @@
 							"payPerRequest": 0.068,
 							"multiplier": 1,
 							"ability": 52.673669395513,
-							"tps": 56.2535705567599,
+							"tps": 56.4825166993174,
 							"index": 17,
 							"valueIndex": 45,
 							"free": false
@@ -23705,7 +23237,7 @@
 							"payPerRequest": 0.0019466666666666666,
 							"multiplier": 1.5,
 							"ability": 33.7,
-							"tps": 41.7690855154168,
+							"tps": 42.1198081418443,
 							"index": 54,
 							"valueIndex": 41,
 							"free": false
@@ -23758,7 +23290,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 3,
 							"valueIndex": 16,
 							"free": false
@@ -23780,7 +23312,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 34,
 							"valueIndex": 39,
 							"free": false
@@ -24384,6 +23916,33 @@
 						}
 					},
 					{
+						"key": "inkling",
+						"name": "Inkling",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 1,
+								"output": 4.05,
+								"cacheRead": 0.17,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 29673.59050445104,
+							"requestsPerFiveHour": 8902.077151335312,
+							"requestsPerWeek": 17804.154302670624,
+							"costPerRequest": 0.01011,
+							"payPerRequest": 0.0067399999999999995,
+							"multiplier": 1.5,
+							"ability": 25,
+							"tps": 170.999838534698,
+							"index": 41,
+							"valueIndex": 24,
+							"free": false
+						}
+					},
+					{
 						"key": "kimik25",
 						"name": "Kimi K2.5",
 						"oc": null,
@@ -24406,33 +23965,6 @@
 							"ability": 23.5,
 							"tps": null,
 							"index": 46,
-							"valueIndex": 23,
-							"free": false
-						}
-					},
-					{
-						"key": "inkling",
-						"name": "Inkling",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 1,
-								"output": 4.05,
-								"cacheRead": 0.17,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 29673.59050445104,
-							"requestsPerFiveHour": 8902.077151335312,
-							"requestsPerWeek": 17804.154302670624,
-							"costPerRequest": 0.01011,
-							"payPerRequest": 0.0067399999999999995,
-							"multiplier": 1.5,
-							"ability": 25,
-							"tps": 168.41907902528,
-							"index": 41,
 							"valueIndex": 23,
 							"free": false
 						}
@@ -24806,6 +24338,60 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25",
+						"name": "MiMo-V2.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.14,
+								"output": 0.28,
+								"cacheRead": 0.0028,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 194805.1948051948,
+							"requestsPerFiveHour": 38961.03896103896,
+							"requestsPerWeek": 97402.5974025974,
+							"costPerRequest": 0.000308,
+							"payPerRequest": 0.00005133333333333334,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 61,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25pro",
+						"name": "MiMo-V2.5-Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 21329.54141485958,
+							"requestsPerFiveHour": 4265.908282971916,
+							"requestsPerWeek": 10664.77070742979,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 38,
+							"valueIndex": null,
+							"free": false
 						},
 						"cc": null
 					},
@@ -25408,11 +24994,11 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
-					"ocWins": 15,
-					"ccWins": 5,
+					"headToHead": 24,
+					"ocWins": 14,
+					"ccWins": 4,
 					"ties": 6,
-					"ocOnly": 3,
+					"ocOnly": 5,
 					"ccOnly": 71
 				}
 			},
@@ -25438,7 +25024,7 @@
 							"payPerRequest": 0.000495,
 							"multiplier": 2,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 44,
 							"valueIndex": 73,
 							"free": false
@@ -25460,7 +25046,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 42.7,
-							"tps": 93.1119234389769,
+							"tps": 92.5116396198929,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -25535,7 +25121,7 @@
 							"payPerRequest": 0,
 							"multiplier": 0,
 							"ability": 30.3334426348039,
-							"tps": 326.900120158351,
+							"tps": 326.652829774166,
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
@@ -25590,6 +25176,54 @@
 						}
 					},
 					{
+						"key": "mimov26pro",
+						"name": "MiMo V2.6 Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 85318.16565943832,
+							"requestsPerFiveHour": 17063.633131887666,
+							"requestsPerWeek": 42659.08282971916,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": 46.3,
+							"tps": 52.2861352326125,
+							"index": 44,
+							"valueIndex": 78,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.0036,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 427350.4273504273,
+							"requestsPerFiveHour": 128205.12820512819,
+							"requestsPerWeek": 256410.25641025638,
+							"costPerRequest": 0.000702,
+							"payPerRequest": 0.000468,
+							"multiplier": 1.5,
+							"ability": 46.3,
+							"tps": 52.2861352326125,
+							"index": 64,
+							"valueIndex": 92,
+							"free": false
+						}
+					},
+					{
 						"key": "deepseekv41flash",
 						"name": "DeepSeek V4.1 Flash",
 						"oc": {
@@ -25638,54 +25272,6 @@
 						}
 					},
 					{
-						"key": "mimov26pro",
-						"name": "MiMo V2.6 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 85318.16565943832,
-							"requestsPerFiveHour": 17063.633131887666,
-							"requestsPerWeek": 42659.08282971916,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 46.3,
-							"tps": 52.2861352326125,
-							"index": 44,
-							"valueIndex": 78,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 427350.4273504273,
-							"requestsPerFiveHour": 128205.12820512819,
-							"requestsPerWeek": 256410.25641025638,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.000468,
-							"multiplier": 1.5,
-							"ability": 46.3,
-							"tps": 52.2861352326125,
-							"index": 64,
-							"valueIndex": 91,
-							"free": false
-						}
-					},
-					{
 						"key": "claudesonnet55",
 						"name": "Claude Sonnet 5.5",
 						"oc": null,
@@ -25706,7 +25292,7 @@
 							"payPerRequest": 0.005733333333333333,
 							"multiplier": 1.5,
 							"ability": 56,
-							"tps": 132.653071700514,
+							"tps": 132.86432220917,
 							"index": 33,
 							"valueIndex": 87,
 							"free": false
@@ -25888,7 +25474,7 @@
 							"payPerRequest": 0.0003822222222222222,
 							"multiplier": 4.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 47,
 							"valueIndex": 68,
 							"free": false
@@ -25910,8 +25496,56 @@
 							"payPerRequest": 0.0011466666666666665,
 							"multiplier": 1.5,
 							"ability": 41.8,
-							"tps": 68.5290879674535,
+							"tps": 66.9542896454689,
 							"index": 53,
+							"valueIndex": 73,
+							"free": false
+						}
+					},
+					{
+						"key": "step5preview",
+						"name": "Step 5 Preview",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 9463.72239747634,
+							"requestsPerFiveHour": 1892.744479495268,
+							"requestsPerWeek": 4731.86119873817,
+							"costPerRequest": 0.00634,
+							"payPerRequest": 0.004226666666666667,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 18,
+							"valueIndex": 53,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 1,
+								"output": 2.7,
+								"cacheRead": 0.05,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 78125,
+							"requestsPerFiveHour": 23437.5,
+							"requestsPerWeek": 46875,
+							"costPerRequest": 0.00384,
+							"payPerRequest": 0.00256,
+							"multiplier": 1.5,
+							"ability": 43.7,
+							"tps": 137.548635443596,
+							"index": 43,
 							"valueIndex": 73,
 							"free": false
 						}
@@ -26019,54 +25653,6 @@
 						}
 					},
 					{
-						"key": "step5preview",
-						"name": "Step 5 Preview",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 9463.72239747634,
-							"requestsPerFiveHour": 1892.744479495268,
-							"requestsPerWeek": 4731.86119873817,
-							"costPerRequest": 0.00634,
-							"payPerRequest": 0.004226666666666667,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 18,
-							"valueIndex": 49,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 1,
-								"output": 2.7,
-								"cacheRead": 0.05,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 78125,
-							"requestsPerFiveHour": 23437.5,
-							"requestsPerWeek": 46875,
-							"costPerRequest": 0.00384,
-							"payPerRequest": 0.00256,
-							"multiplier": 1.5,
-							"ability": 43.7,
-							"tps": 96.7115533451772,
-							"index": 43,
-							"valueIndex": 69,
-							"free": false
-						}
-					},
-					{
 						"key": "ling31flash",
 						"name": "Ling 3.1 Flash",
 						"oc": null,
@@ -26168,7 +25754,7 @@
 							"payPerRequest": 0.0028640000000000002,
 							"multiplier": 1.5,
 							"ability": 41.8,
-							"tps": 137.058175934907,
+							"tps": 133.9085792909378,
 							"index": 42,
 							"valueIndex": 68,
 							"free": false
@@ -26195,9 +25781,9 @@
 							"payPerRequest": 0.0086,
 							"multiplier": 1,
 							"ability": 51.8332597011541,
-							"tps": 54.3281820685133,
+							"tps": 54.7853181484417,
 							"index": 29,
-							"valueIndex": 65,
+							"valueIndex": 66,
 							"free": false
 						}
 					},
@@ -26245,7 +25831,7 @@
 							"ability": 36,
 							"tps": null,
 							"index": 51,
-							"valueIndex": 63,
+							"valueIndex": 64,
 							"free": false
 						}
 					},
@@ -26277,54 +25863,6 @@
 						}
 					},
 					{
-						"key": "mimov25",
-						"name": "MiMo V2.5",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 120,
-							"requestsPerMonth": 389610.3896103896,
-							"requestsPerFiveHour": 77922.07792207792,
-							"requestsPerWeek": 194805.1948051948,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00010266666666666668,
-							"multiplier": 3,
-							"ability": 21.8,
-							"tps": null,
-							"index": 62,
-							"valueIndex": 51,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0.14,
-								"output": 0.28,
-								"cacheRead": 0.0028,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 974025.974025974,
-							"requestsPerFiveHour": 292207.7922077922,
-							"requestsPerWeek": 584415.5844155845,
-							"costPerRequest": 0.000308,
-							"payPerRequest": 0.00020533333333333333,
-							"multiplier": 1.5,
-							"ability": 21.8,
-							"tps": null,
-							"index": 73,
-							"valueIndex": 58,
-							"free": false
-						}
-					},
-					{
 						"key": "qwen38max0902",
 						"name": "Qwen 3.8 Max 0902",
 						"oc": null,
@@ -26352,54 +25890,6 @@
 						}
 					},
 					{
-						"key": "mimov25pro",
-						"name": "MiMo V2.5 Pro",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.003625,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 85318.16565943832,
-							"requestsPerFiveHour": 17063.633131887666,
-							"requestsPerWeek": 42659.08282971916,
-							"costPerRequest": 0.00070325,
-							"payPerRequest": 0.0004688333333333333,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 44,
-							"valueIndex": 44,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0.435,
-								"output": 0.87,
-								"cacheRead": 0.0036,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 427350.4273504273,
-							"requestsPerFiveHour": 128205.12820512819,
-							"requestsPerWeek": 256410.25641025638,
-							"costPerRequest": 0.000702,
-							"payPerRequest": 0.000468,
-							"multiplier": 1.5,
-							"ability": 26,
-							"tps": null,
-							"index": 64,
-							"valueIndex": 57,
-							"free": false
-						}
-					},
-					{
 						"key": "nemotron35supervl",
 						"name": "Nemotron 3.5 Super VL",
 						"oc": null,
@@ -26420,7 +25910,7 @@
 							"payPerRequest": 0.0015066666666666666,
 							"multiplier": 1.5,
 							"ability": 26.5,
-							"tps": 427.573277414639,
+							"tps": 429.870914506856,
 							"index": 49,
 							"valueIndex": 56,
 							"free": false
@@ -26447,7 +25937,7 @@
 							"payPerRequest": 0.0305,
 							"multiplier": 1,
 							"ability": 53.3549259623252,
-							"tps": 69.1961051080191,
+							"tps": 68.7357105217778,
 							"index": 13,
 							"valueIndex": 55,
 							"free": false
@@ -26527,9 +26017,9 @@
 							"payPerRequest": 0.005,
 							"multiplier": 3,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 16,
-							"valueIndex": 45,
+							"valueIndex": 44,
 							"free": false
 						},
 						"cc": {
@@ -26549,7 +26039,7 @@
 							"payPerRequest": 0.01,
 							"multiplier": 1.5,
 							"ability": 44.8,
-							"tps": 79.0935967169625,
+							"tps": 77.7247128275094,
 							"index": 27,
 							"valueIndex": 52,
 							"free": false
@@ -26603,7 +26093,7 @@
 							"payPerRequest": 0.006233333333333334,
 							"multiplier": 1.5,
 							"ability": 38.9,
-							"tps": 140.685548649308,
+							"tps": 142.325036557937,
 							"index": 32,
 							"valueIndex": 51,
 							"free": false
@@ -26786,7 +26276,7 @@
 							"payPerRequest": 0.005949333333333333,
 							"multiplier": 1.5,
 							"ability": 38.4,
-							"tps": 78.2873953261029,
+							"tps": 79.5628630886507,
 							"index": 33,
 							"valueIndex": 45,
 							"free": false
@@ -26909,9 +26399,9 @@
 							"payPerRequest": 0.0019466666666666666,
 							"multiplier": 1.5,
 							"ability": 33.7,
-							"tps": 41.7690855154168,
+							"tps": 42.1198081418443,
 							"index": 46,
-							"valueIndex": 41,
+							"valueIndex": 42,
 							"free": false
 						}
 					},
@@ -26936,7 +26426,7 @@
 							"payPerRequest": 0.068,
 							"multiplier": 1,
 							"ability": 52.673669395513,
-							"tps": 56.2535705567599,
+							"tps": 56.4825166993174,
 							"index": 4,
 							"valueIndex": 41,
 							"free": false
@@ -27091,7 +26581,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 4,
 							"valueIndex": 23,
 							"free": false
@@ -27113,7 +26603,7 @@
 							"payPerRequest": 0.013600000000000001,
 							"multiplier": 1.5,
 							"ability": 43.6,
-							"tps": 37.5673451377857,
+							"tps": 37.149693672692,
 							"index": 23,
 							"valueIndex": 36,
 							"free": false
@@ -27689,7 +27179,7 @@
 							"payPerRequest": 0.0067399999999999995,
 							"multiplier": 1.5,
 							"ability": 25,
-							"tps": 168.41907902528,
+							"tps": 170.999838534698,
 							"index": 31,
 							"valueIndex": 23,
 							"free": false
@@ -28064,6 +27554,60 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25",
+						"name": "MiMo-V2.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.14,
+								"output": 0.28,
+								"cacheRead": 0.0028,
+								"cacheWrite": null
+							},
+							"allowance": 120,
+							"requestsPerMonth": 389610.3896103896,
+							"requestsPerFiveHour": 77922.07792207792,
+							"requestsPerWeek": 194805.1948051948,
+							"costPerRequest": 0.000308,
+							"payPerRequest": 0.00010266666666666668,
+							"multiplier": 3,
+							"ability": null,
+							"tps": null,
+							"index": 62,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
+						"key": "mimov25pro",
+						"name": "MiMo-V2.5-Pro",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.435,
+								"output": 0.87,
+								"cacheRead": 0.003625,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 85318.16565943832,
+							"requestsPerFiveHour": 17063.633131887666,
+							"requestsPerWeek": 42659.08282971916,
+							"costPerRequest": 0.00070325,
+							"payPerRequest": 0.0004688333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 44,
+							"valueIndex": null,
+							"free": false
 						},
 						"cc": null
 					},
@@ -28666,11 +28210,11 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
-					"ocWins": 16,
-					"ccWins": 5,
+					"headToHead": 24,
+					"ocWins": 15,
+					"ccWins": 4,
 					"ties": 5,
-					"ocOnly": 3,
+					"ocOnly": 5,
 					"ccOnly": 71
 				}
 			}
