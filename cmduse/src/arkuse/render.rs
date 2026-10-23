@@ -635,9 +635,12 @@ pub fn render_text(
     }
 
     out.push_str(&top_models(&ink, report, 3));
+    // The header carries the row's own widths so the two cannot drift: every
+    // label is right-aligned in the field its cell occupies, and the name field
+    // is left-aligned to the model id.
     out.push_str(&format!(
-        "\n{}MODEL                            COEF       AFP     REQ{}\n",
-        ink.bold, ink.reset
+        "\n{}{:<28} {:>5} {:>9} {:>7}{}\n",
+        ink.bold, "MODEL", "COEF", "AFP", "REQ", ink.reset
     ));
     for model in report.models.iter().take(rows) {
         out.push_str(&model_row(&ink, model));
@@ -1653,6 +1656,36 @@ mod tests {
         assert!(text.contains("deepseek-v4.1-flash"), "{text}");
         assert!(text.contains("AFP"), "the plan's own unit: {text}");
         assert!(!text.contains('$'), "ARK never prices in dollars: {text}");
+    }
+
+    /// The right edge (1-based, inclusive) of every whitespace-separated cell.
+    fn cell_ends(line: &str) -> Vec<usize> {
+        let mut ends = Vec::new();
+        let mut cursor = 0;
+        for cell in line.split_whitespace() {
+            let start = line[cursor..].find(cell).expect("cell in line") + cursor;
+            cursor = start + cell.len();
+            ends.push(cursor);
+        }
+        ends
+    }
+
+    /// The header labels sit in the columns their cells do: every numeric column
+    /// is right-aligned, so its label must end where the value ends.
+    #[test]
+    fn the_model_table_header_aligns_with_its_rows() {
+        let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        let mut lines = text.lines().skip_while(|line| !line.starts_with("MODEL "));
+        let header = lines.next().expect("the table header");
+        let row = lines
+            .find(|line| line.starts_with("deepseek-v4.1-flash "))
+            .expect("the model row");
+        let header_ends = cell_ends(header);
+        assert_eq!(
+            header_ends[1..],
+            cell_ends(row)[1..header_ends.len()],
+            "header columns must end where their cells do:\n{header}\n{row}"
+        );
     }
 
     #[test]

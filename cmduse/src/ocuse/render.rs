@@ -295,19 +295,24 @@ fn exceeded(model: &ModelUsage) -> bool {
 /// against its own limit, which is a different denominator. Tokens are counted
 /// without cache reads: those run an order of magnitude larger and would make
 /// every money share look like a rounding error.
-fn top_models(ink: &Ink, report: &Report, count: usize) -> String {
+fn top_models(ink: &Ink, report: &Report, count: usize, name_w: usize) -> String {
     let tokens = |model: &ModelUsage| model.month.input + model.month.output;
     let total_cost = report.month.cost;
     let total_tokens: u64 = report.models.iter().map(tokens).sum();
     if report.models.is_empty() || (total_cost <= 0.0 && total_tokens == 0) {
         return String::new();
     }
+    // The label's padding keeps the money cells over their own columns however
+    // wide the name field grew (`TOP N MODELS ` then the rest of the field).
+    let lead = format!("TOP {count} MODELS");
+    let label_w = name_w.saturating_sub(lead.chars().count() + 1);
     let mut out = format!(
-        "\n{}TOP {} MODELS{} {} {} {} {}\n",
+        "\n{}{}{}{} {:<label_w$} {} {} {}\n",
         ink.bold,
-        count,
+        lead,
         ink.reset,
-        ink.dim_on(format!("{:<15}", "by period spend")),
+        ink.dim,
+        "by period spend",
         ink.dim_on(format!("{:>10}", "MONEY")),
         ink.dim_on(format!("{:>8}", "SHARE")),
         ink.dim_on(format!("{:>10} {:>8}", "TOKENS", "SHARE")),
@@ -319,10 +324,11 @@ fn top_models(ink: &Ink, report: &Report, count: usize) -> String {
             pct(model.month.cost, total_cost),
         ));
         out.push_str(&format!(
-            "{:<28} {money_cell} {:>10} {:>8}\n",
+            "{:<name_w$} {money_cell} {:>10} {:>8}\n",
             model.id,
             compact(tokens(model)),
             pct(tokens(model) as f64, total_tokens as f64),
+            name_w = name_w,
         ));
     }
     out
@@ -331,7 +337,7 @@ fn top_models(ink: &Ink, report: &Report, count: usize) -> String {
 /// One row of the model table: limit, spend, share of that limit used, the two
 /// rolling windows, and requests. The share of *period* spend moved to
 /// `top_models`, so this row stays a per-model-vs-its-own-limit line.
-fn model_row(ink: &Ink, model: &ModelUsage) -> String {
+fn model_row(ink: &Ink, model: &ModelUsage, name_w: usize) -> String {
     let limit = match model.limit {
         Some(limit) => money(limit),
         None => ink.dim_on("—".into()),
@@ -361,13 +367,14 @@ fn model_row(ink: &Ink, model: &ModelUsage) -> String {
         String::new()
     };
     format!(
-        "{:<28}{flag} {:>7} {spent} {use_cell} {} {} {:>7}\n",
+        "{:<name_w$}{flag} {:>7} {spent} {use_cell} {} {} {:>7}\n",
         model.id,
         limit,
         // Go windows are per model too: 5h = 20% of the limit, weekly = 50%.
         window_cell(ink, model, model.five_hour.cost, 0.20),
         window_cell(ink, model, model.weekly.cost, 0.50),
         compact(model.month.requests),
+        name_w = name_w,
     )
 }
 
@@ -556,13 +563,36 @@ pub fn render_text(
         None => {}
     }
 
-    out.push_str(&top_models(&ink, report, 3));
+    // A model id wider than the field shoves its own row right, so the name
+    // column takes the longest displayed id; 28 stays the floor (the width the
+    // table was laid out for).
+    let name_w = report
+        .models
+        .iter()
+        .take(rows)
+        .map(|model| model.id.chars().count())
+        .max()
+        .unwrap_or(0)
+        .max(28);
+    out.push_str(&top_models(&ink, report, 3, name_w));
+    // The header carries the row's own widths so the two cannot drift: every
+    // label is right-aligned in the field its cell occupies, and the name field
+    // is left-aligned to the model id.
     out.push_str(&format!(
-        "\n{}MODEL                            LIMIT      SPENT     USE       5H       WK     REQ{}\n",
-        ink.bold, ink.reset
+        "\n{}{:<name_w$} {:>7} {:>10} {:>7} {:>8} {:>8} {:>7}{}\n",
+        ink.bold,
+        "MODEL",
+        "LIMIT",
+        "SPENT",
+        "USE",
+        "5H",
+        "WK",
+        "REQ",
+        ink.reset,
+        name_w = name_w
     ));
     for model in report.models.iter().take(rows) {
-        out.push_str(&model_row(&ink, model));
+        out.push_str(&model_row(&ink, model, name_w));
     }
     if report.models.len() > rows {
         out.push_str(&format!(
@@ -850,9 +880,10 @@ pub fn plans_text(colour: bool) -> String {
             ink.reset,
             ink.cyan_on(format!("${:.2}", plan.price_usd)),
         ));
+        // Same widths as the rows below: limit 7, each rate 6, cache 8.
         out.push_str(&format!(
-            "{}MODEL                            LIMIT    IN     OUT    CACHE{}\n",
-            ink.bold, ink.reset
+            "{}{:<28} {:>7} {:>6} {:>6} {:>8}{}\n",
+            ink.bold, "MODEL", "LIMIT", "IN", "OUT", "CACHE", ink.reset
         ));
         for model in &catalog.go.models {
             let rate = model.variants.first();
@@ -1459,6 +1490,71 @@ mod tests {
         assert!(
             text.contains("50.0%"),
             "the model table keeps its own USE: {text}"
+        );
+    }
+
+    /// The right edge (1-based, inclusive) of every whitespace-separated cell.
+    fn cell_ends(line: &str) -> Vec<usize> {
+        let mut ends = Vec::new();
+        let mut cursor = 0;
+        for cell in line.split_whitespace() {
+            let start = line[cursor..].find(cell).expect("cell in line") + cursor;
+            cursor = start + cell.len();
+            ends.push(cursor);
+        }
+        ends
+    }
+
+    /// The header labels sit in the columns their cells do: every numeric column
+    /// is right-aligned, so its label must end where the value ends.
+    #[test]
+    fn the_model_table_header_aligns_with_its_rows() {
+        let now = 1_800_000_000_000;
+        // $5 of a $60 limit: no LIMIT EXCEEDED flag, which shifts a row on
+        // purpose.
+        let rows = vec![Row {
+            at_ms: now - 60_000,
+            provider: "opencode-go".into(),
+            model: "glm-5.3-flash".into(),
+            cost_usd: 5.0,
+            ..Default::default()
+        }];
+        let report =
+            crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
+        let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        let mut lines = text.lines().skip_while(|line| !line.starts_with("MODEL "));
+        let header = lines.next().expect("the table header");
+        let row = lines
+            .find(|line| line.starts_with("glm-5.3-flash"))
+            .expect("the model row");
+        let header_ends = cell_ends(header);
+        assert_eq!(
+            header_ends[1..],
+            cell_ends(row)[1..header_ends.len()],
+            "header columns must end where their cells do:\n{header}\n{row}"
+        );
+    }
+
+    /// The catalogue table is the second literal header: same rule, same check.
+    #[test]
+    fn the_models_table_header_aligns_with_its_rows() {
+        let text = models_text(zen::DEFAULT_PLAN, false, false);
+        let mut lines = text.lines().skip_while(|line| !line.starts_with("MODEL "));
+        let header = lines.next().expect("the table header");
+        // A free row prints `—` and a >28-char id overflows the name field, so
+        // pick a granted model whose id leaves the name column intact.
+        let row = lines
+            .find(|line| line.starts_with("DeepSeek V4 Flash "))
+            .expect("the model row");
+        let header_ends = cell_ends(header);
+        let row_ends = cell_ends(row);
+        // MODEL and ID are left-aligned (and a display name may hold spaces), so
+        // only the last five — the three rates, the limit and GRANTED — compare
+        // on their right edge.
+        assert_eq!(
+            &header_ends[header_ends.len() - 5..],
+            &row_ends[row_ends.len() - 5..],
+            "header columns must end where their cells do:\n{header}\n{row}"
         );
     }
 
