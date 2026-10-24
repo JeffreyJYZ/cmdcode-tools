@@ -142,7 +142,7 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
     let rows = || {
         let cutoff =
             since_ms.unwrap_or_else(|| window::now_ms() - number("days", days) * 86_400_000);
-        db::read_rows(db_path, cutoff)
+        db::read_all(db_path, cutoff)
     };
     let text = match name {
         "usage" => rows().map(|rows| {

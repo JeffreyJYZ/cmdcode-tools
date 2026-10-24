@@ -18,6 +18,10 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Default)]
 pub struct Row {
+    /// Which local client ran the call — `opencode`, `dsh` or `pi`. The report
+    /// names every client it counted, since only opencode's own store was visible
+    /// before and a total that silently grew would look like a drift.
+    pub client: &'static str,
     pub at_ms: i64,
     pub session: String,
     pub provider: String,
@@ -156,6 +160,57 @@ pub fn read_rows(path: &str, since_ms: i64) -> Result<Vec<Row>, String> {
     }
 }
 
+/// opencode's store plus the other local clients spending the same allowance.
+///
+/// `pi` and `dsh` keep their own session logs (see [`crate::stores`]), and both
+/// run on `opencode-go`, so their calls are the same plan's usage. Only rows on
+/// [`PROVIDERS`] are added: a client pointed at some other gateway is not this
+/// dashboard's traffic.
+pub fn read_all(path: &str, since_ms: i64) -> Result<Vec<Row>, String> {
+    let mut rows = read_rows(path, since_ms)?;
+    rows.extend(external(&crate::stores::Dirs::from_env(), since_ms));
+    Ok(rows)
+}
+
+/// Map the extra clients' turns onto this module's rows, dropping any model call
+/// that did not run on a Go/Zen provider.
+fn external(dirs: &crate::stores::Dirs, since_ms: i64) -> Vec<Row> {
+    let catalog = crate::ocuse::zen::catalog();
+    crate::stores::read(dirs, since_ms)
+        .into_iter()
+        .filter(|turn| PROVIDERS.contains(&turn.provider.as_str()))
+        .map(|turn| {
+            // dsh records no cost of its own, and the daily/hourly/session/model
+            // reports sum `cost_usd` rather than pricing — so price it here on the
+            // documented schedule, the same fallback `window::build` applies.
+            let priced = catalog
+                .price(
+                    &turn.model,
+                    turn.at_ms,
+                    turn.input,
+                    turn.output,
+                    turn.reasoning,
+                    turn.cache_read,
+                    turn.cache_write,
+                )
+                .unwrap_or(turn.cost_usd);
+            Row {
+                client: turn.client,
+                at_ms: turn.at_ms,
+                session: turn.session,
+                provider: turn.provider,
+                model: turn.model,
+                cost_usd: priced,
+                input: turn.input,
+                output: turn.output,
+                reasoning: turn.reasoning,
+                cache_read: turn.cache_read,
+                cache_write: turn.cache_write,
+            }
+        })
+        .collect()
+}
+
 /// Does this store use opencode v2's `session_message` table?
 fn has_v2(connection: &Connection) -> bool {
     connection
@@ -198,6 +253,7 @@ fn read_v2(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, String> {
             continue;
         }
         out.push(Row {
+            client: crate::stores::OPENCODE,
             at_ms,
             session,
             provider,
@@ -247,6 +303,7 @@ fn read_legacy(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, Strin
             cache: None,
         });
         out.push(Row {
+            client: crate::stores::OPENCODE,
             at_ms,
             session,
             provider,
@@ -312,10 +369,39 @@ mod tests {
         assert_eq!(rows[0].cache_read, 7);
         assert!((rows[0].cost_usd - 0.5).abs() < f64::EPSILON);
         assert_eq!(rows[1].model, "gpt-5.5");
+        assert_eq!(rows[0].client, crate::stores::OPENCODE);
 
         let later = read_rows(&path, 1_500).unwrap();
         assert_eq!(later.len(), 1);
         assert_eq!(later[0].provider, "opencode");
+    }
+
+    /// The extra clients are the same allowance only where the provider says so:
+    /// a `pi` session pointed at another gateway is not Go usage.
+    #[test]
+    fn other_clients_keep_only_go_and_zen_rows() {
+        let dir = tempfile::tempdir().unwrap();
+        let pi = dir.path().join("pi/--p--");
+        std::fs::create_dir_all(&pi).unwrap();
+        std::fs::write(
+            pi.join("s.jsonl"),
+            concat!(
+                r#"{"type":"message","message":{"role":"assistant","provider":"opencode-go","model":"glm-5.2","timestamp":1000,"usage":{"input":10,"output":1}}}"#,
+                "\n",
+                r#"{"type":"message","message":{"role":"assistant","provider":"openrouter","model":"glm-5.2","timestamp":1000,"usage":{"input":10,"output":1}}}"#,
+                "\n",
+            ),
+        )
+        .unwrap();
+        let dirs = crate::stores::Dirs {
+            dsh: dir.path().join("dsh"),
+            pi: dir.path().join("pi"),
+        };
+        let rows = external(&dirs, 0);
+        assert_eq!(rows.len(), 1, "{rows:#?}");
+        assert_eq!(rows[0].client, crate::stores::PI);
+        assert_eq!(rows[0].provider, "opencode-go");
+        assert_eq!(rows[0].input, 10);
     }
 
     /// v2 holds the live credential; the legacy file is only where a v1 install

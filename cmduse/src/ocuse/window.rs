@@ -99,6 +99,10 @@ pub struct Report {
     /// dashboard's "estimated locally" says nothing about which it was, and only
     /// one of those is something to act on.
     pub account_error: Option<String>,
+    /// Every local client the rows came from, in read order — `opencode`, `dsh`,
+    /// `pi`. The dashboard names them, because a total that grew when another
+    /// harness spent the same allowance must be visible, not mysterious.
+    pub clients: Vec<String>,
     pub five_hour: Totals,
     pub weekly: Totals,
     pub month: Totals,
@@ -257,12 +261,25 @@ pub fn build(
         month_inferred: since_override.is_none() && month_inferred,
         account: None,
         account_error: None,
+        clients: Vec::new(),
         five_hour: Totals::default(),
         weekly: Totals::default(),
         month: Totals::default(),
         models: Vec::new(),
     };
     let mut by_model: std::collections::BTreeMap<String, ModelUsage> = Default::default();
+
+    // Which local clients these rows came from. Read before the cutting loop so a
+    // client whose rows all fall outside the window is still named — the store was
+    // read, and saying so beats a silently different total.
+    for row in rows {
+        if row.client.is_empty() {
+            continue; // a hand-built row in a test names no client
+        }
+        if !report.clients.iter().any(|client| client == row.client) {
+            report.clients.push(row.client.to_string());
+        }
+    }
 
     for row in rows {
         // The month cut applies to the month, not to the loop: the account's week
@@ -515,5 +532,28 @@ mod tests {
             None,
         );
         assert_eq!(report.models[0].id, "pricey");
+    }
+
+    /// The report names every client it read, so a total that grew because `pi`
+    /// or `dsh` spent the same allowance is visible in the frame, not inferred.
+    #[test]
+    fn the_report_names_every_client_it_read() {
+        let now = days_from_civil(2026, 9, 27) * 86_400;
+        let mut rows = vec![row(now - 60, "cheap", 0.1)];
+        rows[0].client = crate::stores::OPENCODE;
+        let mut dsh = row(now - 60, "cheap", 0.2);
+        dsh.client = crate::stores::DSH;
+        let mut again = row(now - 60, "cheap", 0.3);
+        again.client = crate::stores::DSH;
+        rows.extend([dsh, again]);
+        let report = build(
+            &rows,
+            &crate::ocuse::zen::catalog(),
+            crate::ocuse::zen::DEFAULT_PLAN,
+            now * 1000,
+            None,
+            None,
+        );
+        assert_eq!(report.clients, ["opencode", "dsh"]);
     }
 }

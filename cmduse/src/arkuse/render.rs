@@ -425,13 +425,27 @@ pub fn render_text(
         .plan(&report.tier)
         .map(|p| p.label.clone())
         .unwrap_or_else(|| report.tier.clone());
+    // The extra local clients on the same plan, named beside the store: their
+    // calls are in the AFP below, so the header has to say so.
+    let extra: Vec<&str> = report
+        .clients
+        .iter()
+        .map(String::as_str)
+        .filter(|client| *client != crate::stores::OPENCODE)
+        .collect();
+    let extra = if extra.is_empty() {
+        String::new()
+    } else {
+        format!(" + {}", extra.join(", "))
+    };
     out.push_str(&format!(
-        "{}Volcengine ARK usage{} — agent plan {}, from {}{}{}\n",
+        "{}Volcengine ARK usage{} — agent plan {}, from {}{}{}{}\n",
         ink.bold,
         ink.reset,
         tier_label,
         ink.dim,
         shorten(db_path),
+        extra,
         ink.reset,
     ));
     let end = report
@@ -976,6 +990,9 @@ pub fn render_json(report: &Report) -> String {
     serde_json::json!({
         "source": "opencode",
         "scope": "local",
+        // Every local client the figures came from — opencode's own store plus
+        // any of `dsh` / `pi` that ran this plan's traffic. Additive.
+        "clients": &report.clients,
         "plan": report.tier,
         "profile": report.profile,
         "periodStart": report.since_ms,

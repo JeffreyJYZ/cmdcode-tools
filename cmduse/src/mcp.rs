@@ -220,7 +220,7 @@ fn tools() -> Value {
     },
     {
         "name": "session",
-        "description": "Command Code local usage by project/session from the CLI logs in ~/.commandcode/projects, windowed by since or days.",
+        "description": "Command Code local usage by project/session from the CLI logs in ~/.commandcode/projects plus the pi and dsh session logs on a command-code* provider, windowed by since or days.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -234,7 +234,7 @@ fn tools() -> Value {
     },
     {
         "name": "model",
-        "description": "Command Code local usage by model from the CLI logs in ~/.commandcode/projects, windowed by since or days. Pass id for one model's detail.",
+        "description": "Command Code local usage by model from the CLI logs in ~/.commandcode/projects plus the pi and dsh session logs on a command-code* provider, windowed by since or days. Pass id for one model's detail.",
         "inputSchema": {
             "type": "object",
             "properties": {

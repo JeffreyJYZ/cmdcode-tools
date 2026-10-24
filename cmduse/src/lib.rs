@@ -14,6 +14,9 @@ mod render;
 mod report_render;
 mod reports;
 mod snapshot;
+// The other agent CLIs on this machine (`pi`, `dsh`), as usage sources: ocuse
+// counts the Go traffic they ran, not only opencode's own.
+mod stores;
 mod update_check;
 
 #[cfg(test)]
@@ -669,10 +672,15 @@ pub(crate) fn daily_output(
         Some(Err(e)) => Err(e.to_string()),
         None => {
             let d = reports::load_local(tz);
+            // The extra clients are named, not implied: the figures below now
+            // include a `pi`/`dsh` session on a `command-code*` provider.
             let subtitle = if tz != 0 {
-                format!("offline, ~/.commandcode/projects, UTC{}", tz_suffix(tz))
+                format!(
+                    "offline, ~/.commandcode/projects + pi, dsh, UTC{}",
+                    tz_suffix(tz)
+                )
             } else {
-                "offline, ~/.commandcode/projects".to_string()
+                "offline, ~/.commandcode/projects + pi, dsh".to_string()
             };
             Ok(report_render::table(
                 "local", &subtitle, &d.by_day, &d.total, days, fmt, false,

@@ -332,7 +332,7 @@ pub fn run() {
         None => period_label,
     };
 
-    let read_since = |since_ms: i64| match db::read_rows(&db_path, since_ms) {
+    let read_since = |since_ms: i64| match db::read_all(&db_path, since_ms) {
         Ok(rows) => rows,
         Err(error) => {
             eprintln!("arkuse: {error}");
@@ -673,6 +673,7 @@ mod tests {
             month_inferred: false,
             account: None,
             account_error: None,
+            clients: Vec::new(),
             tier: "medium".into(),
             profile: None,
             offset_secs: 0,

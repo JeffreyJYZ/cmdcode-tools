@@ -23,6 +23,10 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Default)]
 pub struct Row {
+    /// Which local client ran the call — `opencode`, `dsh` or `pi`. Only rows on
+    /// [`PROVIDERS`] reach this struct, so a client that used the plan is named in
+    /// the report rather than silently inflating it.
+    pub client: &'static str,
     pub at_ms: i64,
     pub session: String,
     pub provider: String,
@@ -117,6 +121,37 @@ pub fn read_rows(path: &str, since_ms: i64) -> Result<Vec<Row>, String> {
     }
 }
 
+/// opencode's store plus the other local clients the plan billed.
+///
+/// `pi` and `dsh` keep their own session logs (see [`crate::stores`]); a client
+/// pointed at the plan's `agent-plan` provider is the same subscription, so its
+/// calls count. Anything on another gateway is not this plan's usage.
+pub fn read_all(path: &str, since_ms: i64) -> Result<Vec<Row>, String> {
+    let mut rows = read_rows(path, since_ms)?;
+    rows.extend(external(&crate::stores::Dirs::from_env(), since_ms));
+    Ok(rows)
+}
+
+/// Map the extra clients' turns onto this module's rows, dropping any model call
+/// that did not run on this plan's provider.
+fn external(dirs: &crate::stores::Dirs, since_ms: i64) -> Vec<Row> {
+    crate::stores::read(dirs, since_ms)
+        .into_iter()
+        .filter(|turn| PROVIDERS.contains(&turn.provider.as_str()))
+        .map(|turn| Row {
+            client: turn.client,
+            at_ms: turn.at_ms,
+            session: turn.session,
+            provider: turn.provider,
+            model: turn.model,
+            input: turn.input,
+            output: turn.output,
+            cache_read: turn.cache_read,
+            cache_write: turn.cache_write,
+        })
+        .collect()
+}
+
 /// Does this store use opencode v2's `session_message` table?
 fn has_v2(connection: &Connection) -> bool {
     connection
@@ -162,6 +197,7 @@ fn read_v2(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, String> {
             continue;
         }
         out.push(Row {
+            client: crate::stores::OPENCODE,
             at_ms,
             session,
             provider,
@@ -208,6 +244,7 @@ fn read_legacy(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, Strin
             cache: None,
         });
         out.push(Row {
+            client: crate::stores::OPENCODE,
             at_ms,
             session,
             provider,
@@ -285,5 +322,29 @@ mod tests {
     fn missing_database_is_an_error_not_a_panic() {
         let error = read_rows("/nonexistent/opencode.db", 0).unwrap_err();
         assert!(error.contains("open"), "{error}");
+    }
+
+    /// `pi` and `dsh` are the same plan only where the provider says so: a client
+    /// pointed at another gateway is not this subscription's usage.
+    #[test]
+    fn other_clients_keep_only_plan_rows() {
+        let dir = tempfile::tempdir().unwrap();
+        let dsh = dir.path().join("dsh/--p--/session-1");
+        std::fs::create_dir_all(&dsh).unwrap();
+        let log = concat!(
+            r#"{"type":"assistant/message","time":1000,"data":{"message":{"source":{"provider":"agent-plan","model":"deepseek-v4.1-flash"}},"usage":{"inputTokens":10,"outputTokens":2}}}"#,
+            "\n",
+            r#"{"type":"assistant/message","time":1000,"data":{"message":{"source":{"provider":"opencode-go","model":"deepseek-v4.1-flash"}},"usage":{"inputTokens":10,"outputTokens":2}}}"#,
+            "\n",
+        );
+        std::fs::write(dsh.join("session.v4.jsonl"), log.as_bytes()).unwrap();
+        let dirs = crate::stores::Dirs {
+            dsh: dir.path().join("dsh"),
+            pi: dir.path().join("pi"),
+        };
+        let rows = external(&dirs, 0);
+        assert_eq!(rows.len(), 1, "{rows:#?}");
+        assert_eq!(rows[0].client, crate::stores::DSH);
+        assert_eq!(rows[0].provider, "agent-plan");
     }
 }

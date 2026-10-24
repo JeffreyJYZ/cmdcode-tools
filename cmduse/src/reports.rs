@@ -35,7 +35,8 @@ struct Message {
 
 /// (project dir name, file contents) for every session JSONL under
 /// `~/.commandcode/projects`, skipping checkpoints/metadata. Shared by the
-/// daily and hourly local scans so the walk/filter lives in one place.
+/// daily and hourly local scans so the walk/filter lives in one place. The
+/// `pi`/`dsh` logs are added by [`external_records`], in the same shape.
 fn session_files() -> Vec<(String, String)> {
     let mut out = Vec::new();
     let Ok(entries) = std::fs::read_dir(crate::paths::home().join(".commandcode/projects")) else {
@@ -95,13 +96,46 @@ pub fn load_local(tz: i64) -> LocalData {
     load_local_since(tz, None)
 }
 
+/// Providers whose traffic bills this plan. A harness other than the CLI still
+/// spends the same CommandCode account when it is pointed at these.
+const CC_PROVIDERS: [&str; 2] = ["command-code", "commandcode"];
+
+/// The other local clients' model calls on the CommandCode plan, as the same
+/// records the CLI's own JSONL scan produces.
+///
+/// `~/.commandcode/projects` only holds what the CLI ran, so a `pi` or `dsh`
+/// session on a `command-code*` provider was invisible to `model`/`session`/
+/// `daily --local`. The shared reader (`crate::stores`) supplies the turn; the
+/// client's own dollar figure is carried through rather than re-priced, because
+/// this side reports what the harness recorded.
+fn external_records(dirs: &crate::stores::Dirs) -> Vec<UsageRecord> {
+    crate::stores::read(dirs, 0)
+        .into_iter()
+        .filter(|turn| turn.at_ms > 0 && CC_PROVIDERS.iter().any(|p| turn.provider.starts_with(p)))
+        .map(|turn| UsageRecord {
+            project: turn.project.clone(),
+            timestamp: cmduse_core::dates::iso_instant((turn.at_ms / 1000).max(0) as u64),
+            model: (!turn.model.is_empty()).then(|| turn.model.clone()),
+            usage: Usage {
+                input_tokens: turn.input,
+                output_tokens: turn.output,
+                cache_read_tokens: turn.cache_read,
+                cache_write_tokens: turn.cache_write,
+                cost_usd: turn.cost_usd,
+            },
+            is_session: true,
+        })
+        .collect()
+}
+
 /// Local usage restricted to records at or after `since_ms` (epoch
 /// MILLISECONDS — the unit `parse_iso_utc` returns and `UsageRecord::timestamp`
 /// parses to). Local JSONL is all-time otherwise, so a caller wanting one
 /// billing period must pass a bound.
 pub fn load_local_since(tz: i64, since_ms: Option<f64>) -> LocalData {
     let files = session_files();
-    let records = usage_records(&files);
+    let mut records = usage_records(&files);
+    records.extend(external_records(&crate::stores::Dirs::from_env()));
     let kept: Vec<UsageRecord> = match since_ms {
         None => records,
         Some(since) => records
@@ -187,7 +221,8 @@ pub fn load_account_hourly(
 pub fn load_local_hourly(hours: usize, tz: i64) -> Vec<(String, Totals)> {
     let hours = hours.max(1);
     let files = session_files();
-    let records = usage_records(&files);
+    let mut records = usage_records(&files);
+    records.extend(external_records(&crate::stores::Dirs::from_env()));
 
     // local hour buckets, same math as the account path but from record stamps
     let now = now_secs();
@@ -213,6 +248,7 @@ pub fn load_local_hourly(hours: usize, tz: i64) -> Vec<(String, Totals)> {
 
 #[cfg(test)]
 mod window_tests {
+    use super::external_records;
     use cmduse_core::dates::parse_iso_utc;
 
     #[test]
@@ -224,5 +260,45 @@ mod window_tests {
         assert!(!keep("2026-08-26T23:59:59Z"));
         // unparseable timestamps are kept rather than silently dropped
         assert!(keep(""));
+    }
+
+    /// The other clients count only where they were pointed at this account:
+    /// `opencode-go` traffic is `ocuse`'s, `command-code` is here.
+    #[test]
+    fn other_clients_count_only_on_commandcode_providers() {
+        let tmp = tempfile::tempdir().unwrap();
+        let pi = tmp.path().join("pi/--Users-someone-proj--");
+        std::fs::create_dir_all(&pi).unwrap();
+        std::fs::write(
+            pi.join("s.jsonl"),
+            concat!(
+                r#"{"type":"message","message":{"role":"assistant","provider":"command-code-openai","model":"deepseek-v4.1-flash","timestamp":1792835029000,"usage":{"input":100,"output":10,"cacheRead":900,"cacheWrite":0,"cost":{"total":0.5}}}}"#,
+                "\n",
+                r#"{"type":"message","message":{"role":"assistant","provider":"opencode-go","model":"deepseek-v4.1-flash","timestamp":1792835029000,"usage":{"input":1,"output":1}}}"#,
+                "\n",
+            ),
+        )
+        .unwrap();
+        let dirs = crate::stores::Dirs {
+            dsh: tmp.path().join("dsh"),
+            pi: tmp.path().join("pi"),
+        };
+        let records = external_records(&dirs);
+        assert_eq!(
+            records.len(),
+            1,
+            "{:?}",
+            records
+                .iter()
+                .map(|r| r.project.clone())
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(records[0].project, "--Users-someone-proj--");
+        assert_eq!(records[0].timestamp, "2026-10-24T09:43:49.000Z");
+        assert_eq!(records[0].model.as_deref(), Some("deepseek-v4.1-flash"));
+        assert_eq!(records[0].usage.input_tokens, 100);
+        assert_eq!(records[0].usage.cache_read_tokens, 900);
+        assert_eq!(records[0].usage.cost_usd, 0.5);
+        assert!(records[0].is_session);
     }
 }

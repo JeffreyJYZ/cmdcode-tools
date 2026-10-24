@@ -478,13 +478,14 @@ Config: ~/.config/cmd-usage/config.json
     \"statusline_colors\": true, \"statusline_ascii\": false,
     \"check_updates\": true, \"dismissed_update\": null }
 
-daily/model/session read ~/.commandcode/projects offline (no API calls).
+daily/model/session read ~/.commandcode/projects offline (no API calls), plus
+the pi and dsh session logs where they ran on a command-code* provider.
 Dashboard needs: logged-in Command Code CLI (~/.commandcode/auth.json)";
 
 /// The `ocuse` help text: the shared block plus its own extras and the
 /// ocuse-only flags. Kept in sync with `CMDUSE_HELP` by the parity test in
 /// `cli_tests` (every shared token cmduse prints must print here too).
-const OCUSE_HELP: &str = "ocuse — OpenCode Go/Zen usage (opencode.db + Go's usage endpoint)
+const OCUSE_HELP: &str = "ocuse — OpenCode Go/Zen usage (opencode.db + pi, dsh + Go's usage endpoint)
 
 Usage: ocuse [options]            Live plan dashboard (watch mode)
        ocuse -1                   One-shot dashboard
@@ -519,7 +520,8 @@ Options:
       --since <ISO>     model/session: count from this instant instead of --days
       --gated           models: filter to what the selected plan grants
       --db <path>       opencode store (default $OPENCODE_DB or
-                        ~/.local/share/opencode/opencode.db)
+                        ~/.local/share/opencode/opencode.db); the pi and dsh
+                        session logs are read beside it
       --plan <id>       Go plan to measure against: go (default) or go-plus
       --no-api          Skip OpenCode Go's usage endpoint and stay local-only
       --window <w>      report window: month (default), all, or <n>d
@@ -542,7 +544,7 @@ key, no network, or with --no-api, the windows fall back to a local estimate.";
 
 /// The `arkuse` help text: the shared block plus ARK's own flags. Same parity
 /// rule as ocuse's (the shared tokens are asserted by `cli_tests`).
-const ARKUSE_HELP: &str = "arkuse — Volcengine ARK Agent Plan usage (opencode.db + arkcli control plane)
+const ARKUSE_HELP: &str = "arkuse — Volcengine ARK Agent Plan usage (opencode.db + pi, dsh + arkcli control plane)
 
 Usage: arkuse [options]           Live plan dashboard (watch mode)
        arkuse -1                  One-shot dashboard
@@ -577,7 +579,8 @@ Options:
       --since <ISO>     model/session: count from this instant instead of --days
       --gated           models: filter to what the selected tier grants
       --db <path>       opencode store (default $OPENCODE_DB or
-                        ~/.local/share/opencode/opencode.db)
+                        ~/.local/share/opencode/opencode.db); the pi and dsh
+                        session logs are read beside it
       --plan <id>       ARK tier: small, medium (default), large, max
       --profile <name>  arkcli control-plane profile (default: the first
                         agent-plan profile, or $ARKUSE_PROFILE)

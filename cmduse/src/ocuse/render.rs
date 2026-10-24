@@ -406,12 +406,26 @@ pub fn render_text(
     let ink = Ink::new(colour).width(bar_width);
     let c = |text: String| ink.cyan_on(text);
     let mut out = String::new();
+    // Which local clients fed these rows, when it is not opencode alone: `pi` and
+    // `dsh` spend the same Go allowance, so their store is named beside the path.
+    let extra: Vec<&str> = report
+        .clients
+        .iter()
+        .map(String::as_str)
+        .filter(|client| *client != crate::stores::OPENCODE)
+        .collect();
+    let extra = if extra.is_empty() {
+        String::new()
+    } else {
+        format!(" + {}", extra.join(", "))
+    };
     out.push_str(&format!(
-        "{}OpenCode usage{} — go + zen, from {}{}{}\n",
+        "{}OpenCode usage{} — go + zen, from {}{}{}{}\n",
         ink.bold,
         ink.reset,
         ink.dim,
         shorten(db_path),
+        extra,
         ink.reset,
     ));
     // cmduse prints `Success N%` from its account API; opencode's own store
@@ -802,6 +816,10 @@ pub fn render_json(report: &Report) -> String {
     };
     serde_json::to_string_pretty(&serde_json::json!({
         "source": "opencode.db",
+        // Every local client the figures came from — opencode's own store plus
+        // any of `dsh` / `pi` that ran this machine's traffic. Additive: a
+        // consumer that predates it keeps reading `source`.
+        "clients": &report.clients,
         "generatedAt": report.now_ms,
         "periodStart": report.since_ms,
         // Period bounds in epoch ms, the same units as cmduse's `-1 --json`
@@ -1490,6 +1508,38 @@ mod tests {
         assert!(
             text.contains("50.0%"),
             "the model table keeps its own USE: {text}"
+        );
+    }
+
+    /// `pi` and `dsh` spend the same allowance, so the header names them rather
+    /// than printing a total that disagrees with opencode's own store alone.
+    #[test]
+    fn the_header_names_a_client_beside_opencode() {
+        let now = 1_800_000_000_000;
+        let rows = vec![
+            Row {
+                client: "opencode",
+                at_ms: now - 60_000,
+                provider: "opencode-go".into(),
+                model: "glm-5.3-flash".into(),
+                cost_usd: 1.0,
+                ..Default::default()
+            },
+            Row {
+                client: "pi",
+                at_ms: now - 60_000,
+                provider: "opencode-go".into(),
+                model: "glm-5.3-flash".into(),
+                cost_usd: 1.0,
+                ..Default::default()
+            },
+        ];
+        let report =
+            crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
+        let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        assert!(
+            text.contains("/tmp/opencode.db + pi"),
+            "the header names the extra client: {text}"
         );
     }
 

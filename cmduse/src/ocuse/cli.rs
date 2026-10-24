@@ -328,7 +328,7 @@ pub fn run() {
         None => period_label,
     };
 
-    let read_since = |since_ms: i64| match db::read_rows(&db_path, since_ms) {
+    let read_since = |since_ms: i64| match db::read_all(&db_path, since_ms) {
         Ok(rows) => rows,
         Err(error) => {
             eprintln!("ocuse: {error}");
@@ -693,6 +693,7 @@ mod tests {
             month_inferred: false,
             account: None,
             account_error: None,
+            clients: Vec::new(),
             five_hour: Default::default(),
             weekly: Default::default(),
             month: Default::default(),

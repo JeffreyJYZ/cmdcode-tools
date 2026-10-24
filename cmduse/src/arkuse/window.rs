@@ -80,6 +80,10 @@ pub struct Report {
     /// Why the meters are absent, when that is worth saying (`--no-api` is a
     /// deliberate choice, not a fault).
     pub account_error: Option<String>,
+    /// Every local client the rows came from, in read order — `opencode`, `dsh`,
+    /// `pi`. The tier's meters see every harness on the plan, so the local half
+    /// must name which stores it could actually read.
+    pub clients: Vec<String>,
     /// The tier the figures are measured against (explicit `--plan`, else the
     /// profile's own `plan_tier`, else the catalogue default).
     pub tier: String,
@@ -292,6 +296,7 @@ pub fn build(
         month_inferred: since_override.is_none() && month_inferred,
         account: None,
         account_error: None,
+        clients: Vec::new(),
         tier: plan_id.to_string(),
         profile: account.map(|a| a.profile.clone()),
         offset_secs: account.map_or(0, |a| a.monthly.offset_secs()),
@@ -302,6 +307,17 @@ pub fn build(
         models: Vec::new(),
     };
     let mut by_model: std::collections::BTreeMap<String, ModelUsage> = Default::default();
+
+    // Which local clients these rows came from, read before the window cuts so a
+    // client whose rows all fall outside still gets named.
+    for row in rows {
+        if row.client.is_empty() {
+            continue; // a hand-built row in a test names no client
+        }
+        if !report.clients.iter().any(|client| client == row.client) {
+            report.clients.push(row.client.to_string());
+        }
+    }
 
     for row in rows {
         let in_month = row.at_ms >= since_ms;

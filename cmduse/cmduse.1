@@ -92,7 +92,10 @@ API) that spent against the same account.  Days are derived by fetching the
 cumulative summary at each UTC midnight and differencing adjacent
 boundaries; requests are pooled 8 at a time in parallel.  With
 \fB\-\-local\fR it instead reads only this machine's CLI sessions from
-.IR ~/.commandcode/projects
+.IR ~/.commandcode/projects ,
+plus the \fBpi\fR (\fI~/.pi/agent/sessions\fR) and \fBdsh\fR
+(\fI~/.dsh/sessions\fR) session logs, of which only their
+\fIcommand\-code*\fR calls count
 (offline, no API key required, misses other harnesses).  Days are bucketed
 in UTC unless \fB\-\-tz\fR is given, which applies to both the API and the
 local path.  \fB\-\-json\fR emits one object
@@ -112,6 +115,8 @@ and honors \fB\-\-tz\fR.  \fB\-\-json\fR emits one object
 .B model
 Local usage grouped by model, read from
 .IR ~/.commandcode/projects
+plus the \fBpi\fR and \fBdsh\fR session logs (only their
+\fIcommand\-code*\fR calls)
 (offline; the usage API exposes no per\-model split).  All\-time by default:
 \fB\-\-days\fR \fIn\fR or \fB\-\-since\fR \fIISO\fR bounds the window, and
 \fB\-\-json\fR reports \fIsource\fR + \fIsince\fR alongside \fImodels\fR.
@@ -497,6 +502,12 @@ Read; API key.  Written by the Command Code CLI.
 Read; per\-project CLI usage logs used by \fBdaily\fR/\fBhourly\fR
 \fB\-\-local\fR, \fBmodel\fR, \fBsession\fR.  JSON lines.
 .TP
+.I ~/.pi/agent/sessions, ~/.dsh/sessions
+Read; the \fBpi\fR and \fBdsh\fR session logs the same local reports read,
+keeping only calls on a \fIcommand\-code*\fR provider (\fBocuse\fR/\fBarkuse\fR
+read them for their own providers).  Override with
+\fBPI_SESSIONS_DIR\fR / \fBDSH_SESSIONS_DIR\fR; dsh compresses its log.
+.TP
 .I ~/.cache/cmd\-usage/last\-check
 Written; JSON recording the last update\-check time and newest known version.
 Deleting it forces a fresh check on the next run.
@@ -765,7 +776,13 @@ Print usage and exit 0.
 opencode store path.  Default \fBOPENCODE_DB\fR, else
 .IR ~/.local/share/opencode/opencode.db .
 Opened read\-only, so a running opencode is unaffected; a missing or
-unreadable store exits 1 with a hint.
+unreadable store exits 1 with a hint.  Alongside it, the \fBpi\fR
+(\fI~/.pi/agent/sessions\fR, overridden by \fBPI_SESSIONS_DIR\fR) and
+\fBdsh\fR (\fI~/.dsh/sessions\fR, zstd\-compressed, overridden by
+\fBDSH_SESSIONS_DIR\fR) session logs are read, and only their rows on
+\fBopencode-go\fR / \fBopencode\fR count: both harnesses spend the same
+allowance.  The header names each client read, and \fB\-\-json\fR carries the
+list as \fBclients\fR; a missing store contributes nothing.
 .TP
 .B \-\-plan \fIid\fR
 Which Go plan to measure against: \fBgo\fR (default) or \fBgo-plus\fR.  There
@@ -1003,9 +1020,9 @@ resolved.
 .SS arkuse data and windows
 Two sources.  \fBarkcli usage plan\fR returns the plan's own meters with their
 reset instants \(em the only figures that see every machine and harness on the
-subscription \(em and this store (\fIopencode.db\fR, provider
-\fIagent\-plan\fR only) supplies the per\-model attribution and the local
-estimate.  The server's windows are not reproducible locally: the 5\-hour
+subscription \(em and the local stores (\fIopencode.db\fR plus the \fBpi\fR and
+\fBdsh\fR session logs, provider \fIagent\-plan\fR only) supply the per\-model
+attribution and the local estimate.  The server's windows are not reproducible locally: the 5\-hour
 window is a block with its own reset, the week is anchored to Monday 00:00, and
 the month is the subscription anniversary, so rows are cut at
 \fIreset \(mi window\fR and period dates print in the server's own offset.

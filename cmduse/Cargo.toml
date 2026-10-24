@@ -64,6 +64,9 @@ lexopt = "0.3"
 # ocuse reads opencode's own SQLite store read-only; bundled so the crate needs
 # no system libsqlite.
 rusqlite = { version = "0.40", features = ["bundled"] }
+# dsh compresses its session log; the reader decodes it in-process rather than
+# shelling out to a `zstd` binary the machine may not have.
+zstd = "0.13"
 
 [dev-dependencies]
 tempfile = "3"
