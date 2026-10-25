@@ -109,6 +109,8 @@ cd opencode-plugin && bun test && bun check && bun fmt --check && bunx biome lin
 
 TypeScript packages: `bun check` for types (never `tsc --noEmit`), `bun fmt` for formatting, Biome for linting. **Formatting is Bun's own formatter**, configured once in the repo-root `bunfig.toml` `[fmt]` (tabs, `tabWidth` 4, `printWidth` 100 — Bun walks up, so every package and `website/` inherit it) and `.prettierignore` skips vendored output — never add Prettier or `biome format`. **Never name a package script `fmt` or `check`**: Bun prefers the script over its own builtin, so `bun fmt --check` starts writing and `bun check` stops type-checking. **`bun fmt` / `bun lint` write; the gate is `bun fmt --check` + `bunx biome lint`.** `typescript` stays a devDependency only where a build shells `tsc -p tsconfig.build.json` for declarations (the four plugin packages); everything else type-checks through Bun.
 
+**`bun lint` is canary-only as of 1.4.4** (docs pages exist, the binary has no such command). When it ships in a stable Bun, linting moves there: `[lint]` rules in the root `bunfig.toml`, and the `lint` script is renamed or dropped because it would shadow the builtin — the same trap as `fmt` and `check`. Biome's `biome.json` files and the `@biomejs/biome` devDependency come out with it.
+
 Tests must be hermetic: CI has no `cmduse` binary and no homebrew prefix, so anything shelling out needs a skip guard or an injected candidate list. **Bun module mocks (`mock.module`) are process-wide and leak into other files** — never mock a module another test relies on; drive the real seam instead (e.g. `CMD_API_KEY`).
 
 **Every TS package pins `typescript: ^7`** (the native port) — never `^5`.
