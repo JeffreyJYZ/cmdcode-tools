@@ -49,7 +49,10 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun test
-      - run: bun run typecheck
+      - run: bun check
+      # Read-only, so a formatting or lint deviation fails the build instead of
+      # being written away: `bun fmt`/`bun lint` are the local writing pass.
+      - run: bunx biome check
       - if: matrix.build
         run: bun run build
 

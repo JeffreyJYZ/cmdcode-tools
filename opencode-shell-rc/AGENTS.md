@@ -56,8 +56,7 @@ Hermetic: every test points `HOME` and `XDG_STATE_HOME` at a temp dir and writes
 bun install
 bun test
 bun check
-bun fmt
-bun lint
+bunx biome check  # verify; bun fmt / bun lint are the writing pass
 bun run build
 ```
 

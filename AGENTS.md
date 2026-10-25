@@ -104,10 +104,10 @@ cargo test && cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo package -p cmduse-core --allow-dirty   # core ships plans.json+gating.json
 printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | cargo run -p cmd-usage -- mcp
-cd opencode-plugin && bun test && bun check && bun fmt && bun lint
+cd opencode-plugin && bun test && bun check && bunx biome check
 ```
 
-TypeScript packages: `bun check` for types (never `tsc --noEmit`), `bun fmt` for formatting, `bun lint` for Biome lint, `biome check` to verify both halves. **Never name a package script `check`** — Bun prefers the script over its own `bun check`, so the type check silently becomes whatever that script does.
+TypeScript packages: `bun check` for types (never `tsc --noEmit`), and `bunx biome check` to verify format + lint. **`bun fmt` is Bun's own Prettier-like formatter; the `fmt` script shadows it on purpose** — that script runs Biome, because Bun's would rewrite the tree at width 80 with spaces — so never `bun fmt --check` (the flag is forwarded into `--write` and errors) and never `bun fmt --no-script` here. **`bun fmt` and `bun lint` are the writing pass, never a gate**: they repair the tree, so a green run says nothing about whether it was already clean. **Never name a package script `check`** — Bun prefers the script over its own `bun check`, so the type check silently becomes whatever that script does.
 
 Tests must be hermetic: CI has no `cmduse` binary and no homebrew prefix, so anything shelling out needs a skip guard or an injected candidate list. **Bun module mocks (`mock.module`) are process-wide and leak into other files** — never mock a module another test relies on; drive the real seam instead (e.g. `CMD_API_KEY`).
 

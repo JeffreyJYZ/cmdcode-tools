@@ -262,8 +262,9 @@ Names from the two catalogs are collapsed onto one canonical key (lowercase, ven
 ```sh
 bun install
 bun test          # unit tests (parsers, normalisation, metrics)
-bun run typecheck # tsc --noEmit
-bun run check     # biome format + lint (write)
+bun check         # types (Bun's own check)
+bun fmt           # biome format --write
+bun lint          # biome lint --write
 ```
 
 ## Links

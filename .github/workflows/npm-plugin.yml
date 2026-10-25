@@ -114,7 +114,8 @@ jobs:
         working-directory: ${{ steps.pkg.outputs.dir }}
         run: |
           bun test
-          bun run typecheck
+          bun check
+          bunx biome check
           if [ "${{ steps.pkg.outputs.build }}" = "true" ]; then bun run build; fi
 
       - name: The tag and the manifest must agree
