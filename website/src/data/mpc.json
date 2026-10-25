@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-10-24T15:22:30.371Z",
+	"generatedAt": "2026-10-25T06:17:28.073Z",
 	"plans": [
 		{
 			"key": "go",
@@ -1843,33 +1843,6 @@
 						}
 					},
 					{
-						"key": "longcat25preview",
-						"name": "LongCat 2.5 Preview Free",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": 0
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						},
-						"cc": null
-					},
-					{
 						"key": "beam",
 						"name": "Beam Free",
 						"oc": {
@@ -2289,7 +2262,7 @@
 					"ocWins": 1,
 					"ccWins": 22,
 					"ties": 0,
-					"ocOnly": 7,
+					"ocOnly": 6,
 					"ccOnly": 34
 				}
 			},
@@ -4078,33 +4051,6 @@
 						}
 					},
 					{
-						"key": "longcat25preview",
-						"name": "LongCat 2.5 Preview Free",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": 0
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						},
-						"cc": null
-					},
-					{
 						"key": "beam",
 						"name": "Beam Free",
 						"oc": {
@@ -4524,7 +4470,7 @@
 					"ocWins": 0,
 					"ccWins": 23,
 					"ties": 0,
-					"ocOnly": 7,
+					"ocOnly": 6,
 					"ccOnly": 34
 				}
 			}
@@ -6573,33 +6519,6 @@
 						}
 					},
 					{
-						"key": "longcat25preview",
-						"name": "LongCat 2.5 Preview Free",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": 0
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						},
-						"cc": null
-					},
-					{
 						"key": "beam",
 						"name": "Beam Free",
 						"oc": {
@@ -7100,7 +7019,7 @@
 					"ocWins": 8,
 					"ccWins": 14,
 					"ties": 3,
-					"ocOnly": 5,
+					"ocOnly": 4,
 					"ccOnly": 45
 				}
 			},
@@ -9147,33 +9066,6 @@
 						}
 					},
 					{
-						"key": "longcat25preview",
-						"name": "LongCat 2.5 Preview Free",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": 0
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						},
-						"cc": null
-					},
-					{
 						"key": "beam",
 						"name": "Beam Free",
 						"oc": {
@@ -9674,7 +9566,7 @@
 					"ocWins": 8,
 					"ccWins": 16,
 					"ties": 1,
-					"ocOnly": 5,
+					"ocOnly": 4,
 					"ccOnly": 45
 				}
 			}
@@ -12122,33 +12014,6 @@
 						}
 					},
 					{
-						"key": "longcat25preview",
-						"name": "LongCat 2.5 Preview Free",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": 0
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						},
-						"cc": null
-					},
-					{
 						"key": "beam",
 						"name": "Beam Free",
 						"oc": {
@@ -12649,7 +12514,7 @@
 					"ocWins": 15,
 					"ccWins": 2,
 					"ties": 9,
-					"ocOnly": 4,
+					"ocOnly": 3,
 					"ccOnly": 59
 				}
 			},
@@ -15095,33 +14960,6 @@
 						}
 					},
 					{
-						"key": "longcat25preview",
-						"name": "LongCat 2.5 Preview Free",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": 0
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						},
-						"cc": null
-					},
-					{
 						"key": "beam",
 						"name": "Beam Free",
 						"oc": {
@@ -15622,7 +15460,7 @@
 					"ocWins": 14,
 					"ccWins": 3,
 					"ties": 9,
-					"ocOnly": 4,
+					"ocOnly": 3,
 					"ccOnly": 59
 				}
 			}
@@ -18199,33 +18037,6 @@
 						}
 					},
 					{
-						"key": "longcat25preview",
-						"name": "LongCat 2.5 Preview Free",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": 0
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						},
-						"cc": null
-					},
-					{
 						"key": "beam",
 						"name": "Beam Free",
 						"oc": {
@@ -18882,7 +18693,7 @@
 					"ocWins": 15,
 					"ccWins": 4,
 					"ties": 7,
-					"ocOnly": 4,
+					"ocOnly": 3,
 					"ccOnly": 70
 				}
 			},
@@ -21457,33 +21268,6 @@
 						}
 					},
 					{
-						"key": "longcat25preview",
-						"name": "LongCat 2.5 Preview Free",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": 0
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						},
-						"cc": null
-					},
-					{
 						"key": "beam",
 						"name": "Beam Free",
 						"oc": {
@@ -22140,7 +21924,7 @@
 					"ocWins": 16,
 					"ccWins": 4,
 					"ties": 6,
-					"ocOnly": 4,
+					"ocOnly": 3,
 					"ccOnly": 70
 				}
 			}
@@ -24717,33 +24501,6 @@
 						}
 					},
 					{
-						"key": "longcat25preview",
-						"name": "LongCat 2.5 Preview Free",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": 0
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						},
-						"cc": null
-					},
-					{
 						"key": "beam",
 						"name": "Beam Free",
 						"oc": {
@@ -25400,7 +25157,7 @@
 					"ocWins": 15,
 					"ccWins": 4,
 					"ties": 7,
-					"ocOnly": 4,
+					"ocOnly": 3,
 					"ccOnly": 70
 				}
 			},
@@ -27975,33 +27732,6 @@
 						}
 					},
 					{
-						"key": "longcat25preview",
-						"name": "LongCat 2.5 Preview Free",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": 0
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						},
-						"cc": null
-					},
-					{
 						"key": "beam",
 						"name": "Beam Free",
 						"oc": {
@@ -28658,7 +28388,7 @@
 					"ocWins": 16,
 					"ccWins": 4,
 					"ties": 6,
-					"ocOnly": 4,
+					"ocOnly": 3,
 					"ccOnly": 70
 				}
 			}
