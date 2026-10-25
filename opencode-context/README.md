@@ -14,7 +14,7 @@ Add it to the `plugins` array in `~/.config/opencode/opencode.json` and restart 
 
 ```json
 {
-  "plugins": ["@jeffreyjyz/opencode-context"]
+	"plugins": ["@jeffreyjyz/opencode-context"]
 }
 ```
 
@@ -22,7 +22,7 @@ For local development point at the checkout instead — an absolute path is trea
 
 ```json
 {
-  "plugins": ["/Users/you/dev/cmdcode-tools/opencode-context"]
+	"plugins": ["/Users/you/dev/cmdcode-tools/opencode-context"]
 }
 ```
 
@@ -37,12 +37,12 @@ A symlink under `~/.config/opencode/plugins/` is also picked up. After `bun run 
 
 Two halves of one package, because they run in different processes:
 
-| half | file | job |
-| --- | --- | --- |
+| half   | file           | job                                                                                                                      |
+| ------ | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | server | `src/index.ts` | measures the assembled system prompt and tool definitions on every request (their **sizes** only) and registers the tool |
-| TUI | `src/tui.tsx` | the `/context` slash command and the dialog |
+| TUI    | `src/tui.tsx`  | the `/context` slash command and the dialog                                                                              |
 
-The message store holds no system prompt or tool schemas, so the server half records their byte sizes in `$XDG_CACHE_HOME/opencode-context/<session>.json` (one small JSON per session; no prompt text) and the dialog reads them. The rest of the breakdown comes straight from opencode's live data — the *replayable* context (`session.context`, post-compaction), the model's context limit, and the agent instructions as a fallback.
+The message store holds no system prompt or tool schemas, so the server half records their byte sizes in `$XDG_CACHE_HOME/opencode-context/<session>.json` (one small JSON per session; no prompt text) and the dialog reads them. The rest of the breakdown comes straight from opencode's live data — the _replayable_ context (`session.context`, post-compaction), the model's context limit, and the agent instructions as a fallback.
 
 Units: each row shows UTF-8 **bytes** (delta's size column) and the header shows the provider's **measured tokens** over the model limit. Per-row percentages are share of the byte total.
 

@@ -25,7 +25,7 @@ Add the plugin to `opencode.json` (v2 hosts use `plugins`; v1's singular `plugin
 
 ```json
 {
-  "plugins": ["@jeffreyjyz/opencode-command-code"]
+	"plugins": ["@jeffreyjyz/opencode-command-code"]
 }
 ```
 
@@ -67,12 +67,12 @@ Usage comes from `cmduse` polled every 5 seconds, read from opencode's message s
 
 Each command passes its arguments through to the CLI that owns it, and each has an agent-facing tool of the same name, so the model can fetch the same text without you typing a slash command.
 
-| Command | Tool | Spawns |
-|---|---|---|
-| `/cmd-usage` | `cmd_usage` | `cmduse` — plan, credits, windows, billing period; `plans` for the plan table |
-| `/ocuse-usage` | `ocuse_usage` | `ocuse` — OpenCode Go/Zen meters and per-model spend; empty args mean `-1` |
-| `/arkuse-usage` | `arkuse_usage` | `arkuse` — Volcengine ARK Agent Plan meters in AFP; empty args mean `-1` |
-| — | `mpc_prices` | `mpc` — per-model price comparison across Command Code and OpenCode Go plans |
+| Command         | Tool           | Spawns                                                                        |
+| --------------- | -------------- | ----------------------------------------------------------------------------- |
+| `/cmd-usage`    | `cmd_usage`    | `cmduse` — plan, credits, windows, billing period; `plans` for the plan table |
+| `/ocuse-usage`  | `ocuse_usage`  | `ocuse` — OpenCode Go/Zen meters and per-model spend; empty args mean `-1`    |
+| `/arkuse-usage` | `arkuse_usage` | `arkuse` — Volcengine ARK Agent Plan meters in AFP; empty args mean `-1`      |
+| —               | `mpc_prices`   | `mpc` — per-model price comparison across Command Code and OpenCode Go plans  |
 
 A bare `ocuse` or `arkuse` is a live watch loop that would never return to the dialog, so an empty argument means the one-shot dashboard.
 

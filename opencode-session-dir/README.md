@@ -14,7 +14,7 @@ Add it to the `plugins` array in `~/.config/opencode/opencode.json` and restart 
 
 ```json
 {
-  "plugins": ["@jeffreyjyz/opencode-session-dir"]
+	"plugins": ["@jeffreyjyz/opencode-session-dir"]
 }
 ```
 
@@ -22,7 +22,7 @@ For local development point at the checkout instead (an absolute path is treated
 
 ```json
 {
-  "plugins": ["/Users/you/dev/cmdcode-tools/opencode-session-dir"]
+	"plugins": ["/Users/you/dev/cmdcode-tools/opencode-session-dir"]
 }
 ```
 
@@ -30,11 +30,11 @@ After `bun run build` the root `index.js` / `tui.js` shims load `dist/`.
 
 ## Commands
 
-| Command | Behavior |
-| --- | --- |
-| `/session-dir` | Browse (or type) a directory and bind it to the current session. |
-| `/session-dir-list` | Show the directories bound to the current session. |
-| `/session-dir-remove` | Pick a bound directory and unbind it. |
+| Command               | Behavior                                                         |
+| --------------------- | ---------------------------------------------------------------- |
+| `/session-dir`        | Browse (or type) a directory and bind it to the current session. |
+| `/session-dir-list`   | Show the directories bound to the current session.               |
+| `/session-dir-remove` | Pick a bound directory and unbind it.                            |
 
 All three require an open session; they act on the active session only.
 
@@ -42,16 +42,16 @@ All three require an open session; they act on the active session only.
 
 Two halves of one package, because they run in different processes:
 
-| half | file | job |
-| --- | --- | --- |
+| half   | file           | job                                                                                                                                       |
+| ------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | server | `src/index.ts` | `permission.evaluate` grants `external_directory` for the requesting session's bound dirs; `session.context` advertises them to the model |
-| TUI | `src/tui.tsx` | the three slash commands and their dialogs |
+| TUI    | `src/tui.tsx`  | the three slash commands and their dialogs                                                                                                |
 
 Both halves meet on the filesystem. Bindings live in `$XDG_DATA_HOME/opencode/session-dir/bindings.json` (default `~/.local/share/opencode/session-dir/bindings.json`) as a map from session id to absolute paths:
 
 ```json
 {
-  "ses_abc123": ["/Users/you/other-project"]
+	"ses_abc123": ["/Users/you/other-project"]
 }
 ```
 

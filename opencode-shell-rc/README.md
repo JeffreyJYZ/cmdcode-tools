@@ -6,7 +6,7 @@ Make the opencode agent shell load your zsh aliases and functions.
 
 ## What it is
 
-The shell tool runs `/bin/zsh -c …` in a *non-interactive* shell, which never reads `~/.zshrc`, so an alias like `gp='git push'` fails in agent shells. This plugin points every zsh the agent spawns at a `.zshenv` shim that sources the aliases and functions your interactive shell defines — without paying for oh-my-zsh, `compinit`, autosuggestions or syntax-highlighting on every command.
+The shell tool runs `/bin/zsh -c …` in a _non-interactive_ shell, which never reads `~/.zshrc`, so an alias like `gp='git push'` fails in agent shells. This plugin points every zsh the agent spawns at a `.zshenv` shim that sources the aliases and functions your interactive shell defines — without paying for oh-my-zsh, `compinit`, autosuggestions or syntax-highlighting on every command.
 
 ## Install
 
@@ -14,7 +14,7 @@ Add it to the `plugins` array in `~/.config/opencode/opencode.json` and restart 
 
 ```json
 {
-  "plugins": ["@jeffreyjyz/opencode-shell-rc"]
+	"plugins": ["@jeffreyjyz/opencode-shell-rc"]
 }
 ```
 
@@ -22,7 +22,7 @@ For local development point at the checkout instead (an absolute path is treated
 
 ```json
 {
-  "plugins": ["/Users/you/dev/cmdcode-tools/opencode-shell-rc"]
+	"plugins": ["/Users/you/dev/cmdcode-tools/opencode-shell-rc"]
 }
 ```
 
@@ -49,10 +49,10 @@ Per-command cost is ~0ms: the generated state is sourced from `.zshenv`, and the
 
 ## What you get and what you don't
 
-| kept | skipped |
-| --- | --- |
-| every alias (incl. oh-my-zsh's) | oh-my-zsh startup / theme |
-| every shell function | `compinit`, completions |
+| kept                                       | skipped                              |
+| ------------------------------------------ | ------------------------------------ |
+| every alias (incl. oh-my-zsh's)            | oh-my-zsh startup / theme            |
+| every shell function                       | `compinit`, completions              |
 | an optional `~/.config/opencode/shell.zsh` | autosuggestions, syntax-highlighting |
 
 `PATH` and environment variables are **not** snapshot — the agent shell inherits the environment opencode was started with. If you add a `PATH` entry to `.zshrc`, restart opencode for the agent to see it; alias and function edits are picked up on the next command with no restart.
@@ -61,7 +61,7 @@ Non-zsh shells are left completely untouched. If zsh is missing or generation fa
 
 ## The alias index
 
-The agent shell *has* your aliases, but the model does not know their names — so it types `bun` where `b` would do. The plugin therefore mirrors the aliases **you wrote in `~/.zshrc`** into the bottom of the global `~/.config/opencode/AGENTS.md`, between `<!-- shell-rc-aliases-begin -->` and `<!-- shell-rc-aliases-end -->`:
+The agent shell _has_ your aliases, but the model does not know their names — so it types `bun` where `b` would do. The plugin therefore mirrors the aliases **you wrote in `~/.zshrc`** into the bottom of the global `~/.config/opencode/AGENTS.md`, between `<!-- shell-rc-aliases-begin -->` and `<!-- shell-rc-aliases-end -->`:
 
 ```markdown
 <!-- shell-rc-aliases-begin -->
@@ -79,7 +79,7 @@ Behaviour worth knowing:
 
 - **Idempotent.** The block is rewritten only when its content changes, so an unchanged rc leaves `AGENTS.md`'s mtime alone — opencode watches that file and would otherwise inject an instruction update for nothing.
 - **Yours stays yours.** Everything outside the markers is preserved byte for byte; the block is appended when the markers are absent.
-- **Not exhaustive by design.** An alias defined inside a conditional, a loop, a function, or a sourced file is not indexed — the rc is read as text for *where*, zsh is asked only for *what*.
+- **Not exhaustive by design.** An alias defined inside a conditional, a loop, a function, or a sourced file is not indexed — the rc is read as text for _where_, zsh is asked only for _what_.
 - **Always present.** If the block is deleted by hand, the next shell puts it back.
 
 ## Blocked commands
@@ -97,12 +97,12 @@ $ echo $?
 
 ```json
 {
-  "blocked": {
-    "grep": "rg",
-    "find": "fd",
-    "sed": "sd (or read for line ranges)",
-    "ack": "rg"
-  }
+	"blocked": {
+		"grep": "rg",
+		"find": "fd",
+		"sed": "sd (or read for line ranges)",
+		"ack": "rg"
+	}
 }
 ```
 
