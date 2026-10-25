@@ -8,9 +8,7 @@ export function numbers(bag: Bag, key: string): number[] | undefined {
 	const parts = Array.isArray(value) ? value : String(value).split(",");
 	const nums = parts.map((part) => Number(part));
 	if (nums.some((n) => !Number.isFinite(n))) {
-		throw new Error(
-			`--${key} expects comma-separated numbers, got "${value}"`,
-		);
+		throw new Error(`--${key} expects comma-separated numbers, got "${value}"`);
 	}
 	return nums;
 }
@@ -28,9 +26,7 @@ export function presets(bag: Bag): Record<string, string[]> {
 	const value = bag.presets;
 	if (!value || typeof value !== "object" || Array.isArray(value)) return {};
 	const out: Record<string, string[]> = {};
-	for (const [name, ids] of Object.entries(
-		value as Record<string, unknown>,
-	)) {
+	for (const [name, ids] of Object.entries(value as Record<string, unknown>)) {
 		out[name] = Array.isArray(ids)
 			? ids.map((id) => String(id).trim())
 			: String(ids)

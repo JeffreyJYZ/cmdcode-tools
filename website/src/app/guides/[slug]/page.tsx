@@ -11,21 +11,13 @@ export function generateStaticParams(): Params[] {
 	return listGuides().map((guide) => ({ slug: guide.slug }));
 }
 
-export async function generateMetadata({
-	params,
-}: {
-	params: Promise<Params>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
 	const guide = loadGuide((await params).slug);
 	if (!guide) return {};
 	return { title: guide.title, description: guide.description };
 }
 
-export default async function GuidePage({
-	params,
-}: {
-	params: Promise<Params>;
-}) {
+export default async function GuidePage({ params }: { params: Promise<Params> }) {
 	const guide = loadGuide((await params).slug);
 	if (!guide) notFound();
 
@@ -35,11 +27,7 @@ export default async function GuidePage({
 				<h1>{guide.title}</h1>
 				<p className="ink-muted mt-3">{guide.description}</p>
 			</header>
-			<MDXRemote
-				source={guide.body}
-				components={mdxComponents}
-				options={{ mdxOptions }}
-			/>
+			<MDXRemote source={guide.body} components={mdxComponents} options={{ mdxOptions }} />
 		</article>
 	);
 }

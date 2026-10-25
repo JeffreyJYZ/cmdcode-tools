@@ -43,10 +43,7 @@ function jsonlFiles(dir: string, out: string[]): string[] {
 			continue;
 		}
 		if (stat.isDirectory()) jsonlFiles(path, out);
-		else if (
-			name.endsWith(".jsonl") &&
-			!name.endsWith(".checkpoints.jsonl")
-		) {
+		else if (name.endsWith(".jsonl") && !name.endsWith(".checkpoints.jsonl")) {
 			out.push(path);
 		}
 	}
@@ -91,8 +88,7 @@ export function scanLogs(
 				continue;
 			}
 			if (!line.usage || !line.model) continue;
-			if (since && line.timestamp && new Date(line.timestamp) < since)
-				continue;
+			if (since && line.timestamp && new Date(line.timestamp) < since) continue;
 			const key = normalizeKey(line.model);
 			const bucket = byModel.get(key) ?? {
 				name: line.model,

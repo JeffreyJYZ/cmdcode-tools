@@ -60,17 +60,17 @@ mpc --usage --json                               # full projection
 
 Sources, merged when more than one is present:
 
-| source | covers |
-| --- | --- |
-| **opencode's message store** (`~/.local/share/opencode/opencode.db`, `--usage-db`, `OPENCODE_DB`) | every request opencode ran, for every provider — complete and backfilled |
+| source                                                                                               | covers                                                                                  |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **opencode's message store** (`~/.local/share/opencode/opencode.db`, `--usage-db`, `OPENCODE_DB`)    | every request opencode ran, for every provider — complete and backfilled                |
 | external per-request log (`--usage-log`, `MPC_USAGE_LOG`, default `$XDG_CACHE_HOME/mpc/usage.jsonl`) | any harness that writes one JSON line per request; consulted only when the DB is absent |
-| `cmduse model --json --since <ISO>` (windowed model reports) | CommandCode CLI sessions on this machine |
-| session-log scan (`~/.commandcode/projects`) | fallback when cmduse lacks the window |
-| `--usage-file` | anything else you have |
+| `cmduse model --json --since <ISO>` (windowed model reports)                                         | CommandCode CLI sessions on this machine                                                |
+| session-log scan (`~/.commandcode/projects`)                                                         | fallback when cmduse lacks the window                                                   |
+| `--usage-file`                                                                                       | anything else you have                                                                  |
 
 The DB is read-only via `bun:sqlite`; assistant messages carry `cost`, `tokens` and `modelID`/`providerID`, so no plugin is required for the opencode side. Set `CMDUSE_BIN` to test against a dev cmduse (`cmdusedev`).
 
-**Scope caveat.** Only *local* sources exist — the account API exposes totals, not per-model usage, and Studio's API surface is the same endpoint. The report prints a coverage line (`local usage N of M account requests (x%)`) and warns below 90%, so a partial mix is visible rather than silently wrong.
+**Scope caveat.** Only _local_ sources exist — the account API exposes totals, not per-model usage, and Studio's API surface is the same endpoint. The report prints a coverage line (`local usage N of M account requests (x%)`) and warns below 90%, so a partial mix is visible rather than silently wrong.
 
 ```text
 MODEL          your req    your $    CC $/req  CC $/mo    OC $/req  OC $/mo  cheaper
@@ -80,7 +80,7 @@ totals  your mix · CC $2.4761/mo · OpenCode $2.7686/mo
         head-to-head  2 of 2 models · CC $2.4761/mo · OpenCode $2.7686/mo · cheaper CommandCode by $0.2925 (12%)
 ```
 
-Usage is per-model **totals**, so `your $` is the list value of the tokens, `CC $/mo` is what that subscription would cost you, and models that exceed a plan's allowance are flagged `over cap`. The `head-to-head` line answers "which plan is cheaper *for my mix*", so it is restricted to the models **both** plans price — a model only one provider sells would otherwise pad that side's total and "prove" the other cheaper on traffic it cannot serve. One-sided rows are excluded and counted. Unknown models are listed, never dropped. Accepts the cmduse shape, `{"entries": [...]}`, or a bare array of `{ model, requests, tokensIn, cacheRead, tokensOut }`.
+Usage is per-model **totals**, so `your $` is the list value of the tokens, `CC $/mo` is what that subscription would cost you, and models that exceed a plan's allowance are flagged `over cap`. The `head-to-head` line answers "which plan is cheaper _for my mix_", so it is restricted to the models **both** plans price — a model only one provider sells would otherwise pad that side's total and "prove" the other cheaper on traffic it cannot serve. One-sided rows are excluded and counted. Unknown models are listed, never dropped. Accepts the cmduse shape, `{"entries": [...]}`, or a bare array of `{ model, requests, tokensIn, cacheRead, tokensOut }`.
 
 ## Config file
 
@@ -88,15 +88,15 @@ Every flag persists. `mpc` reads `~/.config/mpc/config.json` (or `$XDG_CONFIG_HO
 
 ```json
 {
-  "ccPlan": "goat",
-  "ocPlan": "go",
-  "columns": ["model", "oc-per1k", "cc-per1k", "val"],
-  "presets": { "cheap": ["model", "oc-per1k", "cc-per1k", "cost"] },
-  "metric": "val",
-  "benchWeight": 0.4,
-  "valWeights": [0.4, 0.1, 0.25, 0.15, 0.1],
-  "color": false,
-  "plugins": ["./work.json", "mpc-preset-openai"]
+	"ccPlan": "goat",
+	"ocPlan": "go",
+	"columns": ["model", "oc-per1k", "cc-per1k", "val"],
+	"presets": { "cheap": ["model", "oc-per1k", "cc-per1k", "cost"] },
+	"metric": "val",
+	"benchWeight": 0.4,
+	"valWeights": [0.4, 0.1, 0.25, 0.15, 0.1],
+	"color": false,
+	"plugins": ["./work.json", "mpc-preset-openai"]
 }
 ```
 
@@ -114,78 +114,78 @@ Relative paths resolve against the config file's directory. A plugin is a `.json
 
 ## Options
 
-| Flag | Default | Meaning |
-| --- | --- | --- |
-| `--cc-plan <id>` | `goat` | CommandCode plan: `go`, `goat`, `pro`, `max10`, `max20` |
-| `--oc-plan <id>` | `go` | OpenCode Go plan: `go`, `go-plus` (same token rates, higher per-model limits) |
-| `--in <n>` | `800` | fixed input tokens per request |
-| `--cache <n>` | `50000` | fixed cache-read tokens per request |
-| `--out <n>` | `200` | fixed output tokens per request |
-| `--reasoning <n>` | `0` | reasoning tokens per request, billed at the output rate on top of output |
-| `--cache-write <n>` | `0` | cache-write tokens per request; a model that publishes no cache-write rate is priced at its input rate |
-| `--shape <spec>` | `auto` | `auto` = reqshape's measured profile when it has ≥ `SHAPE_MIN_REQS` (500) reqs, else the fixed workload; `measured` forces reqshape; `off` keeps the fixed workload; a path reads a saved `reqshape --format json` payload |
-| `--since <date>` | — | measured shape: only requests on or after this date |
-| `--metric <name>` | `val` | sort by `val`, `cost`, `perreq`, `req` or `name`; `cost` and `perreq` ascend (lower better), `val`/`req` descend, `--asc` flips; rows with no `VAL` always sort last |
-| `--model <re>` | — | filter rows by name (regex, substring fallback) |
-| `--only <scope>` | `all` | `all` = union of both catalogs, `both` = only shared models |
-| `--width <n>` | terminal | force table width; by default the table trims to the terminal and drops optional columns (`rates`, `req/$`, `5h`/`wk`) until it fits |
-| `--minimal` | off | fewest columns: model + req/mo both sides + win + val |
-| `--medium` | off | preset: allowance and the rate views per side + win + cost + val |
-| `--no-fit` | off | keep the preset's full width instead of trimming to the terminal |
-| `--columns <ids>` | preset | comma-separated columns to show, in order (overrides presets and trimming); `--columns help` lists ids |
-| `--bench <src>` | `aa` with a key, else `cc` | ability scores: `cc`, `aa`, `aa-web`, `file:<path>`, `url:<url>` |
-| `--bench-weight <n>` | `0.35` | ability share of `VAL`, 0-1 |
-| `--tps-weight <n>` | `0.10` | output-speed share of `VAL`, 0-1 |
-| `--bench-name <label>` | source | footer label for the ability source |
-| `--aa-key <key>` | `AA_API_KEY` | Artificial Analysis API key |
-| `--no-fallback` | off | skip filling ability misses from the other sources |
-| `--no-ability` | off | hide `ability` and `VAL` |
-| `--preset <name>` | — | named column set from `presets` in config |
-| `--val-weights <a,b,c,d,e>` | see above | VAL weights (ability, tps, volume, cache, output) |
-| `--scale <mode>` | `log` | `log` or `linear` normalisation for skewed terms |
-| `--inherit-suffixes <s>` | built-in | speed-variant suffixes that inherit ability |
-| `--window <five,week>` | derived | override rolling-window ratios |
-| `--cost-thresholds <g,y>` | `30,60` | COST colour cut-offs |
-| `--val-thresholds <y,g>` | `40,70` | VAL colour cut-offs |
-| `--format <name>` | `table` | `table`, `json`, `csv`, `md` |
-| `--color <mode>` | `auto` | `auto`, `always`, `never` |
-| `--config <path>` | XDG | config file |
-| `--no-config` | off | ignore config and plugins |
-| `--plugin <paths>` | — | extra config plugins, comma-separated |
-| `--print-config` | — | print effective settings and exit |
-| `-h, --help` | — | generated help (cac) |
-| `-v, --version` | — | print version |
-| `--peak` | off | use peak-rate rows instead of off-peak (DeepSeek) |
-| `--asc` | off | sort ascending |
-| `--detail` | off | every column, untrimmed; the default is every column trimmed to the terminal width |
-| `--json` | off | emit JSON instead of a table |
-| `--no-color` | off | disable ANSI colour |
-| `--check` | off | validate sources, list unmatched models, exit |
+| Flag                        | Default                    | Meaning                                                                                                                                                                                                                    |
+| --------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--cc-plan <id>`            | `goat`                     | CommandCode plan: `go`, `goat`, `pro`, `max10`, `max20`                                                                                                                                                                    |
+| `--oc-plan <id>`            | `go`                       | OpenCode Go plan: `go`, `go-plus` (same token rates, higher per-model limits)                                                                                                                                              |
+| `--in <n>`                  | `800`                      | fixed input tokens per request                                                                                                                                                                                             |
+| `--cache <n>`               | `50000`                    | fixed cache-read tokens per request                                                                                                                                                                                        |
+| `--out <n>`                 | `200`                      | fixed output tokens per request                                                                                                                                                                                            |
+| `--reasoning <n>`           | `0`                        | reasoning tokens per request, billed at the output rate on top of output                                                                                                                                                   |
+| `--cache-write <n>`         | `0`                        | cache-write tokens per request; a model that publishes no cache-write rate is priced at its input rate                                                                                                                     |
+| `--shape <spec>`            | `auto`                     | `auto` = reqshape's measured profile when it has ≥ `SHAPE_MIN_REQS` (500) reqs, else the fixed workload; `measured` forces reqshape; `off` keeps the fixed workload; a path reads a saved `reqshape --format json` payload |
+| `--since <date>`            | —                          | measured shape: only requests on or after this date                                                                                                                                                                        |
+| `--metric <name>`           | `val`                      | sort by `val`, `cost`, `perreq`, `req` or `name`; `cost` and `perreq` ascend (lower better), `val`/`req` descend, `--asc` flips; rows with no `VAL` always sort last                                                       |
+| `--model <re>`              | —                          | filter rows by name (regex, substring fallback)                                                                                                                                                                            |
+| `--only <scope>`            | `all`                      | `all` = union of both catalogs, `both` = only shared models                                                                                                                                                                |
+| `--width <n>`               | terminal                   | force table width; by default the table trims to the terminal and drops optional columns (`rates`, `req/$`, `5h`/`wk`) until it fits                                                                                       |
+| `--minimal`                 | off                        | fewest columns: model + req/mo both sides + win + val                                                                                                                                                                      |
+| `--medium`                  | off                        | preset: allowance and the rate views per side + win + cost + val                                                                                                                                                           |
+| `--no-fit`                  | off                        | keep the preset's full width instead of trimming to the terminal                                                                                                                                                           |
+| `--columns <ids>`           | preset                     | comma-separated columns to show, in order (overrides presets and trimming); `--columns help` lists ids                                                                                                                     |
+| `--bench <src>`             | `aa` with a key, else `cc` | ability scores: `cc`, `aa`, `aa-web`, `file:<path>`, `url:<url>`                                                                                                                                                           |
+| `--bench-weight <n>`        | `0.35`                     | ability share of `VAL`, 0-1                                                                                                                                                                                                |
+| `--tps-weight <n>`          | `0.10`                     | output-speed share of `VAL`, 0-1                                                                                                                                                                                           |
+| `--bench-name <label>`      | source                     | footer label for the ability source                                                                                                                                                                                        |
+| `--aa-key <key>`            | `AA_API_KEY`               | Artificial Analysis API key                                                                                                                                                                                                |
+| `--no-fallback`             | off                        | skip filling ability misses from the other sources                                                                                                                                                                         |
+| `--no-ability`              | off                        | hide `ability` and `VAL`                                                                                                                                                                                                   |
+| `--preset <name>`           | —                          | named column set from `presets` in config                                                                                                                                                                                  |
+| `--val-weights <a,b,c,d,e>` | see above                  | VAL weights (ability, tps, volume, cache, output)                                                                                                                                                                          |
+| `--scale <mode>`            | `log`                      | `log` or `linear` normalisation for skewed terms                                                                                                                                                                           |
+| `--inherit-suffixes <s>`    | built-in                   | speed-variant suffixes that inherit ability                                                                                                                                                                                |
+| `--window <five,week>`      | derived                    | override rolling-window ratios                                                                                                                                                                                             |
+| `--cost-thresholds <g,y>`   | `30,60`                    | COST colour cut-offs                                                                                                                                                                                                       |
+| `--val-thresholds <y,g>`    | `40,70`                    | VAL colour cut-offs                                                                                                                                                                                                        |
+| `--format <name>`           | `table`                    | `table`, `json`, `csv`, `md`                                                                                                                                                                                               |
+| `--color <mode>`            | `auto`                     | `auto`, `always`, `never`                                                                                                                                                                                                  |
+| `--config <path>`           | XDG                        | config file                                                                                                                                                                                                                |
+| `--no-config`               | off                        | ignore config and plugins                                                                                                                                                                                                  |
+| `--plugin <paths>`          | —                          | extra config plugins, comma-separated                                                                                                                                                                                      |
+| `--print-config`            | —                          | print effective settings and exit                                                                                                                                                                                          |
+| `-h, --help`                | —                          | generated help (cac)                                                                                                                                                                                                       |
+| `-v, --version`             | —                          | print version                                                                                                                                                                                                              |
+| `--peak`                    | off                        | use peak-rate rows instead of off-peak (DeepSeek)                                                                                                                                                                          |
+| `--asc`                     | off                        | sort ascending                                                                                                                                                                                                             |
+| `--detail`                  | off                        | every column, untrimmed; the default is every column trimmed to the terminal width                                                                                                                                         |
+| `--json`                    | off                        | emit JSON instead of a table                                                                                                                                                                                               |
+| `--no-color`                | off                        | disable ANSI colour                                                                                                                                                                                                        |
+| `--check`                   | off                        | validate sources, list unmatched models, exit                                                                                                                                                                              |
 
 ## Data sources (all fetched live)
 
-| Source | Provides |
-| --- | --- |
-| `cmduse plans --json` | CommandCode plan price, credits, 5h/weekly windows |
-| `commandcode.ai/docs/plans/{goat,pro,max,go}` | per-model credits + token rates |
-| `opencode.ai/v2/docs/console/go/` | oc-go per-model monthly limit (per Go plan) + shared token rates |
-| `opencode.ai/zen/go/v1/models` | oc-go live model list (`--check` drift) |
+| Source                                        | Provides                                                         |
+| --------------------------------------------- | ---------------------------------------------------------------- |
+| `cmduse plans --json`                         | CommandCode plan price, credits, 5h/weekly windows               |
+| `commandcode.ai/docs/plans/{goat,pro,max,go}` | per-model credits + token rates                                  |
+| `opencode.ai/v2/docs/console/go/`             | oc-go per-model monthly limit (per Go plan) + shared token rates |
+| `opencode.ai/zen/go/v1/models`                | oc-go live model list (`--check` drift)                          |
 
 ## Reading the table
 
-| Column | Meaning |
-| --- | --- |
-| `in/out/cache` (`--detail`) | model token rates, USD per 1M tokens |
-| `allow` | monthly credits this plan devotes to that model |
-| `req/5h`, `req/wk` (`--detail`) | requests the plan's rolling 5-hour / weekly window allows |
-| `req/mo` | requests the allowance buys (`allowance / costPerRequest`) |
-| `$/1K` | what 1,000 requests cost you on the plan |
-| `req/$` | requests one dollar of subscription buys |
-| `ability` | benchmark score for the model |
-| `tps` | output tokens per second |
-| `WIN` | side with the lower per-request cost |
-| `COST` | 0-100 volume index: `requests/mo`, **lower is better** (no ability) |
-| `VAL` | 0-100 ability-aware value score |
+| Column                          | Meaning                                                             |
+| ------------------------------- | ------------------------------------------------------------------- |
+| `in/out/cache` (`--detail`)     | model token rates, USD per 1M tokens                                |
+| `allow`                         | monthly credits this plan devotes to that model                     |
+| `req/5h`, `req/wk` (`--detail`) | requests the plan's rolling 5-hour / weekly window allows           |
+| `req/mo`                        | requests the allowance buys (`allowance / costPerRequest`)          |
+| `$/1K`                          | what 1,000 requests cost you on the plan                            |
+| `req/$`                         | requests one dollar of subscription buys                            |
+| `ability`                       | benchmark score for the model                                       |
+| `tps`                           | output tokens per second                                            |
+| `WIN`                           | side with the lower per-request cost                                |
+| `COST`                          | 0-100 volume index: `requests/mo`, **lower is better** (no ability) |
+| `VAL`                           | 0-100 ability-aware value score                                     |
 
 `--columns a,b,c` picks and orders columns; ids are listed under `--columns help`, and `cc-*` mirrors the `oc-*` set. Without it, plain `mpc` shows every column that fits the terminal, `--minimal` and `--medium` narrow the set, and `--detail` prints all of them untrimmed.
 
@@ -208,13 +208,13 @@ payPerRequest    = planPrice * costPerRequest / allowance            # what you 
 multiplier       = allowance / planPrice                             # $usage per $paid
 ```
 
-Reasoning bills at the output rate *on top of* output — opencode's own provider-priced rows reproduce exactly that way (a GLM-5.3 turn of 8,689 input / 14 output / 38 reasoning / 128 cache-read is priced at `0.01242668`, which only matches when reasoning joins the output term). A cache-write rate the model does not publish falls back to its input rate rather than to free.
+Reasoning bills at the output rate _on top of_ output — opencode's own provider-priced rows reproduce exactly that way (a GLM-5.3 turn of 8,689 input / 14 output / 38 reasoning / 128 cache-read is priced at `0.01242668`, which only matches when reasoning joins the output term). A cache-write rate the model does not publish falls back to its input rate rather than to free.
 
 ### Measuring instead of assuming
 
 By default mpc asks **reqshape** for the shape of your real traffic, read from opencode's own store, and prices **both** plans on that single per-req profile, so the comparison isolates price and allowance from traffic and the footer prints one workload line. reqshape only leads once it has `SHAPE_MIN_REQS` (500) measured requests — below that the fixed 800/50K/200 workload is steadier. The footer's `shape` line says plainly which was used, the sample size behind the choice, and the alternative flag.
 
-`req/mo` then answers "how many of *my* requests fit this allowance" rather than "how many of a hypothetical 800/50K/200 ones do". Force the fixed workload with `--shape off`, force reqshape regardless of sample with `--shape measured`, or save a payload once with `reqshape --format json > shape.json` and reuse it with `--shape shape.json`; `--since <date>` narrows the window. A missing `reqshape` binary (`REQSHAPE_BIN` overrides it) is a warning, not a failure: mpc keeps the fixed workload and carries on.
+`req/mo` then answers "how many of _my_ requests fit this allowance" rather than "how many of a hypothetical 800/50K/200 ones do". Force the fixed workload with `--shape off`, force reqshape regardless of sample with `--shape measured`, or save a payload once with `reqshape --format json > shape.json` and reuse it with `--shape shape.json`; `--since <date>` narrows the window. A missing `reqshape` binary (`REQSHAPE_BIN` overrides it) is a warning, not a failure: mpc keeps the fixed workload and carries on.
 
 The **index** behind `COST` is a 0-100 volume score across every model-provider entry:
 
@@ -235,12 +235,12 @@ VAL = 100 * (0.35*ability + 0.10*tps + 0.25*volume + 0.15*cache + 0.15*output)
 
 `--bench-weight` and `--tps-weight` set the ability and speed shares; the remaining weight splits volume/cache/output 50/25/25. Ability and `tps` come from the same source, so `--bench cc` reads both CommandCode's `Intelligence` and `Tok/s` columns. Speed variants (`…Fast`, `…HighSpeed`, `…UltraSpeed`, `…FlashX`) inherit their base model's ability — same weights — and, when the benchmark publishes no throughput for the variant, the base's throughput ×`SPEED_TPS_FACTOR` (a speed tier is multiples of its base). Without that a Fast model was scored at the neutral rate, ranking it below its slower base. Unscored models show `ability —` and `VAL —` and are excluded from the ability normalisation range.
 
-| `--bench` | source | coverage |
-| --- | --- | --- |
-| `aa` | Artificial Analysis API (paginated) | full; needs `AA_API_KEY` |
-| `aa-web` | Artificial Analysis models page scrape | partial (only the models AA embeds) |
-| `cc` | CommandCode's `Intelligence` column | every matched model |
-| `file:<path>` / `url:<url>` | your JSON, `{ "model": score }` or `[{ model, score }]` | whatever you supply |
+| `--bench`                   | source                                                  | coverage                            |
+| --------------------------- | ------------------------------------------------------- | ----------------------------------- |
+| `aa`                        | Artificial Analysis API (paginated)                     | full; needs `AA_API_KEY`            |
+| `aa-web`                    | Artificial Analysis models page scrape                  | partial (only the models AA embeds) |
+| `cc`                        | CommandCode's `Intelligence` column                     | every matched model                 |
+| `file:<path>` / `url:<url>` | your JSON, `{ "model": score }` or `[{ model, score }]` | whatever you supply                 |
 
 The default is `aa` when an AA key is available (`AA_API_KEY` or `--aa-key`), otherwise `cc`; an explicit `--bench` always wins. After the lead source, misses are filled from the same benchmark's keyless page scrape (`aa-web`) and then from CommandCode, the last resort — `--no-fallback` disables the fills. Because CC's `Intelligence` column and AA publish the same index, a `cc`-led run asks AA only when it still lacks throughput (CC's plan pages no longer publish `Tok/s`). Everything is fetched live, every run — **`mpc` writes no cache**: `aa-web` reads the index and speed straight out of the models page's embedded React Server Components payload, so a source that is down costs only the columns it alone supplies, never a stale value.
 
@@ -263,8 +263,9 @@ Names from the two catalogs are collapsed onto one canonical key (lowercase, ven
 bun install
 bun test          # unit tests (parsers, normalisation, metrics)
 bun check         # types (Bun's own check)
-bun fmt           # biome format --write
-bun lint          # biome lint --write
+bun fmt           # Bun's formatter
+bun lint          # Biome lint
+bun fmt --check   # verify formatting
 ```
 
 ## Links

@@ -25,18 +25,13 @@ function byRequestsPerMonth(a: Projection, b: Projection): number {
 	return a.requestsPerMonth > b.requestsPerMonth ? -1 : 1;
 }
 
-function sortProjections(
-	projections: Projection[],
-	sort: Options["sort"],
-): Projection[] {
+function sortProjections(projections: Projection[], sort: Options["sort"]): Projection[] {
 	const sorted = [...projections];
 	if (sort === "cost") {
 		return sorted.sort((a, b) => a.costPerReq - b.costPerReq);
 	}
 	if (sort === "name") {
-		return sorted.sort((a, b) =>
-			a.entry.model.localeCompare(b.entry.model),
-		);
+		return sorted.sort((a, b) => a.entry.model.localeCompare(b.entry.model));
 	}
 	return sorted.sort(byRequestsPerMonth);
 }
@@ -53,13 +48,9 @@ function ratesOf(options: Options): RateEntry[] {
 	} catch (error) {
 		const detail = error instanceof Error ? error.message : String(error);
 		if (!options.custom) {
-			throw new Error(
-				`${detail}\nPass --in/--out/--budget to price a custom model instead.`,
-			);
+			throw new Error(`${detail}\nPass --in/--out/--budget to price a custom model instead.`);
 		}
-		process.stderr.write(
-			`reqshape: ${detail}\n          pricing the custom model only\n`,
-		);
+		process.stderr.write(`reqshape: ${detail}\n          pricing the custom model only\n`);
 	}
 	if (options.custom) entries.push(customEntry(options.custom));
 	return entries;
@@ -82,29 +73,22 @@ export async function run(argv: string[]): Promise<number> {
 
 	if (shape.reqs === 0) {
 		const why =
-			drops.map((drop) => `${drop.reason} ${drop.asks}`).join(" · ") ||
-			"no requests found";
+			drops.map((drop) => `${drop.reason} ${drop.asks}`).join(" · ") || "no requests found";
 		process.stderr.write(
 			`reqshape: nothing to price — no requests survived the filters (${why})\n`,
 		);
 		return 1;
 	}
 
-	const profile: Profile =
-		options.weight === "session" ? shape.perSession : shape.perReq;
+	const profile: Profile = options.weight === "session" ? shape.perSession : shape.perReq;
 
 	let entries = ratesOf(options);
 	const needle = options.model.trim().toLowerCase();
 	if (needle) {
-		entries = entries.filter((entry) =>
-			entry.model.toLowerCase().includes(needle),
-		);
+		entries = entries.filter((entry) => entry.model.toLowerCase().includes(needle));
 	}
 	const total = entries.length;
-	let projections = sortProjections(
-		projectAll(entries, profile),
-		options.sort,
-	);
+	let projections = sortProjections(projectAll(entries, profile), options.sort);
 	if (options.limit > 0) projections = projections.slice(0, options.limit);
 	const account = options.account ? loadAccount(options.cmduse) : null;
 

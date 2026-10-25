@@ -81,16 +81,10 @@ describe("buildShape", () => {
 			ask({ reqs: [req(1, { cacheRead: 400 })] }),
 			ask({
 				sessionID: "b",
-				reqs: [
-					req(1, { cacheRead: 1_000 }),
-					req(2, { cacheRead: 3_000 }),
-				],
+				reqs: [req(1, { cacheRead: 1_000 }), req(2, { cacheRead: 3_000 })],
 			}),
 		]);
-		expect(shape.buckets.map((bucket) => bucket.label)).toEqual([
-			"1",
-			"2-5",
-		]);
+		expect(shape.buckets.map((bucket) => bucket.label)).toEqual(["1", "2-5"]);
 		expect(shape.buckets[0]?.reqs).toBe(2);
 		expect(shape.buckets[0]?.cacheRead).toBe(700);
 		expect(shape.buckets[1]?.cacheRead).toBe(3_000);

@@ -14,9 +14,7 @@ describe("renderText", () => {
 		expect(text).toContain("2026-07-10 → 2026-09-29");
 		expect(text).toContain("system prompt 137");
 		expect(text).toContain("cache read 248.0K");
-		expect(text).toContain(
-			"one vote per conversation instead: cache read 64.0K",
-		);
+		expect(text).toContain("one vote per conversation instead: cache read 64.0K");
 		expect(text).toContain("pos 101+");
 		expect(text).toContain("deepseek-v4.1-flash 2.7K");
 		expect(text).toContain("MODEL");
@@ -32,14 +30,10 @@ describe("renderText", () => {
 	});
 
 	test("only a missing cache-read rate is flagged, since that is the one that bites", () => {
-		const flagged = renderText(
-			report({ projections: [projection({ cacheAtInput: true })] }),
-		);
+		const flagged = renderText(report({ projections: [projection({ cacheAtInput: true })] }));
 		expect(flagged).toContain("billed at the input rate");
 		// A missing write rate is immaterial at 8 tokens a request: no flag.
-		const plain = renderText(
-			report({ projections: [projection({ writeAtInput: true })] }),
-		);
+		const plain = renderText(report({ projections: [projection({ writeAtInput: true })] }));
 		expect(plain).not.toContain("billed at the input rate");
 	});
 
@@ -54,9 +48,7 @@ describe("renderText", () => {
 			{ reason: "orphan prompt", asks: 3, reqs: 3 },
 		];
 		expect(renderText(report({ drops }))).not.toContain("orphan prompt");
-		expect(renderText(report({ drops, explain: true }))).toContain(
-			"orphan prompt 3",
-		);
+		expect(renderText(report({ drops, explain: true }))).toContain("orphan prompt 3");
 	});
 
 	test("free and capped figures render without inventing numbers", () => {
@@ -109,8 +101,6 @@ describe("renderText", () => {
 	});
 
 	test("a noisier table says what it is missing", () => {
-		expect(renderText(report({ total: 91 }))).toContain(
-			"showing 1 of 91 model-plans",
-		);
+		expect(renderText(report({ total: 91 }))).toContain("showing 1 of 91 model-plans");
 	});
 });

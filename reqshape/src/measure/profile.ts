@@ -2,17 +2,16 @@ import type { Ask, Bucket, Profile, Req, Shape, Stats } from "#~/types.ts";
 import { sideProfiles } from "./sides.ts";
 import { emptyProfile, FIELDS, mean, reqProfile, stats } from "./stats.ts";
 
-const BUCKETS: Array<{ label: string; holds: (position: number) => boolean }> =
-	[
-		{ label: "1", holds: (position) => position === 1 },
-		{ label: "2-5", holds: (position) => position >= 2 && position <= 5 },
-		{ label: "6-20", holds: (position) => position >= 6 && position <= 20 },
-		{
-			label: "21-100",
-			holds: (position) => position >= 21 && position <= 100,
-		},
-		{ label: "101+", holds: (position) => position >= 101 },
-	];
+const BUCKETS: Array<{ label: string; holds: (position: number) => boolean }> = [
+	{ label: "1", holds: (position) => position === 1 },
+	{ label: "2-5", holds: (position) => position >= 2 && position <= 5 },
+	{ label: "6-20", holds: (position) => position >= 6 && position <= 20 },
+	{
+		label: "21-100",
+		holds: (position) => position >= 21 && position <= 100,
+	},
+	{ label: "101+", holds: (position) => position >= 101 },
+];
 
 const STAT_FIELDS = { ...FIELDS, cost: (req: Req) => req.cost };
 
@@ -23,9 +22,7 @@ const STAT_FIELDS = { ...FIELDS, cost: (req: Req) => req.cost };
 function sessionProfile(sessions: Req[][]): Profile {
 	const profile = emptyProfile();
 	for (const [field, read] of Object.entries(FIELDS)) {
-		profile[field as keyof Profile] = mean(
-			sessions.map((session) => mean(session.map(read))),
-		);
+		profile[field as keyof Profile] = mean(sessions.map((session) => mean(session.map(read))));
 	}
 	return profile;
 }

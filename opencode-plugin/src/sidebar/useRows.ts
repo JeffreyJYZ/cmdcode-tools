@@ -29,12 +29,7 @@ import {
 	type Usage,
 	usageRows,
 } from "./rows";
-import {
-	loadModelUsage,
-	loadModelWindowStart,
-	loadSessionUsage,
-	usageDbPath,
-} from "./usageDb";
+import { loadModelUsage, loadModelWindowStart, loadSessionUsage, usageDbPath } from "./usageDb";
 import { type ZenUsage, type ZenWindowStarts, zenRows } from "./zen";
 
 /**
@@ -49,11 +44,7 @@ export function sessionKind(providerID: string | undefined): SessionKind {
 	if (!providerID) return "unknown";
 	if (providerID.startsWith(PROVIDER_ID_PREFIX)) return "ours";
 	if (providerID.startsWith(GO_PROVIDER_ID)) return "go";
-	if (
-		providerID === ZEN_PROVIDER_ID ||
-		providerID.startsWith(ZEN_PROVIDER_PREFIX)
-	)
-		return "zen";
+	if (providerID === ZEN_PROVIDER_ID || providerID.startsWith(ZEN_PROVIDER_PREFIX)) return "zen";
 	if (providerID.startsWith(ARK_PROVIDER_ID)) return "ark";
 	return "other";
 }
@@ -92,9 +83,7 @@ export function seededRows(): SidebarRow[] {
  * memory, so that one row blanked on every remount and session switch while the
  * plan above it stayed up — which reads as the panel having lost the row.
  */
-let lastModelUsage:
-	| { key: string; session?: string; usage: ModelUsage }
-	| undefined;
+let lastModelUsage: { key: string; session?: string; usage: ModelUsage } | undefined;
 
 /**
  * Keep the last figure for a model. Keyed canonically because the session's id
@@ -104,11 +93,7 @@ let lastModelUsage:
  * counted one conversation's spend against another's and read as "over 100% of
  * session".
  */
-export function rememberModelUsage(
-	id: string,
-	usage: ModelUsage,
-	session?: string,
-): void {
+export function rememberModelUsage(id: string, usage: ModelUsage, session?: string): void {
 	lastModelUsage = { key: modelKey(id), session, usage };
 }
 
@@ -118,10 +103,7 @@ export function rememberModelUsage(
  * the frame during a session switch: keeping the previous row up beats blanking
  * it, the same call `wasOurs` makes for the account block.
  */
-export function seededModelUsage(
-	id: string | undefined,
-	session?: string,
-): ModelUsage | undefined {
+export function seededModelUsage(id: string | undefined, session?: string): ModelUsage | undefined {
 	if (!lastModelUsage) return undefined;
 	if (
 		session !== undefined &&
@@ -131,9 +113,7 @@ export function seededModelUsage(
 		return undefined;
 	}
 	if (id === undefined) return lastModelUsage.usage;
-	return lastModelUsage.key === modelKey(id)
-		? lastModelUsage.usage
-		: undefined;
+	return lastModelUsage.key === modelKey(id) ? lastModelUsage.usage : undefined;
 }
 
 /**
@@ -209,10 +189,7 @@ export type Accounted = { account?: unknown; accountError?: string };
  * a transport fault keeps them, unlabelled, because the next poll restores them
  * anyway.
  */
-export function keepAccount<T extends Accounted>(
-	next: T,
-	last: Accounted | undefined,
-): T {
+export function keepAccount<T extends Accounted>(next: T, last: Accounted | undefined): T {
 	if (next.account || !last?.account) return next;
 	if (actionableAccountError(next.accountError)) return next;
 	return { ...next, account: last.account, accountError: undefined };
@@ -230,15 +207,11 @@ export function useRows(
 	const [modelUsage, setModelUsage] = createSignal<
 		{ key: string; session?: string; usage: ModelUsage } | undefined
 	>(lastModelUsage);
-	const [sessionUsage, setSessionUsage] = createSignal<
-		ModelUsage | undefined
-	>();
+	const [sessionUsage, setSessionUsage] = createSignal<ModelUsage | undefined>();
 	// The active model's rolling-window starts (Go/Zen), from the store: the
 	// oldest request still inside the 5-hour and weekly windows, so each row can
 	// count that request's ageing-out as the window's reset.
-	const [modelWindows, setModelWindows] = createSignal<
-		ZenWindowStarts | undefined
-	>();
+	const [modelWindows, setModelWindows] = createSignal<ZenWindowStarts | undefined>();
 	// Once a session on one of our models has been seen, an unresolved switch
 	// keeps the section up rather than hiding it; a cold start on someone else's
 	// model still shows nothing.
@@ -283,11 +256,8 @@ export function useRows(
 		if (!id) return;
 		const now = Date.now();
 		setModelWindows({
-			fiveHour:
-				loadModelWindowStart(id, now - FIVE_HOUR_SECS * 1000) ??
-				undefined,
-			weekly:
-				loadModelWindowStart(id, now - WEEKLY_SECS * 1000) ?? undefined,
+			fiveHour: loadModelWindowStart(id, now - FIVE_HOUR_SECS * 1000) ?? undefined,
+			weekly: loadModelWindowStart(id, now - WEEKLY_SECS * 1000) ?? undefined,
 		});
 	};
 
@@ -305,18 +275,14 @@ export function useRows(
 			const session = sessionID();
 			refreshMeta();
 			// Session totals are provider-agnostic and cheap (one indexed read).
-			if (session)
-				setSessionUsage(loadSessionUsage(session) ?? undefined);
+			if (session) setSessionUsage(loadSessionUsage(session) ?? undefined);
 			if (kind === "ours") {
 				const snapshot = await loadUsage();
 				rememberSnapshot(snapshot);
 				setUsage(usageRows(snapshot));
 				refreshModelUsage(activeModelId());
 			} else if (kind === "go" || kind === "zen") {
-				const snapshot = keepAccount(
-					await loadZen(loadPrefs().ocPlan),
-					lastZen,
-				);
+				const snapshot = keepAccount(await loadZen(loadPrefs().ocPlan), lastZen);
 				rememberZen(snapshot);
 				setZen(snapshot);
 				// The store scan is provider-agnostic and needs no network, so the
@@ -373,9 +339,7 @@ export function useRows(
 		if (
 			seen &&
 			(id === undefined || seen.key === modelKey(id)) &&
-			(seen.session === undefined ||
-				session === undefined ||
-				seen.session === session)
+			(seen.session === undefined || session === undefined || seen.session === session)
 		) {
 			return seen.usage;
 		}
@@ -386,9 +350,7 @@ export function useRows(
 		const kind = sessionKind(providerID());
 		if (!shows(kind) && (kind === "other" || !wasOurs())) return [];
 		const id = activeModelId();
-		const found = id
-			? (meta().get(modelKey(id)) ?? meta().get(id))
-			: undefined;
+		const found = id ? (meta().get(modelKey(id)) ?? meta().get(id)) : undefined;
 		// The session id is the only name available when the catalog is missing;
 		// its vendor prefix is noise, so keep the tail.
 		const fallbackName = id ? (id.split("/").pop() ?? id) : undefined;

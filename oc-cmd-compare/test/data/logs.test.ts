@@ -5,10 +5,7 @@ import { join } from "node:path";
 import { scanLogs } from "#~/data/usage/logs.ts";
 
 function writeLog(dir: string, name: string, lines: unknown[]): void {
-	writeFileSync(
-		join(dir, name),
-		`${lines.map((l) => JSON.stringify(l)).join("\n")}\n`,
-	);
+	writeFileSync(join(dir, name), `${lines.map((l) => JSON.stringify(l)).join("\n")}\n`);
 }
 
 function scratch(): string {
@@ -50,9 +47,7 @@ describe("scanLogs", () => {
 
 	test("ignores checkpoint files and lines without usage", () => {
 		const dir = scratch();
-		writeLog(dir, "s.checkpoints.jsonl", [
-			msg("2026-09-20T00:00:00Z", "x", 9),
-		]);
+		writeLog(dir, "s.checkpoints.jsonl", [msg("2026-09-20T00:00:00Z", "x", 9)]);
 		writeLog(dir, "b.jsonl", [{ type: "model_change", model: "y" }]);
 		expect(scanLogs(undefined, dir)).toHaveLength(0);
 	});

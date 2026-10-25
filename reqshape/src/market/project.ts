@@ -34,28 +34,19 @@ export function project(entry: RateEntry, profile: Profile): Projection {
 		1e6;
 
 	const requestsPerMonth =
-		costPerReq > 0
-			? entry.allowance / costPerReq
-			: Number.POSITIVE_INFINITY;
+		costPerReq > 0 ? entry.allowance / costPerReq : Number.POSITIVE_INFINITY;
 
 	return {
 		entry,
 		costPerReq,
 		requestsPerMonth,
-		requestsPerFiveHour:
-			entry.ratio5h === null ? null : requestsPerMonth * entry.ratio5h,
-		requestsPerWeek:
-			entry.ratioWeek === null
-				? null
-				: requestsPerMonth * entry.ratioWeek,
+		requestsPerFiveHour: entry.ratio5h === null ? null : requestsPerMonth * entry.ratio5h,
+		requestsPerWeek: entry.ratioWeek === null ? null : requestsPerMonth * entry.ratioWeek,
 		cacheAtInput: entry.cacheRead === null && profile.cacheRead > 0,
 		writeAtInput: entry.cacheWrite === null && profile.cacheWrite > 0,
 	};
 }
 
-export function projectAll(
-	entries: RateEntry[],
-	profile: Profile,
-): Projection[] {
+export function projectAll(entries: RateEntry[], profile: Profile): Projection[] {
 	return entries.map((entry) => project(entry, profile));
 }

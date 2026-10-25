@@ -1,11 +1,5 @@
 import { UNLIMITED } from "#~/constants/data.ts";
-import {
-	cellText,
-	headerIndex,
-	nameCell,
-	parseMoney,
-	type Table,
-} from "#~/data/scrape/tables.ts";
+import { cellText, headerIndex, nameCell, parseMoney, type Table } from "#~/data/scrape/tables.ts";
 import { displayName, normalizeKey } from "#~/keys.ts";
 import type { CatalogEntry, ModelPricing, ProviderId } from "#~/types.ts";
 import { dealIn } from "./deal.ts";
@@ -29,10 +23,8 @@ function pricingOf(
 	return {
 		input: parseMoney(cells[cols.in] ?? "") ?? 0,
 		output: parseMoney(cells[cols.out] ?? "") ?? 0,
-		cacheRead:
-			cols.cache >= 0 ? (parseMoney(cells[cols.cache] ?? "") ?? 0) : 0,
-		cacheWrite:
-			cols.write >= 0 ? parseMoney(cells[cols.write] ?? "") : null,
+		cacheRead: cols.cache >= 0 ? (parseMoney(cells[cols.cache] ?? "") ?? 0) : 0,
+		cacheWrite: cols.write >= 0 ? parseMoney(cells[cols.write] ?? "") : null,
 	};
 }
 
@@ -41,17 +33,8 @@ function pricingOf(
  * header carries Input + Output + an allowance column qualify, so the wide
  * "models included" tables are ignored.
  */
-export function extractCatalog(
-	tables: Table[],
-	options: CatalogOptions,
-): CatalogEntry[] {
-	const {
-		provider,
-		plan,
-		creditHeader,
-		defaultAllowance,
-		peak = false,
-	} = options;
+export function extractCatalog(tables: Table[], options: CatalogOptions): CatalogEntry[] {
+	const { provider, plan, creditHeader, defaultAllowance, peak = false } = options;
 	const best = new Map<string, { entry: CatalogEntry; score: number }>();
 
 	for (const table of tables) {
@@ -77,9 +60,7 @@ export function extractCatalog(
 			// Its allowance is meaningless (cost is 0), so record 0 — that keeps
 			// it out of the plan's summed credits and marks it free for --check.
 			const creditCell = cells[creditCol] ?? "";
-			const unlimited = creditHeader
-				? UNLIMITED.test(cellText(creditCell))
-				: false;
+			const unlimited = creditHeader ? UNLIMITED.test(cellText(creditCell)) : false;
 			const allowance = creditHeader
 				? (parseMoney(creditCell) ?? (unlimited ? 0 : null))
 				: (defaultAllowance ?? 0);

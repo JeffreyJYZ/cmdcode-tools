@@ -20,9 +20,7 @@ function parseJsonScores(text: string): Map<string, number> {
 			add(record.model ?? record.name, record.score ?? record.value);
 		}
 	} else if (body && typeof body === "object") {
-		for (const [name, score] of Object.entries(
-			body as Record<string, unknown>,
-		)) {
+		for (const [name, score] of Object.entries(body as Record<string, unknown>)) {
 			add(name, score);
 		}
 	}
@@ -31,8 +29,7 @@ function parseJsonScores(text: string): Map<string, number> {
 
 async function loadFile(path: string): Promise<Map<string, number>> {
 	const file = Bun.file(path);
-	if (!(await file.exists()))
-		throw new Error(`bench file not found: ${path}`);
+	if (!(await file.exists())) throw new Error(`bench file not found: ${path}`);
 	return parseJsonScores(await file.text());
 }
 
@@ -42,10 +39,7 @@ async function loadUrl(url: string): Promise<Map<string, number>> {
 
 export async function resolvePrimary(opts: AbilityOptions): Promise<Resolved> {
 	const [scheme, arg] = opts.source.includes(":")
-		? [
-				opts.source.split(":")[0] ?? "",
-				opts.source.slice(opts.source.indexOf(":") + 1),
-			]
+		? [opts.source.split(":")[0] ?? "", opts.source.slice(opts.source.indexOf(":") + 1)]
 		: [opts.source, undefined];
 
 	switch (scheme) {
@@ -64,9 +58,7 @@ export async function resolvePrimary(opts: AbilityOptions): Promise<Resolved> {
 		case "aa": {
 			const key = opts.key ?? process.env.AA_API_KEY;
 			if (!key) {
-				throw new Error(
-					"--bench aa needs a key: set AA_API_KEY or pass --aa-key",
-				);
+				throw new Error("--bench aa needs a key: set AA_API_KEY or pass --aa-key");
 			}
 			const data = await loadAaApi(key);
 			if (data.intelligence.size === 0) {
@@ -119,9 +111,4 @@ export async function loadAaFallback(
 	return { data: await loadAaWeb(), how: "AA web scrape" };
 }
 
-export type {
-	AbilityOptions,
-	AbilityResult,
-	AbilitySource,
-	BenchData,
-} from "./types.ts";
+export type { AbilityOptions, AbilityResult, AbilitySource, BenchData } from "./types.ts";

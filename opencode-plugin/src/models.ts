@@ -41,10 +41,7 @@ export async function loadModels(key: string): Promise<ModelSplit> {
 	// Cache is keyed by API key: CMD_API_KEY lets one process serve multiple
 	// accounts, and account A's model list must not leak into account B.
 	let models: CmdModel[];
-	const fresh =
-		cache &&
-		cache.key === key &&
-		Date.now() - cache.at < MODELS_CACHE_TTL_MS;
+	const fresh = cache && cache.key === key && Date.now() - cache.at < MODELS_CACHE_TTL_MS;
 	if (fresh && cache) {
 		models = cache.models;
 	} else {
@@ -84,9 +81,7 @@ export async function loadModels(key: string): Promise<ModelSplit> {
 		// for "upstream added models".
 		gated = false;
 	}
-	const allowed = models.filter(
-		(m) => evaluateModelAccess(m.id, plan).allowed,
-	);
+	const allowed = models.filter((m) => evaluateModelAccess(m.id, plan).allowed);
 	const { claude, open } = splitModels(allowed);
 	return { claude, open, gated };
 }

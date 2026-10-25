@@ -5,11 +5,7 @@
  * the window went. The /context dialog lives in the TUI half (./tui).
  */
 import type { Plugin as PluginNs } from "@opencode/plugin";
-import {
-	computeBreakdown,
-	measuredTokensOf,
-	renderMarkdown,
-} from "./breakdown";
+import { computeBreakdown, measuredTokensOf, renderMarkdown } from "./breakdown";
 import { readCapture, writeCapture } from "./capture";
 import { SERVER_ID } from "./constants/ids";
 import { TOOL_DESCRIPTION } from "./constants/tool";
@@ -42,9 +38,7 @@ export const contextPlugin: PluginNs.Plugin = {
 					(total, [name, definition]) =>
 						total +
 						bytesOf(
-							name +
-								(definition?.description ?? "") +
-								safeJson(definition?.input),
+							name + (definition?.description ?? "") + safeJson(definition?.input),
 						),
 					0,
 				);

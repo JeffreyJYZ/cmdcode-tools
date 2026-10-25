@@ -1,22 +1,12 @@
 import { cac } from "cac";
 import pkg from "../../package.json" with { type: "json" };
-import {
-	answeredByCac,
-	customOf,
-	number,
-	oneOf,
-	sinceOf,
-	str,
-} from "./flags.ts";
+import { answeredByCac, customOf, number, oneOf, sinceOf, str } from "./flags.ts";
 import { defaultOptions, type Options } from "./options.ts";
 
 export function parseArgs(argv: string[]): Options {
 	const cli = cac("reqshape");
 	cli.option("--sessions <mode>", "all | user — user drops subagent sessions")
-		.option(
-			"--weight <mode>",
-			"turn | session — which mean the projection prices",
-		)
+		.option("--weight <mode>", "turn | session — which mean the projection prices")
 		.option("--since <date>", "only asks on or after this date")
 		.option("--project <dir>", "only sessions under this directory")
 		.option("--model <text>", "only model rows whose name contains this")
@@ -30,10 +20,7 @@ export function parseArgs(argv: string[]): Options {
 		.option("--five-hour <usd>", "custom model: five-hour cap")
 		.option("--weekly <usd>", "custom model: weekly cap")
 		.option("--label <name>", "custom model: display name")
-		.option(
-			"--db <path>",
-			"opencode store (default ~/.local/share/opencode/opencode.db)",
-		)
+		.option("--db <path>", "opencode store (default ~/.local/share/opencode/opencode.db)")
 		.option("--mpc <bin>", "mpc binary (else MPC_BIN)")
 		.option("--cmduse <bin>", "cmduse binary (else CMDUSE_BIN)")
 		.option("--no-account", "skip the cmduse account line")
@@ -52,20 +39,15 @@ export function parseArgs(argv: string[]): Options {
 	const raw = (flags ?? {}) as Record<string, unknown>;
 	const options = defaultOptions();
 
-	options.sessions =
-		oneOf(raw.sessions, ["all", "user"], "sessions") ?? options.sessions;
-	options.weight =
-		oneOf(raw.weight, ["turn", "session"], "weight") ?? options.weight;
-	options.sort =
-		oneOf(raw.sort, ["reqmo", "cost", "name"], "sort") ?? options.sort;
-	options.format =
-		oneOf(raw.format, ["text", "json"], "format") ?? options.format;
+	options.sessions = oneOf(raw.sessions, ["all", "user"], "sessions") ?? options.sessions;
+	options.weight = oneOf(raw.weight, ["turn", "session"], "weight") ?? options.weight;
+	options.sort = oneOf(raw.sort, ["reqmo", "cost", "name"], "sort") ?? options.sort;
+	options.format = oneOf(raw.format, ["text", "json"], "format") ?? options.format;
 	// cac negates a declared flag itself, so --no-color arrives as `false`.
 	options.color =
 		raw.color === false
 			? "never"
-			: (oneOf(raw.color, ["auto", "always", "never"], "color") ??
-				options.color);
+			: (oneOf(raw.color, ["auto", "always", "never"], "color") ?? options.color);
 
 	options.limit = number(raw.limit, "limit");
 	options.since = sinceOf(raw.since);

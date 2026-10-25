@@ -26,10 +26,7 @@ function useActiveHeading(ids: string[]): string {
 			(entries) => {
 				const shown = entries
 					.filter((entry) => entry.isIntersecting)
-					.sort(
-						(a, b) =>
-							a.boundingClientRect.top - b.boundingClientRect.top,
-					);
+					.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
 				if (shown[0]) setActive(shown[0].target.id);
 			},
 			{ rootMargin: "0px 0px -70% 0px", threshold: 0 },
@@ -47,9 +44,7 @@ function SectionLink({ entry, active }: { entry: TocEntry; active: boolean }) {
 			<a
 				href={`#${entry.id}`}
 				className={`block py-0.5 text-sm no-underline ${
-					active
-						? "text-[var(--accent)]"
-						: "ink-muted hover:text-[var(--fg)]"
+					active ? "text-[var(--accent)]" : "ink-muted hover:text-[var(--fg)]"
 				}`}
 			>
 				{entry.text}
@@ -74,10 +69,7 @@ export function DocSidebar({
 	const activeId = useActiveHeading(toc.map((entry) => entry.id));
 
 	return (
-		<nav
-			aria-label="Docs"
-			className="w-full shrink-0 lg:sticky lg:top-8 lg:h-fit lg:w-64"
-		>
+		<nav aria-label="Docs" className="w-full shrink-0 lg:sticky lg:top-8 lg:h-fit lg:w-64">
 			<Search />
 			<ul className="flex flex-col gap-1">
 				{projects.map((project) => {

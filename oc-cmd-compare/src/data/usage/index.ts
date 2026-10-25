@@ -2,12 +2,7 @@ import { runCmduse } from "#~/data/cmduse.ts";
 import { defaultUsageLog, mergeUsage, readUsageLog } from "./log.ts";
 import { scanLogs } from "./logs.ts";
 import { defaultOpencodeDb, readOpencodeDb } from "./opencodeDb.ts";
-import {
-	type AccountSummary,
-	accountSummary,
-	parseUsage,
-	type UsageEntry,
-} from "./parse.ts";
+import { type AccountSummary, accountSummary, parseUsage, type UsageEntry } from "./parse.ts";
 
 export type { AccountSummary, UsageEntry } from "./parse.ts";
 
@@ -40,10 +35,7 @@ async function cmduseModel(since?: Date): Promise<UsageEntry[] | null> {
 	}
 }
 
-function sinceFor(
-	window: UsageWindow,
-	account?: AccountSummary,
-): Date | undefined {
+function sinceFor(window: UsageWindow, account?: AccountSummary): Date | undefined {
 	if (window === "all") return undefined;
 	if (window.endsWith("d")) {
 		const days = Number(window.slice(0, -1));
@@ -76,8 +68,7 @@ export async function loadUsage(
 ): Promise<UsageReportInput> {
 	if (source) {
 		const file = Bun.file(source);
-		if (!(await file.exists()))
-			throw new Error(`usage file not found: ${source}`);
+		if (!(await file.exists())) throw new Error(`usage file not found: ${source}`);
 		return {
 			entries: parseUsage(await file.text()),
 			label: source,
@@ -96,19 +87,14 @@ export async function loadUsage(
 
 	const sources: string[] = [];
 	if (db) {
-		sources.push(
-			`opencode db (${db.providers.length} providers, ${db.records} records)`,
-		);
+		sources.push(`opencode db (${db.providers.length} providers, ${db.records} records)`);
 	}
 	if (log) sources.push("provider usage log");
 	if (sessions.length > 0) {
 		sources.push(fromCmduse ? "cmduse model --json" : "local session logs");
 	}
 
-	const entries = mergeUsage(
-		mergeUsage(db?.entries ?? [], log ?? []),
-		sessions,
-	);
+	const entries = mergeUsage(mergeUsage(db?.entries ?? [], log ?? []), sessions);
 	return {
 		entries,
 		label: sources.join(" + ") || "no usage found",

@@ -53,12 +53,7 @@ describe("usageRows", () => {
 	};
 	test("renders plan, monthly, windows and period", () => {
 		const rows = usageRows(usage, 1_000_000_000_000 - 5 * 60_000);
-		expect(rows[0]).toEqual([
-			"Plan",
-			"GOAT · $70/mo credits",
-			"base",
-			true,
-		]);
+		expect(rows[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base", true]);
 		expect(rows[1]).toEqual(["Monthly", "$50.56 / $70 (72.2%)", "warn"]);
 		expect(rows[2]).toEqual(["5-hour", "$1.17/$14 (8.4%)", "ok"]);
 		expect(rows[3]?.[0]).toBe("");
@@ -220,12 +215,7 @@ describe("modelRows", () => {
 			intelligence: 39.5,
 			tps: 247,
 		});
-		expect(rows[0]).toEqual([
-			"Model",
-			"DeepSeek V4.1 Flash",
-			"strong",
-			true,
-		]);
+		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong", true]);
 		expect(rows[1]).toEqual(["Tier", "open source", "base"]);
 		expect(rows[2]).toEqual(["Allowance", "$60/mo", "base"]);
 		expect(rows[3]).toEqual(["Rates", "$0.15/$0.6 in/out", "base"]);
@@ -242,11 +232,7 @@ describe("modelRows", () => {
 			allowance: 0,
 			free: true,
 		});
-		expect(rows.find((row) => row[0] === "Allowance")).toEqual([
-			"Allowance",
-			"∞",
-			"base",
-		]);
+		expect(rows.find((row) => row[0] === "Allowance")).toEqual(["Allowance", "∞", "base"]);
 	});
 
 	test("adds cache write only when the model has one", () => {
@@ -256,11 +242,7 @@ describe("modelRows", () => {
 			rates: { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
 		});
 		expect(claude[1]).toEqual(["Rates", "$2/$10 in/out", "base"]);
-		expect(claude[2]).toEqual([
-			"",
-			"cache read $0.2 · write $2.5",
-			"muted",
-		]);
+		expect(claude[2]).toEqual(["", "cache read $0.2 · write $2.5", "muted"]);
 	});
 	test("a promotion from mpc rides along, expiry compacted", () => {
 		const rows = modelRows({
@@ -279,17 +261,11 @@ describe("modelRows", () => {
 			name: "Pixel Canary",
 			deal: { badge: "Free" },
 		});
-		expect(rows.find((row) => row[0] === "Deal")).toEqual([
-			"Deal",
-			"Free",
-			"ok",
-		]);
+		expect(rows.find((row) => row[0] === "Deal")).toEqual(["Deal", "Free", "ok"]);
 		// No promotion, no row.
-		expect(
-			modelRows({ key: "kimi", name: "Kimi K3" }).some(
-				(row) => row[0] === "Deal",
-			),
-		).toBe(false);
+		expect(modelRows({ key: "kimi", name: "Kimi K3" }).some((row) => row[0] === "Deal")).toBe(
+			false,
+		);
 	});
 
 	test("puts this model's usage under the model name, with its share", () => {
@@ -298,12 +274,7 @@ describe("modelRows", () => {
 			{ requests: 1_234, cost: 8.4 },
 			{ requests: 2_000, cost: 12 },
 		);
-		expect(rows[0]).toEqual([
-			"Model",
-			"DeepSeek V4.1 Flash",
-			"strong",
-			true,
-		]);
+		expect(rows[0]).toEqual(["Model", "DeepSeek V4.1 Flash", "strong", true]);
 		expect(rows[1]).toEqual(["Usage (this model)", "1.2K req", "base"]);
 		// Spend and its denominator: 8.40 of the session's 12.00 is 70%.
 		expect(rows[2]).toEqual(["", "$8.40 · 70% of session", "muted"]);
@@ -322,10 +293,7 @@ describe("modelRows", () => {
 	});
 
 	test("spend without a session total shows the figure alone", () => {
-		const rows = modelRows(
-			{ key: "kimi", name: "Kimi K3" },
-			{ requests: 10, cost: 0.5 },
-		);
+		const rows = modelRows({ key: "kimi", name: "Kimi K3" }, { requests: 10, cost: 0.5 });
 		expect(rows.find((row) => row[0] === "")?.[1]).toBe("$0.50");
 	});
 
@@ -352,12 +320,7 @@ describe("modelRows", () => {
 			{ requests: 30, cost: 2 },
 			"deepseek-v4.1-flash",
 		);
-		expect(rows[0]).toEqual([
-			"Model",
-			"deepseek-v4.1-flash",
-			"strong",
-			true,
-		]);
+		expect(rows[0]).toEqual(["Model", "deepseek-v4.1-flash", "strong", true]);
 		expect(rows.some((row) => row[0] === "Usage (this model)")).toBe(true);
 		expect(rows.some((row) => row[0] === "Session")).toBe(true);
 		// No catalog means no tier/rates/allowance rows.
@@ -395,18 +358,9 @@ describe("tones", () => {
 		expect(rows[2]?.[2]).toBe("crit");
 	});
 	test("parts splits label from value for the panel", () => {
-		expect(parts(["Tier", "open source", "base"])).toEqual([
-			"Tier: ",
-			"open source",
-		]);
-		expect(parts(["", "cache read $0.003", "muted"])).toEqual([
-			"  cache read $0.003",
-			"",
-		]);
-		expect(parts(["Command Code", "", "muted"])).toEqual([
-			"Command Code",
-			"",
-		]);
+		expect(parts(["Tier", "open source", "base"])).toEqual(["Tier: ", "open source"]);
+		expect(parts(["", "cache read $0.003", "muted"])).toEqual(["  cache read $0.003", ""]);
+		expect(parts(["Command Code", "", "muted"])).toEqual(["Command Code", ""]);
 	});
 });
 
@@ -420,9 +374,7 @@ describe("tierFor", () => {
 
 describe("modelKey", () => {
 	test("mirrors mpc's normalization", () => {
-		expect(modelKey("deepseek/deepseek-v4.1-flash")).toBe(
-			"deepseekv41flash",
-		);
+		expect(modelKey("deepseek/deepseek-v4.1-flash")).toBe("deepseekv41flash");
 		expect(modelKey("DeepSeek V4 Flash (latest)")).toBe("deepseekv4flash");
 		expect(modelKey("zai-org/GLM-5.2-Fast")).toBe("glm52fast");
 	});
@@ -433,16 +385,12 @@ describe("elapsedLabel", () => {
 	test("a window minutes into a long period reads <1%, not 0%", () => {
 		// 40 minutes into a 7-day window
 		const resetAt = 1_000_000 + 7 * 86_400 - 2400;
-		expect(elapsedLabel(resetAt * 1000, 7 * 86_400, 1_000_000)).toBe(
-			"0.4%",
-		);
+		expect(elapsedLabel(resetAt * 1000, 7 * 86_400, 1_000_000)).toBe("0.4%");
 	});
 	test("exactly at the start stays 0%, and real percents round", () => {
 		const resetAt = 1_000_000 + fiveHour;
 		expect(elapsedLabel(resetAt * 1000, fiveHour, 1_000_000)).toBe("0.0%");
-		expect(
-			elapsedLabel(resetAt * 1000, fiveHour, 1_000_000 + 13 * 60),
-		).toBe("4.3%");
+		expect(elapsedLabel(resetAt * 1000, fiveHour, 1_000_000 + 13 * 60)).toBe("4.3%");
 	});
 	test("no reset time means no label", () => {
 		expect(elapsedLabel(undefined, fiveHour, 1_000_000)).toBeUndefined();
@@ -477,9 +425,6 @@ describe("min plan is a fallback, not a second opinion", () => {
 	});
 	test("min plan fills in when the snapshot has no tier", () => {
 		const rows = modelRows({ key: "k", name: "New Model", minPlan: "Pro" });
-		expect(rows.map(([label, value]) => [label, value])).toContainEqual([
-			"Min plan",
-			"Pro",
-		]);
+		expect(rows.map(([label, value]) => [label, value])).toContainEqual(["Min plan", "Pro"]);
 	});
 });

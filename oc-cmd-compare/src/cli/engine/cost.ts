@@ -10,10 +10,7 @@ import type { ModelPricing, PlanInfo, Workload } from "#~/types.ts";
  * output ones at the 4.4 $/M output rate). A model that publishes no
  * cache-write rate is priced at its input rate rather than assumed free.
  */
-export function costPerRequest(
-	pricing: ModelPricing,
-	workload: Workload,
-): number {
+export function costPerRequest(pricing: ModelPricing, workload: Workload): number {
 	const output = workload.output + workload.reasoning;
 	return (
 		(workload.input * pricing.input +

@@ -13,9 +13,7 @@ export async function loadCcPlan(planId: string): Promise<PlanInfo> {
 	const plans = await cmdusePlans();
 	const match = plans.find((p) => p.name === def.cmduse);
 	if (!match) {
-		throw new Error(
-			`cmduse plans --json has no plan named "${def.cmduse}"`,
-		);
+		throw new Error(`cmduse plans --json has no plan named "${def.cmduse}"`);
 	}
 	return {
 		provider: "cc",

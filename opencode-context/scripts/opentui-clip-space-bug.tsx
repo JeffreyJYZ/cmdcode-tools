@@ -17,14 +17,7 @@ import type { JSX } from "@opentui/solid";
 import { For, Show } from "solid-js";
 
 type Tone =
-	| "thinking"
-	| "outputs"
-	| "system"
-	| "inputs"
-	| "user"
-	| "assistant"
-	| "toolDefs"
-	| "other";
+	"thinking" | "outputs" | "system" | "inputs" | "user" | "assistant" | "toolDefs" | "other";
 interface Bucket {
 	readonly key: string;
 	readonly label: string;
@@ -45,10 +38,8 @@ const trim = (n: number) => {
 	const s = n.toFixed(1);
 	return s.endsWith(".0") ? s.slice(0, -2) : s;
 };
-const formatBytes = (n: number) =>
-	n < 1024 ? `${Math.round(n)}B` : `${trim(n / 1024)}KB`;
-const formatTokens = (n: number) =>
-	n < 1000 ? String(n) : `${trim(n / 1000)}k`;
+const formatBytes = (n: number) => (n < 1024 ? `${Math.round(n)}B` : `${trim(n / 1024)}KB`);
+const formatTokens = (n: number) => (n < 1000 ? String(n) : `${trim(n / 1000)}k`);
 const formatPercent = (part: number, whole: number) =>
 	whole <= 0 ? "0.0%" : `${((part / whole) * 100).toFixed(1)}%`;
 
@@ -198,10 +189,7 @@ export function BreakdownDialog(props: {
 			props.breakdown.measuredTokens !== undefined
 				? formatTokens(props.breakdown.measuredTokens)
 				: "?";
-		const cap =
-			props.breakdown.limit !== undefined
-				? formatTokens(props.breakdown.limit)
-				: "?";
+		const cap = props.breakdown.limit !== undefined ? formatTokens(props.breakdown.limit) : "?";
 		return `${used} / ${cap}`;
 	};
 	// One flat list so rows render in a single For.
@@ -218,13 +206,7 @@ export function BreakdownDialog(props: {
 			return [parent, ...kids];
 		});
 	return (
-		<box
-			flexDirection="column"
-			width="100%"
-			paddingLeft={2}
-			paddingRight={2}
-			paddingBottom={1}
-		>
+		<box flexDirection="column" width="100%" paddingLeft={2} paddingRight={2} paddingBottom={1}>
 			<text fg={props.colors.muted}>Context Window</text>
 			<box height={1} />
 			<Bar breakdown={props.breakdown} />

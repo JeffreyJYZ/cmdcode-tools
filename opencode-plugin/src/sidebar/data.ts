@@ -6,21 +6,11 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import {
-	type RunOptions,
-	runArkuse,
-	runCmduse,
-	runMpc,
-	runOcuse,
-} from "../cli";
+import { type RunOptions, runArkuse, runCmduse, runMpc, runOcuse } from "../cli";
 import { SPAWN_OPTIONS } from "../constants/cli";
 import { CACHE_DIR, ccCatalogFile } from "../constants/paths";
 import { OC_PLAN_DEFAULT, type OcPlan } from "../constants/sidebar";
-import {
-	ARK_SNAPSHOT_TTL_MS,
-	CATALOG_CACHE_TTL_MS,
-	CHILD_TIMEOUT_MS,
-} from "../constants/timing";
+import { ARK_SNAPSHOT_TTL_MS, CATALOG_CACHE_TTL_MS, CHILD_TIMEOUT_MS } from "../constants/timing";
 import { type ArkUsage, parseArkJson } from "./ark";
 import { type ModelMeta, modelKey, type Usage } from "./rows";
 import { parseZenJson, type ZenUsage } from "./zen";
@@ -53,29 +43,18 @@ export function parseUsageJson(text: string): Usage {
 	const summary = (raw.summary ?? {}) as Record<string, unknown>;
 	return {
 		plan: typeof raw.plan === "string" ? raw.plan : undefined,
-		monthlyCap:
-			typeof raw.monthlyCap === "number" ? raw.monthlyCap : undefined,
-		monthlyCredits:
-			typeof raw.monthlyCredits === "number"
-				? raw.monthlyCredits
-				: undefined,
+		monthlyCap: typeof raw.monthlyCap === "number" ? raw.monthlyCap : undefined,
+		monthlyCredits: typeof raw.monthlyCredits === "number" ? raw.monthlyCredits : undefined,
 		fiveHour: win(raw.fiveHour),
 		weekly: win(raw.weekly),
-		periodEnd:
-			typeof raw.periodEnd === "string" ? raw.periodEnd : undefined,
+		periodEnd: typeof raw.periodEnd === "string" ? raw.periodEnd : undefined,
 		// cmduse 0.7.2+ also publishes the period bounds in epoch ms; older
 		// builds omit them and the monthly row then shows spend only.
-		periodStartAt:
-			typeof raw.periodStartAt === "number"
-				? raw.periodStartAt
-				: undefined,
-		periodEndAt:
-			typeof raw.periodEndAt === "number" ? raw.periodEndAt : undefined,
-		requests:
-			typeof summary.requests === "number" ? summary.requests : undefined,
+		periodStartAt: typeof raw.periodStartAt === "number" ? raw.periodStartAt : undefined,
+		periodEndAt: typeof raw.periodEndAt === "number" ? raw.periodEndAt : undefined,
+		requests: typeof summary.requests === "number" ? summary.requests : undefined,
 		cost: typeof summary.cost === "number" ? summary.cost : undefined,
-		error:
-			typeof raw.error === "string" && raw.error ? raw.error : undefined,
+		error: typeof raw.error === "string" && raw.error ? raw.error : undefined,
 	};
 }
 
@@ -193,18 +172,13 @@ export function zenArgs(plan: OcPlan): string[] {
 
 /** mpc's catalog, cached on disk: it scrapes live docs over the network. The
  * cache is per plan, since mpc bakes that plan's per-model allowance into it. */
-export async function loadMeta(
-	plan: OcPlan = OC_PLAN_DEFAULT,
-): Promise<Map<string, ModelMeta>> {
+export async function loadMeta(plan: OcPlan = OC_PLAN_DEFAULT): Promise<Map<string, ModelMeta>> {
 	try {
 		const cached = JSON.parse(await readFile(cachePath(plan), "utf8")) as {
 			fetchedAt?: number;
 			rows?: [string, ModelMeta][];
 		};
-		if (
-			cached.fetchedAt &&
-			Date.now() - cached.fetchedAt < CATALOG_CACHE_TTL_MS
-		) {
+		if (cached.fetchedAt && Date.now() - cached.fetchedAt < CATALOG_CACHE_TTL_MS) {
 			return new Map(cached.rows ?? []);
 		}
 	} catch {
@@ -214,10 +188,7 @@ export async function loadMeta(
 	try {
 		const path = cachePath(plan);
 		await mkdir(dirname(path), { recursive: true });
-		await writeFile(
-			path,
-			JSON.stringify({ fetchedAt: Date.now(), rows: [...meta] }),
-		);
+		await writeFile(path, JSON.stringify({ fetchedAt: Date.now(), rows: [...meta] }));
 	} catch {
 		// cache is best-effort
 	}
@@ -229,9 +200,7 @@ export async function loadMeta(
  * unreachable (see `requireSnapshot`). */
 export async function loadUsage(): Promise<Usage> {
 	return requireSnapshot(
-		parseUsageJson(
-			await runCmduse(["-1", "--json", "--plain"], SIDEBAR_OPTS),
-		),
+		parseUsageJson(await runCmduse(["-1", "--json", "--plain"], SIDEBAR_OPTS)),
 	);
 }
 
@@ -241,9 +210,7 @@ export async function loadUsage(): Promise<Usage> {
  * when the account has a Go key. Throws when ocuse is missing or fails, and the
  * caller then omits the panel.
  */
-export async function loadZen(
-	plan: OcPlan = OC_PLAN_DEFAULT,
-): Promise<ZenUsage> {
+export async function loadZen(plan: OcPlan = OC_PLAN_DEFAULT): Promise<ZenUsage> {
 	return parseZenJson(await runOcuse(zenArgs(plan), SIDEBAR_OPTS));
 }
 

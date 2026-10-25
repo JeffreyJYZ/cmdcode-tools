@@ -13,12 +13,8 @@ export interface ScoreConfig {
 	window?: [number, number];
 }
 
-function normalise(
-	weights: number[] | undefined,
-	fallback: number[],
-): number[] {
-	const values =
-		weights && weights.length === fallback.length ? weights : fallback;
+function normalise(weights: number[] | undefined, fallback: number[]): number[] {
+	const values = weights && weights.length === fallback.length ? weights : fallback;
 	const total = values.reduce((a, b) => a + b, 0);
 	return total > 0 ? values.map((v) => v / total) : fallback;
 }
@@ -32,9 +28,7 @@ const scale = (values: number[], mode: ScaleMode): number[] =>
  * "cost" here means "how many requests the plan buys". */
 export function assignIndex(metrics: EntryMetrics[]): void {
 	const priced = metrics.filter((m) => Number.isFinite(m.requestsPerMonth));
-	const volume = minmax(
-		priced.map((m) => Math.log10(Math.max(m.requestsPerMonth, 1))),
-	);
+	const volume = minmax(priced.map((m) => Math.log10(Math.max(m.requestsPerMonth, 1))));
 
 	priced.forEach((m, i) => {
 		m.index = Math.round(100 * (volume[i] ?? 0.5));
@@ -46,10 +40,7 @@ export function assignIndex(metrics: EntryMetrics[]): void {
 }
 
 /** VAL: ability / speed / volume / cache / output. Unscored models stay null. */
-export function assignValueIndex(
-	metrics: EntryMetrics[],
-	config: ScoreConfig,
-): void {
+export function assignValueIndex(metrics: EntryMetrics[], config: ScoreConfig): void {
 	const weights = normalise(config.valWeights, [
 		config.abilityWeight,
 		config.tpsWeight,
@@ -67,9 +58,7 @@ export function assignValueIndex(
 		speeded.map((m) => m.tps ?? 1),
 		config.scale,
 	);
-	const volume = minmax(
-		priced.map((m) => Math.log10(Math.max(m.requestsPerMonth, 1))),
-	);
+	const volume = minmax(priced.map((m) => Math.log10(Math.max(m.requestsPerMonth, 1))));
 	const cache = scale(
 		priced.map((m) => m.pricing.cacheRead),
 		config.scale,
@@ -112,7 +101,6 @@ export function assignValueIndex(
 	const low = values.length > 0 ? Math.min(...values) : 0;
 	const high = values.length > 0 ? Math.max(...values) : 0;
 	for (const [m, value] of composites) {
-		m.valueIndex =
-			high > low ? Math.round((100 * (value - low)) / (high - low)) : 100;
+		m.valueIndex = high > low ? Math.round((100 * (value - low)) / (high - low)) : 100;
 	}
 }

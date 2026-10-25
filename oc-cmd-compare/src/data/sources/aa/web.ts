@@ -64,9 +64,7 @@ function readArray(text: string, key: string): unknown[] | null {
 
 /** A finite, positive number; `null` for anything else (incl. 0 = unmeasured). */
 function positive(value: unknown): number | null {
-	return typeof value === "number" && Number.isFinite(value) && value > 0
-		? value
-		: null;
+	return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : null;
 }
 
 function labelOf(model: AaModel): string {

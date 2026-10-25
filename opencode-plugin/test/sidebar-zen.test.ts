@@ -78,19 +78,10 @@ describe("zenRows", () => {
 		expect(find("Weekly")).toEqual(["Weekly", "$1/$30 (3.3%)", "ok"]);
 		expect(find("Monthly")).toEqual(["Monthly", "$12/$60 (20.0%)", "ok"]);
 		expect(find("Period")).toEqual(["Period", "58 requests · $17", "base"]);
-		expect(find("Model")).toEqual([
-			"Model",
-			"GLM 5.3 Flash",
-			"strong",
-			true,
-		]);
+		expect(find("Model")).toEqual(["Model", "GLM 5.3 Flash", "strong", true]);
 		// The store-backed rows sit where the CommandCode panel puts them: this
 		// model's requests, then this conversation's totals.
-		expect(find("Usage (this model)")).toEqual([
-			"Usage (this model)",
-			"3 req",
-			"base",
-		]);
+		expect(find("Usage (this model)")).toEqual(["Usage (this model)", "3 req", "base"]);
 		expect(rows.find((row) => row[1].includes("of session"))).toEqual([
 			"",
 			"$0.10 · 40% of session",
@@ -102,9 +93,7 @@ describe("zenRows", () => {
 		expect(find("Intelligence")).toEqual(["Intelligence", "48", "base"]);
 		expect(find("Tok/s")).toEqual(["Tok/s", "120", "base"]);
 		// A rule separates the account block from the model block, like the CC panel.
-		expect(
-			rows.some((row) => row[2] === "muted" && row[0].startsWith("─")),
-		).toBe(true);
+		expect(rows.some((row) => row[2] === "muted" && row[0].startsWith("─"))).toBe(true);
 	});
 
 	test("caps and the allowance survive a missing catalog", () => {
@@ -201,9 +190,7 @@ describe("zenRows", () => {
 		expect(rows[monthly]).toEqual(["Monthly", "$12/$60 (20.0%)", "ok"]);
 		// The request count survives; the elapsed/resets continuation does not.
 		expect(rows[monthly + 1]?.[1]).toBe("40 req");
-		expect(rows.some((row) => (row[1] ?? "").includes("elapsed"))).toBe(
-			false,
-		);
+		expect(rows.some((row) => (row[1] ?? "").includes("elapsed"))).toBe(false);
 	});
 
 	test("without a window start the rolling windows stay spend only", () => {
@@ -242,11 +229,7 @@ describe("zenRows", () => {
 			oc: { plan: "Zen" },
 		});
 		const find = (label: string) => rows.find((row) => row[0] === label);
-		expect(find("Plan")).toEqual([
-			"Plan",
-			"Zen · limits per model",
-			"base",
-		]);
+		expect(find("Plan")).toEqual(["Plan", "Zen · limits per model", "base"]);
 		expect(find("5-hour")).toEqual(["5-hour", "$0.50 · 1 req", "base"]);
 		expect(find("Allowance")).toBeUndefined();
 		expect(find("Rates")).toBeUndefined();
@@ -301,11 +284,7 @@ describe("zenRows", () => {
 			name: "Step 5 Preview",
 			oc: { plan: "Go", allowance: 0 },
 		});
-		expect(rows.find((row) => row[0] === "Allowance")).toEqual([
-			"Allowance",
-			"∞",
-			"base",
-		]);
+		expect(rows.find((row) => row[0] === "Allowance")).toEqual(["Allowance", "∞", "base"]);
 	});
 
 	test("the Plan row names the selected plan", () => {
@@ -319,9 +298,7 @@ describe("zenRows", () => {
 				rates: { input: 0.1, output: 0.2, cacheRead: 0.002 },
 			},
 		});
-		expect(rows.find((row) => row[0] === "Plan")?.[1]).toBe(
-			"Go Plus · limits per model",
-		);
+		expect(rows.find((row) => row[0] === "Plan")?.[1]).toBe("Go Plus · limits per model");
 		// The allowance follows the plan's limit.
 		expect(rows.find((row) => row[0] === "Allowance")).toEqual([
 			"Allowance",
@@ -346,12 +323,7 @@ describe("zenRows", () => {
 		);
 		const find = (label: string) => rows.find((row) => row[0] === label);
 		expect(find("Period")).toBeDefined();
-		expect(find("Model")).toEqual([
-			"Model",
-			"glm-5.3-flash",
-			"strong",
-			true,
-		]);
+		expect(find("Model")).toEqual(["Model", "glm-5.3-flash", "strong", true]);
 		expect(find("Session")).toEqual(["Session", "5 req · $0.25", "base"]);
 		// No model figure scanned, no `Usage (this model)` row.
 		expect(find("Usage (this model)")).toBeUndefined();
@@ -371,70 +343,39 @@ describe("rolling window ageing-out (derived reset)", () => {
 	const age = (secs: number) => Date.now() - secs * 1000;
 
 	test("5-hour and Weekly show the elapsed share and the derived reset", () => {
-		const rows = zenRows(
-			parseZenJson(sample),
-			meta,
-			undefined,
-			undefined,
-			undefined,
-			{
-				fiveHour: age(FIVE_HOUR_SECS / 5), // an hour into 5h
-				weekly: age(WEEKLY_SECS / 7), // a day into the week
-			},
-		);
+		const rows = zenRows(parseZenJson(sample), meta, undefined, undefined, undefined, {
+			fiveHour: age(FIVE_HOUR_SECS / 5), // an hour into 5h
+			weekly: age(WEEKLY_SECS / 7), // a day into the week
+		});
 		const five = rows.findIndex((row) => row[0] === "5-hour");
 		expect(rows[five]).toEqual(["5-hour", "$0.50/$12 (4.2%)", "ok"]);
-		expect(rows[five + 1]).toEqual([
-			"",
-			"20.0% elapsed · resets 4h",
-			"muted",
-		]);
+		expect(rows[five + 1]).toEqual(["", "20.0% elapsed · resets 4h", "muted"]);
 		// The request count rides on after the continuation, as before.
 		expect(rows[five + 2]?.[1]).toBe("1 req");
 		const weekly = rows.findIndex((row) => row[0] === "Weekly");
-		expect(rows[weekly + 1]).toEqual([
-			"",
-			"14.3% elapsed · resets 6d",
-			"muted",
-		]);
+		expect(rows[weekly + 1]).toEqual(["", "14.3% elapsed · resets 6d", "muted"]);
 	});
 
 	test("the reset is the oldest request plus the window", () => {
 		const oldest = age(4 * 3600);
 		// A derived-reset test on the pure helper, independent of rendering.
-		expect(rollingReset(oldest, FIVE_HOUR_SECS)).toBe(
-			oldest + FIVE_HOUR_SECS * 1000,
-		);
+		expect(rollingReset(oldest, FIVE_HOUR_SECS)).toBe(oldest + FIVE_HOUR_SECS * 1000);
 		expect(rollingReset(undefined, FIVE_HOUR_SECS)).toBeUndefined();
 		// Rendered: a request four hours old leaves the 5-hour window in an hour.
-		const rows = zenRows(
-			parseZenJson(sample),
-			meta,
-			undefined,
-			undefined,
-			undefined,
-			{ fiveHour: oldest },
-		);
+		const rows = zenRows(parseZenJson(sample), meta, undefined, undefined, undefined, {
+			fiveHour: oldest,
+		});
 		const five = rows.findIndex((row) => row[0] === "5-hour");
 		expect(rows[five + 1]?.[1]).toBe("80.0% elapsed · resets 1h");
 	});
 
 	test("an empty rolling window keeps the request count alone", () => {
-		const rows = zenRows(
-			parseZenJson(sample),
-			meta,
-			undefined,
-			undefined,
-			undefined,
-			{},
-		);
+		const rows = zenRows(parseZenJson(sample), meta, undefined, undefined, undefined, {});
 		const five = rows.findIndex((row) => row[0] === "5-hour");
 		expect(rows[five + 1]?.[1]).toBe("1 req");
 		// No continuation row between the count and the next window.
 		expect(rows[five + 2]?.[0]).toBe("Weekly");
-		expect(rows.some((row) => (row[1] ?? "").includes("resets"))).toBe(
-			false,
-		);
+		expect(rows.some((row) => (row[1] ?? "").includes("resets"))).toBe(false);
 	});
 
 	test("the continuation matches the CommandCode row byte for byte", () => {
@@ -450,18 +391,11 @@ describe("rolling window ageing-out (derived reset)", () => {
 			Date.now(),
 		);
 		const ccFive = cc.findIndex((row) => row[0] === "5-hour");
-		const zen = zenRows(
-			parseZenJson(sample),
-			meta,
-			undefined,
-			undefined,
-			undefined,
-			{ fiveHour: start },
-		);
+		const zen = zenRows(parseZenJson(sample), meta, undefined, undefined, undefined, {
+			fiveHour: start,
+		});
 		const zenFive = zen.findIndex((row) => row[0] === "5-hour");
-		expect(cc.slice(ccFive, ccFive + 2)).toEqual(
-			zen.slice(zenFive, zenFive + 2),
-		);
+		expect(cc.slice(ccFive, ccFive + 2)).toEqual(zen.slice(zenFive, zenFive + 2));
 	});
 });
 
@@ -539,17 +473,13 @@ describe("the account's own meters", () => {
 			month: { requests: 4, cost: 1.5 },
 		});
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
-		const head = rows.findIndex(
-			(row) => row[1] === "by model · this month",
-		);
+		const head = rows.findIndex((row) => row[1] === "by model · this month");
 		expect(head).toBeGreaterThan(-1);
 		// Highest spend first, each against its own documented limit.
 		expect(rows[head + 1]?.[1]).toBe("$17/$60 (28.3%)");
 		expect(rows[head + 2]?.[1]).toBe("$1.50/$15 (10.0%)");
 		for (const row of rows.slice(head, head + 3)) {
-			expect(
-				(row[0] ?? "").length + 2 + (row[1] ?? "").length,
-			).toBeLessThanOrEqual(37);
+			expect((row[0] ?? "").length + 2 + (row[1] ?? "").length).toBeLessThanOrEqual(37);
 		}
 	});
 
@@ -567,9 +497,7 @@ describe("the account's own meters", () => {
 		// Every row stays inside the sidebar's budget: label + 2 + value.
 		for (const label of ["5-hour", "Weekly", "Monthly", "Period"]) {
 			const row = find(label);
-			expect(
-				(row?.[0] ?? "").length + 2 + (row?.[1] ?? "").length,
-			).toBeLessThanOrEqual(37);
+			expect((row?.[0] ?? "").length + 2 + (row?.[1] ?? "").length).toBeLessThanOrEqual(37);
 		}
 		// The reset countdown rides on the continuation, as on the CC side.
 		expect(find("5-hour")?.[2]).toBe("ok");
@@ -586,20 +514,14 @@ describe("the account's own meters", () => {
 		};
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		const five = rows.findIndex((row) => row[0] === "5-hour");
-		expect(rows[five]).toEqual([
-			"5-hour",
-			"100% of limit · $0.50 local",
-			"crit",
-		]);
+		expect(rows[five]).toEqual(["5-hour", "100% of limit · $0.50 local", "crit"]);
 		expect(rows[five + 1]?.[1]).toContain("LIMIT EXCEEDED");
 	});
 
 	test("without meters the per-model windows still render", () => {
 		// The fallback is what an older ocuse, a missing key or `--no-api` gives.
 		const rows = zenRows(parseZenJson(sample), meta);
-		expect(rows.find((row) => row[0] === "5-hour")?.[1]).toBe(
-			"$0.50/$12 (4.2%)",
-		);
+		expect(rows.find((row) => row[0] === "5-hour")?.[1]).toBe("$0.50/$12 (4.2%)");
 	});
 
 	test("a named reason rides directly under Plan", () => {
@@ -609,11 +531,7 @@ describe("the account's own meters", () => {
 		body.accountError = "HTTP 401 api_key_expired";
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		expect(rows[0]).toEqual(["Plan", "Go · limits per model", "base"]);
-		expect(rows[1]).toEqual([
-			"",
-			"usage API: HTTP 401 api_key_expired",
-			"warn",
-		]);
+		expect(rows[1]).toEqual(["", "usage API: HTTP 401 api_key_expired", "warn"]);
 		// An older ocuse names nothing, so the panel is exactly as it was.
 		const quiet = zenRows(parseZenJson(sample), meta);
 		expect(quiet.some((row) => row[1].includes("usage API"))).toBe(false);

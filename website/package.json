@@ -6,7 +6,6 @@
 		"check:links": "bun scripts/check-links.ts",
 		"snapshot:mpc": "bun scripts/snapshot-mpc.ts",
 		"snapshot:releases": "bun scripts/snapshot-releases.ts",
-		"fmt": "biome format --write .",
 		"lint": "biome lint --write ."
 	},
 	"dependencies": {

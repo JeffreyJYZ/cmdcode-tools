@@ -10,13 +10,7 @@
  * startup — and they are strictly per session: the server only ever consults
  * the entry for the session the request belongs to.
  */
-import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	statSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 

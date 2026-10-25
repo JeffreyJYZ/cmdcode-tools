@@ -39,9 +39,9 @@ Drop agent-only zsh into `~/.config/opencode/shell.zsh`, sourced alongside the g
 The plugin registers a `shell.create.before` hook. When the shell about to run is zsh it:
 
 1. lays down `$XDG_STATE_HOME/opencode/shell-rc/` (default `~/.local/state/opencode/shell-rc/`) containing:
-   - `.zshenv` — the tiny shim zsh reads first;
-   - `state.zsh` — the generated aliases and functions;
-   - `.zshrc` / `.zprofile` / `.zlogin` — symlinks to your real files so nested interactive/login shells still find them;
+    - `.zshenv` — the tiny shim zsh reads first;
+    - `state.zsh` — the generated aliases and functions;
+    - `.zshrc` / `.zprofile` / `.zlogin` — symlinks to your real files so nested interactive/login shells still find them;
 2. regenerates `state.zsh` **only when the rc changed** (`~/.zshrc`, `~/.zshenv` or oh-my-zsh), by running `zsh -ic 'alias -L; typeset -f'` once — zsh's own serializer, so every alias and function is captured exactly — then `zcompile`s it so sourcing costs ~0.5ms instead of ~10ms;
 3. sets `ZDOTDIR` for that command.
 
@@ -65,11 +65,13 @@ The agent shell _has_ your aliases, but the model does not know their names — 
 
 ```markdown
 <!-- shell-rc-aliases-begin -->
+
 ## Shell aliases (auto-generated from ~/.zshrc)
 
 - `b` = `bun`
 - `gs` = `git status`
 - `ls` = `eza --icons=always`
+
 <!-- shell-rc-aliases-end -->
 ```
 

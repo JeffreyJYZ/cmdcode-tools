@@ -16,13 +16,7 @@ export type Guide = GuideMeta & { body: string };
 // asset reference: Turbopack const-folds a string target and then tries to
 // bundle the directory as a module, which fails. A bare `import.meta.url`
 // stays a runtime value, same as `@/lib/load` uses for the package READMEs.
-const GUIDES_DIR = join(
-	fileURLToPath(import.meta.url),
-	"..",
-	"..",
-	"content",
-	"guides",
-);
+const GUIDES_DIR = join(fileURLToPath(import.meta.url), "..", "..", "content", "guides");
 const EXT = ".mdx";
 
 /**
@@ -37,12 +31,8 @@ export function parseGuide(slug: string, source: string): Guide {
 	return {
 		slug,
 		title: typeof data.title === "string" ? data.title : slug,
-		description:
-			typeof data.description === "string" ? data.description : "",
-		order:
-			typeof data.order === "number"
-				? data.order
-				: Number.MAX_SAFE_INTEGER,
+		description: typeof data.description === "string" ? data.description : "",
+		order: typeof data.order === "number" ? data.order : Number.MAX_SAFE_INTEGER,
 		body: content,
 	};
 }

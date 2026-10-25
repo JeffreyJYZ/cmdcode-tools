@@ -1,9 +1,5 @@
 import { DOC_URL, OC_MODELS_URL, OC_PLANS } from "#~/constants/sources.ts";
-import {
-	extractCatalog,
-	fetchText,
-	parseTabTables,
-} from "#~/data/scrape/index.ts";
+import { extractCatalog, fetchText, parseTabTables } from "#~/data/scrape/index.ts";
 import type { CatalogEntry, PlanInfo } from "#~/types.ts";
 
 function planDef(planId: string) {
@@ -21,10 +17,7 @@ function planDef(planId: string) {
  * plans share one price list, so the tab label is what selects the right
  * allowance table: identical headers and rates, different monthly limits.
  */
-export async function loadOcGoCatalog(
-	planId: string,
-	peak = false,
-): Promise<CatalogEntry[]> {
+export async function loadOcGoCatalog(planId: string, peak = false): Promise<CatalogEntry[]> {
 	const def = planDef(planId);
 	const html = await fetchText(DOC_URL);
 	const tabs = await parseTabTables(html);

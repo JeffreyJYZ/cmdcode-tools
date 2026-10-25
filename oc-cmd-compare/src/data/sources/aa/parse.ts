@@ -19,10 +19,7 @@ export function parseAaApi(body: unknown): {
 		const record = row as Record<string, unknown>;
 		const name = String(record.name ?? record.slug ?? record.id ?? "");
 		const slug = typeof record.slug === "string" ? record.slug : undefined;
-		const keys = [
-			slug ? normalizeKey(slug) : "",
-			normalizeKey(name),
-		].filter(Boolean);
+		const keys = [slug ? normalizeKey(slug) : "", normalizeKey(name)].filter(Boolean);
 		if (keys.length === 0) continue;
 
 		const iq = findNumber(record, /intelligence_index/i);
@@ -47,14 +44,8 @@ export function parseAaApi(body: unknown): {
 /** Depth-first search for the first finite number under a matching key. */
 function findNumber(value: unknown, pattern: RegExp): number | null {
 	if (!value || typeof value !== "object") return null;
-	for (const [key, child] of Object.entries(
-		value as Record<string, unknown>,
-	)) {
-		if (
-			typeof child === "number" &&
-			Number.isFinite(child) &&
-			pattern.test(key)
-		) {
+	for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+		if (typeof child === "number" && Number.isFinite(child) && pattern.test(key)) {
 			return child;
 		}
 	}

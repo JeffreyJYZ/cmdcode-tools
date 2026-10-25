@@ -30,12 +30,7 @@ export async function run(argv: string[]): Promise<number> {
 	// cac prints the help text / version line itself and returns the parsed bag
 	// (with the `h`/`v` aliases) instead of exiting, so stop here — otherwise the
 	// full table would print after the help, and the aliases would trip assertKnown.
-	if (
-		bag.help === true ||
-		bag.h === true ||
-		bag.version === true ||
-		bag.v === true
-	) {
+	if (bag.help === true || bag.h === true || bag.version === true || bag.v === true) {
 		return 0;
 	}
 	if (bag.printConfig === true) {
@@ -63,16 +58,8 @@ export async function run(argv: string[]): Promise<number> {
 		);
 	}
 
-	const {
-		ocEntries,
-		ccEntries,
-		ocPlanInfo,
-		ccPlanInfo,
-		rows,
-		ability,
-		workloads,
-		shapeNote,
-	} = await collect(options);
+	const { ocEntries, ccEntries, ocPlanInfo, ccPlanInfo, rows, ability, workloads, shapeNote } =
+		await collect(options);
 	if (options.check) {
 		return runCheck(options, ocEntries, ccEntries, rows, ability);
 	}
@@ -91,9 +78,7 @@ export async function run(argv: string[]): Promise<number> {
 			{ months: options.usageMonths },
 		);
 		if (options.format === "json" || options.json) {
-			console.log(
-				JSON.stringify({ source: usage.label, ...projection }, null, 2),
-			);
+			console.log(JSON.stringify({ source: usage.label, ...projection }, null, 2));
 			return 0;
 		}
 		renderUsage(projection, {
@@ -107,11 +92,7 @@ export async function run(argv: string[]): Promise<number> {
 	}
 
 	const result = sortRows(
-		rows.filter(
-			(r) =>
-				matches(r, options.model) &&
-				(options.only === "all" || (r.oc && r.cc)),
-		),
+		rows.filter((r) => matches(r, options.model) && (options.only === "all" || (r.oc && r.cc))),
 		options.metric,
 		options.asc,
 	);
@@ -119,9 +100,7 @@ export async function run(argv: string[]): Promise<number> {
 		ocPlan: ocPlanInfo,
 		ccPlan: ccPlanInfo,
 		workloads,
-		abilityLabel: options.noAbility
-			? undefined
-			: (options.benchName ?? ability.label),
+		abilityLabel: options.noAbility ? undefined : (options.benchName ?? ability.label),
 		abilityNote: options.noAbility ? undefined : ability.note,
 		shapeNote,
 		window: options.window,

@@ -14,14 +14,7 @@
 import { formatBytes, formatPercent, formatTokens } from "./format";
 
 export type Tone =
-	| "thinking"
-	| "outputs"
-	| "system"
-	| "inputs"
-	| "user"
-	| "assistant"
-	| "toolDefs"
-	| "other";
+	"thinking" | "outputs" | "system" | "inputs" | "user" | "assistant" | "toolDefs" | "other";
 
 export interface Bucket {
 	readonly key: string;
@@ -181,8 +174,7 @@ export function computeBreakdown(input: BreakdownInput): Breakdown {
 						inputs.add(json(part.state?.input));
 						const result = outputs.get(name) ?? new Acc();
 						result.add(resultText(part.state?.content));
-						if (part.state?.status === "error")
-							result.add(json(part.state.error));
+						if (part.state?.status === "error") result.add(json(part.state.error));
 						outputs.set(name, result);
 					}
 				}
@@ -219,9 +211,7 @@ export function computeBreakdown(input: BreakdownInput): Breakdown {
 	toolDefs.addBytes(input.toolDefsBytes ?? 0);
 
 	const children: Bucket[] = [...outputs.entries()]
-		.map(([name, value]) =>
-			makeBucket(`output:${name}`, name, "outputs", value),
-		)
+		.map(([name, value]) => makeBucket(`output:${name}`, name, "outputs", value))
 		.sort(bySize);
 
 	const buckets: Bucket[] = [
@@ -286,9 +276,7 @@ interface TokenLike {
 }
 
 /** Provider-measured tokens for the newest assistant turn — the header number. */
-export function measuredTokensOf(
-	messages: readonly unknown[],
-): number | undefined {
+export function measuredTokensOf(messages: readonly unknown[]): number | undefined {
 	for (let i = messages.length - 1; i >= 0; i--) {
 		const message = messages[i] as { type?: string; tokens?: TokenLike };
 		if (message.type !== "assistant" || !message.tokens) continue;

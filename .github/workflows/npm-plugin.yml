@@ -115,7 +115,8 @@ jobs:
         run: |
           bun test
           bun check
-          bunx biome check
+          bun fmt --check
+          bunx biome lint
           if [ "${{ steps.pkg.outputs.build }}" = "true" ]; then bun run build; fi
 
       - name: The tag and the manifest must agree

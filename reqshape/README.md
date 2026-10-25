@@ -8,7 +8,7 @@ Measure the shape of your requests from opencode's own history, then price that 
 
 A **req** is one model call — the same unit the opencode sidebar counts: a single `assistant` row in opencode's store. An agentic ask is many reqs, because the model is called again after every tool result.
 
-`reqshape` reads that history, averages it, and hands you the answer as a token vector: *one of my requests is 8.2K input, 309 output, 139 reasoning, 248K cache read*. Then it prices that vector on every model OpenCode Go and CommandCode sell, and divides each plan's allowance and window caps by the result. Every prompt you typed counts, however short; only generated rows are excluded.
+`reqshape` reads that history, averages it, and hands you the answer as a token vector: _one of my requests is 8.2K input, 309 output, 139 reasoning, 248K cache read_. Then it prices that vector on every model OpenCode Go and CommandCode sell, and divides each plan's allowance and window caps by the result. Every prompt you typed counts, however short; only generated rows are excluded.
 
 `mpc` answers the same question with a fixed assumption (800 in / 50K cache / 200 out). This answers it with your actual traffic — and usually disagrees, because context is re-read on every call and yours is deep.
 
@@ -76,13 +76,13 @@ CC account  1,898 reqs this period · GOAT · ends 2026-10-27
 
 Every request re-sends the conversation, and providers bill the re-sent part as cached tokens. So cache read is not a property of how you prompt; it is a function of **how far into the conversation you are**:
 
-| position in its session | reqs | cache read / req |
-| --- | --- | --- |
-| 1st | 28 | 579 |
-| 2–5 | 107 | 9.9K |
-| 6–20 | 356 | 21.5K |
-| 21–100 | 1,043 | 62.2K |
-| 101+ | 5,737 | 301.5K |
+| position in its session | reqs  | cache read / req |
+| ----------------------- | ----- | ---------------- |
+| 1st                     | 28    | 579              |
+| 2–5                     | 107   | 9.9K             |
+| 6–20                    | 356   | 21.5K            |
+| 21–100                  | 1,043 | 62.2K            |
+| 101+                    | 5,737 | 301.5K           |
 
 The first request of a conversation is essentially free to re-send; the hundredth re-sends 300K tokens. On this history **78% of all requests sit at 101+**, which is why the per-request average (248K) is four times the per-conversation average (64K) — one enormous session otherwise sets the profile.
 
@@ -92,26 +92,26 @@ A model with no published cache-read rate is billed for that context at its **in
 
 ## Structural noise
 
-Not every row is a request you made. Auto-generated `synthetic` prompts, the `compaction` summary turn, `shell` commands and `system` rows are dropped, as is an ask whose model was never called. Every prompt *you* typed — however short or offhand — is profiled. `--explain` prints every drop reason with its count, so nothing is silently discarded.
+Not every row is a request you made. Auto-generated `synthetic` prompts, the `compaction` summary turn, `shell` commands and `system` rows are dropped, as is an ask whose model was never called. Every prompt _you_ typed — however short or offhand — is profiled. `--explain` prints every drop reason with its count, so nothing is silently discarded.
 
 ## Options
 
-| flag | default | meaning |
-| --- | --- | --- |
-| `--weight <mode>` | `turn` | `turn` (every req equal) or `session` (one vote per conversation) |
-| `--sessions <mode>` | `all` | `all` includes subagent sessions; `user` drops them |
-| `--since <date>` | all time | only asks on or after this date |
-| `--project <dir>` | all | only sessions whose directory contains this |
-| `--model <text>` | all | only model rows whose name contains this |
-| `--limit <n>` | all | cap the number of model rows |
-| `--sort <key>` | `reqmo` | `reqmo` (most requests first), `cost`, `name` |
-| `--explain` | off | list every drop reason rather than the top six |
-| `--format <mode>` | `text` | `text` or `json` |
-| `--db <path>` | opencode's store | where the history lives (`OPENCODE_DB`) |
-| `--mpc <bin>` | `mpc` | catalogue source (`MPC_BIN`) |
-| `--cmduse <bin>` | `cmduse` | account line (`CMDUSE_BIN`) |
-| `--no-account` | off | skip the `cmduse` account line |
-| `--no-color` | off | plain output (also honours `NO_COLOR`) |
+| flag                | default          | meaning                                                           |
+| ------------------- | ---------------- | ----------------------------------------------------------------- |
+| `--weight <mode>`   | `turn`           | `turn` (every req equal) or `session` (one vote per conversation) |
+| `--sessions <mode>` | `all`            | `all` includes subagent sessions; `user` drops them               |
+| `--since <date>`    | all time         | only asks on or after this date                                   |
+| `--project <dir>`   | all              | only sessions whose directory contains this                       |
+| `--model <text>`    | all              | only model rows whose name contains this                          |
+| `--limit <n>`       | all              | cap the number of model rows                                      |
+| `--sort <key>`      | `reqmo`          | `reqmo` (most requests first), `cost`, `name`                     |
+| `--explain`         | off              | list every drop reason rather than the top six                    |
+| `--format <mode>`   | `text`           | `text` or `json`                                                  |
+| `--db <path>`       | opencode's store | where the history lives (`OPENCODE_DB`)                           |
+| `--mpc <bin>`       | `mpc`            | catalogue source (`MPC_BIN`)                                      |
+| `--cmduse <bin>`    | `cmduse`         | account line (`CMDUSE_BIN`)                                       |
+| `--no-account`      | off              | skip the `cmduse` account line                                    |
+| `--no-color`        | off              | plain output (also honours `NO_COLOR`)                            |
 
 ### A model nobody sells
 
@@ -129,7 +129,7 @@ reqshape --in 0.15 --out 0.6 --cache-read 0.003 --budget 60 --five-hour 12 --wee
 
 ### Per side, and back into `mpc`
 
-`--format json` carries `sides.oc` and `sides.cc`: the same measured profile split by whose traffic it is (requests to `opencode*` vs the `CC_PREFIXES` ids), with each side's own request count. `mpc --shape measured` reads exactly that payload and prices each plan on its side's shape, so its estimated `req/mo` is "how many of *my* requests fit" instead of a fixed 800-in / 50K-cache / 200-out assumption.
+`--format json` carries `sides.oc` and `sides.cc`: the same measured profile split by whose traffic it is (requests to `opencode*` vs the `CC_PREFIXES` ids), with each side's own request count. `mpc --shape measured` reads exactly that payload and prices each plan on its side's shape, so its estimated `req/mo` is "how many of _my_ requests fit" instead of a fixed 800-in / 50K-cache / 200-out assumption.
 
 Runs take about 20 seconds: both `mpc` and `cmduse` go to the network.
 

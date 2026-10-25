@@ -13,9 +13,7 @@ function tempPath(): string {
 function v2Store(): string {
 	const path = tempPath();
 	const db = new Database(path);
-	db.run(
-		"CREATE TABLE session (id text primary key, parent_id text, directory text)",
-	);
+	db.run("CREATE TABLE session (id text primary key, parent_id text, directory text)");
 	db.run(
 		"CREATE TABLE session_message (id text primary key, session_id text, type text, seq integer, time_created integer, time_updated integer, data text)",
 	);
@@ -46,14 +44,7 @@ function v2Store(): string {
 		// Still streaming: model known, tokens absent.
 		["m3", "ses_a", "assistant", 2, 3_000, { model: { id: "glm-5.2" } }],
 		["m4", "ses_b", "synthetic", 0, 4_000, { text: "continue" }],
-		[
-			"m5",
-			"ses_b",
-			"assistant",
-			1,
-			5_000,
-			{ tokens: { input: 1, output: 1 } },
-		],
+		["m5", "ses_b", "assistant", 1, 5_000, { tokens: { input: 1, output: 1 } }],
 	];
 	for (const [id, session, type, seq, time, data] of rows) {
 		insert.run(id, session, type, seq, time, time, JSON.stringify(data));
@@ -69,15 +60,8 @@ function legacyStore(): string {
 	db.run(
 		"CREATE TABLE message (id text primary key, session_id text, time_created integer, time_updated integer, data text)",
 	);
-	const insert = db.prepare(
-		"INSERT INTO message VALUES (?, 'ses_1', ?, ?, ?)",
-	);
-	insert.run(
-		"m1",
-		1_000,
-		1_000,
-		JSON.stringify({ role: "user", text: "fix it" }),
-	);
+	const insert = db.prepare("INSERT INTO message VALUES (?, 'ses_1', ?, ?, ?)");
+	insert.run("m1", 1_000, 1_000, JSON.stringify({ role: "user", text: "fix it" }));
 	insert.run(
 		"m2",
 		2_000,
@@ -123,10 +107,7 @@ describe("readStore", () => {
 	test("reads the legacy layout with role and modelID", () => {
 		const store = readStore(legacyStore());
 		expect(store.layout).toBe("legacy");
-		expect(store.messages.map((m) => m.kind)).toEqual([
-			"user",
-			"assistant",
-		]);
+		expect(store.messages.map((m) => m.kind)).toEqual(["user", "assistant"]);
 		expect(store.messages[1]?.model).toBe("deepseek/deepseek-v4.1-flash");
 		expect(store.messages[1]?.tokens?.input).toBe(10);
 		// The legacy payload carries `providerID`; reading it is what lets a
@@ -137,9 +118,7 @@ describe("readStore", () => {
 	});
 
 	test("fails loudly when there is no store", () => {
-		expect(() => readStore("/nonexistent/opencode.db")).toThrow(
-			/no opencode store/,
-		);
+		expect(() => readStore("/nonexistent/opencode.db")).toThrow(/no opencode store/);
 	});
 
 	test("fails loudly on a store with neither layout", () => {

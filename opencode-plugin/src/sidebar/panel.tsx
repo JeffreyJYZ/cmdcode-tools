@@ -30,10 +30,7 @@ export interface HostTheme {
 		readonly base: RGBA;
 		readonly muted: RGBA;
 		readonly feedback: Readonly<
-			Record<
-				"success" | "warning" | "error" | "info",
-				{ readonly base: RGBA }
-			>
+			Record<"success" | "warning" | "error" | "info", { readonly base: RGBA }>
 		>;
 	};
 	readonly hue?: {
@@ -48,10 +45,7 @@ export interface HostTheme {
  * first and failed: terminals fold one-step-apart cyans onto the same ANSI
  * colour, so the headline rows read identical to the rest.
  */
-export function hostColors(
-	theme: HostTheme,
-	mode: "dark" | "light" = "dark",
-): PanelColors {
+export function hostColors(theme: HostTheme, mode: "dark" | "light" = "dark"): PanelColors {
 	return {
 		base: theme.text.base,
 		muted: theme.text.muted,
@@ -70,10 +64,7 @@ export function hostColors(
 }
 
 /** v1 hosts expose only a text/muted pair, so the semantic roles are literals. */
-export function legacyColors(theme: {
-	text: RGBA;
-	textMuted: RGBA;
-}): PanelColors {
+export function legacyColors(theme: { text: RGBA; textMuted: RGBA }): PanelColors {
 	return {
 		base: theme.text,
 		muted: theme.textMuted,
@@ -118,10 +109,7 @@ const spanStyle = (fg: RGBA): { style: { fg: RGBA } } =>
  * A headline row (the plan, the active model) is drawn whole in one shade: its
  * label and its value share the colour, rather than the label being tinted alone.
  */
-const rowColors = (
-	colors: PanelColors,
-	row: SidebarRow,
-): { label: RGBA; value: RGBA } =>
+const rowColors = (colors: PanelColors, row: SidebarRow): { label: RGBA; value: RGBA } =>
 	row[3]
 		? { label: colors.headline, value: colors.headline }
 		: { label: colors.label, value: colors[row[2] ?? "base"] };
@@ -139,9 +127,7 @@ function Row(props: { row: SidebarRow; colors: PanelColors }) {
 			<span {...spanStyle(fg.label)}>
 				<b>{label}</b>
 			</span>
-			<span {...spanStyle(fg.value)}>
-				{tone === "strong" ? <b>{value}</b> : value}
-			</span>
+			<span {...spanStyle(fg.value)}>{tone === "strong" ? <b>{value}</b> : value}</span>
 		</text>
 	);
 }
@@ -158,9 +144,7 @@ export function Panel(props: {
 				<text fg={props.colors().base}>
 					<b>{props.title()}</b>
 				</text>
-				<For each={props.rows()}>
-					{(row) => <Row row={row} colors={props.colors()} />}
-				</For>
+				<For each={props.rows()}>{(row) => <Row row={row} colors={props.colors()} />}</For>
 			</box>
 		</Show>
 	);

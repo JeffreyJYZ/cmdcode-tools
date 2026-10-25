@@ -8,9 +8,7 @@ import { SETS, TIERS, type Tier } from "#~/constants/cli.ts";
 function tierOf(options: Options): Tier {
 	const picked = TIERS.filter((tier) => options[tier]);
 	if (picked.length > 1) {
-		throw new Error(
-			`--${picked.join(" and --")} conflict — pick one column preset`,
-		);
+		throw new Error(`--${picked.join(" and --")} conflict — pick one column preset`);
 	}
 	return picked[0] ?? "detail";
 }

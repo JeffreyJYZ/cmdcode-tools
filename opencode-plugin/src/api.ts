@@ -4,11 +4,7 @@ function authHeaders(key: string): Record<string, string> {
 	return { Authorization: `Bearer ${key}`, Accept: "application/json" };
 }
 
-async function getJson(
-	path: string,
-	key: string,
-	timeoutMs = 10_000,
-): Promise<unknown> {
+async function getJson(path: string, key: string, timeoutMs = 10_000): Promise<unknown> {
 	const resp = await fetch(`${API_BASE}${path}`, {
 		headers: authHeaders(key),
 		signal: AbortSignal.timeout(timeoutMs),
@@ -83,10 +79,7 @@ export async function subscriptions(key: string): Promise<SubData> {
 }
 
 export async function credits(key: string): Promise<Credits> {
-	const r = (await getJson(
-		"/alpha/billing/credits",
-		key,
-	)) as Partial<Credits>;
+	const r = (await getJson("/alpha/billing/credits", key)) as Partial<Credits>;
 	return {
 		credits: {
 			monthlyCredits: r.credits?.monthlyCredits ?? 0,
@@ -98,9 +91,5 @@ export async function credits(key: string): Promise<Credits> {
 }
 
 export async function providerModels(key: string): Promise<ProviderModelsResp> {
-	return getJson(
-		"/provider/v1/models",
-		key,
-		15_000,
-	) as Promise<ProviderModelsResp>;
+	return getJson("/provider/v1/models", key, 15_000) as Promise<ProviderModelsResp>;
 }

@@ -2,15 +2,7 @@ import type { Projection } from "#~/market/project.ts";
 import type { AccountSummary } from "#~/market/sources.ts";
 import type { DropCount, Shape } from "#~/types.ts";
 import { bold, dim, fmtCount, fmtInt } from "./format.ts";
-import {
-	block,
-	dropLines,
-	measured,
-	models,
-	perReq,
-	position,
-	sides,
-} from "./sections.ts";
+import { block, dropLines, measured, models, perReq, position, sides } from "./sections.ts";
 import { tableBody, tableHeader, tableRule } from "./table.ts";
 
 export interface Report {
@@ -31,13 +23,9 @@ export function renderText(report: Report): string {
 
 	out.push(
 		`${bold("reqshape")}  ${fmtCount(shape.reqs)} reqs · ${
-			weight === "session"
-				? "each conversation one vote"
-				: "every req weighted equally"
+			weight === "session" ? "each conversation one vote" : "every req weighted equally"
 		}`,
-		dim(
-			`measured from the opencode ${report.layout} store · priced by mpc`,
-		),
+		dim(`measured from the opencode ${report.layout} store · priced by mpc`),
 		"",
 		...block("MEASURED", measured(shape)),
 		...block("DROPPED", dropLines(report.drops, report.explain)),
@@ -56,9 +44,7 @@ export function renderText(report: Report): string {
 		out.push("no model rows to price");
 	} else {
 		out.push(
-			...block("PROJECTED", [
-				dim("what the plan's allowance buys at the measured shape"),
-			]),
+			...block("PROJECTED", [dim("what the plan's allowance buys at the measured shape")]),
 			"",
 			tableHeader(),
 			tableRule(),
@@ -67,16 +53,12 @@ export function renderText(report: Report): string {
 		);
 		if (report.total > projections.length) {
 			out.push(
-				dim(
-					`showing ${fmtInt(projections.length)} of ${fmtInt(report.total)} model-plans`,
-				),
+				dim(`showing ${fmtInt(projections.length)} of ${fmtInt(report.total)} model-plans`),
 			);
 		}
 		if (projections.some((projection) => projection.cacheAtInput)) {
 			out.push(
-				dim(
-					"* publishes no cache-read rate, so the context is billed at the input rate",
-				),
+				dim("* publishes no cache-read rate, so the context is billed at the input rate"),
 			);
 		}
 	}

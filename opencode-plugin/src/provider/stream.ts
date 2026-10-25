@@ -26,15 +26,8 @@ export function sseDecoder(
 			const line = buffer.slice(0, nl).replace(/\r$/, "");
 			buffer = buffer.slice(nl + 1);
 			const trimmed = line.trim();
-			if (
-				!trimmed ||
-				trimmed.startsWith(":") ||
-				trimmed.startsWith("event:")
-			)
-				continue;
-			const payload = trimmed.startsWith("data:")
-				? trimmed.slice(5).trim()
-				: trimmed;
+			if (!trimmed || trimmed.startsWith(":") || trimmed.startsWith("event:")) continue;
+			const payload = trimmed.startsWith("data:") ? trimmed.slice(5).trim() : trimmed;
 			if (!payload || payload === "[DONE]") continue;
 			try {
 				const parsed = JSON.parse(payload);
@@ -48,17 +41,11 @@ export function sseDecoder(
 }
 
 const text = (v: unknown): string => (typeof v === "string" ? v : "");
-const num = (v: unknown): number =>
-	typeof v === "number" && Number.isFinite(v) ? v : 0;
+const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
 const rec = (v: unknown): Record<string, unknown> =>
 	v && typeof v === "object" ? (v as Record<string, unknown>) : {};
 
-const TOOL_FINISH = new Set([
-	"tool_use",
-	"tool_calls",
-	"tool-call",
-	"function_call",
-]);
+const TOOL_FINISH = new Set(["tool_use", "tool_calls", "tool-call", "function_call"]);
 const LENGTH_FINISH = new Set([
 	"length",
 	"max_tokens",
@@ -67,9 +54,7 @@ const LENGTH_FINISH = new Set([
 ]);
 
 /** Wire stop reason → unified v3 finish reason; unknown reasons completed. */
-export function finishReason(
-	raw: string | undefined,
-): LanguageModelV3FinishReason {
+export function finishReason(raw: string | undefined): LanguageModelV3FinishReason {
 	const value = (raw ?? "unknown").toLowerCase();
 	if (TOOL_FINISH.has(value)) return { unified: "tool-calls", raw };
 	if (LENGTH_FINISH.has(value)) return { unified: "length", raw };
@@ -96,9 +81,7 @@ function usageFrom(
 }
 
 /** Anthropic `message_start`/`message_delta` usage → v3 usage. */
-export function anthropicUsage(
-	raw: Record<string, unknown>,
-): LanguageModelV3Usage {
+export function anthropicUsage(raw: Record<string, unknown>): LanguageModelV3Usage {
 	const total = num(raw.input_tokens);
 	const cacheRead = num(raw.cache_read_input_tokens);
 	const cacheWrite = num(raw.cache_creation_input_tokens);
@@ -114,21 +97,12 @@ export function anthropicUsage(
 }
 
 /** OpenAI usage → v3 usage (`prompt_tokens_details.cached_tokens` is cache read). */
-export function openaiUsage(
-	raw: Record<string, unknown>,
-): LanguageModelV3Usage {
+export function openaiUsage(raw: Record<string, unknown>): LanguageModelV3Usage {
 	const total = num(raw.prompt_tokens);
 	const cached = num(rec(raw.prompt_tokens_details).cached_tokens);
 	const output = num(raw.completion_tokens);
 	const reasoning = num(rec(raw.completion_tokens_details).reasoning_tokens);
-	return usageFrom(
-		total,
-		Math.max(0, total - cached),
-		cached,
-		0,
-		output,
-		reasoning,
-	);
+	return usageFrom(total, Math.max(0, total - cached), cached, 0, output, reasoning);
 }
 
 export interface Reducer {
@@ -148,9 +122,7 @@ export function anthropicReducer(): Reducer {
 	const open = (index: number, kind: "text" | "thinking"): Part[] => {
 		const id = `${kind === "text" ? "text" : "reasoning"}-${index}`;
 		blocks.set(index, { type: kind, id });
-		return [
-			{ type: kind === "text" ? "text-start" : "reasoning-start", id },
-		];
+		return [{ type: kind === "text" ? "text-start" : "reasoning-start", id }];
 	};
 
 	return {
@@ -187,25 +159,15 @@ export function anthropicReducer(): Reducer {
 				const block = blocks.get(index);
 				const textDelta = text(delta.text);
 				if (textDelta) {
-					const parts =
-						block?.type === "text" ? [] : open(index, "text");
+					const parts = block?.type === "text" ? [] : open(index, "text");
 					const id = blocks.get(index)?.id ?? `text-${index}`;
-					return [
-						...parts,
-						{ type: "text-delta", id, delta: textDelta },
-					];
+					return [...parts, { type: "text-delta", id, delta: textDelta }];
 				}
 				const thinking = text(delta.thinking);
 				if (thinking) {
-					const parts =
-						block?.type === "thinking"
-							? []
-							: open(index, "thinking");
+					const parts = block?.type === "thinking" ? [] : open(index, "thinking");
 					const id = blocks.get(index)?.id ?? `reasoning-${index}`;
-					return [
-						...parts,
-						{ type: "reasoning-delta", id, delta: thinking },
-					];
+					return [...parts, { type: "reasoning-delta", id, delta: thinking }];
 				}
 				const partial = text(delta.partial_json);
 				if (partial && block?.type === "tool_use") {
@@ -224,12 +186,9 @@ export function anthropicReducer(): Reducer {
 				const block = blocks.get(index);
 				if (!block) return [];
 				blocks.delete(index);
-				if (block.type === "text")
-					return [{ type: "text-end", id: block.id }];
-				if (block.type === "thinking")
-					return [{ type: "reasoning-end", id: block.id }];
-				if (block.type === "tool_use")
-					return [{ type: "tool-input-end", id: block.id }];
+				if (block.type === "text") return [{ type: "text-end", id: block.id }];
+				if (block.type === "thinking") return [{ type: "reasoning-end", id: block.id }];
+				if (block.type === "tool_use") return [{ type: "tool-input-end", id: block.id }];
 				return [];
 			}
 			if (type === "message_delta") {
@@ -262,12 +221,9 @@ export function anthropicReducer(): Reducer {
 		close() {
 			const parts: Part[] = [];
 			for (const block of blocks.values()) {
-				if (block.type === "text")
-					parts.push({ type: "text-end", id: block.id });
-				if (block.type === "thinking")
-					parts.push({ type: "reasoning-end", id: block.id });
-				if (block.type === "tool_use")
-					parts.push({ type: "tool-input-end", id: block.id });
+				if (block.type === "text") parts.push({ type: "text-end", id: block.id });
+				if (block.type === "thinking") parts.push({ type: "reasoning-end", id: block.id });
+				if (block.type === "tool_use") parts.push({ type: "tool-input-end", id: block.id });
 			}
 			blocks.clear();
 			return parts;
@@ -354,8 +310,7 @@ export function openaiReducer(): Reducer {
 			const choice = rec(choices[0]);
 			const delta = rec(choice.delta);
 
-			const reasoning =
-				text(delta.reasoning) || text(delta.reasoning_content);
+			const reasoning = text(delta.reasoning) || text(delta.reasoning_content);
 			if (reasoning) {
 				if (!reasoningId) {
 					parts.push(...closeText());
@@ -377,18 +332,13 @@ export function openaiReducer(): Reducer {
 				}
 				parts.push({ type: "text-delta", id: textId, delta: content });
 			}
-			const calls = Array.isArray(delta.tool_calls)
-				? delta.tool_calls
-				: [];
+			const calls = Array.isArray(delta.tool_calls) ? delta.tool_calls : [];
 			if (calls.length > 0) {
 				parts.push(...closeReasoning(), ...closeText());
 				for (const raw of calls) {
 					const call = rec(raw);
 					const fn = rec(call.function);
-					const index =
-						typeof call.index === "number"
-							? call.index
-							: tools.size;
+					const index = typeof call.index === "number" ? call.index : tools.size;
 					let buffer = tools.get(index);
 					if (!buffer) {
 						buffer = {
@@ -442,17 +392,9 @@ export function openaiReducer(): Reducer {
 			// the run's end: with stream_options.include_usage the real tokens ride
 			// that last chunk, and emitting on the finish_reason chunk would report
 			// zeros. A provider that never sends usage gets its finish from close().
-			if (
-				pending &&
-				!finished &&
-				(usage !== undefined || choices.length === 0)
-			) {
+			if (pending && !finished && (usage !== undefined || choices.length === 0)) {
 				finished = true;
-				parts.push(
-					...closeReasoning(),
-					...closeText(),
-					...flushTools(),
-				);
+				parts.push(...closeReasoning(), ...closeText(), ...flushTools());
 				parts.push({
 					type: "finish",
 					finishReason: pending,
@@ -462,11 +404,7 @@ export function openaiReducer(): Reducer {
 			return parts;
 		},
 		close() {
-			const parts = [
-				...closeReasoning(),
-				...closeText(),
-				...flushTools(),
-			];
+			const parts = [...closeReasoning(), ...closeText(), ...flushTools()];
 			if (pending && !finished) {
 				finished = true;
 				parts.push({

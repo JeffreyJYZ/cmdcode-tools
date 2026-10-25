@@ -31,11 +31,8 @@ function cachePath(): string {
 /** Never throws: a missing or corrupt cache is simply "no cache". */
 export async function readModelsCache(): Promise<ModelsCache | undefined> {
 	try {
-		const parsed = JSON.parse(
-			await readFile(cachePath(), "utf8"),
-		) as ModelsCache;
-		if (!Array.isArray(parsed.claude) || !Array.isArray(parsed.open))
-			return undefined;
+		const parsed = JSON.parse(await readFile(cachePath(), "utf8")) as ModelsCache;
+		if (!Array.isArray(parsed.claude) || !Array.isArray(parsed.open)) return undefined;
 		return parsed;
 	} catch {
 		return undefined;
@@ -54,10 +51,7 @@ export async function writeModelsCache(cache: ModelsCache): Promise<void> {
 }
 
 /** True when two lists differ by ids (the only thing a picker shows). */
-export function idsDiffer(
-	a: readonly CachedModel[],
-	b: readonly CachedModel[],
-): boolean {
+export function idsDiffer(a: readonly CachedModel[], b: readonly CachedModel[]): boolean {
 	if (a.length !== b.length) return true;
 	const left = new Set(a.map((m) => m.id));
 	return b.some((m) => !left.has(m.id));

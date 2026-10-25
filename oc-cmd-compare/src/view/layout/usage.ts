@@ -85,9 +85,7 @@ function headToHeadLine(report: UsageProjection): string {
 	}
 	const excluded = head.total - head.shared;
 	const note =
-		excluded > 0
-			? ` (${excluded} one-sided row${excluded === 1 ? "" : "s"} excluded)`
-			: "";
+		excluded > 0 ? ` (${excluded} one-sided row${excluded === 1 ? "" : "s"} excluded)` : "";
 	const delta = Math.abs(head.cc - head.oc);
 	const pct = head.cc > 0 ? (delta / head.cc) * 100 : 0;
 	const verdict =
@@ -129,9 +127,7 @@ export function renderUsage(report: UsageProjection, meta: UsageMeta): void {
 	const line = (values: string[], rightSet: Set<number>): string =>
 		values
 			.map((v, i) =>
-				rightSet.has(i)
-					? v.padStart(widths[i] ?? 0)
-					: v.padEnd(widths[i] ?? 0),
+				rightSet.has(i) ? v.padStart(widths[i] ?? 0) : v.padEnd(widths[i] ?? 0),
 			)
 			.join("  ");
 	const right = new Set([1, 2, 3, 4, 5, 6]);
@@ -149,15 +145,11 @@ export function renderUsage(report: UsageProjection, meta: UsageMeta): void {
 	console.log(
 		`${paint(SGR.bold, "plans")}   ${planTitle(meta.plans["oc-go"])} $${meta.plans["oc-go"].price}/mo · ${planTitle(meta.plans.cc)} $${meta.plans.cc.price}/mo`,
 	);
-	const over = report.rows
-		.filter((r) => r.cc?.overCap || r.oc?.overCap)
-		.map((r) => r.name);
+	const over = report.rows.filter((r) => r.cc?.overCap || r.oc?.overCap).map((r) => r.name);
 	if (over.length > 0) {
 		console.log(dim(`over cap for at least one plan: ${over.join(", ")}`));
 	}
 	if (report.unmatched.length > 0) {
-		console.log(
-			dim(`unmatched models (excluded): ${report.unmatched.join(", ")}`),
-		);
+		console.log(dim(`unmatched models (excluded): ${report.unmatched.join(", ")}`));
 	}
 }

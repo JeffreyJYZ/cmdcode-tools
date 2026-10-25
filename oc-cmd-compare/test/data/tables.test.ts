@@ -16,15 +16,9 @@ describe("parseMoney", () => {
 		expect(parseMoney("—")).toBeNull();
 	});
 	test("strikethrough picks the current price", () => {
-		expect(
-			parseMoney(`$2.00${BOUNDARY}$1.20${BOUNDARY}+1${BOUNDARY}`),
-		).toBe(1.2);
+		expect(parseMoney(`$2.00${BOUNDARY}$1.20${BOUNDARY}+1${BOUNDARY}`)).toBe(1.2);
 	});
 	test("trailing multiplier note is not merged", () => {
-		expect(
-			parseMoney(
-				`$15${BOUNDARY} $60${BOUNDARY}4x · Ends Sep 27${BOUNDARY}`,
-			),
-		).toBe(60);
+		expect(parseMoney(`$15${BOUNDARY} $60${BOUNDARY}4x · Ends Sep 27${BOUNDARY}`)).toBe(60);
 	});
 });

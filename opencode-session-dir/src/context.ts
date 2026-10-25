@@ -9,16 +9,13 @@ import { join } from "node:path";
 
 const CONTEXT_FILES = ["AGENTS.md", "CLAUDE.md", ".agents/AGENTS.md"] as const;
 
-const shouldInjectContext = (): boolean =>
-	process.env.OPENCODE_SESSION_DIR_INJECT_CONTEXT === "1";
+const shouldInjectContext = (): boolean => process.env.OPENCODE_SESSION_DIR_INJECT_CONTEXT === "1";
 
 export function contextSection(dirs: string[]): string[] {
 	if (dirs.length === 0) return [];
 
 	const listed = dirs.map((dir) => `- ${dir}`).join("\n");
-	const sections = [
-		`Directories bound to this session (use them at their paths):\n${listed}`,
-	];
+	const sections = [`Directories bound to this session (use them at their paths):\n${listed}`];
 
 	if (!shouldInjectContext()) return sections;
 

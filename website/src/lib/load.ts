@@ -74,9 +74,6 @@ export async function loadProjectDoc(project: Project): Promise<ProjectDoc> {
 	};
 	// Strip the lead paragraph before link rewriting so the line still matches
 	// the `description` it was derived from (a relative link would have moved it).
-	const body = rewriteLinks(
-		stripLeadParagraph(stripLeadingH1(stripped), description),
-		ctx,
-	);
+	const body = rewriteLinks(stripLeadParagraph(stripLeadingH1(stripped), description), ctx);
 	return { title, description, body, toc: extractToc(body) };
 }

@@ -43,25 +43,17 @@ describe("canonicalizeModelId", () => {
 		expect(canonicalizeModelId("claude-sonnet-5")).toBe("claude-sonnet-5");
 	});
 	test("case-insensitive", () => {
-		expect(canonicalizeModelId("minimaxai/minimax-m2.5")).toBe(
-			"MiniMaxAI/MiniMax-M2.5",
-		);
+		expect(canonicalizeModelId("minimaxai/minimax-m2.5")).toBe("MiniMaxAI/MiniMax-M2.5");
 	});
 	test("deprecated alias", () => {
 		expect(canonicalizeModelId("claude-opus-4-6")).toBe("claude-opus-4-7");
-		expect(canonicalizeModelId("claude-haiku-4-5")).toBe(
-			"claude-haiku-4-5-20251001",
-		);
+		expect(canonicalizeModelId("claude-haiku-4-5")).toBe("claude-haiku-4-5-20251001");
 	});
 	test("date suffix stripped", () => {
-		expect(canonicalizeModelId("claude-opus-4-7-20251101")).toBe(
-			"claude-opus-4-7",
-		);
+		expect(canonicalizeModelId("claude-opus-4-7-20251101")).toBe("claude-opus-4-7");
 	});
 	test("unknown passes through", () => {
-		expect(canonicalizeModelId("totally-new-model")).toBe(
-			"totally-new-model",
-		);
+		expect(canonicalizeModelId("totally-new-model")).toBe("totally-new-model");
 	});
 });
 
@@ -69,12 +61,8 @@ describe("gating tables match CLI", () => {
 	test("go plan blocks muse-spark-1.2 + grok-4.6", () => {
 		const rules = PLAN_RULES["individual-go"];
 		expect(rules?.allowedCategories).toEqual(["opensource"]);
-		expect(rules?.blockedModels).toContain(
-			"vercel-ai-gateway:meta/muse-spark-1.2",
-		);
-		expect(rules?.blockedModels).toContain(
-			"vercel-ai-gateway:xai/grok-4.6",
-		);
+		expect(rules?.blockedModels).toContain("vercel-ai-gateway:meta/muse-spark-1.2");
+		expect(rules?.blockedModels).toContain("vercel-ai-gateway:xai/grok-4.6");
 	});
 	test("pro blocks opus + fable, allows sonnet", () => {
 		const rules = PLAN_RULES["individual-pro"];
@@ -83,30 +71,22 @@ describe("gating tables match CLI", () => {
 	});
 	test("categories", () => {
 		expect(MODEL_CATEGORIES["claude-sonnet-5"]).toBe("premium");
-		expect(MODEL_CATEGORIES["deepseek/deepseek-v4-flash"]).toBe(
-			"opensource",
-		);
+		expect(MODEL_CATEGORIES["deepseek/deepseek-v4-flash"]).toBe("opensource");
 	});
 });
 
 describe("evaluateModelAccess (edges beyond conformance vectors)", () => {
 	test("newer sibling of premium model inherits premium (claude-fable-5-1)", () => {
-		expect(evaluateModelAccess("claude-fable-5-1", goat).allowed).toBe(
-			false,
-		);
+		expect(evaluateModelAccess("claude-fable-5-1", goat).allowed).toBe(false);
 	});
 	test("version-bumped id with no prefix sibling defaults to allow (API enforces)", () => {
 		expect(evaluateModelAccess("claude-sonnet-6", goat).allowed).toBe(true);
 	});
 	test("unprefixed unknown model on gated plan defaults opensource", () => {
-		expect(
-			evaluateModelAccess("newvendor/new-open-model", goat).allowed,
-		).toBe(true);
+		expect(evaluateModelAccess("newvendor/new-open-model", goat).allowed).toBe(true);
 	});
 	test("empirically hard-blocked model on GOAT (API 403 MODEL_NOT_IN_PLAN)", () => {
-		expect(evaluateModelAccess("meta/muse-spark-1.1", goat).allowed).toBe(
-			false,
-		);
+		expect(evaluateModelAccess("meta/muse-spark-1.1", goat).allowed).toBe(false);
 	});
 	test("purchased credits override hard block", () => {
 		expect(
@@ -155,12 +135,8 @@ describe("tool registrations", () => {
 		]);
 		expect(plugin.tool.cmd_usage.description).toBe(TOOL_DESCRIPTION);
 		expect(plugin.tool.mpc_prices.description).toBe(MPC_TOOL_DESCRIPTION);
-		expect(plugin.tool.ocuse_usage.description).toBe(
-			OCUSE_TOOL_DESCRIPTION,
-		);
-		expect(plugin.tool.arkuse_usage.description).toBe(
-			ARKUSE_TOOL_DESCRIPTION,
-		);
+		expect(plugin.tool.ocuse_usage.description).toBe(OCUSE_TOOL_DESCRIPTION);
+		expect(plugin.tool.arkuse_usage.description).toBe(ARKUSE_TOOL_DESCRIPTION);
 		const schema = z.object(plugin.tool.mpc_prices.args);
 		expect(schema.parse({})).toEqual({});
 		expect(schema.parse({ arg: "--json" })).toEqual({ arg: "--json" });
@@ -205,19 +181,13 @@ describe("tool registrations", () => {
 		]);
 		const mpc = added.find((t) => t.name === "mpc_prices");
 		expect(mpc?.description).toBe(MPC_TOOL_DESCRIPTION);
-		expect(mpc?.input.properties.arg.description).toBe(
-			MPC_TOOL_ARG_DESCRIPTION,
-		);
+		expect(mpc?.input.properties.arg.description).toBe(MPC_TOOL_ARG_DESCRIPTION);
 		const ocuse = added.find((t) => t.name === "ocuse_usage");
 		expect(ocuse?.description).toBe(OCUSE_TOOL_DESCRIPTION);
-		expect(ocuse?.input.properties.arg.description).toBe(
-			OCUSE_TOOL_ARG_DESCRIPTION,
-		);
+		expect(ocuse?.input.properties.arg.description).toBe(OCUSE_TOOL_ARG_DESCRIPTION);
 		const arkuse = added.find((t) => t.name === "arkuse_usage");
 		expect(arkuse?.description).toBe(ARKUSE_TOOL_DESCRIPTION);
-		expect(arkuse?.input.properties.arg.description).toBe(
-			ARKUSE_TOOL_ARG_DESCRIPTION,
-		);
+		expect(arkuse?.input.properties.arg.description).toBe(ARKUSE_TOOL_ARG_DESCRIPTION);
 	});
 	test("mpc_prices description answers cost per request and per month", () => {
 		expect(MPC_TOOL_DESCRIPTION).toContain("per request");

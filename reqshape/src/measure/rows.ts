@@ -24,9 +24,7 @@ export interface RawMessage {
 }
 
 export function object(value: unknown): Record<string, unknown> {
-	return value !== null && typeof value === "object"
-		? (value as Record<string, unknown>)
-		: {};
+	return value !== null && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
 export function text(value: unknown): string {
@@ -116,8 +114,7 @@ export function readLegacy(db: Database): RawMessage[] {
 			sessionID: row.session_id,
 			kind: text(data.role),
 			time: row.time_created,
-			text:
-				text(data.text) || (typeof content === "string" ? content : ""),
+			text: text(data.text) || (typeof content === "string" ? content : ""),
 			model: text(data.modelID),
 			// The legacy payload records `providerID` too; hardcoding "" here
 			// made every legacy session emit no `sides` at all.

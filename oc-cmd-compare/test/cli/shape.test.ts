@@ -2,11 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { chmodSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-	SHAPE_AUTO,
-	SHAPE_GUARD_ENV,
-	SHAPE_MIN_REQS,
-} from "#~/constants/shape.ts";
+import { SHAPE_AUTO, SHAPE_GUARD_ENV, SHAPE_MIN_REQS } from "#~/constants/shape.ts";
 import { loadShapes, reqsOf, workloadOf } from "#~/data/shape.ts";
 
 const PROFILE = {
@@ -45,9 +41,7 @@ describe("workloadOf", () => {
 	});
 
 	test("falls back to shape.perReq for an older payload", () => {
-		expect(
-			workloadOf(JSON.stringify({ shape: { perReq: PROFILE } })),
-		).toEqual(PROFILE);
+		expect(workloadOf(JSON.stringify({ shape: { perReq: PROFILE } }))).toEqual(PROFILE);
 	});
 
 	test("a payload with no profile yields nothing", () => {
@@ -76,8 +70,7 @@ describe("loadShapes", () => {
 
 	test("a missing file falls back rather than throwing", async () => {
 		expect(
-			(await loadShapes(join(tmpdir(), "mpc-no-such-shape.json")))
-				.workload,
+			(await loadShapes(join(tmpdir(), "mpc-no-such-shape.json"))).workload,
 		).toBeUndefined();
 	});
 });

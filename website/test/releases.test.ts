@@ -1,15 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import {
-	buildTimeline,
-	groupTimeline,
-	type ReleasesSnapshot,
-	sourceLabel,
-} from "@/lib/releases";
+import { buildTimeline, groupTimeline, type ReleasesSnapshot, sourceLabel } from "@/lib/releases";
 
-const GH_URL =
-	"https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.8.0";
-const NPM_URL =
-	"https://www.npmjs.com/package/@jeffreyjyz/opencode-context/v/0.1.1";
+const GH_URL = "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.8.0";
+const NPM_URL = "https://www.npmjs.com/package/@jeffreyjyz/opencode-context/v/0.1.1";
 const CRATE_URL = "https://crates.io/crates/cmd-usage/0.7.7";
 
 /** One entry per source, dated so newest-first ordering is unambiguous. */
@@ -50,9 +43,7 @@ const fixture: ReleasesSnapshot = {
 
 describe("buildTimeline — empty inputs", () => {
 	test("an empty GitHub list yields no entries (no throw)", () => {
-		expect(
-			buildTimeline({ generatedAt: "", github: [], npm: [], crates: [] }),
-		).toEqual([]);
+		expect(buildTimeline({ generatedAt: "", github: [], npm: [], crates: [] })).toEqual([]);
 		expect(buildTimeline({ github: [] })).toEqual([]);
 	});
 
@@ -77,9 +68,7 @@ describe("buildTimeline — mixed fixture", () => {
 	test("attaches the source URL to each entry", () => {
 		const entries = buildTimeline(fixture);
 		expect(entries.find((e) => e.version === "0.1.1")?.url).toBe(NPM_URL);
-		expect(entries.find((e) => e.package === "cmd-usage")?.url).toBe(
-			CRATE_URL,
-		);
+		expect(entries.find((e) => e.package === "cmd-usage")?.url).toBe(CRATE_URL);
 		expect(entries.find((e) => e.package === "cmduse")?.url).toBe(GH_URL);
 	});
 
@@ -89,9 +78,7 @@ describe("buildTimeline — mixed fixture", () => {
 		expect(release?.version).toBe("0.8.0");
 		expect(release?.notes).toContain("Full Changelog");
 		// Registry entries have no notes.
-		expect(
-			entries.find((e) => e.package === "cmd-usage")?.notes,
-		).toBeUndefined();
+		expect(entries.find((e) => e.package === "cmd-usage")?.notes).toBeUndefined();
 	});
 
 	test("every entry has the required fields", () => {
@@ -145,9 +132,7 @@ describe("the committed snapshot", () => {
 		const snapshot = (await Bun.file(
 			new URL("../src/data/releases.json", import.meta.url),
 		).json()) as ReleasesSnapshot;
-		const placeholders = snapshot.npm.filter((r) =>
-			r.version.startsWith("0.0.0-"),
-		);
+		const placeholders = snapshot.npm.filter((r) => r.version.startsWith("0.0.0-"));
 		expect(placeholders).toEqual([]);
 	});
 });

@@ -67,45 +67,26 @@ describe("parseModalities", () => {
 });
 
 describe("text-only denylist (1.65+ modality default)", () => {
-	const withDenylist =
-		'Rr=new Set(["zai-org/GLM-5.3","MiniMaxAI/MiniMax-M2.7"])';
+	const withDenylist = 'Rr=new Set(["zai-org/GLM-5.3","MiniMaxAI/MiniMax-M2.7"])';
 	test("parses the denied ids", () => {
-		expect(parseTextOnly(withDenylist)).toEqual([
-			"zai-org/GLM-5.3",
-			"MiniMaxAI/MiniMax-M2.7",
-		]);
+		expect(parseTextOnly(withDenylist)).toEqual(["zai-org/GLM-5.3", "MiniMaxAI/MiniMax-M2.7"]);
 	});
 	test("denied ids are text-only, everything else accepts images", () => {
-		const denied = new Set(
-			parseTextOnly(withDenylist).map((id) => id.toLowerCase()),
-		);
+		const denied = new Set(parseTextOnly(withDenylist).map((id) => id.toLowerCase()));
 		expect(modalitiesFor("zai-org/GLM-5.3", {}, denied)).toEqual(["text"]);
-		expect(modalitiesFor("claude-sonnet-5", {}, denied)).toEqual([
-			"text",
-			"image",
-		]);
+		expect(modalitiesFor("claude-sonnet-5", {}, denied)).toEqual(["text", "image"]);
 	});
 	test("an explicit record still wins", () => {
 		expect(
-			modalitiesFor(
-				"claude-sonnet-5",
-				{ "claude-sonnet-5": ["text"] },
-				new Set(),
-			),
+			modalitiesFor("claude-sonnet-5", { "claude-sonnet-5": ["text"] }, new Set()),
 		).toEqual(["text"]);
 	});
 });
 
 describe("mergeCatalog", () => {
 	test("joins pricing with modalities, defaulting to text", () => {
-		const catalog = mergeCatalog(
-			parseModelsMd(MD),
-			parseModalities(BUNDLE),
-		);
-		expect(catalog["claude-sonnet-5"]?.modalities).toEqual([
-			"text",
-			"image",
-		]);
+		const catalog = mergeCatalog(parseModelsMd(MD), parseModalities(BUNDLE));
+		expect(catalog["claude-sonnet-5"]?.modalities).toEqual(["text", "image"]);
 		expect(catalog["deepseek/x"]?.modalities).toEqual(["text"]);
 	});
 });
@@ -117,9 +98,7 @@ describe("generated catalog", () => {
 	});
 	test("flags vision, prices and reasoning from the table", () => {
 		expect(supportsImage("claude-sonnet-5")).toBe(true);
-		expect(supportsImage("deepseek/deepseek-v4-flash-vision-exp")).toBe(
-			true,
-		);
+		expect(supportsImage("deepseek/deepseek-v4-flash-vision-exp")).toBe(true);
 		expect(inputModalities("definitely/not-a-model")).toEqual(["text"]);
 		expect(modelCost("deepseek/deepseek-v4.1-flash")).toEqual({
 			input: 0.15,
@@ -153,10 +132,7 @@ describe("v2 model capabilities", () => {
 		expect(info.capabilities.input).toEqual(["text", "image"]);
 	});
 	test("stays text-only for an unlisted model", () => {
-		const info = toV2Model(
-			{ id: "unknown/model", name: "?", contextLength: 0 },
-			lane,
-		) as {
+		const info = toV2Model({ id: "unknown/model", name: "?", contextLength: 0 }, lane) as {
 			capabilities: { input: string[] };
 		};
 		expect(info.capabilities.input).toEqual(["text"]);

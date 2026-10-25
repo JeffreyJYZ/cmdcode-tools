@@ -46,38 +46,25 @@ const rows: SidebarRow[] = [
 describe("rendered panel", () => {
 	test("labels and values carry different colours", async () => {
 		const setup = await testRender(
-			() => (
-				<Panel
-					title={() => "Command Code"}
-					rows={() => rows}
-					colors={() => colors}
-				/>
-			),
+			() => <Panel title={() => "Command Code"} rows={() => rows} colors={() => colors} />,
 			{ width: 42, height: 12 },
 		);
 		await setup.renderOnce();
 		const frame = setup.captureSpans();
 		const spans = frame.lines.flatMap((line) => line.spans);
-		const find = (text: string) =>
-			spans.find((span) => span.text.includes(text));
+		const find = (text: string) => spans.find((span) => span.text.includes(text));
 
 		// The point of the whole exercise: no row may collapse to one colour,
 		// and labels wear their own hue rather than the value's.
 		expect(hex(find("Tier: ")?.fg as RGBA)).toBe(hex(colors.label));
 		// The two headline rows are whole-line: label and value share one shade.
 		expect(hex(find("Plan: ")?.fg as RGBA)).toBe(hex(colors.headline));
-		expect(hex(find("GOAT · $70/mo credits")?.fg as RGBA)).toBe(
-			hex(colors.headline),
-		);
+		expect(hex(find("GOAT · $70/mo credits")?.fg as RGBA)).toBe(hex(colors.headline));
 		expect(hex(find("Model: ")?.fg as RGBA)).toBe(hex(colors.headline));
-		expect(hex(find("DeepSeek V4.1 Flash")?.fg as RGBA)).toBe(
-			hex(colors.headline),
-		);
+		expect(hex(find("DeepSeek V4.1 Flash")?.fg as RGBA)).toBe(hex(colors.headline));
 		expect(hex(colors.headline)).not.toBe(hex(colors.label));
 		expect(hex(find("open source")?.fg as RGBA)).toBe(hex(colors.base));
-		expect(hex(find("$57.40 / $70 (82%)")?.fg as RGBA)).toBe(
-			hex(colors.warn),
-		);
+		expect(hex(find("$57.40 / $70 (82%)")?.fg as RGBA)).toBe(hex(colors.warn));
 		expect(hex(colors.label)).not.toBe(hex(colors.base));
 
 		// Labels are bold (attributes set), values are not.
@@ -126,11 +113,7 @@ describe("rendered panel", () => {
 		);
 		const setup = await testRender(
 			() => (
-				<Panel
-					title={() => "OpenCode Go"}
-					rows={() => zen}
-					colors={() => mono(colors)}
-				/>
+				<Panel title={() => "OpenCode Go"} rows={() => zen} colors={() => mono(colors)} />
 			),
 			{ width: 42, height: 16 },
 		);
@@ -149,11 +132,7 @@ describe("rendered panel", () => {
 		// users see: plain text and dim only, no cyan, no amber, no headline hue.
 		const setup = await testRender(
 			() => (
-				<Panel
-					title={() => "Command Code"}
-					rows={() => rows}
-					colors={() => mono(colors)}
-				/>
+				<Panel title={() => "Command Code"} rows={() => rows} colors={() => mono(colors)} />
 			),
 			{ width: 42, height: 12 },
 		);

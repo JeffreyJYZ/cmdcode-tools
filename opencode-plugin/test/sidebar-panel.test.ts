@@ -1,10 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { RGBA, TextNodeRenderable } from "@opentui/core";
-import {
-	hostColors,
-	legacyColors,
-	type PanelColors,
-} from "../src/sidebar/panel";
+import { hostColors, legacyColors, type PanelColors } from "../src/sidebar/panel";
 
 /** Distinct values so a mis-wired token shows up as the wrong colour. */
 const c = (r: number) => RGBA.fromValues(r, 0.5, 0.5, 1);
@@ -43,21 +39,12 @@ describe("panel colours", () => {
 		// Every other tone comes from the text palette, so the peach `primary` /
 		// `interactive` scales (the earlier dark orange) cannot reach a row.
 		const plain = hostColors(theme);
-		for (const tone of [
-			"base",
-			"muted",
-			"strong",
-			"ok",
-			"warn",
-			"crit",
-		] as const) {
+		for (const tone of ["base", "muted", "strong", "ok", "warn", "crit"] as const) {
 			expect(dark[tone]).toBe(plain[tone]);
 		}
 		// Light themes put a peach in the accent slot, so headlines keep the
 		// label hue there instead of turning orange.
-		expect(hostColors(accented, "light").headline).toBe(
-			hostColors(accented, "light").label,
-		);
+		expect(hostColors(accented, "light").headline).toBe(hostColors(accented, "light").label);
 	});
 
 	test("legacy hosts keep their text pair and get literal semantic colours", () => {
@@ -82,10 +69,7 @@ describe("panel colours", () => {
 		const label = TextNodeRenderable.fromString("Tier: ", { fg: c(0.5) });
 		label.add(TextNodeRenderable.fromString("open source", { fg: c(0.9) }));
 		const chunks = label.gatherWithInheritedStyle();
-		expect(chunks.map((chunk) => chunk.text)).toEqual([
-			"Tier: ",
-			"open source",
-		]);
+		expect(chunks.map((chunk) => chunk.text)).toEqual(["Tier: ", "open source"]);
 		const [head, tail] = chunks;
 		expect(head?.fg?.r).toBeCloseTo(0.5);
 		expect(tail?.fg?.r).toBeCloseTo(0.9);

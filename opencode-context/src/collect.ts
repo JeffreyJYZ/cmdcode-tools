@@ -6,11 +6,7 @@
  * numbers describe the window that is actually loaded.
  */
 import type { Plugin as Tui } from "@opencode/plugin/tui";
-import {
-	type Breakdown,
-	computeBreakdown,
-	measuredTokensOf,
-} from "./breakdown";
+import { type Breakdown, computeBreakdown, measuredTokensOf } from "./breakdown";
 import { readCapture } from "./capture";
 
 type Ctx = Tui.Context;
@@ -24,18 +20,13 @@ function agentSystemBytes(
 	try {
 		const agents = ctx.data.location.agent.list(location as never);
 		const agent = agents?.find((entry) => entry.id === agentID);
-		return agent?.system
-			? new TextEncoder().encode(agent.system).length
-			: undefined;
+		return agent?.system ? new TextEncoder().encode(agent.system).length : undefined;
 	} catch {
 		return undefined;
 	}
 }
 
-export async function collectBreakdown(
-	ctx: Ctx,
-	sessionID: string,
-): Promise<Breakdown> {
+export async function collectBreakdown(ctx: Ctx, sessionID: string): Promise<Breakdown> {
 	let messages: readonly unknown[] = [];
 	try {
 		messages = await ctx.client.session.context({ sessionID });
@@ -48,8 +39,7 @@ export async function collectBreakdown(
 	const models = ctx.data.location.model.list(session?.location as never);
 	const model = models?.find(
 		(entry) =>
-			entry.providerID === session?.model?.providerID &&
-			entry.id === session?.model?.id,
+			entry.providerID === session?.model?.providerID && entry.id === session?.model?.id,
 	);
 	const capture = await readCapture(sessionID);
 
@@ -59,10 +49,6 @@ export async function collectBreakdown(
 		toolDefsBytes: capture?.toolDefsBytes,
 		measuredTokens: measuredTokensOf(messages),
 		limit: model?.limit?.context,
-		fallbackSystemBytes: agentSystemBytes(
-			ctx,
-			session?.agent,
-			session?.location,
-		),
+		fallbackSystemBytes: agentSystemBytes(ctx, session?.agent, session?.location),
 	});
 }

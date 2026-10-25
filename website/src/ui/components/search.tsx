@@ -78,14 +78,10 @@ function loadScript(): Promise<void> {
 			resolve();
 			return;
 		}
-		const existing = document.querySelector<HTMLScriptElement>(
-			"script[data-pagefind-ui]",
-		);
+		const existing = document.querySelector<HTMLScriptElement>("script[data-pagefind-ui]");
 		const script = existing ?? document.createElement("script");
 		script.addEventListener("load", () => resolve());
-		script.addEventListener("error", () =>
-			reject(new Error("Failed to load Pagefind UI")),
-		);
+		script.addEventListener("error", () => reject(new Error("Failed to load Pagefind UI")));
 		if (!existing) {
 			script.src = UI_SCRIPT;
 			script.async = true;
@@ -125,8 +121,7 @@ export function Search() {
 				showImages: false,
 				processResult: (result) => {
 					result.url = cleanUrl(result.url);
-					if (result.meta?.url)
-						result.meta.url = cleanUrl(result.meta.url);
+					if (result.meta?.url) result.meta.url = cleanUrl(result.meta.url);
 					return result;
 				},
 			});
@@ -139,11 +134,6 @@ export function Search() {
 	}, []);
 
 	return (
-		<div
-			ref={container}
-			className="doc-search"
-			data-state={state}
-			hidden={state !== "ready"}
-		/>
+		<div ref={container} className="doc-search" data-state={state} hidden={state !== "ready"} />
 	);
 }

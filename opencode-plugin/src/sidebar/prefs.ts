@@ -15,12 +15,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { OPENCODE_DIR, PREFS_FILE } from "../constants/paths";
-import {
-	OC_PLAN_DEFAULT,
-	OC_PLANS,
-	type OcPlan,
-	PREF_DEFAULTS,
-} from "../constants/sidebar";
+import { OC_PLAN_DEFAULT, OC_PLANS, type OcPlan, PREF_DEFAULTS } from "../constants/sidebar";
 import { PREFS_CACHE_MS } from "../constants/timing";
 
 export interface Prefs {
@@ -40,10 +35,7 @@ export function prefsPath(env: NodeJS.ProcessEnv = process.env): string {
 /** A plan id is only accepted verbatim; anything else asks for the default. */
 function planFrom(value: unknown, source: string): OcPlan | undefined {
 	if (value === undefined) return undefined;
-	if (
-		typeof value === "string" &&
-		(OC_PLANS as readonly string[]).includes(value)
-	) {
+	if (typeof value === "string" && (OC_PLANS as readonly string[]).includes(value)) {
 		return value as OcPlan;
 	}
 	// Never crash or blank the panel over a typo: warn and use the default.
@@ -63,10 +55,7 @@ export function parsePrefs(raw: unknown): Prefs {
 }
 
 /** Env override, then the file, then the default. Cached for `PREFS_CACHE_MS`. */
-export function loadPrefs(
-	env: NodeJS.ProcessEnv = process.env,
-	now = Date.now(),
-): Prefs {
+export function loadPrefs(env: NodeJS.ProcessEnv = process.env, now = Date.now()): Prefs {
 	if (cached && now - cached.at < PREFS_CACHE_MS) return cached.prefs;
 	let prefs = PREF_DEFAULTS;
 	// The file is read even when an env override is set, so a per-run colour
@@ -78,8 +67,7 @@ export function loadPrefs(
 	}
 	const flag = env.CMD_COLORS;
 	if (flag === "1" || flag === "true") prefs = { ...prefs, colors: true };
-	else if (flag === "0" || flag === "false")
-		prefs = { ...prefs, colors: false };
+	else if (flag === "0" || flag === "false") prefs = { ...prefs, colors: false };
 	const envPlan = planFrom(env.CMD_OC_PLAN, "CMD_OC_PLAN");
 	if (envPlan !== undefined) prefs = { ...prefs, ocPlan: envPlan };
 	cached = { at: now, prefs };

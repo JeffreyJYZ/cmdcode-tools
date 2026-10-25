@@ -18,20 +18,10 @@
  * assignments on one line and `alias -- -` all come out canonical.
  */
 import { execFileSync } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	renameSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import {
-	AGENTS_FILE,
-	ALIAS_BLOCK_BEGIN,
-	ALIAS_BLOCK_END,
-} from "./constants/shell-rc";
+import { AGENTS_FILE, ALIAS_BLOCK_BEGIN, ALIAS_BLOCK_END } from "./constants/shell-rc";
 
 /** Read `HOME` per call so tests can point it at a temporary directory. */
 const home = (): string => process.env.HOME ?? homedir();
@@ -157,9 +147,7 @@ export function upsertBlock(text: string, block: string): string {
 	const begin = text.indexOf(ALIAS_BLOCK_BEGIN);
 	const end = begin < 0 ? -1 : text.indexOf(ALIAS_BLOCK_END, begin);
 	if (begin >= 0 && end >= 0) {
-		return (
-			text.slice(0, begin) + block + text.slice(end + ALIAS_BLOCK_END.length)
-		);
+		return text.slice(0, begin) + block + text.slice(end + ALIAS_BLOCK_END.length);
 	}
 	const base = text.replace(/\s+$/, "");
 	return base.length > 0 ? `${base}\n\n${block}\n` : `${block}\n`;

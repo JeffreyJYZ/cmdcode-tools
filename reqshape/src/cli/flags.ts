@@ -28,9 +28,7 @@ export function number(value: unknown, flag: string): number {
 	if (value === undefined || value === null) return 0;
 	const parsed = Number(value);
 	if (!Number.isFinite(parsed) || parsed < 0) {
-		throw new Error(
-			`--${flag} expects a number, got ${JSON.stringify(value)}`,
-		);
+		throw new Error(`--${flag} expects a number, got ${JSON.stringify(value)}`);
 	}
 	return parsed;
 }
@@ -48,9 +46,7 @@ export function oneOf<T extends string>(
 	if (value === undefined || value === null) return undefined;
 	const text = String(value);
 	if (!(allowed as readonly string[]).includes(text)) {
-		throw new Error(
-			`--${flag} expects ${allowed.join(" | ")}, got "${text}"`,
-		);
+		throw new Error(`--${flag} expects ${allowed.join(" | ")}, got "${text}"`);
 	}
 	return text as T;
 }

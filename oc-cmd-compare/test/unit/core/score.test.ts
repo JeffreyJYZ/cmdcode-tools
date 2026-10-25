@@ -6,15 +6,9 @@ import { ccPlan, entry, metric, workloads } from "../fixtures.ts";
 
 describe("buildMetrics", () => {
 	test("payPerRequest * requestsPerMonth equals plan price", () => {
-		const [m] = buildMetrics(
-			[entry({})],
-			new Map([["cc", ccPlan]]),
-			workloads,
-		);
+		const [m] = buildMetrics([entry({})], new Map([["cc", ccPlan]]), workloads);
 		expect(m?.requestsPerMonth).toBeGreaterThan(0);
-		expect(
-			(m?.payPerRequest ?? 0) * (m?.requestsPerMonth ?? 0),
-		).toBeCloseTo(ccPlan.price, 6);
+		expect((m?.payPerRequest ?? 0) * (m?.requestsPerMonth ?? 0)).toBeCloseTo(ccPlan.price, 6);
 	});
 
 	test("free models are infinite and score 100", () => {
@@ -69,11 +63,7 @@ describe("buildMetrics", () => {
 				},
 			}),
 		];
-		for (const m of buildMetrics(
-			entries,
-			new Map([["cc", ccPlan]]),
-			workloads,
-		)) {
+		for (const m of buildMetrics(entries, new Map([["cc", ccPlan]]), workloads)) {
 			expect(m.index).toBeGreaterThanOrEqual(0);
 			expect(m.index).toBeLessThanOrEqual(100);
 		}
@@ -102,9 +92,7 @@ describe("ability value index", () => {
 		);
 		const byKey = new Map(entries.map((e, i) => [e.key, metrics[i]]));
 		expect(byKey.get("smart")?.ability).toBe(60);
-		expect(byKey.get("smart")?.valueIndex).toBeGreaterThan(
-			byKey.get("dumb")?.valueIndex ?? 0,
-		);
+		expect(byKey.get("smart")?.valueIndex).toBeGreaterThan(byKey.get("dumb")?.valueIndex ?? 0);
 		expect(byKey.get("unscored")?.ability).toBeNull();
 		expect(byKey.get("unscored")?.valueIndex).toBeNull();
 		for (const m of metrics) {

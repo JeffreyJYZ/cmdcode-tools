@@ -3,23 +3,11 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { KNOWN_MODELS } from "../src/constants/gating";
-import {
-	DEFAULT_CONTEXT_LENGTH,
-	DEFAULT_OUTPUT_TOKENS,
-} from "../src/constants/models";
+import { DEFAULT_CONTEXT_LENGTH, DEFAULT_OUTPUT_TOKENS } from "../src/constants/models";
 import { INTEGRATION_ID, type Lane } from "../src/constants/providers";
 import { isClaude } from "../src/models";
-import {
-	setupTimingLine,
-	startupLogPath,
-	writeStartupLine,
-} from "../src/startupLog";
-import {
-	credentialKey,
-	mergeModels,
-	staticSeedModels,
-	toV2Model,
-} from "../src/v2";
+import { setupTimingLine, startupLogPath, writeStartupLine } from "../src/startupLog";
+import { credentialKey, mergeModels, staticSeedModels, toV2Model } from "../src/v2";
 
 const claudeLane: Lane = {
 	id: "command-code-anthropic",
@@ -67,10 +55,10 @@ describe("toV2Model", () => {
 		expect(m.compatibility).toBeUndefined();
 	});
 	test("capabilities are text-only tools", () => {
-		const m = toV2Model(
-			{ id: "x", name: "x", contextLength: 1 },
-			claudeLane,
-		) as Record<string, unknown>;
+		const m = toV2Model({ id: "x", name: "x", contextLength: 1 }, claudeLane) as Record<
+			string,
+			unknown
+		>;
 		expect(m.capabilities).toEqual({
 			tools: true,
 			input: ["text"],
@@ -96,10 +84,7 @@ describe("credentialKey", () => {
 	test("stored key wins over the local fallback", async () => {
 		process.env.CMD_API_KEY = "local-key";
 		const key = await credentialKey(
-			ctxWith(
-				{ type: "credential", id: "c1" },
-				{ type: "key", key: "host-key" },
-			),
+			ctxWith({ type: "credential", id: "c1" }, { type: "key", key: "host-key" }),
 		);
 		expect(key).toBe("host-key");
 		delete process.env.CMD_API_KEY;
@@ -107,10 +92,7 @@ describe("credentialKey", () => {
 	test("oauth connections expose the access token", async () => {
 		process.env.CMD_API_KEY = "local-key";
 		const key = await credentialKey(
-			ctxWith(
-				{ type: "credential", id: "c1" },
-				{ type: "oauth", access: "tok" },
-			),
+			ctxWith({ type: "credential", id: "c1" }, { type: "oauth", access: "tok" }),
 		);
 		expect(key).toBe("tok");
 		delete process.env.CMD_API_KEY;
@@ -125,19 +107,13 @@ describe("credentialKey", () => {
 describe("staticSeedModels", () => {
 	test("splits known models by lane, no context length yet", () => {
 		const seed = staticSeedModels();
-		const claude = seed["command-code-anthropic"] as Array<
-			Record<string, unknown>
-		>;
-		const open = seed["command-code-openai"] as Array<
-			Record<string, unknown>
-		>;
+		const claude = seed["command-code-anthropic"] as Array<Record<string, unknown>>;
+		const open = seed["command-code-openai"] as Array<Record<string, unknown>>;
 		expect(claude.length + open.length).toBe(KNOWN_MODELS.length);
 		for (const m of claude) expect(isClaude(m.id as string)).toBe(true);
 		for (const m of open) expect(isClaude(m.id as string)).toBe(false);
 		for (const m of [...claude, ...open])
-			expect((m.limit as { context: number }).context).toBe(
-				DEFAULT_CONTEXT_LENGTH,
-			);
+			expect((m.limit as { context: number }).context).toBe(DEFAULT_CONTEXT_LENGTH);
 	});
 });
 
@@ -151,20 +127,13 @@ describe("mergeModels", () => {
 		expect(merged.map((x) => (x as { id: string }).id)).toEqual(["a", "b"]);
 	});
 	test("live fields win for shared ids, snapshot order is preserved", () => {
-		const merged = mergeModels(
-			[m("a", { name: "old" }), m("b")],
-			[m("a", { name: "new" })],
-		);
+		const merged = mergeModels([m("a", { name: "old" }), m("b")], [m("a", { name: "new" })]);
 		expect(merged[0]).toEqual({ id: "a", name: "new" });
 		expect((merged[1] as { id: string }).id).toBe("b");
 	});
 	test("live-only models append in live order", () => {
 		const merged = mergeModels([m("a")], [m("c"), m("b")]);
-		expect(merged.map((x) => (x as { id: string }).id)).toEqual([
-			"a",
-			"c",
-			"b",
-		]);
+		expect(merged.map((x) => (x as { id: string }).id)).toEqual(["a", "c", "b"]);
 	});
 });
 
@@ -178,9 +147,7 @@ describe("setup timing line", () => {
 				refresh: 2410,
 				models: 61,
 			}),
-		).toBe(
-			"setup: key=3ms register=11ms connection=612ms refresh=2410ms models=61",
-		);
+		).toBe("setup: key=3ms register=11ms connection=612ms refresh=2410ms models=61");
 	});
 	test("writes to the cache file without throwing", async () => {
 		process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), "cc-startup-"));
@@ -194,9 +161,7 @@ describe("setup timing line", () => {
 			}),
 		);
 		const text = readFileSync(startupLogPath(), "utf8");
-		expect(text).toContain(
-			"setup: key=1ms register=2ms connection=3ms refresh=4ms models=5",
-		);
+		expect(text).toContain("setup: key=1ms register=2ms connection=3ms refresh=4ms models=5");
 		delete process.env.XDG_CACHE_HOME;
 	});
 });

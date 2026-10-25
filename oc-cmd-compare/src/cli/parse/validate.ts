@@ -32,13 +32,9 @@ export function share(name: string, value: unknown): number {
 
 /** Reject undeclared flags before mapping. */
 export function assertKnown(bag: Bag): void {
-	const extra = Object.keys(bag).filter(
-		(key) => !KNOWN.has(key) && !INTERNAL.has(key),
-	);
+	const extra = Object.keys(bag).filter((key) => !KNOWN.has(key) && !INTERNAL.has(key));
 	if (extra.length > 0) {
-		throw new Error(
-			`unknown flag "--${extra[0]}" — see --help for the full list`,
-		);
+		throw new Error(`unknown flag "--${extra[0]}" — see --help for the full list`);
 	}
 }
 
@@ -49,12 +45,8 @@ function flag(key: string): string {
 
 /** Reject a value-taking flag used bare (`--shape` with no argument). */
 export function assertValues(bag: Bag): void {
-	const bare = Object.keys(bag).filter(
-		(key) => VALUED.has(key) && bag[key] === true,
-	);
+	const bare = Object.keys(bag).filter((key) => VALUED.has(key) && bag[key] === true);
 	if (bare.length > 0) {
-		throw new Error(
-			`${flag(String(bare[0]))} expects a value — see --help`,
-		);
+		throw new Error(`${flag(String(bare[0]))} expects a value — see --help`);
 	}
 }

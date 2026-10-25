@@ -41,10 +41,7 @@ export function renderCsv(rows: Row[], summary: Tally): string {
 }
 
 /** Markdown table with the default columns. */
-export function renderMarkdown(
-	rows: Row[],
-	plans: [PlanInfo, PlanInfo],
-): string {
+export function renderMarkdown(rows: Row[], plans: [PlanInfo, PlanInfo]): string {
 	const lines = [
 		`# ${planTitle(plans[0])} vs ${planTitle(plans[1])}`,
 		"",
@@ -64,9 +61,7 @@ export function renderMarkdown(
 			String(100 - Math.max(row.oc?.index ?? -1, row.cc?.index ?? -1, 0)),
 			String(row.oc?.valueIndex ?? row.cc?.valueIndex ?? "—"),
 		];
-		lines.push(
-			`| ${cells.map((c) => c.replace(/\|/g, "\\|")).join(" | ")} |`,
-		);
+		lines.push(`| ${cells.map((c) => c.replace(/\|/g, "\\|")).join(" | ")} |`);
 	}
 	return `${lines.join("\n")}\n`;
 }

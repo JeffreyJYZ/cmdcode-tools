@@ -1,11 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { resolveColumns, trimsToWidth } from "#~/cli/flow/columns.ts";
 import { parseArgs } from "#~/cli/run.ts";
-import {
-	DETAIL_COLUMNS,
-	MEDIUM_COLUMNS,
-	MINIMAL_COLUMNS,
-} from "#~/constants/view.ts";
+import { DETAIL_COLUMNS, MEDIUM_COLUMNS, MINIMAL_COLUMNS } from "#~/constants/view.ts";
 
 describe("resolveColumns", () => {
 	test("plain mpc is the full set, trimmed to the terminal", () => {
@@ -36,9 +32,7 @@ describe("resolveColumns", () => {
 	});
 
 	test("two tiers at once is an error", () => {
-		expect(() =>
-			resolveColumns(parseArgs(["--minimal", "--medium"])),
-		).toThrow(/conflict/);
+		expect(() => resolveColumns(parseArgs(["--minimal", "--medium"]))).toThrow(/conflict/);
 	});
 
 	test("--columns is exact and bypasses trimming", () => {
@@ -48,8 +42,6 @@ describe("resolveColumns", () => {
 	});
 
 	test("an unknown config preset still throws", () => {
-		expect(() => resolveColumns(parseArgs(["--preset", "nope"]))).toThrow(
-			/unknown preset/,
-		);
+		expect(() => resolveColumns(parseArgs(["--preset", "nope"]))).toThrow(/unknown preset/);
 	});
 });

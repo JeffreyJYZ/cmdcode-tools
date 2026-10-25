@@ -60,9 +60,7 @@ describe("sidebar prefs", () => {
 		const warn = console.warn;
 		console.warn = () => {};
 		try {
-			expect(parsePrefs({ ocPlan: "go-plus-ultra" }).ocPlan).toBe(
-				OC_PLAN_DEFAULT,
-			);
+			expect(parsePrefs({ ocPlan: "go-plus-ultra" }).ocPlan).toBe(OC_PLAN_DEFAULT);
 			expect(parsePrefs({ ocPlan: 42 }).ocPlan).toBe(OC_PLAN_DEFAULT);
 		} finally {
 			console.warn = warn;
@@ -90,34 +88,22 @@ describe("sidebar prefs", () => {
 	test("CMD_COLORS overrides the file both ways", () => {
 		const { env } = configDir();
 		writeFileSync(prefsPath(env), '{"colors": true}');
-		expect(loadPrefs({ ...env, CMD_COLORS: "1" }, tick()).colors).toBe(
-			true,
-		);
-		expect(loadPrefs({ ...env, CMD_COLORS: "0" }, tick()).colors).toBe(
-			false,
-		);
-		expect(loadPrefs({ ...env, CMD_COLORS: "nope" }, tick()).colors).toBe(
-			true,
-		);
+		expect(loadPrefs({ ...env, CMD_COLORS: "1" }, tick()).colors).toBe(true);
+		expect(loadPrefs({ ...env, CMD_COLORS: "0" }, tick()).colors).toBe(false);
+		expect(loadPrefs({ ...env, CMD_COLORS: "nope" }, tick()).colors).toBe(true);
 	});
 
 	test("CMD_OC_PLAN overrides the file, and a colour override keeps the plan", () => {
 		const { env } = configDir();
 		writeFileSync(prefsPath(env), '{"ocPlan": "go-plus"}');
-		expect(loadPrefs({ ...env, CMD_OC_PLAN: "go" }, tick()).ocPlan).toBe(
-			"go",
-		);
+		expect(loadPrefs({ ...env, CMD_OC_PLAN: "go" }, tick()).ocPlan).toBe("go");
 		// An unrecognised env value is ignored (with a warning), file stands.
 		const warn = console.warn;
 		console.warn = () => {};
 		try {
-			expect(
-				loadPrefs({ ...env, CMD_OC_PLAN: "bogus" }, tick()).ocPlan,
-			).toBe("go-plus");
+			expect(loadPrefs({ ...env, CMD_OC_PLAN: "bogus" }, tick()).ocPlan).toBe("go-plus");
 			// A per-run colour flag must not hide the configured plan.
-			expect(loadPrefs({ ...env, CMD_COLORS: "0" }, tick()).ocPlan).toBe(
-				"go-plus",
-			);
+			expect(loadPrefs({ ...env, CMD_COLORS: "0" }, tick()).ocPlan).toBe("go-plus");
 		} finally {
 			console.warn = warn;
 		}

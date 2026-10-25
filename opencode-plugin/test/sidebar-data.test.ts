@@ -182,31 +182,14 @@ describe("parseMpcJson", () => {
 describe("CLI args", () => {
 	test("ocuse is asked for the selected Go plan", () => {
 		expect(zenArgs("go")).toEqual(["-1", "--json", "--plan", "go"]);
-		expect(zenArgs("go-plus")).toEqual([
-			"-1",
-			"--json",
-			"--plan",
-			"go-plus",
-		]);
+		expect(zenArgs("go-plus")).toEqual(["-1", "--json", "--plan", "go-plus"]);
 	});
 
 	test("mpc keeps `--shape off` and takes the plan", () => {
 		// `--shape off` is the recursion break (mpc -> reqshape -> mpc); it must
 		// survive alongside the plan flag.
-		expect(metaArgs("go")).toEqual([
-			"--json",
-			"--shape",
-			"off",
-			"--oc-plan",
-			"go",
-		]);
-		expect(metaArgs("go-plus")).toEqual([
-			"--json",
-			"--shape",
-			"off",
-			"--oc-plan",
-			"go-plus",
-		]);
+		expect(metaArgs("go")).toEqual(["--json", "--shape", "off", "--oc-plan", "go"]);
+		expect(metaArgs("go-plus")).toEqual(["--json", "--shape", "off", "--oc-plan", "go-plus"]);
 	});
 });
 
@@ -250,14 +233,8 @@ function fixtureDb(): string {
 		db.run("INSERT INTO message VALUES (?, ?)", [JSON.stringify(data), at]);
 	const model = "deepseek/deepseek-v4.1-flash";
 	const now = Date.now();
-	row(
-		{ role: "assistant", modelID: model, tokens: { input: 1 }, cost: 0.5 },
-		now - 1_000,
-	);
-	row(
-		{ role: "assistant", modelID: model, tokens: { input: 1 }, cost: 1.25 },
-		now - 2_000,
-	);
+	row({ role: "assistant", modelID: model, tokens: { input: 1 }, cost: 0.5 }, now - 1_000);
+	row({ role: "assistant", modelID: model, tokens: { input: 1 }, cost: 1.25 }, now - 2_000);
 	row(
 		{
 			role: "assistant",
@@ -267,10 +244,7 @@ function fixtureDb(): string {
 		},
 		now - 1_000,
 	);
-	row(
-		{ role: "user", modelID: model, tokens: { input: 1 }, cost: 3 },
-		now - 1_000,
-	);
+	row({ role: "user", modelID: model, tokens: { input: 1 }, cost: 3 }, now - 1_000);
 	row(
 		{ role: "assistant", modelID: model, tokens: { input: 1 }, cost: 5 },
 		now - 40 * 86_400_000,
@@ -283,25 +257,15 @@ describe("loadModelUsage", () => {
 	test("sums the window for one model only", () => {
 		const path = fixtureDb();
 		const week = Date.now() - 7 * 86_400_000;
-		expect(
-			loadModelUsage("deepseek/deepseek-v4.1-flash", week, path),
-		).toEqual({
+		expect(loadModelUsage("deepseek/deepseek-v4.1-flash", week, path)).toEqual({
 			requests: 2,
 			cost: 1.75,
 		});
 		// the vendored id and the bare one share a canonical key
-		expect(
-			loadModelUsage("deepseek-v4.1-flash", week, path)?.requests,
-		).toBe(2);
+		expect(loadModelUsage("deepseek-v4.1-flash", week, path)?.requests).toBe(2);
 	});
 	test("returns null without a store", () => {
-		expect(
-			loadModelUsage(
-				"deepseek/deepseek-v4.1-flash",
-				0,
-				"/nope/missing.db",
-			),
-		).toBeNull();
+		expect(loadModelUsage("deepseek/deepseek-v4.1-flash", 0, "/nope/missing.db")).toBeNull();
 	});
 });
 
@@ -310,9 +274,7 @@ describe("loadSessionUsage", () => {
 		const dir = mkdtempSync(join(tmpdir(), "cc-session-"));
 		const path = join(dir, "opencode.db");
 		const db = new Database(path);
-		db.run(
-			"CREATE TABLE message (id TEXT, session_id TEXT, data TEXT, time_created INTEGER)",
-		);
+		db.run("CREATE TABLE message (id TEXT, session_id TEXT, data TEXT, time_created INTEGER)");
 		const row = (id: string, session: string, data: object) =>
 			db.run("INSERT INTO message VALUES (?, ?, ?, ?)", [
 				id,
@@ -377,13 +339,7 @@ function v2Db(): string {
 		"CREATE TABLE session_message (id TEXT, session_id TEXT, type TEXT, time_created INTEGER, data TEXT)",
 	);
 	db.run("INSERT INTO session_v2 VALUES (?, ?)", ["ses_a", 3.5]);
-	const insert = (
-		id: string,
-		session: string,
-		type: string,
-		at: number,
-		data: object,
-	) =>
+	const insert = (id: string, session: string, type: string, at: number, data: object) =>
 		db.run("INSERT INTO session_message VALUES (?, ?, ?, ?, ?)", [
 			id,
 			session,
@@ -436,10 +392,7 @@ describe("v2 store (session_message + session_v2)", () => {
 			cost: 0,
 		});
 		// The 40-day-old turn is outside the window.
-		expect(
-			loadModelUsage("deepseek/deepseek-v4.1-flash", day, v2Db())
-				?.requests,
-		).toBe(3);
+		expect(loadModelUsage("deepseek/deepseek-v4.1-flash", day, v2Db())?.requests).toBe(3);
 		expect(loadModelUsage("kimi-k2.7", day, v2Db())?.requests).toBe(1);
 	});
 
@@ -448,16 +401,12 @@ describe("v2 store (session_message + session_v2)", () => {
 		// this conversation, so the two figures are comparable. A session scope
 		// ignores the period, including the 40-day-old turn.
 		const path = v2Db();
-		expect(loadModelUsage("deepseek-v4.1-flash", 0, path, "ses_a")).toEqual(
-			{
-				requests: 3,
-				cost: 0,
-			},
-		);
+		expect(loadModelUsage("deepseek-v4.1-flash", 0, path, "ses_a")).toEqual({
+			requests: 3,
+			cost: 0,
+		});
 		expect(loadModelUsage("kimi-k2.7", 0, path, "ses_a")?.requests).toBe(1);
-		expect(
-			loadModelUsage("deepseek-v4.1-flash", 0, path, "ses_b")?.requests,
-		).toBe(1);
+		expect(loadModelUsage("deepseek-v4.1-flash", 0, path, "ses_b")?.requests).toBe(1);
 	});
 });
 
@@ -485,9 +434,7 @@ function windowDb(
 }
 
 /** A v2 store with assistant turns at explicit epochs. */
-function windowV2Db(
-	rows: Array<{ model: string; at: number; type?: string }>,
-): string {
+function windowV2Db(rows: Array<{ model: string; at: number; type?: string }>): string {
 	const dir = mkdtempSync(join(tmpdir(), "cc-window-v2-"));
 	const path = join(dir, "opencode.db");
 	const db = new Database(path);
@@ -519,34 +466,20 @@ describe("loadModelWindowStart", () => {
 			{ modelID: "deepseek-v4.1-flash", at: now - 40 * 86_400_000 },
 		]);
 		// The two spellings share a canonical key, so both turns count.
-		expect(
-			loadModelWindowStart(
-				"deepseek-v4.1-flash",
-				now - 5 * 3_600_000,
-				path,
-			),
-		).toBe(now - 3_600_000);
-		expect(
-			loadModelWindowStart(
-				"deepseek-v4.1-flash",
-				now - 7 * 86_400_000,
-				path,
-			),
-		).toBe(now - 6 * 3_600_000);
+		expect(loadModelWindowStart("deepseek-v4.1-flash", now - 5 * 3_600_000, path)).toBe(
+			now - 3_600_000,
+		);
+		expect(loadModelWindowStart("deepseek-v4.1-flash", now - 7 * 86_400_000, path)).toBe(
+			now - 6 * 3_600_000,
+		);
 	});
 
 	test("null when the model has no turn in the window", () => {
 		const now = Date.now();
-		const path = windowDb([
-			{ modelID: "deepseek-v4.1-flash", at: now - 3_600_000 },
-		]);
-		expect(
-			loadModelWindowStart("kimi-k2.7", now - 7 * 86_400_000, path),
-		).toBeNull();
+		const path = windowDb([{ modelID: "deepseek-v4.1-flash", at: now - 3_600_000 }]);
+		expect(loadModelWindowStart("kimi-k2.7", now - 7 * 86_400_000, path)).toBeNull();
 		// A bound at `now` excludes the turn one hour old.
-		expect(
-			loadModelWindowStart("deepseek-v4.1-flash", now, path),
-		).toBeNull();
+		expect(loadModelWindowStart("deepseek-v4.1-flash", now, path)).toBeNull();
 	});
 
 	test("ignores non-assistant turns", () => {
@@ -555,13 +488,9 @@ describe("loadModelWindowStart", () => {
 			{ modelID: "deepseek-v4.1-flash", at: now - 2_000, role: "user" },
 			{ modelID: "deepseek-v4.1-flash", at: now - 3_600_000 },
 		]);
-		expect(
-			loadModelWindowStart(
-				"deepseek-v4.1-flash",
-				now - 5 * 3_600_000,
-				path,
-			),
-		).toBe(now - 3_600_000);
+		expect(loadModelWindowStart("deepseek-v4.1-flash", now - 5 * 3_600_000, path)).toBe(
+			now - 3_600_000,
+		);
 	});
 
 	test("reads the v2 store, grouping by model key", () => {
@@ -573,29 +502,17 @@ describe("loadModelWindowStart", () => {
 			{ model: "deepseek-v4.1-flash", at: now - 40 * 86_400_000 },
 			{ model: "deepseek-v4.1-flash", at: now - 500, type: "user" },
 		]);
-		expect(
-			loadModelWindowStart(
-				"deepseek-v4.1-flash",
-				now - 5 * 3_600_000,
-				path,
-			),
-		).toBe(now - 3_600_000);
-		expect(
-			loadModelWindowStart(
-				"deepseek-v4.1-flash",
-				now - 7 * 86_400_000,
-				path,
-			),
-		).toBe(now - 6 * 3_600_000);
-		expect(
-			loadModelWindowStart("missing/model", now - 7 * 86_400_000, path),
-		).toBeNull();
+		expect(loadModelWindowStart("deepseek-v4.1-flash", now - 5 * 3_600_000, path)).toBe(
+			now - 3_600_000,
+		);
+		expect(loadModelWindowStart("deepseek-v4.1-flash", now - 7 * 86_400_000, path)).toBe(
+			now - 6 * 3_600_000,
+		);
+		expect(loadModelWindowStart("missing/model", now - 7 * 86_400_000, path)).toBeNull();
 	});
 
 	test("returns null without a store", () => {
-		expect(
-			loadModelWindowStart("deepseek-v4.1-flash", 0, "/nope/missing.db"),
-		).toBeNull();
+		expect(loadModelWindowStart("deepseek-v4.1-flash", 0, "/nope/missing.db")).toBeNull();
 	});
 });
 
@@ -603,18 +520,11 @@ describe("periodStart", () => {
 	const now = Date.UTC(2026, 8, 24);
 	test("uses the published period start when cmduse sends one", () => {
 		const startAt = Date.UTC(2026, 7, 27, 12, 23);
-		expect(
-			periodStart(
-				{ periodStartAt: startAt, periodEnd: "2026-09-27" },
-				now,
-			),
-		).toBe(startAt);
+		expect(periodStart({ periodStartAt: startAt, periodEnd: "2026-09-27" }, now)).toBe(startAt);
 	});
 	test("takes the period end one calendar month back without one", () => {
 		expect(
-			new Date(periodStart({ periodEnd: "2026-09-27" }, now))
-				.toISOString()
-				.slice(0, 10),
+			new Date(periodStart({ periodEnd: "2026-09-27" }, now)).toISOString().slice(0, 10),
 		).toBe("2026-08-27");
 	});
 	test("falls back to 30 days", () => {

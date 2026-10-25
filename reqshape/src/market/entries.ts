@@ -8,9 +8,7 @@ import type { MpcJson, MpcSide, ProviderId, RateEntry } from "./rates.ts";
  * on GOAT and Pro, 30%/60% on Max and Go), so stating the rule again here is how
  * the two would drift apart.
  */
-function ratiosOf(
-	json: MpcJson,
-): Map<string, { fiveHour: number; weekly: number }> {
+function ratiosOf(json: MpcJson): Map<string, { fiveHour: number; weekly: number }> {
 	const ratios = new Map<string, { fiveHour: number; weekly: number }>();
 	for (const [id, plan] of Object.entries(json.plans ?? {})) {
 		const credits = numberOr(plan.credits);

@@ -18,8 +18,7 @@ const REGISTRY = "https://registry.npmjs.org/command-code/latest";
  * refreshable unattended.
  */
 const CDNS = ["https://unpkg.com", "https://cdn.jsdelivr.net/npm"];
-const BUNDLE = (cdn: string, version: string) =>
-	`${cdn}/command-code@${version}/dist/cli.mjs`;
+const BUNDLE = (cdn: string, version: string) => `${cdn}/command-code@${version}/dist/cli.mjs`;
 const MODELS_MD = (cdn: string, version: string) =>
 	`${cdn}/command-code@${version}/dist/bundled/command-code-knowledge/reference/models.md`;
 
@@ -79,9 +78,7 @@ export function normalizeMinPlan(raw: string | undefined): string | null {
  * ≤1.65.0 shipped these inline; newer bundles dropped them for a denylist
  * (see `parseTextOnly`), and this returns {} there.
  */
-export function parseModalities(
-	bundle: string,
-): Record<string, InputModality[]> {
+export function parseModalities(bundle: string): Record<string, InputModality[]> {
 	const out: Record<string, InputModality[]> = {};
 	const re = /id:"([^"]+)"[^{}]*?inputModalities:\[([^\]]*)\]/g;
 	for (const match of bundle.matchAll(re)) {
@@ -104,9 +101,7 @@ export function parseModalities(
 export function parseTextOnly(bundle: string): string[] {
 	const match = bundle.match(/Rr=new Set\(\[([^\]]*)\]/);
 	if (!match) return [];
-	return [...(match[1] ?? "").matchAll(/"([^"]+)"/g)]
-		.map((m) => m[1] as string)
-		.filter(Boolean);
+	return [...(match[1] ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1] as string).filter(Boolean);
 }
 
 /** Explicit record wins; otherwise the CLI's own default (vision unless denied).
@@ -124,8 +119,7 @@ export function modalitiesFor(
 /** `\`id\` | Name | Context | Efforts | $/1M in/out · cache read | ...` — parsed
  * cell-wise: splitting on pipes first tolerates the optional `(write $…)` tail
  * and any extra prose columns without a brittle whole-line regex. */
-const RATE_RE =
-	/^\$([\d.]+)\/\$([\d.]+)\s*·\s*cache\s*\$([\d.]+)(?:\s*\(write\s*\$([\d.]+)\))?$/;
+const RATE_RE = /^\$([\d.]+)\/\$([\d.]+)\s*·\s*cache\s*\$([\d.]+)(?:\s*\(write\s*\$([\d.]+)\))?$/;
 
 function parseCount(raw: string): number {
 	const m = raw.trim().match(/^([\d.]+)\s*([MK])?$/i);
@@ -133,24 +127,15 @@ function parseCount(raw: string): number {
 	const value = Number(m[1]);
 	if (!Number.isFinite(value)) return 0;
 	const unit = (m[2] ?? "").toUpperCase();
-	return Math.round(
-		value * (unit === "M" ? 1_000_000 : unit === "K" ? 1000 : 1),
-	);
+	return Math.round(value * (unit === "M" ? 1_000_000 : unit === "K" ? 1000 : 1));
 }
 
-export function parseModelsMd(
-	md: string,
-): Record<string, Omit<CatalogEntry, "modalities">> {
+export function parseModelsMd(md: string): Record<string, Omit<CatalogEntry, "modalities">> {
 	const out: Record<string, Omit<CatalogEntry, "modalities">> = {};
 	for (const line of md.split("\n")) {
 		const cells = line.split("|").map((c) => c.trim());
 		// ["", "`id`", name, context, efforts, rate, minPlan, bestFor, ""]
-		if (
-			cells.length < 8 ||
-			!cells[1]?.startsWith("`") ||
-			!cells[1]?.endsWith("`")
-		)
-			continue;
+		if (cells.length < 8 || !cells[1]?.startsWith("`") || !cells[1]?.endsWith("`")) continue;
 		const rate = cells[5]?.match(RATE_RE);
 		if (!rate) continue;
 		const [, input, output, cacheRead, cacheWrite] = rate;
@@ -300,8 +285,7 @@ if (import.meta.main) {
 	const textOnly = parseTextOnly(bundle);
 	const catalog = mergeCatalog(pricing, modalities, textOnly);
 	const ids = Object.keys(catalog);
-	if (ids.length === 0)
-		throw new Error("parsed no models — upstream docs shape changed");
+	if (ids.length === 0) throw new Error("parsed no models — upstream docs shape changed");
 	// The docs page can lag a CLI release; modalities-only ids (new models) get
 	// the priced-line treatment next refresh. Fail loud, not silently sparse.
 	const orphaned = Object.keys(modalities).filter((id) => !(id in pricing));
@@ -311,7 +295,5 @@ if (import.meta.main) {
 		);
 	}
 	await writeFile(OUT, render(version, catalog));
-	console.log(
-		`wrote src/catalog.ts: ${ids.length} models from command-code@${version}`,
-	);
+	console.log(`wrote src/catalog.ts: ${ids.length} models from command-code@${version}`);
 }

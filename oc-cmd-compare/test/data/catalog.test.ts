@@ -52,9 +52,7 @@ describe("parseTables + extractCatalog", () => {
 	});
 
 	test("reads the badge and its expiry out of the name cell", () => {
-		expect(
-			dealIn("Grok 4.7\u0001-40%\u0001Ends September 27, 2026"),
-		).toEqual({
+		expect(dealIn("Grok 4.7\u0001-40%\u0001Ends September 27, 2026")).toEqual({
 			badge: "-40%",
 			ends: "Ends September 27, 2026",
 		});

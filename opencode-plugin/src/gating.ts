@@ -17,9 +17,7 @@ let staleWarned = false;
 /** Warn once per process when gating.json is older than GATE_STALE_DAYS. */
 export function warnIfGatingStale(): void {
 	if (staleWarned || !GATE_EXTRACTED_AT) return;
-	const days = Math.floor(
-		(Date.now() - Date.parse(GATE_EXTRACTED_AT)) / 86_400_000,
-	);
+	const days = Math.floor((Date.now() - Date.parse(GATE_EXTRACTED_AT)) / 86_400_000);
 	if (days > GATE_STALE_DAYS) {
 		staleWarned = true;
 		console.warn(

@@ -8,10 +8,10 @@ Agent notes. README user-facing; architecture/contracts/traps here.
 
 Siblings:
 
-| tool | takes from it |
-| --- | --- |
+| tool                                         | takes from it                                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `mpc` (`~/dev/cmdcode-tools/oc-cmd-compare`) | `mpc --json --shape off` — pricing, allowances, window ratios (`--shape off` mandatory: see Contracts) |
-| `cmduse` (Rust CLI) | `cmduse -1 --json` — account request count for the period, context line only |
+| `cmduse` (Rust CLI)                          | `cmduse -1 --json` — account request count for the period, context line only                           |
 
 `MPC_BIN` / `CMDUSE_BIN` point either call at a dev build.
 
@@ -53,9 +53,10 @@ test/                    cli, measure, market, view
 bun install
 bun test                       # unit tests
 bun check                      # types (Bun's own check, never tsc --noEmit)
-bun fmt                        # biome format --write
+bun fmt                        # Bun's formatter (bunfig [fmt])
 bun lint                       # biome lint --write
-bunx biome check               # verify both, read-only
+bun fmt --check                # verify formatting, read-only
+bunx biome lint                # verify linting, read-only
 bun run src/index.ts --help
 bun link                       # exposes the `reqshape` binary
 ```
@@ -71,7 +72,7 @@ bun link                       # exposes the `reqshape` binary
 
 ## Contracts
 
-- `mpc --json`: `plans[<id>].{credits,fiveHour,weekly}` and `rows[].{oc,cc}.{pricing{input,output,cacheRead,cacheWrite},allowance,requestsPerMonth,requestsPerFiveHour,requestsPerWeek,free}`. Anything else optional. `pricing: null` = *unpriced*, not free; `entriesOf` skips it, never prices at zero.
+- `mpc --json`: `plans[<id>].{credits,fiveHour,weekly}` and `rows[].{oc,cc}.{pricing{input,output,cacheRead,cacheWrite},allowance,requestsPerMonth,requestsPerFiveHour,requestsPerWeek,free}`. Anything else optional. `pricing: null` = _unpriced_, not free; `entriesOf` skips it, never prices at zero.
 - Window ratios **derived, never restated**: `ratiosOf` prefers plan block (`fiveHour / credits`), else row windowed count ÷ monthly count.
 - `cmduse -1 --json`: `summary.requests`, `plan`, `periodEnd`. Missing/ unauthenticated = no account line, never error.
 - **`--format json` feeds `mpc`'s `--shape auto`/`--shape measured`**: top-level `profile` (same vector as `shape.perReq`) becomes one `Workload`, priced on **both** plans. Keep `profile` a bare token vector (mpc rounds means). `auto` also reads `shape.reqs`, trusting profile only at mpc's `SHAPE_MIN_REQS` — **`shape.reqs` must stay the true kept-req count**, else mpc silently flips measured↔fixed. `sides.{oc,cc}` is ours only; mpc ignores it. oc/cc split here (`command-code*`/`commandcode` → cc, `opencode*` → oc, else excluded): a new CommandCode id goes in `CC_PREFIXES` in `src/constants/providers.ts`.
@@ -91,12 +92,12 @@ bun link                       # exposes the `reqshape` binary
 - **cac prints `--help`/`--version` but does not exit** — sets `run = false`, so report prints after help. `answeredByCac` sees `help`/`version` in the parsed bag; `run()` returns before work. mpc same flaw: match the fix here.
 - **`mri` coerces values**: numeric string → number, `""` → `0`, valueless flag → `true`. Read all string options via `str()` in `flags.ts`; `number()` refuses boolean.
 - **cac leaves a digit-dash flag hyphenated**: `--cap-5h` arrives key `"cap-5h"`, not `cap5h` — unreadable under camelCase, so it did nothing. Caps `--five-hour`/`--weekly`; `test/cli/parse.test.ts` guards this.
-- **cac negates a declared flag itself**: declaring `--no-color` *and* reading `color === false` let declaration win (`color` default `true`, validation failed). Declare `--color` only; `--no-color` arrives `false`.
+- **cac negates a declared flag itself**: declaring `--no-color` _and_ reading `color === false` let declaration win (`color` default `true`, validation failed). Declare `--color` only; `--no-color` arrives `false`.
 - **Session metadata lives in two tables**: v2 `session_v2`, legacy `session` older. Reading only `session` lost the current session, so `--project` matched nothing. Read both, v2 winning.
 - **Completed turn carries `cost` and `tokens`; in-flight one does not** — v1 and v2 look empty mid-stream. Turns without `tokens` skipped, never zero-token.
 - **`cacheRead: null` vs `cacheRead: 0`**: null = no published cache rate (bill context at input rates, flag row); zero = cached reads free. Conflating fabricates or hides a cost.
-- **Reasoning tokens bill as output** on every provider — join the output term in `project()`. `tokens.output`/`tokens.reasoning` are *separate* counters, not a subset; never fold one into the other, never bill twice. Both add it once: `project()` here, mpc's `costPerRequest`.
-- **`requestsPerMonth` is `Infinity` for a free model** — serialises to `null`, meaning *unbounded*. Keep out of comparisons: `sortProjections` compares explicitly because `Infinity - Infinity` is `NaN`.
+- **Reasoning tokens bill as output** on every provider — join the output term in `project()`. `tokens.output`/`tokens.reasoning` are _separate_ counters, not a subset; never fold one into the other, never bill twice. Both add it once: `project()` here, mpc's `costPerRequest`.
+- **`requestsPerMonth` is `Infinity` for a free model** — serialises to `null`, meaning _unbounded_. Keep out of comparisons: `sortProjections` compares explicitly because `Infinity - Infinity` is `NaN`.
 - **Weighted average is two different numbers here**: do not "fix" per-req mean by switching to per-session; both printed, `--weight` picks (they disagree 4x, user should see why).
 
 - **Only a `user` row opens an ask; interjections continue it**: `synthetic`/`system`/`compaction`/`shell` were boundaries too, so a system-reminder between prompt and answer made the answer's reqs a `system` ask, which `filterAsks` discarded whole. They now attach to the ask they interrupted. `orphan` catches reqs before any user prompt.

@@ -10,6 +10,6 @@
 :root {
 	--font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
 	--font-mono:
-		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-		"Liberation Mono", "Courier New", monospace;
+		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+		monospace;
 }

@@ -18,12 +18,7 @@ import type {
 	LanguageModelV3Usage,
 } from "@ai-sdk/provider";
 import { DEFAULT_BASE_URL } from "../constants/endpoints";
-import {
-	anthropicReducer,
-	openaiReducer,
-	type Reducer,
-	sseDecoder,
-} from "./stream";
+import { anthropicReducer, openaiReducer, type Reducer, sseDecoder } from "./stream";
 import { requestBody, type WireLane, type WireTool } from "./wire";
 
 export interface CommandCodeProviderOptions {
@@ -44,16 +39,12 @@ export interface CommandCodeProvider {
 
 /** Claude models use the Anthropic wire; everything else chat completions. */
 export function laneOf(modelId: string): WireLane {
-	const bare = modelId.includes("/")
-		? modelId.slice(modelId.lastIndexOf("/") + 1)
-		: modelId;
+	const bare = modelId.includes("/") ? modelId.slice(modelId.lastIndexOf("/") + 1) : modelId;
 	return bare.toLowerCase().startsWith("claude") ? "anthropic" : "openai";
 }
 
 function endpoint(lane: WireLane): string {
-	return lane === "anthropic"
-		? "/provider/v1/messages"
-		: "/provider/v1/chat/completions";
+	return lane === "anthropic" ? "/provider/v1/messages" : "/provider/v1/chat/completions";
 }
 
 /** `providerOptions.commandcode.reasoning` (or a top-level `reasoning`). */
@@ -105,8 +96,7 @@ export function createCommandCode(
 					maxOutputTokens: callOptions.maxOutputTokens,
 					temperature: callOptions.temperature,
 					tools: toolsOf(callOptions),
-					reasoningEffort:
-						effortFrom(callOptions) ?? options.reasoningEffort,
+					reasoningEffort: effortFrom(callOptions) ?? options.reasoningEffort,
 					images: images(modelId),
 				});
 				const response = await doFetch(`${baseURL}${endpoint(lane)}`, {
@@ -137,9 +127,7 @@ export function createCommandCode(
 						const emit = (parts: ReturnType<Reducer["feed"]>) => {
 							for (const part of parts) controller.enqueue(part);
 						};
-						const decode = sseDecoder((event) =>
-							emit(reducer.feed(event)),
-						);
+						const decode = sseDecoder((event) => emit(reducer.feed(event)));
 						try {
 							for (;;) {
 								const { done, value } = await reader.read();
@@ -179,18 +167,14 @@ export function createCommandCode(
 					outputTokens: { total: 0, text: 0, reasoning: 0 },
 				};
 				const textOf: Record<string, string> = {};
-				const toolsById = new Map<
-					string,
-					{ name: string; input: string }
-				>();
+				const toolsById = new Map<string, { name: string; input: string }>();
 				for (;;) {
 					const { done, value } = await reader.read();
 					if (done) break;
 					const part = value as Record<string, unknown>;
 					if (part.type === "text-delta")
 						textOf[String(part.id)] =
-							(textOf[String(part.id)] ?? "") +
-							String(part.delta);
+							(textOf[String(part.id)] ?? "") + String(part.delta);
 					else if (part.type === "reasoning-delta") {
 						content.push({
 							type: "reasoning",
@@ -220,9 +204,8 @@ export function createCommandCode(
 					content.push({ type: "text", text: value, id });
 				return {
 					content: content as never,
-					finishReason: (
-						finish as unknown as { finishReason?: unknown }
-					).finishReason as never,
+					finishReason: (finish as unknown as { finishReason?: unknown })
+						.finishReason as never,
 					usage,
 					warnings: [],
 				};

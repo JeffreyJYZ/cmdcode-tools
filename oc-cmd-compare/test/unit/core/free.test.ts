@@ -41,11 +41,7 @@ describe("OpenCode Go free (Unlimited) rows", () => {
 
 	test("a free entry is unbounded and scores 100", async () => {
 		const entries = await freeEntries();
-		const [m] = buildMetrics(
-			entries,
-			new Map([["oc-go", ocPlan]]),
-			workloads,
-		);
+		const [m] = buildMetrics(entries, new Map([["oc-go", ocPlan]]), workloads);
 		expect(m?.free).toBe(true);
 		expect(m?.requestsPerMonth).toBe(Number.POSITIVE_INFINITY);
 		expect(m?.requestsPerFiveHour).toBe(Number.POSITIVE_INFINITY);

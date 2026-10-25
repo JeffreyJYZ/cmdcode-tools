@@ -78,9 +78,7 @@ export function sideStyle(side: "oc" | "cc") {
 	const provider: ProviderId = side === "oc" ? "oc-go" : "cc";
 	return (row: Row): string | undefined => {
 		if (!entryOf(row, provider)) return SGR.dim;
-		return cheaperSide(row) === side
-			? PROVIDER_COLOR[provider]
-			: PROVIDER_TINT[provider];
+		return cheaperSide(row) === side ? PROVIDER_COLOR[provider] : PROVIDER_TINT[provider];
 	};
 }
 
@@ -95,10 +93,7 @@ let costCuts: [number, number] = [30, 60];
 let valCuts: [number, number] = [40, 70];
 
 /** Configure the green/yellow cut-offs for COST and VAL. */
-export function setThresholds(
-	cost: [number, number],
-	val: [number, number],
-): void {
+export function setThresholds(cost: [number, number], val: [number, number]): void {
 	costCuts = cost;
 	valCuts = val;
 }
@@ -142,9 +137,7 @@ export const abilityStyle = (row: Row): string | undefined => {
 	const ability = row.oc?.ability ?? row.cc?.ability ?? null;
 	if (ability === null) return SGR.dim;
 	if (!abilityRange || abilityRange[1] <= abilityRange[0]) return undefined;
-	const score =
-		(100 * (ability - abilityRange[0])) /
-		(abilityRange[1] - abilityRange[0]);
+	const score = (100 * (ability - abilityRange[0])) / (abilityRange[1] - abilityRange[0]);
 	if (score >= valCuts[1]) return SGR.green;
 	if (score >= valCuts[0]) return SGR.yellow;
 	return SGR.red;

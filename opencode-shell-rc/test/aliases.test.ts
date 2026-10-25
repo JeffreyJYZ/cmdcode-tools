@@ -128,21 +128,18 @@ describe("the managed block", () => {
 describe("syncAliases", () => {
 	const hasZsh = Bun.which("zsh") !== null;
 
-	test.skipIf(!hasZsh)(
-		"indexes the rc's aliases in the global AGENTS.md",
-		() => {
-			rc("alias b=bun\nalias ls='eza --icons=always'\nexport PATH=/x:$PATH\n");
-			expect(syncAliases()).toBe(true);
-			const text = agentsText();
-			expect(hasBlock(agentsFile())).toBe(true);
-			expect(text).toContain("- `b` = `bun`");
-			expect(text).toContain("- `ls` = `eza --icons=always`");
-			expect(text).not.toContain("PATH");
-			// zsh's own default aliases are not the user's rc.
-			expect(text).not.toContain("run-help");
-			expect(text).not.toContain("which-command");
-		},
-	);
+	test.skipIf(!hasZsh)("indexes the rc's aliases in the global AGENTS.md", () => {
+		rc("alias b=bun\nalias ls='eza --icons=always'\nexport PATH=/x:$PATH\n");
+		expect(syncAliases()).toBe(true);
+		const text = agentsText();
+		expect(hasBlock(agentsFile())).toBe(true);
+		expect(text).toContain("- `b` = `bun`");
+		expect(text).toContain("- `ls` = `eza --icons=always`");
+		expect(text).not.toContain("PATH");
+		// zsh's own default aliases are not the user's rc.
+		expect(text).not.toContain("run-help");
+		expect(text).not.toContain("which-command");
+	});
 
 	test.skipIf(!hasZsh)("does not rewrite an unchanged index", () => {
 		rc("alias b=bun\n");

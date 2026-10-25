@@ -54,9 +54,7 @@ describe("filterAsks", () => {
 		expect(kept).toHaveLength(3);
 		expect(kept.some((entry) => entry.child)).toBe(true);
 
-		const reasons = Object.fromEntries(
-			drops.map((drop) => [drop.reason, drop.asks]),
-		);
+		const reasons = Object.fromEntries(drops.map((drop) => [drop.reason, drop.asks]));
 		expect(reasons["synthetic prompt"]).toBe(1);
 		expect(reasons["compaction prompt"]).toBe(1);
 		expect(reasons["no model call"]).toBe(1);

@@ -46,8 +46,8 @@ export default function Home() {
 			<section>
 				<h1>{SITE_NAME}</h1>
 				<p className="ink-muted mt-4 max-w-[var(--prose-max)] text-lg">
-					Personal tooling for opencode and Command Code — usage
-					dashboards, model comparison, and plugins, kept in one repo.
+					Personal tooling for opencode and Command Code — usage dashboards, model
+					comparison, and plugins, kept in one repo.
 				</p>
 			</section>
 
@@ -57,9 +57,8 @@ export default function Home() {
 					<CopyBlock value={INSTALL_COMMAND} />
 				</div>
 				<p className="ink-muted mono mt-4 text-xs">
-					Everything else installs per package — the mpc and reqshape
-					CLIs and the opencode plugins each have their command on
-					their docs page.
+					Everything else installs per package — the mpc and reqshape CLIs and the
+					opencode plugins each have their command on their docs page.
 				</p>
 			</section>
 
@@ -81,12 +80,8 @@ export default function Home() {
 							href={link.href}
 							className="flex flex-col gap-1 rounded-lg border border-[var(--hairline)] p-5 no-underline transition-colors hover:border-[var(--accent)]"
 						>
-							<span className="ink-fg font-semibold">
-								{link.label}
-							</span>
-							<span className="ink-muted text-sm">
-								{link.blurb}
-							</span>
+							<span className="ink-fg font-semibold">{link.label}</span>
+							<span className="ink-muted text-sm">{link.blurb}</span>
 						</Link>
 					))}
 				</div>

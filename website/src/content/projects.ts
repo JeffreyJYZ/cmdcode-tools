@@ -76,8 +76,7 @@ export const projects: Project[] = [
 	{
 		slug: "opencode-shell-rc",
 		name: "@jeffreyjyz/opencode-shell-rc",
-		tagline:
-			"Make the opencode agent shell load your zsh aliases and functions.",
+		tagline: "Make the opencode agent shell load your zsh aliases and functions.",
 		kind: "npm-plugin",
 		repoPath: "opencode-shell-rc",
 		links: {
@@ -104,8 +103,7 @@ export const projects: Project[] = [
 	{
 		slug: "opencode-plugin",
 		name: "@jeffreyjyz/opencode-command-code",
-		tagline:
-			"Command Code provider, live model list and usage sidebar for opencode.",
+		tagline: "Command Code provider, live model list and usage sidebar for opencode.",
 		kind: "npm-plugin",
 		repoPath: "opencode-plugin",
 		links: {

@@ -30,9 +30,7 @@ describe("parseUsage", () => {
 
 	test("accepts a bare array of entries", () => {
 		const rows = parseUsage(
-			JSON.stringify([
-				{ model: "GLM-5.3 Flash", requests: 3, tokensIn: 100 },
-			]),
+			JSON.stringify([{ model: "GLM-5.3 Flash", requests: 3, tokensIn: 100 }]),
 		);
 		expect(rows[0]?.key).toBe("glm53flash");
 		expect(rows[0]?.cacheRead).toBe(0);
@@ -136,9 +134,7 @@ describe("mergeUsage", () => {
 	test("sums the same model across sources", () => {
 		const a = parseUsage(CMDUSE);
 		const b = parseUsage(
-			JSON.stringify([
-				{ model: "zai-org/GLM-5.2", requests: 8, tokensIn: 100 },
-			]),
+			JSON.stringify([{ model: "zai-org/GLM-5.2", requests: 8, tokensIn: 100 }]),
 		);
 		const [row] = mergeUsage(a, b);
 		expect(row?.requests).toBe(150);

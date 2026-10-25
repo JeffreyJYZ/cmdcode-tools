@@ -7,10 +7,7 @@ export function SiteNav() {
 			<Link href="/" className="ink-fg text-sm font-bold no-underline">
 				{SITE_NAME}
 			</Link>
-			<nav
-				aria-label="Primary"
-				className="flex flex-wrap gap-x-6 gap-y-2"
-			>
+			<nav aria-label="Primary" className="flex flex-wrap gap-x-6 gap-y-2">
 				{NAV_LINKS.map((link) => (
 					<Link
 						key={link.href}

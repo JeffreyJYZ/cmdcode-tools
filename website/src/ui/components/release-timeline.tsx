@@ -23,11 +23,7 @@ export function ReleaseTimeline({ snapshot }: { snapshot: ReleasesSnapshot }) {
 	const groups = groupTimeline(buildTimeline(snapshot));
 
 	if (groups.length === 0) {
-		return (
-			<p className="ink-muted mt-8 text-sm">
-				No releases recorded in the snapshot.
-			</p>
-		);
+		return <p className="ink-muted mt-8 text-sm">No releases recorded in the snapshot.</p>;
 	}
 
 	return (
@@ -42,17 +38,12 @@ export function ReleaseTimeline({ snapshot }: { snapshot: ReleasesSnapshot }) {
 						className="sep rounded-lg p-5"
 					>
 						<header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-							<h2
-								id={headingId}
-								className="mono ink-fg text-sm font-semibold"
-							>
+							<h2 id={headingId} className="mono ink-fg text-sm font-semibold">
 								{group.package}
 							</h2>
 							<span className="mono ink-muted text-xs uppercase tracking-widest">
 								{source} · {group.entries.length}{" "}
-								{group.entries.length === 1
-									? "release"
-									: "releases"}
+								{group.entries.length === 1 ? "release" : "releases"}
 							</span>
 						</header>
 

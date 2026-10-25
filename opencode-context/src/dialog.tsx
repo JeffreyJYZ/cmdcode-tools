@@ -139,10 +139,7 @@ export function BreakdownDialog(props: {
 			props.breakdown.measuredTokens !== undefined
 				? formatTokens(props.breakdown.measuredTokens)
 				: "?";
-		const cap =
-			props.breakdown.limit !== undefined
-				? formatTokens(props.breakdown.limit)
-				: "?";
+		const cap = props.breakdown.limit !== undefined ? formatTokens(props.breakdown.limit) : "?";
 		return `${used} / ${cap}`;
 	};
 	// One flat list so rows render in a single For.
@@ -159,13 +156,7 @@ export function BreakdownDialog(props: {
 			return [parent, ...kids];
 		});
 	return (
-		<box
-			flexDirection="column"
-			width="100%"
-			paddingLeft={2}
-			paddingRight={2}
-			paddingBottom={1}
-		>
+		<box flexDirection="column" width="100%" paddingLeft={2} paddingRight={2} paddingBottom={1}>
 			<text fg={props.colors.muted}>Context Window</text>
 			<box height={1} />
 			<Bar breakdown={props.breakdown} />

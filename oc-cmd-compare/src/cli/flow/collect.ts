@@ -35,9 +35,7 @@ export async function collect(options: Options) {
 		cc: workload,
 	};
 	// Ability is loaded after the catalogs so fills can be limited to our rows.
-	const keys = new Set(
-		[...ocEntries, ...ccEntries].map((entry) => entry.key),
-	);
+	const keys = new Set([...ocEntries, ...ccEntries].map((entry) => entry.key));
 	const ability = options.noAbility
 		? {
 				intelligence: new Map<string, number>(),

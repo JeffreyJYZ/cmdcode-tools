@@ -11,9 +11,7 @@ import remarkGfm from "remark-gfm";
  * in heading anchors or code theme. Consumed as
  * `<MDXRemote options={{ mdxOptions }} />`.
  */
-export const mdxOptions: NonNullable<
-	NonNullable<MDXRemoteProps["options"]>["mdxOptions"]
-> = {
+export const mdxOptions: NonNullable<NonNullable<MDXRemoteProps["options"]>["mdxOptions"]> = {
 	remarkPlugins: [remarkGfm],
 	rehypePlugins: [
 		rehypeSlug,

@@ -20,19 +20,12 @@ import {
 	OCUSE_USAGE_COMMAND_ID,
 	TUI_ID,
 } from "./constants/providers";
-import {
-	hostColors,
-	legacyColors,
-	mono,
-	Panel,
-	type PanelColors,
-} from "./sidebar/panel";
+import { hostColors, legacyColors, mono, Panel, type PanelColors } from "./sidebar/panel";
 import { loadPrefs } from "./sidebar/prefs";
 import { panelTitle, sessionKind, useRows } from "./sidebar/useRows";
 
 /** Colour is opt-in (see sidebar/prefs.ts); off, every tone collapses to text. */
-const themed = (colors: PanelColors): PanelColors =>
-	loadPrefs().colors ? colors : mono(colors);
+const themed = (colors: PanelColors): PanelColors => (loadPrefs().colors ? colors : mono(colors));
 
 // ---- v1 host ---------------------------------------------------------------
 
@@ -41,18 +34,13 @@ interface V1Api {
 		register: (config: {
 			order?: number;
 			slots: {
-				sidebar_content: (
-					ctx: unknown,
-					props: { session_id: string },
-				) => unknown;
+				sidebar_content: (ctx: unknown, props: { session_id: string }) => unknown;
 			};
 		}) => void;
 	};
 	state: {
 		session: {
-			get: (
-				id: string,
-			) => { model?: { providerID: string; id: string } } | undefined;
+			get: (id: string) => { model?: { providerID: string; id: string } } | undefined;
 		};
 	};
 	theme: { current: { text: RGBA; textMuted: RGBA } };
@@ -111,9 +99,7 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 	setup(ctx) {
 		ctx.ui.slot({
 			append: "sidebar.content",
-			render: (input) => (
-				<PanelV2 ctx={ctx} sessionID={input.sessionID} />
-			),
+			render: (input) => <PanelV2 ctx={ctx} sessionID={input.sessionID} />,
 		});
 		// /cmd-usage prints the full cmduse dashboard in a dialog. keymap.layer()
 		// must run inside a render, so mount a no-op and register from there.
@@ -141,9 +127,7 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 									ctx.ui.toast.show({
 										title: "cmd-usage failed",
 										message:
-											error instanceof Error
-												? error.message
-												: String(error),
+											error instanceof Error ? error.message : String(error),
 										variant: "error",
 									});
 									return;
@@ -172,9 +156,7 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 									ctx.ui.toast.show({
 										title: "ocuse-usage failed",
 										message:
-											error instanceof Error
-												? error.message
-												: String(error),
+											error instanceof Error ? error.message : String(error),
 										variant: "error",
 									});
 									return;
@@ -202,9 +184,7 @@ export const commandCodeTui: TuiPluginNs.Definition = {
 									ctx.ui.toast.show({
 										title: "arkuse-usage failed",
 										message:
-											error instanceof Error
-												? error.message
-												: String(error),
+											error instanceof Error ? error.message : String(error),
 										variant: "error",
 									});
 									return;

@@ -88,11 +88,7 @@ export interface ShapeResolution {
 	note: string;
 }
 
-async function payloadOf(
-	source: string,
-	args: string[],
-	warn: boolean,
-): Promise<string | null> {
+async function payloadOf(source: string, args: string[], warn: boolean): Promise<string | null> {
 	if (source !== SHAPE_MEASURED) {
 		try {
 			return await Bun.file(source).text();
@@ -128,10 +124,7 @@ async function payloadOf(
  * `note` names which path was taken, so the footer can show whether reqshape
  * was used and what the alternative flag is.
  */
-export async function loadShapes(
-	spec: string,
-	since?: string,
-): Promise<ShapeResolution> {
+export async function loadShapes(spec: string, since?: string): Promise<ShapeResolution> {
 	const trimmed = spec.trim();
 	const args = ["--format", "json"];
 	if (since) args.push("--since", since);
@@ -139,10 +132,7 @@ export async function loadShapes(
 	// A nested mpc (reqshape runs `mpc --json`) must not measure again — that is
 	// the cycle. Callers that pass `--shape off` never reach here; this catches
 	// the ones that do not (a sibling still pinned to the old default).
-	if (
-		process.env[SHAPE_GUARD_ENV] &&
-		(trimmed === SHAPE_AUTO || trimmed === SHAPE_MEASURED)
-	) {
+	if (process.env[SHAPE_GUARD_ENV] && (trimmed === SHAPE_AUTO || trimmed === SHAPE_MEASURED)) {
 		return {
 			note: "fixed workload · nested mpc (reqshape is already resolving the shape)",
 		};
@@ -176,11 +166,7 @@ export async function loadShapes(
 	}
 
 	const measured = trimmed === SHAPE_MEASURED;
-	const payload = await payloadOf(
-		measured ? SHAPE_MEASURED : trimmed,
-		args,
-		true,
-	);
+	const payload = await payloadOf(measured ? SHAPE_MEASURED : trimmed, args, true);
 	if (!payload) {
 		return {
 			note: "fixed workload · shape source unavailable · --shape auto to fall back automatically",

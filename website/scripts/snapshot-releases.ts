@@ -22,12 +22,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { RELEASES_URL } from "@/lib/consts";
-import type {
-	CrateRelease,
-	GitHubRelease,
-	NpmRelease,
-	ReleasesSnapshot,
-} from "@/lib/releases";
+import type { CrateRelease, GitHubRelease, NpmRelease, ReleasesSnapshot } from "@/lib/releases";
 
 const GITHUB_REPO = "JeffreyJYZ/cmdcode-tools";
 const GITHUB_API = RELEASES_URL;
@@ -52,14 +47,7 @@ const NPM_OWNER = "jeffreyjyz";
 /** crates.io and GitHub both want a descriptive UA; GitHub rejects anonymous. */
 const USER_AGENT = `cmdcode-tools-website-snapshot (https://github.com/${GITHUB_REPO})`;
 
-const OUT_FILE = join(
-	fileURLToPath(import.meta.url),
-	"..",
-	"..",
-	"src",
-	"data",
-	"releases.json",
-);
+const OUT_FILE = join(fileURLToPath(import.meta.url), "..", "..", "src", "data", "releases.json");
 
 const PAGE_SIZE = 100;
 
@@ -117,17 +105,12 @@ type RawPackument = {
 
 /** Version-time entries for one npm package; empty when foreign or unpublished. */
 async function fetchNpmPackage(pkg: string): Promise<NpmRelease[]> {
-	const packument = await getJson<RawPackument>(
-		`${REGISTRY}/${encodeURIComponent(pkg)}`,
-		{ "User-Agent": USER_AGENT },
-	);
-	const maintained = (packument.maintainers ?? []).some(
-		(m) => m.name === NPM_OWNER,
-	);
+	const packument = await getJson<RawPackument>(`${REGISTRY}/${encodeURIComponent(pkg)}`, {
+		"User-Agent": USER_AGENT,
+	});
+	const maintained = (packument.maintainers ?? []).some((m) => m.name === NPM_OWNER);
 	if (!maintained) {
-		console.warn(
-			`  skip npm ${pkg}: not maintained by ${NPM_OWNER} (foreign package)`,
-		);
+		console.warn(`  skip npm ${pkg}: not maintained by ${NPM_OWNER} (foreign package)`);
 		return [];
 	}
 	const time = packument.time ?? {};
@@ -159,10 +142,9 @@ type RawCrateVersions = {
 
 /** Non-yanked versions for one crate; newest-first as the API returns them. */
 async function fetchCrate(crate: string): Promise<CrateRelease[]> {
-	const data = await getJson<RawCrateVersions>(
-		`${CRATES_API}/${crate}/versions`,
-		{ "User-Agent": USER_AGENT },
-	);
+	const data = await getJson<RawCrateVersions>(`${CRATES_API}/${crate}/versions`, {
+		"User-Agent": USER_AGENT,
+	});
 	return data.versions
 		.filter((v) => !v.yanked)
 		.map((v) => ({
@@ -194,24 +176,17 @@ async function main(): Promise<void> {
 
 	const npm: NpmRelease[] = [];
 	for (const pkg of NPM_PACKAGES) {
-		npm.push(
-			...((await settle(`npm ${pkg}`, () => fetchNpmPackage(pkg))) ?? []),
-		);
+		npm.push(...((await settle(`npm ${pkg}`, () => fetchNpmPackage(pkg))) ?? []));
 	}
 
 	const crates: CrateRelease[] = [];
 	for (const crate of CRATES) {
-		crates.push(
-			...((await settle(`crate ${crate}`, () => fetchCrate(crate))) ??
-				[]),
-		);
+		crates.push(...((await settle(`crate ${crate}`, () => fetchCrate(crate))) ?? []));
 	}
 
 	const total = github.length + npm.length + crates.length;
 	if (total === 0) {
-		throw new Error(
-			"every source returned nothing — refusing to write an empty snapshot",
-		);
+		throw new Error("every source returned nothing — refusing to write an empty snapshot");
 	}
 
 	const snapshot: ReleasesSnapshot = {

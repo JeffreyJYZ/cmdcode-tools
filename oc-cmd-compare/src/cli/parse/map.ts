@@ -9,22 +9,13 @@ import {
 } from "#~/cli/options.ts";
 import { ARG_DEFAULTS, BENCH_DEFAULT } from "#~/constants/cli.ts";
 import { SHAPE_MEASURED } from "#~/constants/shape.ts";
-import {
-	colorMode,
-	numbers,
-	pair,
-	presets,
-	usageWindow,
-	words,
-} from "./fields.ts";
+import { colorMode, numbers, pair, presets, usageWindow, words } from "./fields.ts";
 import { assertKnown, assertValues, type Bag, int, share } from "./validate.ts";
 
 export type { Bag } from "./validate.ts";
 
 const pick = (bag: Bag, key: string): unknown =>
-	bag[key] === undefined
-		? ARG_DEFAULTS[key as keyof typeof ARG_DEFAULTS]
-		: bag[key];
+	bag[key] === undefined ? ARG_DEFAULTS[key as keyof typeof ARG_DEFAULTS] : bag[key];
 
 /** `--bench` default is contextual: the AA API leads only when a key exists. */
 function benchDefault(bag: Bag): string {
@@ -83,33 +74,25 @@ export function toOptions(bag: Bag): Options {
 			const suffixes = words(bag, "inheritSuffixes");
 			return suffixes.length > 0 ? suffixes : undefined;
 		})(),
-		window:
-			window && window.length === 2
-				? [window[0] ?? 0, window[1] ?? 0]
-				: undefined,
+		window: window && window.length === 2 ? [window[0] ?? 0, window[1] ?? 0] : undefined,
 		costThresholds: pair(pick(bag, "costThresholds"), "cost-thresholds"),
 		valThresholds: pair(pick(bag, "valThresholds"), "val-thresholds"),
-		benchName:
-			bag.benchName === undefined ? undefined : String(bag.benchName),
+		benchName: bag.benchName === undefined ? undefined : String(bag.benchName),
 		aaKey: bag.aaKey === undefined ? undefined : String(bag.aaKey),
 		noFallback: bag.fallback === false,
 		noAbility: bag.ability === false,
 		peak: bag.peak === true,
 		asc: bag.asc === true,
 		json: bag.json === true,
-		format: parseFormat(
-			bag.format === undefined ? "table" : String(bag.format),
-		) as Format,
+		format: parseFormat(bag.format === undefined ? "table" : String(bag.format)) as Format,
 		colorMode: colorMode(bag.color),
 		check: bag.check === true,
 		printConfig: bag.printConfig === true,
 		usage: bag.usage === true,
-		usageFile:
-			bag.usageFile === undefined ? undefined : String(bag.usageFile),
+		usageFile: bag.usageFile === undefined ? undefined : String(bag.usageFile),
 		usageLog: bag.usageLog === undefined ? undefined : String(bag.usageLog),
 		usageDb: bag.usageDb === undefined ? undefined : String(bag.usageDb),
-		usageMonths:
-			bag.usageMonths === undefined ? 1 : Number(bag.usageMonths),
+		usageMonths: bag.usageMonths === undefined ? 1 : Number(bag.usageMonths),
 		usageWindow: usageWindow(bag.usageWindow),
 		plugins: words(bag, "plugins"),
 	};

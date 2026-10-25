@@ -4,10 +4,7 @@ import { columns } from "#~/view/schema.ts";
 import { paint } from "#~/view/text/index.ts";
 import { buildSegments, renderSegment } from "./segments.ts";
 
-function measure(
-	rows: Row[],
-	ids: string[],
-): { cols: Column[]; widths: number[] } {
+function measure(rows: Row[], ids: string[]): { cols: Column[]; widths: number[] } {
 	const cols = columns(ids);
 	const widths = cols.map((c) => c.header.length);
 	for (const row of rows) {
@@ -34,15 +31,10 @@ export function printTable(
 				.map((seg) => {
 					const label = labels[seg.key];
 					if (!label) return " ".repeat(seg.width);
-					const left = Math.max(
-						0,
-						Math.floor((seg.width - label.title.length) / 2),
-					);
+					const left = Math.max(0, Math.floor((seg.width - label.title.length) / 2));
 					return paint(
 						label.color,
-						label.title
-							.padStart(left + label.title.length)
-							.padEnd(seg.width),
+						label.title.padStart(left + label.title.length).padEnd(seg.width),
 					);
 				})
 				.join(bar),
@@ -65,9 +57,7 @@ export function printTable(
 			)
 			.join(bar),
 	);
-	console.log(
-		segs.map((seg) => "─".repeat(seg.width)).join(paint(SGR.dim, BAR_RULE)),
-	);
+	console.log(segs.map((seg) => "─".repeat(seg.width)).join(paint(SGR.dim, BAR_RULE)));
 	for (const row of rows) {
 		console.log(
 			segs

@@ -8,11 +8,7 @@ function isExternal(href: string): boolean {
 	return SCHEME_RE.test(href) || href.startsWith("//");
 }
 
-function Anchor({
-	href = "",
-	children,
-	...rest
-}: ComponentPropsWithoutRef<"a">) {
+function Anchor({ href = "", children, ...rest }: ComponentPropsWithoutRef<"a">) {
 	if (href.startsWith("#")) {
 		return (
 			<a href={href} {...rest}>
@@ -45,12 +41,8 @@ function Anchor({
  */
 export const mdxComponents = {
 	a: Anchor,
-	h2: ({ children, ...rest }: ComponentPropsWithoutRef<"h2">) => (
-		<h2 {...rest}>{children}</h2>
-	),
-	h3: ({ children, ...rest }: ComponentPropsWithoutRef<"h3">) => (
-		<h3 {...rest}>{children}</h3>
-	),
+	h2: ({ children, ...rest }: ComponentPropsWithoutRef<"h2">) => <h2 {...rest}>{children}</h2>,
+	h3: ({ children, ...rest }: ComponentPropsWithoutRef<"h3">) => <h3 {...rest}>{children}</h3>,
 	table: ({ children, ...rest }: ComponentPropsWithoutRef<"table">) => (
 		<div className="table-wrap">
 			<table {...rest}>{children}</table>

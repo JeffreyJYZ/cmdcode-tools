@@ -41,9 +41,9 @@ describe("verify-release helpers", () => {
 		expect(line).toContain("MATCH");
 	});
 	test("flags a shasum mismatch", () => {
-		expect(
-			verdict("0.3.3", factsFrom(packument, "0.3.3"), 200, "a", "b"),
-		).toContain("MISMATCH");
+		expect(verdict("0.3.3", factsFrom(packument, "0.3.3"), 200, "a", "b")).toContain(
+			"MISMATCH",
+		);
 	});
 	test("sha1 of a known buffer", () => {
 		expect(sha1Hex(new TextEncoder().encode("abc"))).toBe(
@@ -59,9 +59,7 @@ describe("verify-release target resolution", () => {
 		expect(resolveTargetDir()).toBe(ownDir);
 	});
 	test("--dir resolves relative to the repo root", () => {
-		expect(resolveTargetDir("oc-cmd-compare")).toBe(
-			join(repoRoot, "oc-cmd-compare"),
-		);
+		expect(resolveTargetDir("oc-cmd-compare")).toBe(join(repoRoot, "oc-cmd-compare"));
 	});
 	test("--dir passes an absolute path through", () => {
 		expect(resolveTargetDir("/tmp/other-pkg")).toBe("/tmp/other-pkg");

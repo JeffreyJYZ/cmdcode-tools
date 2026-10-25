@@ -31,10 +31,7 @@ export interface WireOptions {
 
 /** Cap the caller's value like upstream: never above the provider ceiling. */
 function capTokens(value: number | undefined): number {
-	const n =
-		typeof value === "number" && Number.isFinite(value)
-			? value
-			: DEFAULT_MAX_TOKENS;
+	const n = typeof value === "number" && Number.isFinite(value) ? value : DEFAULT_MAX_TOKENS;
 	return Math.min(n, DEFAULT_MAX_TOKENS);
 }
 
@@ -45,9 +42,7 @@ function textOf(part: unknown): string {
 
 /** Tool results carry a nested value shape; flatten it the way the API expects. */
 function resultText(part: LanguageModelV3ToolResultPart): string {
-	const output =
-		(part as { output?: unknown }).output ??
-		(part as { result?: unknown }).result;
+	const output = (part as { output?: unknown }).output ?? (part as { result?: unknown }).result;
 	if (typeof output === "string") return output;
 	if (output && typeof output === "object") {
 		const o = output as {
@@ -69,9 +64,7 @@ function imageUrl(part: unknown): string | undefined {
 		mediaType?: unknown;
 		mimeType?: unknown;
 	};
-	const mime = (p.mediaType ??
-		p.mimeType ??
-		"application/octet-stream") as string;
+	const mime = (p.mediaType ?? p.mimeType ?? "application/octet-stream") as string;
 	const data = p.data;
 	if (typeof data === "string")
 		return data.startsWith("data:") ? data : `data:${mime};base64,${data}`;
@@ -87,18 +80,10 @@ function pairedToolCallIds(prompt: LanguageModelV3Prompt): Set<string> {
 	const calls = new Set<string>();
 	const results = new Set<string>();
 	for (const message of prompt) {
-		for (const part of message.content as unknown as Array<
-			Record<string, unknown>
-		>) {
-			if (
-				part.type === "tool-call" &&
-				typeof part.toolCallId === "string"
-			)
+		for (const part of message.content as unknown as Array<Record<string, unknown>>) {
+			if (part.type === "tool-call" && typeof part.toolCallId === "string")
 				calls.add(part.toolCallId);
-			if (
-				part.type === "tool-result" &&
-				typeof part.toolCallId === "string"
-			)
+			if (part.type === "tool-result" && typeof part.toolCallId === "string")
 				results.add(part.toolCallId);
 		}
 	}
@@ -117,8 +102,7 @@ function anthropicUserContent(content: unknown, images: boolean): unknown {
 	const parts = (content ?? []) as unknown as Array<Record<string, unknown>>;
 	const blocks: unknown[] = [];
 	for (const part of parts) {
-		if (part.type === "text")
-			blocks.push({ type: "text", text: textOf(part) });
+		if (part.type === "text") blocks.push({ type: "text", text: textOf(part) });
 		else if (part.type === "file" && images) {
 			const url = imageUrl(part);
 			if (url?.startsWith("data:")) {
@@ -131,10 +115,7 @@ function anthropicUserContent(content: unknown, images: boolean): unknown {
 		}
 	}
 	// Anthropic accepts a bare string for a single text part; keep that shape.
-	if (
-		blocks.length === 1 &&
-		(blocks[0] as { type: string }).type === "text"
-	) {
+	if (blocks.length === 1 && (blocks[0] as { type: string }).type === "text") {
 		return (blocks[0] as { text: string }).text;
 	}
 	return blocks;
@@ -145,8 +126,7 @@ function openaiUserContent(content: unknown, images: boolean): unknown {
 	const parts = (content ?? []) as unknown as Array<Record<string, unknown>>;
 	const blocks: unknown[] = [];
 	for (const part of parts) {
-		if (part.type === "text")
-			blocks.push({ type: "text", text: textOf(part) });
+		if (part.type === "text") blocks.push({ type: "text", text: textOf(part) });
 		else if (part.type === "file" && images) {
 			const url = imageUrl(part);
 			if (url) blocks.push({ type: "image_url", image_url: { url } });
@@ -177,16 +157,11 @@ export function anthropicBody(
 		}
 		if (message.role === "assistant") {
 			const content: unknown[] = [];
-			for (const part of message.content as unknown as Array<
-				Record<string, unknown>
-			>) {
+			for (const part of message.content as unknown as Array<Record<string, unknown>>) {
 				if (part.type === "text") {
 					const text = textOf(part);
 					if (text) content.push({ type: "text", text });
-				} else if (
-					part.type === "tool-call" &&
-					paired.has(String(part.toolCallId))
-				) {
+				} else if (part.type === "tool-call" && paired.has(String(part.toolCallId))) {
 					content.push({
 						type: "tool_use",
 						id: part.toolCallId,
@@ -195,28 +170,19 @@ export function anthropicBody(
 					});
 				}
 			}
-			if (content.length > 0)
-				messages.push({ role: "assistant", content });
+			if (content.length > 0) messages.push({ role: "assistant", content });
 			continue;
 		}
 		// tool results become user turns of tool_result blocks
-		for (const part of message.content as unknown as Array<
-			Record<string, unknown>
-		>) {
-			if (
-				part.type !== "tool-result" ||
-				!paired.has(String(part.toolCallId))
-			)
-				continue;
+		for (const part of message.content as unknown as Array<Record<string, unknown>>) {
+			if (part.type !== "tool-result" || !paired.has(String(part.toolCallId))) continue;
 			messages.push({
 				role: "user",
 				content: [
 					{
 						type: "tool_result",
 						tool_use_id: part.toolCallId,
-						content: resultText(
-							part as unknown as LanguageModelV3ToolResultPart,
-						),
+						content: resultText(part as unknown as LanguageModelV3ToolResultPart),
 					},
 				],
 			});
@@ -245,10 +211,8 @@ export function anthropicBody(
 			input_schema: t.inputSchema ?? {},
 		}));
 	}
-	if (options.temperature !== undefined)
-		body.temperature = options.temperature;
-	if (options.reasoningEffort)
-		body.reasoning_effort = options.reasoningEffort;
+	if (options.temperature !== undefined) body.temperature = options.temperature;
+	if (options.reasoningEffort) body.reasoning_effort = options.reasoningEffort;
 	return body;
 }
 
@@ -272,21 +236,14 @@ export function openaiBody(
 			continue;
 		}
 		if (message.role === "assistant") {
-			const calls = (
-				message.content as unknown as Array<Record<string, unknown>>
-			).filter(
-				(p) =>
-					p.type === "tool-call" && paired.has(String(p.toolCallId)),
+			const calls = (message.content as unknown as Array<Record<string, unknown>>).filter(
+				(p) => p.type === "tool-call" && paired.has(String(p.toolCallId)),
 			);
-			const texts = (
-				message.content as unknown as Array<Record<string, unknown>>
-			)
+			const texts = (message.content as unknown as Array<Record<string, unknown>>)
 				.filter((p) => p.type === "text")
 				.map(textOf)
 				.filter(Boolean);
-			const reasoning = (
-				message.content as unknown as Array<Record<string, unknown>>
-			)
+			const reasoning = (message.content as unknown as Array<Record<string, unknown>>)
 				.filter((p) => p.type === "reasoning")
 				.map(textOf)
 				.join("");
@@ -313,20 +270,12 @@ export function openaiBody(
 			}
 			continue;
 		}
-		for (const part of message.content as unknown as Array<
-			Record<string, unknown>
-		>) {
-			if (
-				part.type !== "tool-result" ||
-				!paired.has(String(part.toolCallId))
-			)
-				continue;
+		for (const part of message.content as unknown as Array<Record<string, unknown>>) {
+			if (part.type !== "tool-result" || !paired.has(String(part.toolCallId))) continue;
 			messages.push({
 				role: "tool",
 				tool_call_id: part.toolCallId,
-				content: resultText(
-					part as unknown as LanguageModelV3ToolResultPart,
-				),
+				content: resultText(part as unknown as LanguageModelV3ToolResultPart),
 			});
 		}
 	}
@@ -346,10 +295,8 @@ export function openaiBody(
 			},
 		}));
 	}
-	if (options.temperature !== undefined)
-		body.temperature = options.temperature;
-	if (options.reasoningEffort)
-		body.reasoning_effort = options.reasoningEffort;
+	if (options.temperature !== undefined) body.temperature = options.temperature;
+	if (options.reasoningEffort) body.reasoning_effort = options.reasoningEffort;
 	body.stream_options = { include_usage: true };
 	return body;
 }

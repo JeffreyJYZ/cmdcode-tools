@@ -25,10 +25,7 @@ function toReq(message: RawMessage, position: number): Req {
  * session rather than the ask, because that is the axis a re-read context grows
  * along: the first request of a conversation is cheap, the hundredth is not.
  */
-export function buildAsks(
-	messages: RawMessage[],
-	sessions: Map<string, SessionRow>,
-): Ask[] {
+export function buildAsks(messages: RawMessage[], sessions: Map<string, SessionRow>): Ask[] {
 	const asks: Ask[] = [];
 	let current: Ask | null = null;
 	let sessionID = "";

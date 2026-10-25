@@ -57,8 +57,7 @@ describe("account snapshot cache", () => {
 		const last: Accounted = { account: { fiveHour: { percent: 12 } } };
 		const failed: Accounted = {
 			account: undefined,
-			accountError:
-				"error sending request for url (https://opencode.ai/zen/go/v1/usage)",
+			accountError: "error sending request for url (https://opencode.ai/zen/go/v1/usage)",
 		};
 		expect(keepAccount(failed, last)).toEqual({
 			account: last.account,
@@ -85,12 +84,7 @@ describe("account snapshot cache", () => {
 		});
 		const after = seededRows();
 		// Whatever ran first, the cached snapshot must yield the plan row now.
-		expect(after[0]).toEqual([
-			"Plan",
-			"GOAT · $70/mo credits",
-			"base",
-			true,
-		]);
+		expect(after[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base", true]);
 		expect(after.map((row) => row[0])).toContain("Monthly");
 		expect(before.length).toBeLessThanOrEqual(after.length);
 	});
@@ -133,18 +127,12 @@ describe("model usage cache", () => {
 		// The row is the model's spend in a conversation, divided by that
 		// session's total, so a figure carried into another session counted one
 		// conversation against another's total and could read over 100%.
-		rememberModelUsage(
-			"deepseek-v4.1-flash",
-			{ requests: 9, cost: 4 },
-			"ses_a",
-		);
+		rememberModelUsage("deepseek-v4.1-flash", { requests: 9, cost: 4 }, "ses_a");
 		expect(seededModelUsage("deepseek-v4.1-flash", "ses_a")).toEqual({
 			requests: 9,
 			cost: 4,
 		});
-		expect(
-			seededModelUsage("deepseek-v4.1-flash", "ses_b"),
-		).toBeUndefined();
+		expect(seededModelUsage("deepseek-v4.1-flash", "ses_b")).toBeUndefined();
 	});
 });
 
@@ -160,15 +148,10 @@ describe("catalog cache", () => {
 
 		rememberMeta(
 			new Map([
-				[
-					"deepseekv41flash",
-					{ key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" },
-				],
+				["deepseekv41flash", { key: "deepseekv41flash", name: "DeepSeek V4.1 Flash" }],
 			]),
 		);
-		expect(seededMeta().get("deepseekv41flash")?.name).toBe(
-			"DeepSeek V4.1 Flash",
-		);
+		expect(seededMeta().get("deepseekv41flash")?.name).toBe("DeepSeek V4.1 Flash");
 
 		rememberMeta(new Map());
 		expect(seededMeta().size).toBe(1);

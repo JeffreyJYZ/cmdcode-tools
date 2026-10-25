@@ -2,12 +2,7 @@ import { LEGEND, PROVIDER_COLOR, SGR } from "#~/constants/view.ts";
 import type { CompareRow, PlanInfo, Workload } from "#~/types.ts";
 import { tally } from "./layout/segments.ts";
 import type { ReportMeta } from "./schema.ts";
-import {
-	paint,
-	planTitle,
-	providerName,
-	shortProviderName,
-} from "./text/index.ts";
+import { paint, planTitle, providerName, shortProviderName } from "./text/index.ts";
 
 /** One side's per-request token vector; fields with no measured signal stay out. */
 function shapeText(workload: Workload): string {
@@ -20,9 +15,7 @@ function shapeText(workload: Workload): string {
 		parts.push(`${workload.reasoning.toLocaleString("en-US")} reasoning`);
 	}
 	if (workload.cacheWrite > 0) {
-		parts.push(
-			`${workload.cacheWrite.toLocaleString("en-US")} cache-write`,
-		);
+		parts.push(`${workload.cacheWrite.toLocaleString("en-US")} cache-write`);
 	}
 	return parts.join(" · ");
 }
@@ -63,8 +56,7 @@ export function footer(rows: CompareRow[], meta: ReportMeta): void {
 	// end, which made every label as faint as its value and read as one grey
 	// block (the shape decision among it).
 	const label = (text: string): string => paint(SGR.bold, text.padEnd(10));
-	const line = (key: string, text: string): void =>
-		console.log(`${label(key)}${text}`);
+	const line = (key: string, text: string): void => console.log(`${label(key)}${text}`);
 	const plans = [meta.ocPlan, meta.ccPlan].map(planBlock);
 	const planWidth = Math.max(...plans.map((p) => p.title.length));
 	const [ocBlock, ccBlock] = plans;
@@ -79,10 +71,7 @@ export function footer(rows: CompareRow[], meta: ReportMeta): void {
 		`${perSide ? `${shortProviderName("oc-go")} ` : ""}${shapeText(ocWorkload)} tokens per request`,
 	);
 	if (perSide) {
-		line(
-			"",
-			`${shortProviderName("cc")} ${shapeText(ccWorkload)} tokens per request`,
-		);
+		line("", `${shortProviderName("cc")} ${shapeText(ccWorkload)} tokens per request`);
 	}
 	if (meta.shapeNote) line("shape", meta.shapeNote);
 
@@ -97,28 +86,16 @@ export function footer(rows: CompareRow[], meta: ReportMeta): void {
 		`rolling caps as % of monthly allowance: ${planTitle(meta.ocPlan)} ${windowPercents(meta.ocPlan, meta.window)} · ${planTitle(meta.ccPlan)} ${windowPercents(meta.ccPlan, meta.window)}`,
 	);
 	if (meta.abilityLabel) {
-		line(
-			"ability",
-			`${meta.abilityLabel}${meta.abilityNote ? ` · ${meta.abilityNote}` : ""}`,
-		);
+		line("ability", `${meta.abilityLabel}${meta.abilityNote ? ` · ${meta.abilityNote}` : ""}`);
 	}
 
 	const t = tally(rows);
-	const parts = [
-		`${providerName("oc-go")} ${t.ocWins}`,
-		`${providerName("cc")} ${t.ccWins}`,
-	];
+	const parts = [`${providerName("oc-go")} ${t.ocWins}`, `${providerName("cc")} ${t.ccWins}`];
 	if (t.ties > 0) parts.push(`tie ${t.ties}`);
 	line("wins", `head-to-head ${t.headToHead} shared: ${parts.join(" · ")}`);
-	line(
-		"",
-		`exclusive: ${providerName("oc-go")} ${t.ocOnly} · ${providerName("cc")} ${t.ccOnly}`,
-	);
+	line("", `exclusive: ${providerName("oc-go")} ${t.ocOnly} · ${providerName("cc")} ${t.ccOnly}`);
 
 	LEGEND.forEach(([key, text], i) => {
-		line(
-			i === 0 ? "legend" : "",
-			`${paint(SGR.bold, (key ?? "").padEnd(9))}${text}`,
-		);
+		line(i === 0 ? "legend" : "", `${paint(SGR.bold, (key ?? "").padEnd(9))}${text}`);
 	});
 }

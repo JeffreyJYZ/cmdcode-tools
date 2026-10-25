@@ -25,10 +25,7 @@ describe("tui plugin definition", () => {
 
 	test("registers both the sidebar and the keymap mount", () => {
 		const claims = captureSetup();
-		expect(claims.map((claim) => claim.append).sort()).toEqual([
-			"app",
-			"sidebar.content",
-		]);
+		expect(claims.map((claim) => claim.append).sort()).toEqual(["app", "sidebar.content"]);
 	});
 
 	test("app-slot mount returns void, not null (no stray prompt line)", () => {

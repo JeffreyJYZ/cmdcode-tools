@@ -72,10 +72,7 @@ function side(
 ): SideProjection {
 	const requests = Math.max(usage.requests, 1e-9);
 	const costPerRequest = periodCost / requests;
-	const payPerRequest =
-		entry.allowance > 0
-			? (plan.price * costPerRequest) / entry.allowance
-			: 0;
+	const payPerRequest = entry.allowance > 0 ? (plan.price * costPerRequest) / entry.allowance : 0;
 	const creditsDrawn = periodCost / months;
 	return {
 		costPerRequest,

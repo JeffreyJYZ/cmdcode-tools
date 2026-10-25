@@ -45,9 +45,7 @@ describe("paths", () => {
 
 	test("falls back under HOME without XDG_DATA_HOME", () => {
 		delete process.env.XDG_DATA_HOME;
-		expect(stateDir()).toBe(
-			join(dir, ".local", "share", "opencode", "session-dir"),
-		);
+		expect(stateDir()).toBe(join(dir, ".local", "share", "opencode", "session-dir"));
 	});
 
 	test("expandHome", () => {

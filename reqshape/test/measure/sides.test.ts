@@ -20,11 +20,7 @@ function req(provider: string, values: Partial<Req> = {}): Req {
 
 describe("sideOf", () => {
 	test("every provider variant the CommandCode plugin registers is cc", () => {
-		for (const id of [
-			...CC_PREFIXES,
-			"command-code-openai",
-			"command-code-anthropic",
-		]) {
+		for (const id of [...CC_PREFIXES, "command-code-openai", "command-code-anthropic"]) {
 			expect(sideOf(id)).toBe("cc");
 		}
 	});

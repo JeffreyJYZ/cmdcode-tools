@@ -44,14 +44,7 @@ import {
 } from "@/lib/mpc";
 
 /** A numeric dimension the table can sort by; `better` decides the winner. */
-type Metric =
-	| "req"
-	| "per1k"
-	| "reqdollar"
-	| "cost"
-	| "ability"
-	| "tps"
-	| "val";
+type Metric = "req" | "per1k" | "reqdollar" | "cost" | "ability" | "tps" | "val";
 type Side = "oc" | "cc";
 type Mode = "compact" | "full";
 type Tone = "ok" | "warn" | "crit";
@@ -88,11 +81,9 @@ const PILL_OFF =
 	"border-[var(--hairline)] ink-muted hover:border-[var(--accent)] hover:text-[var(--fg)]";
 const TH = "px-4 py-2.5 text-right font-medium";
 const TH_FIRST = "px-4 py-2.5 text-left font-medium";
-const TH_GROUP =
-	"border-l border-[var(--hairline)] px-4 py-2.5 text-center font-medium";
+const TH_GROUP = "border-l border-[var(--hairline)] px-4 py-2.5 text-center font-medium";
 const TD = "px-4 py-2 text-right mono tabular-nums";
-const TD_GROUP =
-	"border-l border-[var(--hairline)] px-4 py-2 text-right mono tabular-nums";
+const TD_GROUP = "border-l border-[var(--hairline)] px-4 py-2 text-right mono tabular-nums";
 
 /** Full view's row-level columns — the set mpc puts beside its two groups. */
 const META_HEADERS = ["ability", "tps", "DEAL", "WIN", "COST", "VAL"] as const;
@@ -153,10 +144,7 @@ function formatGeneratedAt(iso: string): string {
 }
 
 /** Numeric value of one side under a metric; `null` when unpriced there. */
-function sideMetricValue(
-	side: MpcSide | null | undefined,
-	metric: Metric,
-): number | null {
+function sideMetricValue(side: MpcSide | null | undefined, metric: Metric): number | null {
 	if (!side) return null;
 	switch (metric) {
 		case "req":
@@ -192,21 +180,16 @@ function rowMetricValue(row: CompareRow, metric: Metric): number | null {
 	}
 	if (metric === "tps") return row.oc?.tps ?? row.cc?.tps ?? null;
 	if (metric === "val") return rowValue(row);
-	const values = [
-		sideMetricValue(row.oc, metric),
-		sideMetricValue(row.cc, metric),
-	].filter((value): value is number => value !== null);
+	const values = [sideMetricValue(row.oc, metric), sideMetricValue(row.cc, metric)].filter(
+		(value): value is number => value !== null,
+	);
 	if (values.length === 0) return null;
 	const better = METRICS.find((m) => m.id === metric)?.better ?? "higher";
 	return better === "higher" ? Math.max(...values) : Math.min(...values);
 }
 
 /** Display string for one side under the current metric — never NaN/undefined. */
-function sideMetricDisplay(
-	row: CompareRow,
-	side: Side,
-	metric: Metric,
-): string {
+function sideMetricDisplay(row: CompareRow, side: Side, metric: Metric): string {
 	if (metric === "req") return side === "oc" ? row.ocLabel : row.ccLabel;
 	const s = row[side];
 	switch (metric) {
@@ -219,9 +202,7 @@ function sideMetricDisplay(
 		case "ability":
 			return formatAbility(s?.ability);
 		case "tps":
-			return s?.tps === null || s?.tps === undefined
-				? DASH
-				: Math.round(s.tps).toString();
+			return s?.tps === null || s?.tps === undefined ? DASH : Math.round(s.tps).toString();
 		case "val":
 			return s?.valueIndex === null || s?.valueIndex === undefined
 				? DASH
@@ -262,10 +243,7 @@ function valTone(value: number | null): Tone | undefined {
 }
 
 /** Ability is ranked min-max across the visible rows, reusing the VAL cut-offs. */
-function abilityTone(
-	row: CompareRow,
-	range: [number, number] | null,
-): Tone | undefined {
+function abilityTone(row: CompareRow, range: [number, number] | null): Tone | undefined {
 	const ability = row.oc?.ability ?? row.cc?.ability ?? null;
 	if (ability === null || !range || range[1] <= range[0]) return undefined;
 	const score = (100 * (ability - range[0])) / (range[1] - range[0]);
@@ -312,10 +290,7 @@ function MetaCells({
 	return (
 		<>
 			{cells.map((cell) => (
-				<td
-					key={cell.header}
-					className={`${TD} ${toneClass(cell.tone) || "ink-muted"}`}
-				>
+				<td key={cell.header} className={`${TD} ${toneClass(cell.tone) || "ink-muted"}`}>
 					{cell.text}
 				</td>
 			))}
@@ -323,19 +298,13 @@ function MetaCells({
 	);
 }
 
-export function CompareTable({
-	initialSnapshot,
-}: {
-	initialSnapshot: MpcSnapshot;
-}) {
+export function CompareTable({ initialSnapshot }: { initialSnapshot: MpcSnapshot }) {
 	const [snapshot, setSnapshot] = useState<MpcSnapshot>(initialSnapshot);
 	const [refreshError, setRefreshError] = useState(false);
 	const [refreshing, setRefreshing] = useState(false);
 
 	const planKeys = snapshot.plans.map((p) => p.key);
-	const initialPlan = planKeys.includes(PREFERRED_PLAN)
-		? PREFERRED_PLAN
-		: (planKeys[0] ?? "");
+	const initialPlan = planKeys.includes(PREFERRED_PLAN) ? PREFERRED_PLAN : (planKeys[0] ?? "");
 
 	const ocPlanKeys = snapshot.ocPlans.map((p) => p.key);
 	const initialOcPlan = ocPlanKeys.includes(PREFERRED_OC_PLAN)
@@ -394,10 +363,7 @@ export function CompareTable({
 	const visible = useMemo(() => {
 		const q = query.trim().toLowerCase();
 		const filtered = q
-			? rows.filter(
-					(r) =>
-						r.name.toLowerCase().includes(q) || r.key.includes(q),
-				)
+			? rows.filter((r) => r.name.toLowerCase().includes(q) || r.key.includes(q))
 			: rows;
 		const dir = asc ? 1 : -1;
 		// Unpriced rows always sink to the bottom, regardless of direction.
@@ -518,11 +484,7 @@ export function CompareTable({
 							{mode === "full" ? (
 								<>
 									<tr className="border-b border-[var(--hairline)] bg-[var(--surface)]">
-										<th
-											scope="col"
-											rowSpan={2}
-											className={TH_FIRST}
-										>
+										<th scope="col" rowSpan={2} className={TH_FIRST}>
 											Model
 										</th>
 										<th
@@ -540,32 +502,19 @@ export function CompareTable({
 											{`CommandCode ${planLabel}`}
 										</th>
 										{META_HEADERS.map((header) => (
-											<th
-												key={header}
-												scope="col"
-												rowSpan={2}
-												className={TH}
-											>
+											<th key={header} scope="col" rowSpan={2} className={TH}>
 												{header}
 											</th>
 										))}
 									</tr>
 									<tr className="border-b border-[var(--hairline)] bg-[var(--surface)]">
 										{SIDE_COLUMNS.map((c) => (
-											<th
-												key={`oc-${c.id}`}
-												scope="col"
-												className={TH}
-											>
+											<th key={`oc-${c.id}`} scope="col" className={TH}>
 												{c.header}
 											</th>
 										))}
 										{SIDE_COLUMNS.map((c) => (
-											<th
-												key={`cc-${c.id}`}
-												scope="col"
-												className={TH}
-											>
+											<th key={`cc-${c.id}`} scope="col" className={TH}>
 												{c.header}
 											</th>
 										))}
@@ -598,9 +547,7 @@ export function CompareTable({
 										className="border-b border-[var(--hairline)] last:border-0 hover:bg-[var(--surface)]"
 									>
 										<td className="px-4 py-2">
-											<span className="ink-fg">
-												{row.name}
-											</span>
+											<span className="ink-fg">{row.name}</span>
 											{row.cc?.deal && (
 												<span className="mono ml-2 rounded-full border border-[var(--hairline)] px-2 py-0.5 text-[0.65rem] text-[var(--accent)]">
 													{row.cc.deal.badge}
@@ -616,11 +563,7 @@ export function CompareTable({
 															: "ink-muted"
 													}`}
 												>
-													{sideMetricDisplay(
-														row,
-														"oc",
-														metric,
-													)}
+													{sideMetricDisplay(row, "oc", metric)}
 												</td>
 												<td
 													className={`${TD} ${
@@ -629,17 +572,9 @@ export function CompareTable({
 															: "ink-muted"
 													}`}
 												>
-													{sideMetricDisplay(
-														row,
-														"cc",
-														metric,
-													)}
+													{sideMetricDisplay(row, "cc", metric)}
 												</td>
-												<td
-													className={`${TD} ink-muted`}
-												>
-													{rowWin(row)}
-												</td>
+												<td className={`${TD} ink-muted`}>{rowWin(row)}</td>
 											</>
 										) : (
 											<>
@@ -649,11 +584,8 @@ export function CompareTable({
 														className={`${TD} ${
 															row.oc?.free
 																? "text-[var(--ok)]"
-																: WIN_TINTED.has(
-																			c.id,
-																		) &&
-																		winSide ===
-																			"oc"
+																: WIN_TINTED.has(c.id) &&
+																	  winSide === "oc"
 																	? "ink-fg font-semibold"
 																	: "ink-muted"
 														}`}
@@ -667,11 +599,8 @@ export function CompareTable({
 														className={`${i === 0 ? TD_GROUP : TD} ${
 															row.cc?.free
 																? "text-[var(--ok)]"
-																: WIN_TINTED.has(
-																			c.id,
-																		) &&
-																		winSide ===
-																			"cc"
+																: WIN_TINTED.has(c.id) &&
+																	  winSide === "cc"
 																	? "ink-fg font-semibold"
 																	: "ink-muted"
 														}`}

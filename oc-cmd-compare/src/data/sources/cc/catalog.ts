@@ -1,10 +1,5 @@
 import { CC_PLANS } from "#~/constants/sources.ts";
-import {
-	extractCatalog,
-	fetchText,
-	parseRoleRows,
-	parseTables,
-} from "#~/data/scrape/index.ts";
+import { extractCatalog, fetchText, parseRoleRows, parseTables } from "#~/data/scrape/index.ts";
 import type { CatalogEntry } from "#~/types.ts";
 
 /** Per-model token rates + monthly credit allowance for a CommandCode plan. */
@@ -19,9 +14,7 @@ export async function loadCcCatalog(planId: string): Promise<CatalogEntry[]> {
 	// <table> while still publishing no per-model credits, so "no credit header"
 	// no longer means "grid" — inferring it sent Go down `parseRoleRows`, which
 	// matches no row, and the load threw.
-	const tables = def.grid
-		? await parseRoleRows(html)
-		: await parseTables(html);
+	const tables = def.grid ? await parseRoleRows(html) : await parseTables(html);
 	const entries = extractCatalog(tables, {
 		provider: "cc",
 		plan: def.label,
@@ -31,9 +24,7 @@ export async function loadCcCatalog(planId: string): Promise<CatalogEntry[]> {
 	});
 	if (entries.length === 0) {
 		const shape = def.grid ? "row" : "table";
-		throw new Error(
-			`no model ${shape}s parsed from ${url} — docs layout may have changed`,
-		);
+		throw new Error(`no model ${shape}s parsed from ${url} — docs layout may have changed`);
 	}
 	if (def.creditHeader && def.standardAllowance !== undefined) {
 		fillDeals(
@@ -54,10 +45,7 @@ export async function loadCcCatalog(planId: string): Promise<CatalogEntry[]> {
  * entries that came from a credits table — those carry no badges, so without
  * this a paid model silently loses the deal published beside its name.
  */
-export function fillDeals(
-	entries: CatalogEntry[],
-	rateOnly: CatalogEntry[],
-): void {
+export function fillDeals(entries: CatalogEntry[], rateOnly: CatalogEntry[]): void {
 	const byKey = new Map(entries.map((entry) => [entry.key, entry]));
 	for (const entry of rateOnly) {
 		const existing = byKey.get(entry.key);

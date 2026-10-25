@@ -20,13 +20,7 @@ export interface Req {
 }
 
 /** What opened an ask. Only `user` is a prompt a person typed. */
-export type AskKind =
-	| "user"
-	| "synthetic"
-	| "compaction"
-	| "shell"
-	| "system"
-	| "orphan";
+export type AskKind = "user" | "synthetic" | "compaction" | "shell" | "system" | "orphan";
 
 /**
  * One prompt and the reqs it drove. An agentic ask is many reqs: the model

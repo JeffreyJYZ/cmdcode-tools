@@ -53,9 +53,7 @@ describe("format", () => {
 	});
 
 	test("prettyModel drops the vendor prefix, which is noise here", () => {
-		expect(prettyModel("deepseek/deepseek-v4.1-flash")).toBe(
-			"deepseek-v4.1-flash",
-		);
+		expect(prettyModel("deepseek/deepseek-v4.1-flash")).toBe("deepseek-v4.1-flash");
 		expect(prettyModel("auto/best-coding")).toBe("best-coding");
 		expect(prettyModel("hy3-free")).toBe("hy3-free");
 		expect(prettyModel("")).toBe("unknown");

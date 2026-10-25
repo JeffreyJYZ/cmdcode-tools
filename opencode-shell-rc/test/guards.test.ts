@@ -1,20 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
-import {
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-	configFile,
-	loadConfig,
-	renderGuards,
-	syncGuards,
-} from "../src/guards";
+import { configFile, loadConfig, renderGuards, syncGuards } from "../src/guards";
 import { restoreEnv } from "./helpers";
 
 const saved = {
@@ -74,22 +63,18 @@ describe("renderGuards", () => {
 	});
 
 	test("skips a binary whose replacement is not installed", () => {
-		expect(
-			renderGuards({ find: "definitely-not-installed-xyz" }),
-		).not.toContain("function find {");
+		expect(renderGuards({ find: "definitely-not-installed-xyz" })).not.toContain(
+			"function find {",
+		);
 	});
 
 	test("skips names that cannot be zsh function names", () => {
-		expect(renderGuards({ "bad name": "fd" }, () => true)).not.toContain(
-			"function bad name",
-		);
+		expect(renderGuards({ "bad name": "fd" }, () => true)).not.toContain("function bad name");
 	});
 
 	test("never blocks cat, even when a config asks for it", () => {
 		// cat emits raw bytes; bat reformats, so the output stops being the file.
-		expect(renderGuards({ cat: "bat" }, () => true)).not.toContain(
-			"function cat",
-		);
+		expect(renderGuards({ cat: "bat" }, () => true)).not.toContain("function cat");
 	});
 });
 
@@ -146,11 +131,7 @@ describe("the generated script in a real shell", () => {
 			try {
 				execFileSync(
 					"zsh",
-					[
-						"-f",
-						"-c",
-						`alias grep='grep --color=auto'; source ${path}; grep --version`,
-					],
+					["-f", "-c", `alias grep='grep --color=auto'; source ${path}; grep --version`],
 					{ stdio: ["ignore", "pipe", "pipe"] },
 				);
 			} catch (error) {
@@ -162,33 +143,30 @@ describe("the generated script in a real shell", () => {
 		},
 	);
 
-	test.skipIf(!hasZsh)(
-		"blocks the binary and leaves the real one reachable",
-		() => {
-			writeConfig({ blocked: { grep: "rg" } });
-			syncGuards();
-			const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
-			// `grep` as a command is the function now; `command grep` is the binary.
-			let status = 0;
-			let stderr = "";
-			try {
-				execFileSync("zsh", ["-f", "-c", `source ${path}; grep --version`], {
-					stdio: ["ignore", "pipe", "pipe"],
-				});
-			} catch (error) {
-				const failed = error as { status?: number; stderr?: Buffer };
-				status = failed.status ?? 0;
-				stderr = failed.stderr?.toString() ?? "";
-			}
-			expect(status).toBe(127);
-			expect(stderr).toContain("use rg");
+	test.skipIf(!hasZsh)("blocks the binary and leaves the real one reachable", () => {
+		writeConfig({ blocked: { grep: "rg" } });
+		syncGuards();
+		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+		// `grep` as a command is the function now; `command grep` is the binary.
+		let status = 0;
+		let stderr = "";
+		try {
+			execFileSync("zsh", ["-f", "-c", `source ${path}; grep --version`], {
+				stdio: ["ignore", "pipe", "pipe"],
+			});
+		} catch (error) {
+			const failed = error as { status?: number; stderr?: Buffer };
+			status = failed.status ?? 0;
+			stderr = failed.stderr?.toString() ?? "";
+		}
+		expect(status).toBe(127);
+		expect(stderr).toContain("use rg");
 
-			const real = execFileSync(
-				"zsh",
-				["-f", "-c", `source ${path}; command grep --version | head -1`],
-				{ encoding: "utf8" },
-			);
-			expect(real.length).toBeGreaterThan(0);
-		},
-	);
+		const real = execFileSync(
+			"zsh",
+			["-f", "-c", `source ${path}; command grep --version | head -1`],
+			{ encoding: "utf8" },
+		);
+		expect(real.length).toBeGreaterThan(0);
+	});
 });

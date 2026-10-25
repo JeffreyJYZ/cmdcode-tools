@@ -80,11 +80,7 @@ export function manifestVersion(text: string): string | undefined {
 
 /** Which of the two formula shapes the url set is (first match wins). */
 export function formulaShape(urls: string[]): FormulaShape {
-	if (
-		urls.some(
-			(u) => u.includes("/releases/download/") && u.endsWith(".tar.gz"),
-		)
-	)
+	if (urls.some((u) => u.includes("/releases/download/") && u.endsWith(".tar.gz")))
 		return "release";
 	if (urls.some((u) => u.endsWith(".crate"))) return "crate";
 	return "unknown";
@@ -99,16 +95,9 @@ export function assetFrom(url: string, sha256?: string): ReleaseAsset {
 }
 
 /** Parse every url + its following sha256 out of a Homebrew formula. */
-export function formulaPin(
-	text: string,
-	path = "Formula/cmduse.rb",
-): FormulaPin {
-	const urls = [...text.matchAll(/^\s*url\s+"([^"]+)"/gm)].map(
-		(m) => m[1] ?? "",
-	);
-	const shas = [...text.matchAll(/^\s*sha256\s+"([0-9a-f]{64})"/gm)].map(
-		(m) => m[1] ?? "",
-	);
+export function formulaPin(text: string, path = "Formula/cmduse.rb"): FormulaPin {
+	const urls = [...text.matchAll(/^\s*url\s+"([^"]+)"/gm)].map((m) => m[1] ?? "");
+	const shas = [...text.matchAll(/^\s*sha256\s+"([0-9a-f]{64})"/gm)].map((m) => m[1] ?? "");
 	return {
 		shape: formulaShape(urls),
 		path,
@@ -131,9 +120,7 @@ export function parseSums(text: string): Record<string, string> {
 
 /** The release `SHA256SUMS` url for a github release download url. */
 export function sumsUrl(url: string): string | undefined {
-	const m = url.match(
-		/^(https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\/[^/]+)\//,
-	);
+	const m = url.match(/^(https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\/[^/]+)\//);
 	return m ? `${m[1]}/SHA256SUMS` : undefined;
 }
 
@@ -162,8 +149,7 @@ export function compareAssets(
 			file: a.file,
 			pinned: a.sha256,
 			sums: sum,
-			status:
-				sum === a.sha256 ? ("MATCH" as const) : ("MISMATCH" as const),
+			status: sum === a.sha256 ? ("MATCH" as const) : ("MISMATCH" as const),
 		};
 	});
 }
@@ -183,34 +169,24 @@ export function verdict(
 ): string {
 	if (!facts.versionPresent)
 		return `version=${version} absent from the index (not published yet)`;
-	if (tarballStatus !== 200)
-		return `version=${version} in the index, tarball=${tarballStatus}`;
-	const match = expected
-		? sha256 === expected
-			? "MATCH"
-			: "MISMATCH"
-		: "no-tip";
+	if (tarballStatus !== 200) return `version=${version} in the index, tarball=${tarballStatus}`;
+	const match = expected ? (sha256 === expected ? "MATCH" : "MISMATCH") : "no-tip";
 	return `version=${version} tarball=200 sha256=${sha256?.slice(0, 12)}… ${match}`;
 }
 
 /** `cargo package` writes the .crate to target/package; hash exactly that file. */
 async function packLocalSha256(version: string): Promise<string | undefined> {
-	const packaged = spawnSync(
-		"cargo",
-		["package", "-p", PKG, "--allow-dirty", "--quiet"],
-		{ cwd: REPO, encoding: "utf8" },
-	);
+	const packaged = spawnSync("cargo", ["package", "-p", PKG, "--allow-dirty", "--quiet"], {
+		cwd: REPO,
+		encoding: "utf8",
+	});
 	if (packaged.status !== 0) {
 		console.error(packaged.stderr?.trim() || "cargo package failed");
 		return undefined;
 	}
-	const file = Bun.file(
-		join(REPO, "target", "package", `${PKG}-${version}.crate`),
-	);
+	const file = Bun.file(join(REPO, "target", "package", `${PKG}-${version}.crate`));
 	if (!(await file.exists())) {
-		console.error(
-			`no crate at ${file.name} — is the manifest at ${version}?`,
-		);
+		console.error(`no crate at ${file.name} — is the manifest at ${version}?`);
 		return undefined;
 	}
 	return sha256Hex(new Uint8Array(await file.arrayBuffer()));
@@ -226,17 +202,12 @@ function git(rev: string): string | undefined {
 }
 
 /** The commit a served `.crate` records in its `.cargo_vcs_info.json`. */
-async function servedCommit(
-	bytes: Uint8Array,
-	version: string,
-): Promise<string | undefined> {
+async function servedCommit(bytes: Uint8Array, version: string): Promise<string | undefined> {
 	const file = join(REPO, "target", "package", `served-${version}.crate`);
 	await Bun.write(file, bytes);
-	const out = spawnSync(
-		"tar",
-		["-xzOf", file, `${PKG}-${version}/.cargo_vcs_info.json`],
-		{ encoding: "utf8" },
-	);
+	const out = spawnSync("tar", ["-xzOf", file, `${PKG}-${version}/.cargo_vcs_info.json`], {
+		encoding: "utf8",
+	});
 	if (out.status !== 0) return undefined;
 	try {
 		return JSON.parse(out.stdout)?.git?.sha1;
@@ -246,16 +217,8 @@ async function servedCommit(
 }
 
 /** Repack at `sha` in a detached worktree and hash the result. */
-async function repackAt(
-	sha: string,
-	version: string,
-): Promise<string | undefined> {
-	const dir = join(
-		process.env.HOME ?? "",
-		"dev/worktrees",
-		basename(REPO),
-		`repack-${version}`,
-	);
+async function repackAt(sha: string, version: string): Promise<string | undefined> {
+	const dir = join(process.env.HOME ?? "", "dev/worktrees", basename(REPO), `repack-${version}`);
 	// A detached worktree, so the checkout being verified is never written to —
 	// and the same path every time, so a leftover from an interrupted run cannot
 	// silently be the tree that gets packed.
@@ -268,15 +231,12 @@ async function repackAt(
 	try {
 		// `--no-verify` skips the build: only the archive's bytes are wanted, and
 		// it keeps the check from depending on a published `cmduse-core`.
-		const packaged = spawnSync(
-			"cargo",
-			["package", "-p", PKG, "--no-verify", "--quiet"],
-			{ cwd: dir, encoding: "utf8" },
-		);
+		const packaged = spawnSync("cargo", ["package", "-p", PKG, "--no-verify", "--quiet"], {
+			cwd: dir,
+			encoding: "utf8",
+		});
 		if (packaged.status !== 0) return undefined;
-		const file = Bun.file(
-			join(dir, "target", "package", `${PKG}-${version}.crate`),
-		);
+		const file = Bun.file(join(dir, "target", "package", `${PKG}-${version}.crate`));
 		if (!(await file.exists())) return undefined;
 		return sha256Hex(new Uint8Array(await file.arrayBuffer()));
 	} finally {
@@ -295,33 +255,22 @@ async function verifyFormula(
 			(a) => a.version !== undefined && a.version !== version,
 		);
 		for (const a of wrong)
-			console.error(
-				`asset ${a.file} pins version ${a.version}, not ${version}`,
-			);
+			console.error(`asset ${a.file} pins version ${a.version}, not ${version}`);
 		const url = sumsUrl(formula.assets[0]?.url ?? "");
 		if (!url) {
-			console.error(
-				`formula urls are not github release downloads (${formula.path})`,
-			);
+			console.error(`formula urls are not github release downloads (${formula.path})`);
 			return 1;
 		}
 		const response = await fetch(url).catch(() => undefined);
 		if (response?.status !== 200) {
-			console.error(
-				`SHA256SUMS ${url} -> ${response?.status ?? 0} (release not published?)`,
-			);
+			console.error(`SHA256SUMS ${url} -> ${response?.status ?? 0} (release not published?)`);
 			return 1;
 		}
-		const verdicts = compareAssets(
-			formula.assets,
-			parseSums(await response.text()),
-		);
+		const verdicts = compareAssets(formula.assets, parseSums(await response.text()));
 		for (const v of verdicts) console.log(assetLine(v));
 		const bad = verdicts.filter((v) => v.status !== "MATCH");
 		if (wrong.length || bad.length) {
-			console.error(
-				`formula pins disagree with ${url} — brew would install other bytes`,
-			);
+			console.error(`formula pins disagree with ${url} — brew would install other bytes`);
 			return 1;
 		}
 		console.log(
@@ -342,9 +291,7 @@ async function verifyFormula(
 		);
 		return 1;
 	}
-	console.log(
-		`formula pins ${version} and the served bytes (${formula.path})`,
-	);
+	console.log(`formula pins ${version} and the served bytes (${formula.path})`);
 	return 0;
 }
 
@@ -355,9 +302,7 @@ async function main(): Promise<number> {
 		return i >= 0 ? args[i + 1] : undefined;
 	};
 	const crate = value("--crate") ?? PKG;
-	const manifest = (await Bun.file(
-		join(REPO, "cmduse/Cargo.toml"),
-	).text()) as string;
+	const manifest = (await Bun.file(join(REPO, "cmduse/Cargo.toml")).text()) as string;
 	const explicit = args.find((a) => !a.startsWith("--") && /^\d/.test(a));
 	const version = explicit ?? manifestVersion(manifest);
 	if (!version) {
@@ -368,9 +313,7 @@ async function main(): Promise<number> {
 	}
 	const expected =
 		value("--expected") ??
-		(args.includes("--no-pack")
-			? undefined
-			: await packLocalSha256(version));
+		(args.includes("--no-pack") ? undefined : await packLocalSha256(version));
 	if (expected) console.log(`expected sha256: ${expected}`);
 	const tries = Number(value("--tries") ?? 40);
 
@@ -409,9 +352,7 @@ async function main(): Promise<number> {
 						? await repackAt(packedAt, version)
 						: undefined;
 				if (repacked !== sha256) {
-					console.error(
-						`served crate is not what this checkout packs — do not ship it`,
-					);
+					console.error(`served crate is not what this checkout packs — do not ship it`);
 					return 1;
 				}
 				console.log(
@@ -419,9 +360,7 @@ async function main(): Promise<number> {
 				);
 			}
 			if (!formula) {
-				console.error(
-					`no tap formula at ${formulaPath} — nothing to check it against`,
-				);
+				console.error(`no tap formula at ${formulaPath} — nothing to check it against`);
 				return 1;
 			}
 			const code = await verifyFormula(version, formula, sha256);
@@ -432,9 +371,7 @@ async function main(): Promise<number> {
 		console.log(`try=${i} ${verdict(version, facts, status)}`);
 		if (i < tries) await Bun.sleep(20_000);
 	}
-	console.error(
-		`timeout: ${crate}@${version} not fully published after ${tries} tries`,
-	);
+	console.error(`timeout: ${crate}@${version} not fully published after ${tries} tries`);
 	return 1;
 }
 

@@ -1,11 +1,7 @@
 import type { Format, Metric } from "#~/cli/options.ts";
 import { SHAPE_AUTO } from "#~/constants/shape.ts";
 import { DEFAULT_OC_PLAN } from "#~/constants/sources.ts";
-import {
-	DETAIL_COLUMNS,
-	MEDIUM_COLUMNS,
-	MINIMAL_COLUMNS,
-} from "#~/constants/view.ts";
+import { DETAIL_COLUMNS, MEDIUM_COLUMNS, MINIMAL_COLUMNS } from "#~/constants/view.ts";
 
 /** Workload defaults asserted by `--in` / `--cache` / `--out` when unset. */
 export const OPTION_DEFAULTS = {

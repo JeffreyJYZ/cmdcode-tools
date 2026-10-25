@@ -31,13 +31,9 @@ describe("parseArgs", () => {
 			expect(parseArgs([]).bench).toBe(BENCH_DEFAULT.keyless);
 			process.env.AA_API_KEY = "test-key";
 			expect(parseArgs([]).bench).toBe(BENCH_DEFAULT.keyed);
-			expect(parseArgs(["--bench", "cc"]).bench).toBe(
-				BENCH_DEFAULT.keyless,
-			);
+			expect(parseArgs(["--bench", "cc"]).bench).toBe(BENCH_DEFAULT.keyless);
 			delete process.env.AA_API_KEY;
-			expect(parseArgs(["--aa-key", "k"]).bench).toBe(
-				BENCH_DEFAULT.keyed,
-			);
+			expect(parseArgs(["--aa-key", "k"]).bench).toBe(BENCH_DEFAULT.keyed);
 		} finally {
 			if (saved === undefined) delete process.env.AA_API_KEY;
 			else process.env.AA_API_KEY = saved;
@@ -136,12 +132,8 @@ describe("parseArgs", () => {
 	});
 
 	test("a value-taking flag used bare names the flag", () => {
-		expect(() => parseArgs(["--usage-window"])).toThrow(
-			/--usage-window expects a value/,
-		);
-		expect(() => parseArgs(["--cache-write"])).toThrow(
-			/--cache-write expects a value/,
-		);
+		expect(() => parseArgs(["--usage-window"])).toThrow(/--usage-window expects a value/);
+		expect(() => parseArgs(["--cache-write"])).toThrow(/--cache-write expects a value/);
 	});
 
 	test("--shape defaults to auto, and bare means measured", () => {
@@ -186,8 +178,6 @@ describe("config layering and --print-config", () => {
 		const dir = tmp();
 		const cfg = join(dir, "config.json");
 		writeFileSync(cfg, JSON.stringify({ bogusKey: 1 }));
-		await expect(run(["--config", cfg, "--print-config"])).rejects.toThrow(
-			/bogusKey/,
-		);
+		await expect(run(["--config", cfg, "--print-config"])).rejects.toThrow(/bogusKey/);
 	});
 });

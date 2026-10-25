@@ -5,9 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readOpencodeDb } from "#~/data/usage/opencodeDb.ts";
 
-function dbWith(
-	rows: Array<{ id: string; created: number; data: unknown }>,
-): string {
+function dbWith(rows: Array<{ id: string; created: number; data: unknown }>): string {
 	const path = join(mkdtempSync(join(tmpdir(), "mpc-db-")), "opencode.db");
 	const db = new Database(path);
 	db.run(
@@ -37,9 +35,7 @@ const assistant = (id: string, model: string, created: number, cost = 0.5) => ({
 });
 
 /** v2's store: `session_message` holds the turn, `data` nests model and tokens. */
-function dbV2With(
-	rows: Array<{ id: string; created: number; data: unknown }>,
-): string {
+function dbV2With(rows: Array<{ id: string; created: number; data: unknown }>): string {
 	const path = join(mkdtempSync(join(tmpdir(), "mpc-db-")), "opencode.db");
 	const db = new Database(path);
 	db.run(
@@ -94,18 +90,8 @@ const v2InFlight = (id: string, model: string, created: number) => ({
 describe("readOpencodeDb", () => {
 	test("aggregates assistant messages per model, honouring the window", () => {
 		const path = dbWith([
-			assistant(
-				"m1",
-				"deepseek/deepseek-v4.1-flash",
-				1_780_000_000_000,
-				0.25,
-			),
-			assistant(
-				"m2",
-				"deepseek/deepseek-v4.1-flash",
-				1_780_000_100_000,
-				0.25,
-			),
+			assistant("m1", "deepseek/deepseek-v4.1-flash", 1_780_000_000_000, 0.25),
+			assistant("m2", "deepseek/deepseek-v4.1-flash", 1_780_000_100_000, 0.25),
 			assistant("m3", "z-ai/glm-5.3-flash", 1_600_000_000_000),
 		]);
 		const all = readOpencodeDb(path);
@@ -123,18 +109,8 @@ describe("readOpencodeDb", () => {
 
 	test("reads v2's session_message, skipping turns still in flight", () => {
 		const path = dbV2With([
-			v2Turn(
-				"s1",
-				"deepseek/deepseek-v4.1-flash",
-				1_780_000_000_000,
-				0.25,
-			),
-			v2Turn(
-				"s2",
-				"deepseek/deepseek-v4.1-flash",
-				1_780_000_100_000,
-				0.25,
-			),
+			v2Turn("s1", "deepseek/deepseek-v4.1-flash", 1_780_000_000_000, 0.25),
+			v2Turn("s2", "deepseek/deepseek-v4.1-flash", 1_780_000_100_000, 0.25),
 			// An in-flight turn carries the model but no tokens yet.
 			v2InFlight("s3", "z-ai/glm-5.3-flash", 1_780_000_200_000),
 		]);

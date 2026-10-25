@@ -14,11 +14,7 @@ export const bold = (text: string): string => wrap("1", text);
 export const dim = (text: string): string => wrap("2", text);
 
 /** Pad to a visible width, truncating with an ellipsis rather than wrapping. */
-export function pad(
-	text: string,
-	width: number,
-	align: "left" | "right" = "left",
-): string {
+export function pad(text: string, width: number, align: "left" | "right" = "left"): string {
 	const visible = text.replace(ANSI, "").length;
 	if (visible > width) return `${text.slice(0, Math.max(0, width - 1))}…`;
 	const fill = " ".repeat(width - visible);

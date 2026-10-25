@@ -16,9 +16,7 @@ import { DEFAULT_ARGS, MPC_DEFAULT_ARGS, SUBCOMMANDS } from "./constants/cli";
 /** Fallback lookup paths: the opencode background service's PATH often lacks
  * the homebrew prefix, so the bare name alone is not enough. `CMDUSE_BIN` wins
  * when set — the dev-build hook the sibling cmduse consumers (mpc) honour too. */
-export function cmduseCandidates(
-	env: Record<string, string | undefined> = process.env,
-): string[] {
+export function cmduseCandidates(env: Record<string, string | undefined> = process.env): string[] {
 	const candidates = [env.CMDUSE_BIN, ...CMDUSE_BIN_CANDIDATES];
 	return candidates.filter((bin): bin is string => Boolean(bin));
 }
@@ -28,9 +26,7 @@ const CANDIDATES = cmduseCandidates();
 /** Same lookup for mpc, the per-model price comparison: `MPC_BIN`
  * wins when set (the `bun link` dev hook oc-cmd-compare installs),
  * then the bun/homebrew fallbacks. */
-export function mpcCandidates(
-	env: Record<string, string | undefined> = process.env,
-): string[] {
+export function mpcCandidates(env: Record<string, string | undefined> = process.env): string[] {
 	const candidates = [env.MPC_BIN, ...MPC_BIN_CANDIDATES];
 	return candidates.filter((bin): bin is string => Boolean(bin));
 }
@@ -39,9 +35,7 @@ const MPC_CANDIDATES = mpcCandidates();
 
 /** Same lookup for ocuse, the OpenCode Go/Zen reader shipped in the cmd-usage
  * crate: `OCUSE_BIN` wins when set, then the homebrew fallbacks. */
-export function ocuseCandidates(
-	env: Record<string, string | undefined> = process.env,
-): string[] {
+export function ocuseCandidates(env: Record<string, string | undefined> = process.env): string[] {
 	const candidates = [env.OCUSE_BIN, ...OCUSE_BIN_CANDIDATES];
 	return candidates.filter((bin): bin is string => Boolean(bin));
 }
@@ -50,9 +44,7 @@ const OCUSE_CANDIDATES = ocuseCandidates();
 
 /** Same lookup for arkuse, the Volcengine ARK Agent Plan reader in the same
  * crate: `ARKUSE_BIN` wins when set, then the homebrew fallbacks. */
-export function arkuseCandidates(
-	env: Record<string, string | undefined> = process.env,
-): string[] {
+export function arkuseCandidates(env: Record<string, string | undefined> = process.env): string[] {
 	const candidates = [env.ARKUSE_BIN, ...ARKUSE_BIN_CANDIDATES];
 	return candidates.filter((bin): bin is string => Boolean(bin));
 }
@@ -156,12 +148,7 @@ function stderrTail(text: string): string {
 	return lines.slice(-3).join("\n").slice(-400);
 }
 
-function runOnce(
-	bin: string,
-	args: string[],
-	opts: RunOptions,
-	name = "cmduse",
-): Promise<string> {
+function runOnce(bin: string, args: string[], opts: RunOptions, name = "cmduse"): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const child = spawn(bin, args, {
 			env: { ...process.env, ...(opts.env ?? {}) },
@@ -207,9 +194,7 @@ function runOnce(
 				const tail = stderrTail(Buffer.concat(err).toString("utf8"));
 				settle(() =>
 					reject(
-						new Error(
-							`${name} ${args.join(" ")}: ${why}${tail ? `\n${tail}` : ""}`,
-						),
+						new Error(`${name} ${args.join(" ")}: ${why}${tail ? `\n${tail}` : ""}`),
 					),
 				);
 			}
@@ -220,10 +205,7 @@ function runOnce(
 /** argv for an invocation: a pre-split token array is used as-is, so a caller
  * with its own argv (the sidebar) needs no arg-string round-trip; a string arg
  * goes through that binary's builder. */
-function resolveArgs(
-	arg: string | readonly string[],
-	build: (arg: string) => string[],
-): string[] {
+function resolveArgs(arg: string | readonly string[], build: (arg: string) => string[]): string[] {
 	return typeof arg === "string" ? build(arg) : [...arg];
 }
 

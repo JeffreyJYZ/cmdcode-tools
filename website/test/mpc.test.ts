@@ -234,26 +234,18 @@ describe("mpc row-level columns", () => {
 				cc: side({ ability: 48.1 }),
 			}),
 		).toBe("48.1");
-		expect(rowAbility({ oc: side({ ability: null }), cc: null })).toBe(
-			DASH,
-		);
-		expect(
-			rowTps({ oc: side({ tps: null }), cc: side({ tps: 214.6 }) }),
-		).toBe("215");
+		expect(rowAbility({ oc: side({ ability: null }), cc: null })).toBe(DASH);
+		expect(rowTps({ oc: side({ tps: null }), cc: side({ tps: 214.6 }) })).toBe("215");
 		expect(rowTps({ oc: side({ tps: null }), cc: null })).toBe(DASH);
 	});
 
 	test("DEAL is CommandCode's badge, else the dash", () => {
-		expect(
-			rowDeal({ oc: side(), cc: side({ deal: { badge: "-98%" } }) }),
-		).toBe("-98%");
+		expect(rowDeal({ oc: side(), cc: side({ deal: { badge: "-98%" } }) })).toBe("-98%");
 		expect(rowDeal({ oc: side(), cc: side() })).toBe(DASH);
 	});
 
 	test("COST inverts the best volume index", () => {
-		expect(
-			rowCost({ oc: side({ index: 80 }), cc: side({ index: 90 }) }),
-		).toBe(10);
+		expect(rowCost({ oc: side({ index: 80 }), cc: side({ index: 90 }) })).toBe(10);
 	});
 
 	test("VAL takes the better score; null when neither side is scored", () => {
@@ -269,9 +261,7 @@ describe("mpc row-level columns", () => {
 				cc: side({ valueIndex: 55 }),
 			}),
 		).toBe(55);
-		expect(
-			rowValue({ oc: side({ valueIndex: null }), cc: null }),
-		).toBeNull();
+		expect(rowValue({ oc: side({ valueIndex: null }), cc: null })).toBeNull();
 	});
 
 	test("a one-sided row never yields NaN/undefined for any column", () => {
@@ -466,9 +456,7 @@ describe("committed snapshot — every cell renders cleanly", () => {
 
 	/** Every run in the nested snapshot, regardless of pair. */
 	function allRuns() {
-		return Object.values(snapshot.byPlan).flatMap((runs) =>
-			Object.values(runs),
-		);
+		return Object.values(snapshot.byPlan).flatMap((runs) => Object.values(runs));
 	}
 
 	test("no plan, row, side or meta cell emits NaN/undefined", () => {

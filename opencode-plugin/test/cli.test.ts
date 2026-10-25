@@ -19,20 +19,13 @@ import {
 
 describe("splitCliArgs", () => {
 	test("whitespace split", () => {
-		expect(splitCliArgs("--tz +05:30 daily")).toEqual([
-			"--tz",
-			"+05:30",
-			"daily",
-		]);
+		expect(splitCliArgs("--tz +05:30 daily")).toEqual(["--tz", "+05:30", "daily"]);
 	});
 	test("multiple spaces / tabs collapse", () => {
 		expect(splitCliArgs("  a\t b   c ")).toEqual(["a", "b", "c"]);
 	});
 	test("double quotes keep spaces", () => {
-		expect(splitCliArgs('--model "gpt 5.5"')).toEqual([
-			"--model",
-			"gpt 5.5",
-		]);
+		expect(splitCliArgs('--model "gpt 5.5"')).toEqual(["--model", "gpt 5.5"]);
 	});
 	test("single quotes keep spaces literally", () => {
 		expect(splitCliArgs("'a b' c")).toEqual(["a b", "c"]);
@@ -52,23 +45,11 @@ describe("buildCmduseArgs", () => {
 	});
 	test("subcommand passed through untouched", () => {
 		expect(buildCmduseArgs("plans")).toEqual(["plans"]);
-		expect(buildCmduseArgs("daily --days 14")).toEqual([
-			"daily",
-			"--days",
-			"14",
-		]);
+		expect(buildCmduseArgs("daily --days 14")).toEqual(["daily", "--days", "14"]);
 	});
 	test("bare flags prepend the one-shot dashboard", () => {
-		expect(buildCmduseArgs("--local")).toEqual([
-			"-1",
-			"--plain",
-			"--local",
-		]);
-		expect(buildCmduseArgs("--tz +05:30 hourly")).toEqual([
-			"--tz",
-			"+05:30",
-			"hourly",
-		]);
+		expect(buildCmduseArgs("--local")).toEqual(["-1", "--plain", "--local"]);
+		expect(buildCmduseArgs("--tz +05:30 hourly")).toEqual(["--tz", "+05:30", "hourly"]);
 	});
 });
 
@@ -116,9 +97,7 @@ describe("runCmduse", () => {
 
 describe("cmduseCandidates", () => {
 	test("CMDUSE_BIN leads, the homebrew paths remain as fallbacks", () => {
-		expect(cmduseCandidates({ CMDUSE_BIN: "/tmp/cmdusedev" })[0]).toBe(
-			"/tmp/cmdusedev",
-		);
+		expect(cmduseCandidates({ CMDUSE_BIN: "/tmp/cmdusedev" })[0]).toBe("/tmp/cmdusedev");
 		expect(cmduseCandidates({})).toEqual([...CMDUSE_BIN_CANDIDATES]);
 		expect(cmduseCandidates({ CMDUSE_BIN: "" })).not.toContain("");
 	});
@@ -136,11 +115,7 @@ describe("buildMpcArgs", () => {
 			"deepseek",
 			"--detail",
 		]);
-		expect(buildMpcArgs('--model "gpt 5.5" --json')).toEqual([
-			"--model",
-			"gpt 5.5",
-			"--json",
-		]);
+		expect(buildMpcArgs('--model "gpt 5.5" --json')).toEqual(["--model", "gpt 5.5", "--json"]);
 	});
 });
 
@@ -171,9 +146,7 @@ describe("runMpc", () => {
 
 describe("mpcCandidates", () => {
 	test("MPC_BIN leads, the bun/homebrew paths remain as fallbacks", () => {
-		expect(mpcCandidates({ MPC_BIN: "/tmp/mpcdev" })[0]).toBe(
-			"/tmp/mpcdev",
-		);
+		expect(mpcCandidates({ MPC_BIN: "/tmp/mpcdev" })[0]).toBe("/tmp/mpcdev");
 		expect(mpcCandidates({})).toEqual([...MPC_BIN_CANDIDATES]);
 		expect(mpcCandidates({ MPC_BIN: "" })).not.toContain("");
 	});
@@ -181,9 +154,7 @@ describe("mpcCandidates", () => {
 
 describe("ocuseCandidates", () => {
 	test("OCUSE_BIN leads, the homebrew paths remain as fallbacks", () => {
-		expect(ocuseCandidates({ OCUSE_BIN: "/tmp/ocusdev" })[0]).toBe(
-			"/tmp/ocusdev",
-		);
+		expect(ocuseCandidates({ OCUSE_BIN: "/tmp/ocusdev" })[0]).toBe("/tmp/ocusdev");
 		expect(ocuseCandidates({})).toEqual([...OCUSE_BIN_CANDIDATES]);
 		expect(ocuseCandidates({ OCUSE_BIN: "" })).not.toContain("");
 	});
@@ -199,9 +170,7 @@ describe("ocuseArgs", () => {
 	});
 	test("given args pass through untouched", () => {
 		expect(ocuseArgs("daily")).toBe("daily");
-		expect(ocuseArgs("--plan go-plus --json")).toBe(
-			"--plan go-plus --json",
-		);
+		expect(ocuseArgs("--plan go-plus --json")).toBe("--plan go-plus --json");
 	});
 });
 

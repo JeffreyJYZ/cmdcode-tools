@@ -63,9 +63,7 @@ export function parseMetric(value: string | undefined): Metric {
 
 export function parseFormat(value: string | undefined): Format {
 	if (!FORMATS.includes(value as Format)) {
-		throw new Error(
-			`unknown --format "${value}" (table | json | csv | md)`,
-		);
+		throw new Error(`unknown --format "${value}" (table | json | csv | md)`);
 	}
 	return value as Format;
 }

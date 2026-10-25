@@ -168,11 +168,7 @@ type RawPlan = {
 };
 
 /** One mpc invocation for a plan pair: returns its parsed `--json` payload. */
-export type MpcRunner = (
-	mpc: MpcCandidate,
-	ccPlanKey: string,
-	ocPlanKey: string,
-) => RawRun;
+export type MpcRunner = (mpc: MpcCandidate, ccPlanKey: string, ocPlanKey: string) => RawRun;
 
 /**
  * Persist the whole side mpc reports — every field its own columns read, plus
@@ -203,11 +199,7 @@ function toSide(raw: RawSide | null | undefined): MpcSide | null {
 }
 
 /** Shell out to one candidate for one plan pair. */
-function runMpc(
-	mpc: MpcCandidate,
-	ccPlanKey: string,
-	ocPlanKey: string,
-): RawRun {
+function runMpc(mpc: MpcCandidate, ccPlanKey: string, ocPlanKey: string): RawRun {
 	const args = [
 		...mpc.prefixArgs,
 		"--json",
@@ -236,10 +228,7 @@ function runMpc(
 }
 
 /** Run the whole cross product against one candidate and assemble the snapshot. */
-export function buildSnapshot(
-	mpc: MpcCandidate,
-	run: MpcRunner = runMpc,
-): MpcSnapshot {
+export function buildSnapshot(mpc: MpcCandidate, run: MpcRunner = runMpc): MpcSnapshot {
 	const byPlan: Record<string, Record<string, MpcRun>> = {};
 	const plans: MpcPlanInfo[] = [];
 	const ocPlans: MpcOcPlanInfo[] = [];

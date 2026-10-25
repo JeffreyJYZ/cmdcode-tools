@@ -128,15 +128,12 @@ async function main() {
 	const results = new Map<string, number | "error">();
 	let cursor = 0;
 	await Promise.all(
-		Array.from(
-			{ length: Math.min(EXTERNAL_CONCURRENCY, urls.length) },
-			async () => {
-				while (cursor < urls.length) {
-					const url = urls[cursor++];
-					results.set(url, await headCheck(url));
-				}
-			},
-		),
+		Array.from({ length: Math.min(EXTERNAL_CONCURRENCY, urls.length) }, async () => {
+			while (cursor < urls.length) {
+				const url = urls[cursor++];
+				results.set(url, await headCheck(url));
+			}
+		}),
 	);
 	const externalOk = urls.filter((url) => {
 		const status = results.get(url);
@@ -156,15 +153,11 @@ async function main() {
 	);
 	for (const url of externalBad) {
 		const status = results.get(url);
-		console.log(
-			`  ✗ ${url}  (${status === "error" ? "network error" : status})`,
-		);
+		console.log(`  ✗ ${url}  (${status === "error" ? "network error" : status})`);
 	}
 
 	if (broken.length > 0) {
-		console.error(
-			`\ncheck-links: ${broken.length} broken internal link(s)`,
-		);
+		console.error(`\ncheck-links: ${broken.length} broken internal link(s)`);
 		process.exit(1);
 	}
 	console.log("\ncheck-links: all internal links resolve ✓");

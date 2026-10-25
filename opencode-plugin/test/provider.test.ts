@@ -2,15 +2,10 @@ import { describe, expect, test } from "bun:test";
 import type { LanguageModelV3CallOptions } from "@ai-sdk/provider";
 import { DEFAULT_MAX_TOKENS } from "../src/constants/models";
 import { createCommandCode, laneOf } from "../src/provider";
-import {
-	anthropicReducer,
-	openaiReducer,
-	sseDecoder,
-} from "../src/provider/stream";
+import { anthropicReducer, openaiReducer, sseDecoder } from "../src/provider/stream";
 import { anthropicBody, openaiBody } from "../src/provider/wire";
 
-const sse = (events: unknown[]) =>
-	events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join("");
+const sse = (events: unknown[]) => events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join("");
 
 describe("sseDecoder", () => {
 	test("reassembles chunk-split lines and ignores noise", () => {
@@ -100,10 +95,9 @@ describe("anthropicReducer", () => {
 			"tool-input-end",
 			"finish",
 		]);
-		expect(
-			(parts.at(-1) as { finishReason: { unified: string } }).finishReason
-				.unified,
-		).toBe("tool-calls");
+		expect((parts.at(-1) as { finishReason: { unified: string } }).finishReason.unified).toBe(
+			"tool-calls",
+		);
 	});
 });
 
@@ -172,9 +166,7 @@ describe("openaiReducer", () => {
 				choices: [
 					{
 						delta: {
-							tool_calls: [
-								{ index: 0, function: { arguments: ":1}" } },
-							],
+							tool_calls: [{ index: 0, function: { arguments: ":1}" } }],
 						},
 					},
 				],
@@ -190,10 +182,9 @@ describe("openaiReducer", () => {
 		};
 		expect(call.toolName).toBe("read");
 		expect(call.input).toBe('{"p":1}');
-		expect(
-			(parts.at(-1) as { finishReason: { unified: string } }).finishReason
-				.unified,
-		).toBe("tool-calls");
+		expect((parts.at(-1) as { finishReason: { unified: string } }).finishReason.unified).toBe(
+			"tool-calls",
+		);
 	});
 });
 
@@ -287,12 +278,7 @@ describe("createCommandCode", () => {
 			if (done) break;
 			types.push((value as { type: string }).type);
 		}
-		expect(types).toEqual([
-			"text-start",
-			"text-delta",
-			"text-end",
-			"finish",
-		]);
+		expect(types).toEqual(["text-start", "text-delta", "text-end", "finish"]);
 	});
 
 	test("surfaces an HTTP failure with the lane and status", async () => {

@@ -50,9 +50,7 @@ describe("listGuides", () => {
 	test("is sorted by order then title", () => {
 		const guides = listGuides();
 		for (let i = 1; i < guides.length; i++) {
-			expect(compareGuides(guides[i - 1], guides[i])).toBeLessThanOrEqual(
-				0,
-			);
+			expect(compareGuides(guides[i - 1], guides[i])).toBeLessThanOrEqual(0);
 		}
 	});
 
@@ -63,9 +61,7 @@ describe("listGuides", () => {
 
 		// At least one real guide omits `order`; it must sort last, not vanish
 		// or produce a NaN comparison.
-		const unordered = first.filter(
-			(guide) => guide.order === Number.MAX_SAFE_INTEGER,
-		);
+		const unordered = first.filter((guide) => guide.order === Number.MAX_SAFE_INTEGER);
 		expect(unordered.length).toBeGreaterThan(0);
 		expect(first[first.length - 1].order).toBe(Number.MAX_SAFE_INTEGER);
 	});

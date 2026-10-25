@@ -87,9 +87,7 @@ function timeOf(iso: string): number {
  * entirely — so a partially-failed snapshot still renders. Every entry keeps
  * the URL of the source it came from.
  */
-export function buildTimeline(
-	data: Partial<ReleasesSnapshot> | null | undefined,
-): TimelineEntry[] {
+export function buildTimeline(data: Partial<ReleasesSnapshot> | null | undefined): TimelineEntry[] {
 	const github = data?.github ?? [];
 	const npm = data?.npm ?? [];
 	const crates = data?.crates ?? [];

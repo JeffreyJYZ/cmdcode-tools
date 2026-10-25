@@ -17,12 +17,7 @@ describe("config file", () => {
 		const fromConfig = await resolveBag(["--config", file]);
 		expect(fromConfig.ccPlan).toBe("pro");
 		expect(fromConfig.metric).toBe("cost");
-		const overridden = await resolveBag([
-			"--config",
-			file,
-			"--cc-plan",
-			"max10",
-		]);
+		const overridden = await resolveBag(["--config", file, "--cc-plan", "max10"]);
 		expect(overridden.ccPlan).toBe("max10");
 		expect(overridden.metric).toBe("cost");
 	});
@@ -30,15 +25,9 @@ describe("config file", () => {
 	test("plugins sit under the config and over the defaults", async () => {
 		const dir = scratch();
 		const plugin = join(dir, "plugin.ts");
-		writeFileSync(
-			plugin,
-			'export default { ccPlan: "max20", metric: "req", width: 100 };\n',
-		);
+		writeFileSync(plugin, 'export default { ccPlan: "max20", metric: "req", width: 100 };\n');
 		const file = join(dir, "config.json");
-		writeFileSync(
-			file,
-			JSON.stringify({ plugins: ["./plugin.ts"], metric: "cost" }),
-		);
+		writeFileSync(file, JSON.stringify({ plugins: ["./plugin.ts"], metric: "cost" }));
 		const bag = await resolveBag(["--config", file]);
 		expect(bag.ccPlan).toBe("max20"); // plugin only
 		expect(bag.metric).toBe("cost"); // config beats plugin
@@ -62,12 +51,7 @@ describe("parseArgs defaults", () => {
 	});
 
 	test("weights parse from comma lists", () => {
-		const o = parseArgs([
-			"--val-weights",
-			"1,0,0,0,0",
-			"--window",
-			"0.3,0.6",
-		]);
+		const o = parseArgs(["--val-weights", "1,0,0,0,0", "--window", "0.3,0.6"]);
 		expect(o.valWeights).toEqual([1, 0, 0, 0, 0]);
 		expect(o.window).toEqual([0.3, 0.6]);
 	});

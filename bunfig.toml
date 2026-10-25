@@ -1,0 +1,5 @@
+[fmt]
+# Bun's own formatter is this repo's formatter. Biome is the linter only.
+useTabs = true
+tabWidth = 4
+printWidth = 100

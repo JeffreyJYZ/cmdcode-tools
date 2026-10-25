@@ -24,16 +24,10 @@ export async function runCheck(
 
 	console.log(`OpenCode entries parsed: ${ocEntries.length}`);
 	console.log(`CommandCode entries:     ${ccEntries.length}`);
-	console.log(
-		`matched models:          ${rows.filter((r) => r.oc && r.cc).length}`,
-	);
-	console.log(
-		`free OpenCode models:    ${ocEntries.filter((e) => e.allowance === 0).length}`,
-	);
+	console.log(`matched models:          ${rows.filter((r) => r.oc && r.cc).length}`);
+	console.log(`free OpenCode models:    ${ocEntries.filter((e) => e.allowance === 0).length}`);
 
-	const scored = rows.filter(
-		(r) => r.oc?.ability != null || r.cc?.ability != null,
-	).length;
+	const scored = rows.filter((r) => r.oc?.ability != null || r.cc?.ability != null).length;
 	console.log(
 		`ability source:          ${ability.label || "disabled"} (${ability.intelligence.size} scores, ${ability.tps.size} speed, ${scored}/${rows.length} rows scored)`,
 	);
@@ -44,8 +38,7 @@ export async function runCheck(
 		.map((r) => r.key);
 	if (unscored.length > 0) {
 		const head = unscored.slice(0, 20).join(", ");
-		const more =
-			unscored.length > 20 ? `  +${unscored.length - 20} more` : "";
+		const more = unscored.length > 20 ? `  +${unscored.length - 20} more` : "";
 		console.log(`ability missing (${unscored.length}): ${head}${more}`);
 	}
 
@@ -56,11 +49,7 @@ export async function runCheck(
 		`OpenCode ids missing from docs table (${unpriced.length}): ${unpriced.join(", ") || "—"}`,
 	);
 
-	console.log(
-		`\nonly in OpenCode (${onlyOc.length}): ${onlyOc.join(", ") || "—"}`,
-	);
-	console.log(
-		`only in CommandCode (${onlyCc.length}): ${onlyCc.join(", ") || "—"}`,
-	);
+	console.log(`\nonly in OpenCode (${onlyOc.length}): ${onlyOc.join(", ") || "—"}`);
+	console.log(`only in CommandCode (${onlyCc.length}): ${onlyCc.join(", ") || "—"}`);
 	return 0;
 }

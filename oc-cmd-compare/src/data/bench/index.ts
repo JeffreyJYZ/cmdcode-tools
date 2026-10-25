@@ -3,18 +3,9 @@ import { loadCc } from "./cc.ts";
 import { loadAaFallback, resolvePrimary } from "./resolve.ts";
 import type { AbilityOptions, AbilityResult } from "./types.ts";
 
-export type {
-	AbilityOptions,
-	AbilityResult,
-	AbilitySource,
-	BenchData,
-} from "./types.ts";
+export type { AbilityOptions, AbilityResult, AbilitySource, BenchData } from "./types.ts";
 
-function merge(
-	into: Map<string, number>,
-	from: Map<string, number>,
-	keys?: Set<string>,
-): number {
+function merge(into: Map<string, number>, from: Map<string, number>, keys?: Set<string>): number {
 	let added = 0;
 	for (const [key, score] of from) {
 		if (keys && !keys.has(key)) continue;
@@ -37,9 +28,7 @@ function prune(map: Map<string, number>, keys?: Set<string>): void {
  * model scored anywhere shows a value. Nothing is cached: a source that is down
  * costs the columns it alone supplies, never a stale value.
  */
-export async function loadAbility(
-	opts: AbilityOptions,
-): Promise<AbilityResult> {
+export async function loadAbility(opts: AbilityOptions): Promise<AbilityResult> {
 	const primary = await resolvePrimary(opts);
 	// CommandCode and Artificial Analysis publish the same intelligence index, so
 	// a CC primary normally needs no second round-trip. That premise only covered
@@ -69,15 +58,10 @@ export async function loadAbility(
 	if (primary.scheme !== "aa-web" && primary.scheme !== "aa") {
 		const fallback = await loadAaFallback(opts);
 		const added =
-			merge(
-				primary.data.intelligence,
-				fallback.data.intelligence,
-				opts.keys,
-			) + merge(primary.data.tps, fallback.data.tps, opts.keys);
+			merge(primary.data.intelligence, fallback.data.intelligence, opts.keys) +
+			merge(primary.data.tps, fallback.data.tps, opts.keys);
 		if (added > 0) {
-			fills.push(
-				`${added} values from Artificial Analysis (${fallback.how})`,
-			);
+			fills.push(`${added} values from Artificial Analysis (${fallback.how})`);
 		}
 	}
 

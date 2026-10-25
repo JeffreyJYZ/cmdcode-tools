@@ -103,9 +103,7 @@ describe("entriesOf", () => {
 
 	test("a model only one provider sells still becomes an entry", () => {
 		const entries = entriesOf(MPC);
-		expect(entries.find((item) => item.key === "freebie")?.provider).toBe(
-			"cc",
-		);
+		expect(entries.find((item) => item.key === "freebie")?.provider).toBe("cc");
 	});
 
 	test("an empty payload is an empty catalogue, not a crash", () => {

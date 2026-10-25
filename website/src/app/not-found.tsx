@@ -11,8 +11,8 @@ export default function NotFound() {
 			<p className="ink-muted text-xs uppercase tracking-widest">404</p>
 			<h1>Page not found</h1>
 			<p className="ink-muted max-w-[var(--prose-max)]">
-				That page does not exist. It may have moved, or the link that
-				brought you here may be out of date.
+				That page does not exist. It may have moved, or the link that brought you here may
+				be out of date.
 			</p>
 			<div className="flex flex-wrap gap-x-6 gap-y-2">
 				<Link href="/" className="no-underline">

@@ -95,21 +95,12 @@ export const LEGEND: [string, string][] = [
 	["5h wk mo", "requests the rolling 5-hour / weekly / monthly window buys"],
 	["$/1K", "your cost per 1,000 requests, at the plan's price"],
 	["req/$", "requests one dollar of subscription buys"],
-	[
-		"DEAL",
-		"active CommandCode promotion: -98%, Free, 2x usage (expiry line is in --json)",
-	],
-	[
-		"WIN",
-		"cheaper side: OC / CC / tie · 'x only' = only that provider has it",
-	],
+	["DEAL", "active CommandCode promotion: -98%, Free, 2x usage (expiry line is in --json)"],
+	["WIN", "cheaper side: OC / CC / tie · 'x only' = only that provider has it"],
 	["ability", "benchmark score for the model (source above)"],
 	["tps", "output tokens per second (source above)"],
 	["COST", "0-100 volume index: requests/mo, lower is better (no ability)"],
-	[
-		"VAL",
-		"0-100 ability-aware value: ability + speed + volume + cache + output",
-	],
+	["VAL", "0-100 ability-aware value: ability + speed + volume + cache + output"],
 ];
 
 export const CSV_HEADER = [

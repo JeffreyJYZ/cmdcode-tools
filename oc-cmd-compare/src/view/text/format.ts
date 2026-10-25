@@ -41,10 +41,7 @@ export function fmtPerDollar(m: EntryMetrics | undefined): string {
 	return fmtCount(1 / m.payPerRequest);
 }
 
-export function fmtRequests(
-	value: number | undefined,
-	hasEntry: boolean,
-): string {
+export function fmtRequests(value: number | undefined, hasEntry: boolean): string {
 	if (!hasEntry || value === undefined) return "—";
 	return fmtCount(value);
 }
@@ -71,9 +68,6 @@ export function shortProviderName(provider: ProviderId): string {
 }
 
 /** e.g. "OpenCode Go", "CommandCode GOAT". */
-export function planTitle(plan: {
-	provider: ProviderId;
-	label: string;
-}): string {
+export function planTitle(plan: { provider: ProviderId; label: string }): string {
 	return `${providerName(plan.provider)} ${plan.label}`;
 }

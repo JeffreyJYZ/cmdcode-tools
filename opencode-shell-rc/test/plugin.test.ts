@@ -30,10 +30,7 @@ async function register(): Promise<(event: ShellCreateBefore) => unknown> {
 	let captured: ((event: ShellCreateBefore) => unknown) | undefined;
 	const context = {
 		shell: {
-			hook: async (
-				_name: string,
-				callback: (event: ShellCreateBefore) => unknown,
-			) => {
+			hook: async (_name: string, callback: (event: ShellCreateBefore) => unknown) => {
 				captured = callback;
 				return { dispose: async () => {} };
 			},

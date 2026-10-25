@@ -122,8 +122,6 @@ describe("OpenCode Go vs Go Plus tab selection", () => {
 		expect(plus.label).toBe("Go Plus");
 		expect(plus.price).toBe(40);
 		expect(plus.credits).toBe(180);
-		expect(() => ocGoPlan(entries, "nope")).toThrow(
-			/unknown OpenCode plan/,
-		);
+		expect(() => ocGoPlan(entries, "nope")).toThrow(/unknown OpenCode plan/);
 	});
 });

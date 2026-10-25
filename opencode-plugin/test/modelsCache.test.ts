@@ -2,11 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-	idsDiffer,
-	readModelsCache,
-	writeModelsCache,
-} from "../src/modelsCache";
+import { idsDiffer, readModelsCache, writeModelsCache } from "../src/modelsCache";
 
 const m = (id: string) => ({ id, name: id, contextLength: 0 });
 

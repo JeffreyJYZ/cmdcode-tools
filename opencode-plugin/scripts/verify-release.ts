@@ -38,11 +38,7 @@ export function conventionalTarball(name: string, version: string): string {
 	return `${REGISTRY}/${name.replace("/", "%2F")}/-/${name.split("/")[1]}-${version}.tgz`;
 }
 
-export function factsFrom(
-	packument: unknown,
-	version: string,
-	name = PKG,
-): ReleaseFacts {
+export function factsFrom(packument: unknown, version: string, name = PKG): ReleaseFacts {
 	const body = (packument ?? {}) as {
 		"dist-tags"?: Record<string, string>;
 		versions?: Record<string, { dist?: { tarball?: string } }>;
@@ -50,9 +46,7 @@ export function factsFrom(
 	return {
 		latest: body["dist-tags"]?.latest ?? "(none)",
 		versionPresent: Boolean(body.versions?.[version]),
-		tarballUrl:
-			body.versions?.[version]?.dist?.tarball ??
-			conventionalTarball(name, version),
+		tarballUrl: body.versions?.[version]?.dist?.tarball ?? conventionalTarball(name, version),
 	};
 }
 
@@ -71,8 +65,7 @@ export function verdict(
 	];
 	if (sha1) parts.push(`sha1=${sha1}`);
 	if (expected) parts.push(sha1 === expected ? "MATCH" : "MISMATCH");
-	if (facts.latest !== version)
-		parts.push(`(latest not yet moved to ${version})`);
+	if (facts.latest !== version) parts.push(`(latest not yet moved to ${version})`);
 	return parts.join(" ");
 }
 
@@ -83,9 +76,7 @@ export function sha1Hex(bytes: ArrayBuffer | Uint8Array): string {
 }
 
 /** The version in a package manifest — the one you just published. */
-export function localVersion(manifest: {
-	version?: string;
-}): string | undefined {
+export function localVersion(manifest: { version?: string }): string | undefined {
 	return typeof manifest.version === "string" ? manifest.version : undefined;
 }
 
@@ -117,9 +108,7 @@ async function packLocalShasum(dir: string): Promise<string | undefined> {
 		stderr: "pipe",
 	});
 	if (proc.exitCode !== 0) {
-		console.error(
-			`npm pack failed: ${proc.stderr.toString().trim().split("\n").pop() ?? ""}`,
-		);
+		console.error(`npm pack failed: ${proc.stderr.toString().trim().split("\n").pop() ?? ""}`);
 		return undefined;
 	}
 	const packed = proc.stdout.toString().trim().split("\n").pop() ?? "";
@@ -155,8 +144,7 @@ async function main(): Promise<number> {
 		);
 		return 2;
 	}
-	if (!explicitVersion)
-		console.log(`no version given; using package.json (${version})`);
+	if (!explicitVersion) console.log(`no version given; using package.json (${version})`);
 	// Default: pack the target dir and compare — the publish-time shasum, no copy-paste.
 	//
 	// That only holds for a publish made from this working copy. Since
@@ -168,9 +156,7 @@ async function main(): Promise<number> {
 	const expected = sourceGate
 		? undefined
 		: (value("--expected") ??
-			(args.includes("--no-pack")
-				? undefined
-				: await packLocalShasum(dir)));
+			(args.includes("--no-pack") ? undefined : await packLocalShasum(dir)));
 	if (sourceGate)
 		console.log(
 			"source gate: checking version + repository in the served tarball (no local-pack comparison)",
@@ -190,16 +176,12 @@ async function main(): Promise<number> {
 		const status = response?.status ?? 0;
 		if (facts.versionPresent && status === 200 && response) {
 			const sha1 = sha1Hex(await response.arrayBuffer());
-			const tarballBytes = await (
-				await fetch(facts.tarballUrl)
-			).arrayBuffer();
+			const tarballBytes = await (await fetch(facts.tarballUrl)).arrayBuffer();
 			const manifest = await manifestFromTarball(tarballBytes);
 			const tarballVersion = manifest?.version;
 			console.log(verdict(version, facts, status, sha1, expected));
 			if (tarballVersion && tarballVersion !== version) {
-				console.error(
-					`tarball package.json says ${tarballVersion}, not ${version}`,
-				);
+				console.error(`tarball package.json says ${tarballVersion}, not ${version}`);
 				return 1;
 			}
 			if (sourceGate) {
@@ -220,9 +202,7 @@ async function main(): Promise<number> {
 				console.log(`repository declared: ${declared}`);
 			}
 			if (expected && sha1 !== expected) {
-				console.error(
-					"served bytes do not match the local pack — do not install",
-				);
+				console.error("served bytes do not match the local pack — do not install");
 				return 1;
 			}
 			console.log(`verified ${name}@${version}`);
@@ -231,9 +211,7 @@ async function main(): Promise<number> {
 		console.log(`try=${i} ${verdict(version, facts, status)}`);
 		if (i < tries) await Bun.sleep(20_000);
 	}
-	console.error(
-		`timeout: ${name}@${version} not fully published after ${tries} tries`,
-	);
+	console.error(`timeout: ${name}@${version} not fully published after ${tries} tries`);
 	return 1;
 }
 
@@ -248,29 +226,19 @@ async function main(): Promise<number> {
  */
 async function manifestFromTarball(
 	bytes: ArrayBuffer,
-): Promise<
-	{ version?: string; repository?: { url?: string } | string } | undefined
-> {
+): Promise<{ version?: string; repository?: { url?: string } | string } | undefined> {
 	try {
-		const { mkdtemp, writeFile, readFile } = await import(
-			"node:fs/promises"
-		);
+		const { mkdtemp, writeFile, readFile } = await import("node:fs/promises");
 		const { tmpdir } = await import("node:os");
 		const dir = await mkdtemp(join(tmpdir(), "verify-release-"));
 		const file = join(dir, "p.tgz");
 		await writeFile(file, Buffer.from(bytes));
-		const tar = Bun.spawnSync([
-			"tar",
-			"xzf",
-			file,
-			"-C",
-			dir,
-			"package/package.json",
-		]);
+		const tar = Bun.spawnSync(["tar", "xzf", file, "-C", dir, "package/package.json"]);
 		if (tar.exitCode !== 0) return undefined;
-		return JSON.parse(
-			await readFile(join(dir, "package", "package.json"), "utf8"),
-		) as { version?: string; repository?: { url?: string } | string };
+		return JSON.parse(await readFile(join(dir, "package", "package.json"), "utf8")) as {
+			version?: string;
+			repository?: { url?: string } | string;
+		};
 	} catch {
 		return undefined;
 	}

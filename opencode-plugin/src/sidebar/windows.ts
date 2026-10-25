@@ -16,8 +16,7 @@ export function elapsedPct(
 	durSecs: number,
 	nowSecs: number,
 ): number | undefined {
-	if (typeof resetAtMs !== "number" || !Number.isFinite(resetAtMs))
-		return undefined;
+	if (typeof resetAtMs !== "number" || !Number.isFinite(resetAtMs)) return undefined;
 	const resetSecs = Math.floor(resetAtMs / 1000);
 	// cmduse-core uses u64 `checked_sub`, so a reset before the window length
 	// (underflow) is "no window", not a negative start.
@@ -42,11 +41,7 @@ export function elapsedLabel(
 ): string | undefined {
 	const pct = elapsedPct(resetAtMs, durSecs, nowSecs);
 	if (pct === undefined) return undefined;
-	if (
-		pct === 0 &&
-		nowSecs > Math.floor((resetAtMs as number) / 1000) - durSecs
-	)
-		return "<0.1%";
+	if (pct === 0 && nowSecs > Math.floor((resetAtMs as number) / 1000) - durSecs) return "<0.1%";
 	return `${pct.toFixed(1)}%`;
 }
 
@@ -67,8 +62,7 @@ export function paceEtaSecs(
 	cap: number,
 	nowSecs: number,
 ): number | undefined {
-	if (typeof resetAtMs !== "number" || !Number.isFinite(resetAtMs))
-		return undefined;
+	if (typeof resetAtMs !== "number" || !Number.isFinite(resetAtMs)) return undefined;
 	const reset = Math.floor(resetAtMs / 1000);
 	// u64 `checked_sub`: a reset closer than the window length is "no window".
 	if (reset < durSecs) return undefined;

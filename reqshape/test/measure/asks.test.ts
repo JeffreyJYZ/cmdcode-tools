@@ -5,11 +5,7 @@ import type { SessionRow } from "#~/measure/store.ts";
 
 const SESSION = "ses_1";
 
-function message(
-	kind: string,
-	time: number,
-	extra: Partial<RawMessage> = {},
-): RawMessage {
+function message(kind: string, time: number, extra: Partial<RawMessage> = {}): RawMessage {
 	return {
 		sessionID: SESSION,
 		kind,
@@ -27,9 +23,7 @@ function tokens(input: number, output: number, read = 0): RawTokens {
 	return { input, output, cache: { read, write: 0 } };
 }
 
-const sessions = new Map<string, SessionRow>([
-	[SESSION, { child: false, directory: "/dev/one" }],
-]);
+const sessions = new Map<string, SessionRow>([[SESSION, { child: false, directory: "/dev/one" }]]);
 
 describe("buildAsks", () => {
 	test("an ask is the run of reqs after its prompt, numbered across the session", () => {

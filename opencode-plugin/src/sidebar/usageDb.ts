@@ -14,8 +14,7 @@ import { type ModelUsage, modelKey } from "./rows";
 /** opencode's message store: `OPENCODE_DB`, else the XDG data dir. */
 export function usageDbPath(): string {
 	if (process.env.OPENCODE_DB) return process.env.OPENCODE_DB;
-	const base =
-		process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share");
+	const base = process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share");
 	return join(base, OPENCODE_DIR, OPENCODE_DB_FILE);
 }
 
@@ -30,9 +29,7 @@ export function periodStart(
 	now = Date.now(),
 ): number {
 	if (typeof usage.periodStartAt === "number") return usage.periodStartAt;
-	const end = usage.periodEnd
-		? Date.parse(`${usage.periodEnd}T23:59:59`)
-		: Number.NaN;
+	const end = usage.periodEnd ? Date.parse(`${usage.periodEnd}T23:59:59`) : Number.NaN;
 	if (!Number.isFinite(end)) return now - 30 * 24 * 60 * 60 * 1000;
 	const start = new Date(end);
 	start.setMonth(start.getMonth() - 1);
@@ -142,8 +139,7 @@ export function loadModelUsage(
 			} catch {
 				continue;
 			}
-			if (data.role !== "assistant" || !data.modelID || !data.tokens)
-				continue;
+			if (data.role !== "assistant" || !data.modelID || !data.tokens) continue;
 			if (modelKey(data.modelID) !== key) continue;
 			const id = `${data.modelID}@${row.time_created}`;
 			if (seen.has(id)) continue; // rows can be rewritten in place
@@ -215,11 +211,9 @@ export function loadModelWindowStart(
 			} catch {
 				continue;
 			}
-			if (data.role !== "assistant" || !data.tokens || !data.modelID)
-				continue;
+			if (data.role !== "assistant" || !data.tokens || !data.modelID) continue;
 			if (modelKey(data.modelID) !== key) continue;
-			if (oldest === null || row.time_created < oldest)
-				oldest = row.time_created;
+			if (oldest === null || row.time_created < oldest) oldest = row.time_created;
 		}
 		return oldest;
 	} catch {
@@ -235,10 +229,7 @@ export function loadModelWindowStart(
  * the store is missing or unreadable, and callers then omit the row. Rows are
  * keyed by their primary key: message rows get rewritten in place.
  */
-export function loadSessionUsage(
-	sessionID: string,
-	path = usageDbPath(),
-): ModelUsage | null {
+export function loadSessionUsage(sessionID: string, path = usageDbPath()): ModelUsage | null {
 	let db: Database;
 	try {
 		db = new Database(path, { readonly: true });
@@ -249,9 +240,9 @@ export function loadSessionUsage(
 		if (hasV2(db)) {
 			// v2 keeps the session's own totals as columns: one indexed read for
 			// spend, plus a count of assistant turns.
-			const totals = db
-				.query("SELECT cost FROM session_v2 WHERE id = ?")
-				.get(sessionID) as { cost?: number } | null;
+			const totals = db.query("SELECT cost FROM session_v2 WHERE id = ?").get(sessionID) as {
+				cost?: number;
+			} | null;
 			const counted = db
 				.query(
 					"SELECT count(*) AS c FROM session_message WHERE session_id = ? AND type = 'assistant'",

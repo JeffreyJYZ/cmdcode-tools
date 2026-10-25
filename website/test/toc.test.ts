@@ -10,8 +10,7 @@ test("extracts H2/H3 headings with github-slugger ids", () => {
 });
 
 test("ignores headings inside fenced code blocks", () => {
-	const md =
-		"# T\n\n## Real\n\n```sh\n## Not a heading\necho hi\n```\n\n### Also real\n";
+	const md = "# T\n\n## Real\n\n```sh\n## Not a heading\necho hi\n```\n\n### Also real\n";
 	expect(extractToc(md)).toEqual([
 		{ depth: 2, id: "real", text: "Real" },
 		{ depth: 3, id: "also-real", text: "Also real" },

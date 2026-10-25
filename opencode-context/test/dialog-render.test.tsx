@@ -7,12 +7,7 @@ import { describe, expect, test } from "bun:test";
 import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
 import type { Breakdown, Bucket } from "../src/breakdown";
-import {
-	CHILD_INDENT,
-	CHILD_TICK,
-	MAX_CHILDREN,
-	TICK,
-} from "../src/constants/dialog";
+import { CHILD_INDENT, CHILD_TICK, MAX_CHILDREN, TICK } from "../src/constants/dialog";
 import { BreakdownDialog } from "../src/dialog";
 
 const colors = {
@@ -89,9 +84,8 @@ describe("rendered dialog", () => {
 			.captureSpans()
 			.lines.find(
 				(line) =>
-					new Set(
-						line.spans.map((s) => hex(s.bg)).filter((bg) => bg !== "#000000"),
-					).size >= 2,
+					new Set(line.spans.map((s) => hex(s.bg)).filter((bg) => bg !== "#000000"))
+						.size >= 2,
 			);
 		expect(bar).toBeDefined();
 		const painted = (bar?.spans ?? []).filter((s) => hex(s.bg) !== "#000000");
@@ -99,9 +93,7 @@ describe("rendered dialog", () => {
 		// the bar must span the dialog, not a fixed-width stub.
 		const cells = painted.reduce((total, s) => total + s.width, 0);
 		expect(cells).toBeGreaterThan(40);
-		expect(new Set(painted.map((s) => hex(s.bg))).size).toBeGreaterThanOrEqual(
-			2,
-		);
+		expect(new Set(painted.map((s) => hex(s.bg))).size).toBeGreaterThanOrEqual(2);
 	});
 
 	test("rows, columns, thinner ticks and one-decimal percents", async () => {

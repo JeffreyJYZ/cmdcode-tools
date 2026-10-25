@@ -4,12 +4,7 @@
 // the same shape cmd-provider's deals panel uses. Keeping this pure makes the
 // panel trivial to test and host-agnostic (v1 and v2 pass the same inputs).
 import { MODEL_CATEGORIES } from "../constants/gating";
-import {
-	FIVE_HOUR_SECS,
-	ROW_WIDTH,
-	TIER_DISPLAY,
-	WEEKLY_SECS,
-} from "../constants/sidebar";
+import { FIVE_HOUR_SECS, ROW_WIDTH, TIER_DISPLAY, WEEKLY_SECS } from "../constants/sidebar";
 import { type Category, canonicalizeModelId } from "../gating";
 import { elapsedLabel, paceEtaSecs } from "./windows";
 
@@ -26,12 +21,7 @@ export type Tone = "base" | "muted" | "strong" | "ok" | "warn" | "crit";
  * A row. `headline` marks the two rows whose label names the thing the panel is
  * about (the plan, the active model); the panel colours their labels apart.
  */
-export type SidebarRow = [
-	label: string,
-	value: string,
-	tone?: Tone,
-	headline?: true,
-];
+export type SidebarRow = [label: string, value: string, tone?: Tone, headline?: true];
 
 /** Headroom severity: comfortable to 70%, tight to 90%, over after that. */
 export function pctTone(pct: number): Tone {
@@ -262,16 +252,12 @@ export function windowRows(
 				? ""
 				: `${elapsed} elapsed`
 			: `cap in ${until(now + eta * 1000, now)}`;
-	const detail = [lead, reset ? `resets ${reset}` : ""]
-		.filter(Boolean)
-		.join(" · ");
+	const detail = [lead, reset ? `resets ${reset}` : ""].filter(Boolean).join(" · ");
 	// Compact on the use line (`$0.55/$14`, no spaces) so larger numbers still fit.
 	return [
 		[
 			label,
-			use
-				? use(used, w.cap, share)
-				: `${money(used)}/${money(w.cap)} (${pct.toFixed(1)}%)`,
+			use ? use(used, w.cap, share) : `${money(used)}/${money(w.cap)} (${pct.toFixed(1)}%)`,
 			w.exceeded ? "crit" : pctTone(share),
 		],
 		...(detail ? [["", detail, "muted"] as SidebarRow] : []),
@@ -285,10 +271,7 @@ export function windowRows(
  * no network, so both panels keep them when the catalog is missing, and both
  * families build them here rather than in two places.
  */
-export function localUsageRows(
-	usage?: ModelUsage,
-	session?: ModelUsage,
-): SidebarRow[] {
+export function localUsageRows(usage?: ModelUsage, session?: ModelUsage): SidebarRow[] {
 	const rows: SidebarRow[] = [];
 	if (usage) {
 		// A model may be subscription-billed, so the harness only prices it when
@@ -299,11 +282,7 @@ export function localUsageRows(
 		// turn's row landing and the session total catching up the numerator can
 		// lead, which flashed "105% of session" then settled to 100%. A part of a
 		// whole never reads over the whole: clamp it.
-		rows.push([
-			"Usage (this model)",
-			`${count(usage.requests)} req`,
-			"base",
-		]);
+		rows.push(["Usage (this model)", `${count(usage.requests)} req`, "base"]);
 		const spend = usage.cost > 0 ? money(usage.cost) : "";
 		const share =
 			usage.cost > 0 && session && session.cost > 0
@@ -314,11 +293,7 @@ export function localUsageRows(
 	}
 	if (session) {
 		const spent = session.cost > 0 ? ` · ${money(session.cost)}` : "";
-		rows.push([
-			"Session",
-			`${count(session.requests)} req${spent}`,
-			"base",
-		]);
+		rows.push(["Session", `${count(session.requests)} req${spent}`, "base"]);
 	}
 	return rows;
 }
@@ -331,8 +306,7 @@ export function localUsageRows(
  */
 function monthlyDetail(usage: Usage, now: number): string | undefined {
 	const { periodStartAt, periodEndAt } = usage;
-	if (typeof periodStartAt !== "number" || typeof periodEndAt !== "number")
-		return undefined;
+	if (typeof periodStartAt !== "number" || typeof periodEndAt !== "number") return undefined;
 	const durSecs = Math.round((periodEndAt - periodStartAt) / 1000);
 	if (durSecs <= 0) return undefined;
 	const elapsed = elapsedLabel(periodEndAt, durSecs, Math.floor(now / 1000));
@@ -345,23 +319,15 @@ function monthlyDetail(usage: Usage, now: number): string | undefined {
 }
 
 /** Plan + rolling windows + period totals, from a cmduse snapshot. */
-export function usageRows(
-	usage: Usage | undefined,
-	now = Date.now(),
-): SidebarRow[] {
+export function usageRows(usage: Usage | undefined, now = Date.now()): SidebarRow[] {
 	if (!usage) return [];
 	const rows: SidebarRow[] = [];
 	if (usage.plan) {
 		const credits =
-			typeof usage.monthlyCap === "number"
-				? ` · $${usage.monthlyCap}/mo credits`
-				: "";
+			typeof usage.monthlyCap === "number" ? ` · $${usage.monthlyCap}/mo credits` : "";
 		rows.push(["Plan", `${usage.plan}${credits}`, "base", true]);
 	}
-	if (
-		typeof usage.monthlyCap === "number" &&
-		typeof usage.monthlyCredits === "number"
-	) {
+	if (typeof usage.monthlyCap === "number" && typeof usage.monthlyCredits === "number") {
 		// cmduse clamps used into [0, cap]: leftover credits can exceed the cap.
 		const used = Math.min(
 			usage.monthlyCap,
@@ -380,8 +346,7 @@ export function usageRows(
 	rows.push(...windowRows("Weekly", usage.weekly, now, WEEKLY_SECS));
 	if (typeof usage.requests === "number" || typeof usage.cost === "number") {
 		const parts: string[] = [];
-		if (typeof usage.requests === "number")
-			parts.push(`${count(usage.requests)} requests`);
+		if (typeof usage.requests === "number") parts.push(`${count(usage.requests)} requests`);
 		if (typeof usage.cost === "number") parts.push(money(usage.cost));
 		rows.push(["Period", parts.join(" · "), "base"]);
 	}
@@ -418,20 +383,14 @@ export function modelRows(
 	// tier for, and showing both read as redundant once gating could refresh.
 	else if (meta.minPlan) rows.push(["Min plan", meta.minPlan, "base"]);
 	if (typeof meta.allowance === "number")
-		rows.push([
-			"Allowance",
-			allowanceLabel(meta.allowance, meta.free),
-			"base",
-		]);
+		rows.push(["Allowance", allowanceLabel(meta.allowance, meta.free), "base"]);
 	if (meta.deal) {
 		// The badge is the news; the expiry is compacted to fit ("Sep 30" rather
 		// than "Ends September 30, 2026"), because the sidebar has 37 columns.
 		const ends = meta.deal.ends?.match(/([A-Z][a-z]{2})[a-z]*\s+(\d{1,2})/);
 		rows.push([
 			"Deal",
-			ends
-				? `${meta.deal.badge} · ends ${ends[1]} ${ends[2]}`
-				: meta.deal.badge,
+			ends ? `${meta.deal.badge} · ends ${ends[1]} ${ends[2]}` : meta.deal.badge,
 			"ok",
 		]);
 	}
@@ -441,23 +400,15 @@ export function modelRows(
 		// when the model has one (Claude does, the DeepSeek/GLM lines do not), so
 		// a zero rate never reads as a price.
 		const cache = [`cache read ${rate(meta.rates.cacheRead)}`];
-		if (
-			typeof meta.rates.cacheWrite === "number" &&
-			meta.rates.cacheWrite > 0
-		) {
+		if (typeof meta.rates.cacheWrite === "number" && meta.rates.cacheWrite > 0) {
 			cache.push(`write ${rate(meta.rates.cacheWrite)}`);
 		}
-		rows.push([
-			"Rates",
-			`${rate(meta.rates.input)}/${rate(meta.rates.output)} in/out`,
-			"base",
-		]);
+		rows.push(["Rates", `${rate(meta.rates.input)}/${rate(meta.rates.output)} in/out`, "base"]);
 		rows.push(["", cache.join(" · "), "muted"]);
 	}
 	if (typeof meta.intelligence === "number")
 		rows.push(["Intelligence", String(meta.intelligence), "base"]);
-	if (typeof meta.tps === "number")
-		rows.push(["Tok/s", String(meta.tps), "base"]);
+	if (typeof meta.tps === "number") rows.push(["Tok/s", String(meta.tps), "base"]);
 	return rows;
 }
 

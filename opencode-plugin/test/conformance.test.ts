@@ -37,18 +37,8 @@ describe("conformance vectors (shared with cmduse-core)", () => {
 			outSecs: number | null;
 		};
 		for (const c of conformance.paceEta as PaceCase[]) {
-			const got = paceEtaSecs(
-				c.resetAtMs ?? undefined,
-				c.durSecs,
-				c.used,
-				c.cap,
-				c.now,
-			);
-			expect([c.resetAtMs, c.now, got ?? null]).toEqual([
-				c.resetAtMs,
-				c.now,
-				c.outSecs,
-			]);
+			const got = paceEtaSecs(c.resetAtMs ?? undefined, c.durSecs, c.used, c.cap, c.now);
+			expect([c.resetAtMs, c.now, got ?? null]).toEqual([c.resetAtMs, c.now, c.outSecs]);
 		}
 	});
 
@@ -83,12 +73,12 @@ describe("conformance vectors (shared with cmduse-core)", () => {
 		for (const c of conformance.elapsedPct as Case[]) {
 			const resetAt = c.resetAtMs === null ? undefined : c.resetAtMs;
 			const expected = c.out === null ? undefined : c.out;
-			expect([
+			expect([c.resetAtMs, c.durSecs, c.now, elapsedPct(resetAt, c.durSecs, c.now)]).toEqual([
 				c.resetAtMs,
 				c.durSecs,
 				c.now,
-				elapsedPct(resetAt, c.durSecs, c.now),
-			]).toEqual([c.resetAtMs, c.durSecs, c.now, expected]);
+				expected,
+			]);
 		}
 	});
 });

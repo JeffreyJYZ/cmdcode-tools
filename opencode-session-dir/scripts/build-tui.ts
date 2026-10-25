@@ -15,13 +15,7 @@ const out = await Bun.build({
 	outdir: new URL("../dist", import.meta.url).pathname,
 	naming: "tui.js",
 	plugins: [createSolidTransformPlugin({ resolvePath: () => null })],
-	external: [
-		"solid-js",
-		"solid-js/*",
-		"@opentui/*",
-		"@opencode/plugin",
-		"@opencode/plugin/tui",
-	],
+	external: ["solid-js", "solid-js/*", "@opentui/*", "@opencode/plugin", "@opencode/plugin/tui"],
 	minify: false,
 });
 

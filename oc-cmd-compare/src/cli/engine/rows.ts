@@ -10,10 +10,7 @@ import type {
 import { buildMetrics } from "./index.ts";
 import type { ScoreConfig } from "./score.ts";
 
-function indexByKey(
-	entries: CatalogEntry[],
-	metrics: EntryMetrics[],
-): Map<string, EntryMetrics> {
+function indexByKey(entries: CatalogEntry[], metrics: EntryMetrics[]): Map<string, EntryMetrics> {
 	const byKey = new Map<string, EntryMetrics>();
 	entries.forEach((entry, i) => {
 		const metric = metrics[i];
@@ -37,14 +34,7 @@ export function buildRows(
 		["cc", ccPlan],
 	]);
 	// Score every entry from both providers against one shared scale.
-	const all = buildMetrics(
-		[...ocEntries, ...ccEntries],
-		plans,
-		workloads,
-		ability,
-		tps,
-		config,
-	);
+	const all = buildMetrics([...ocEntries, ...ccEntries], plans, workloads, ability, tps, config);
 	const ocByKey = indexByKey(ocEntries, all.slice(0, ocEntries.length));
 	const ccByKey = indexByKey(ccEntries, all.slice(ocEntries.length));
 

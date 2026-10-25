@@ -11,12 +11,7 @@ export { fitColumns, tableWidth } from "./layout/fit.ts";
 export { tally } from "./layout/segments.ts";
 export { columns } from "./schema.ts";
 export { renderCsv, renderMarkdown } from "./text/export.ts";
-export {
-	fmtUsd,
-	planTitle,
-	providerName,
-	shortProviderName,
-} from "./text/index.ts";
+export { fmtUsd, planTitle, providerName, shortProviderName } from "./text/index.ts";
 export { setAbilityRange, setColor, setColorMode, setThresholds };
 
 export function renderText(

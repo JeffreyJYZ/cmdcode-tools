@@ -19,9 +19,7 @@ function runJson<T>(bin: string, args: string[]): T {
 		result.error?.message ||
 		"no output (is it installed and on PATH?)";
 	if (result.error || result.status !== 0 || !result.stdout) {
-		throw new Error(
-			`${bin} ${args.join(" ")} failed: ${detail.slice(0, 240)}`,
-		);
+		throw new Error(`${bin} ${args.join(" ")} failed: ${detail.slice(0, 240)}`);
 	}
 	return JSON.parse(result.stdout) as T;
 }

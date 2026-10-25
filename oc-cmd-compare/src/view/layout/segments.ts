@@ -9,11 +9,7 @@ function groupOf(id: string): GroupKey {
 	return "misc";
 }
 
-export function buildSegments(
-	ids: string[],
-	cols: Column[],
-	widths: number[],
-): Segment[] {
+export function buildSegments(ids: string[], cols: Column[], widths: number[]): Segment[] {
 	const segs: Segment[] = [];
 	ids.forEach((id, i) => {
 		const column = cols[i];
@@ -33,19 +29,12 @@ export function buildSegments(
 		}
 	});
 	for (const seg of segs) {
-		seg.width =
-			seg.widths.reduce((a, b) => a + b, 0) +
-			GAP.length * (seg.widths.length - 1);
+		seg.width = seg.widths.reduce((a, b) => a + b, 0) + GAP.length * (seg.widths.length - 1);
 	}
 	return segs;
 }
 
-function cellText(
-	col: Column,
-	text: string,
-	width: number,
-	alignRight: boolean,
-): string {
+function cellText(col: Column, text: string, width: number, alignRight: boolean): string {
 	if (col.pad === false) return text;
 	return alignRight && col.right ? text.padStart(width) : text.padEnd(width);
 }
@@ -58,12 +47,7 @@ export function renderSegment(
 ): string {
 	return seg.columns
 		.map((col, i) => {
-			const text = cellText(
-				col,
-				cells[i] ?? "",
-				seg.widths[i] ?? 0,
-				alignRight,
-			);
+			const text = cellText(col, cells[i] ?? "", seg.widths[i] ?? 0, alignRight);
 			const code = styles?.[i];
 			return code ? paint(code, text) : text;
 		})
@@ -85,8 +69,7 @@ export function tally(rows: Row[]): Tally {
 		if (row.oc && row.cc) {
 			result.headToHead++;
 			if (row.oc.payPerRequest === row.cc.payPerRequest) result.ties++;
-			else if (row.oc.payPerRequest < row.cc.payPerRequest)
-				result.ocWins++;
+			else if (row.oc.payPerRequest < row.cc.payPerRequest) result.ocWins++;
 			else result.ccWins++;
 		} else if (row.oc) {
 			result.ocOnly++;

@@ -8,8 +8,7 @@ import type { UsageEntry } from "./parse.ts";
 /** Default location of opencode's message store. */
 export function defaultOpencodeDb(): string {
 	if (process.env.OPENCODE_DB) return process.env.OPENCODE_DB;
-	const base =
-		process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share");
+	const base = process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share");
 	return join(base, "opencode", "opencode.db");
 }
 
@@ -48,10 +47,7 @@ export interface OpencodeDbUsage {
  * table otherwise, so an upgraded opencode does not read as "no usage". Read-only
  * so a running opencode is unaffected; returns null when the DB is unusable.
  */
-export function readOpencodeDb(
-	path: string,
-	since?: Date,
-): OpencodeDbUsage | null {
+export function readOpencodeDb(path: string, since?: Date): OpencodeDbUsage | null {
 	let db: Database;
 	try {
 		db = new Database(path, { readonly: true });
@@ -60,9 +56,7 @@ export function readOpencodeDb(
 	}
 	try {
 		const sinceMs = since ? since.getTime() : 0;
-		const turns = hasV2(db)
-			? readV2Turns(db, sinceMs)
-			: readLegacyTurns(db, sinceMs);
+		const turns = hasV2(db) ? readV2Turns(db, sinceMs) : readLegacyTurns(db, sinceMs);
 
 		const byKey = new Map<string, UsageEntry>();
 		const seen = new Set<string>();
@@ -121,8 +115,7 @@ function readLegacyTurns(db: Database, sinceMs: number): Turn[] {
 		} catch {
 			continue;
 		}
-		if (data.role !== "assistant" || !data.modelID || !data.tokens)
-			continue;
+		if (data.role !== "assistant" || !data.modelID || !data.tokens) continue;
 		turns.push({
 			id: `${data.modelID}@${(data.time?.created ?? 0) as number}`,
 			modelID: data.modelID,

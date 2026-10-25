@@ -11,14 +11,10 @@ export async function loadAaApi(
 	const maxPages = 20;
 
 	for (let page = 1; page <= maxPages; page++) {
-		const res = await fetchTextWithKey(
-			`${API_URL}?page=${page}&page_size=${pageSize}`,
-			key,
-		);
+		const res = await fetchTextWithKey(`${API_URL}?page=${page}&page_size=${pageSize}`, key);
 		const body = JSON.parse(res) as unknown;
 		mergeAaPage(parseAaApi(body), intelligence, tps);
-		const pagination = (body as { pagination?: { has_more?: boolean } })
-			.pagination;
+		const pagination = (body as { pagination?: { has_more?: boolean } }).pagination;
 		if (!pagination?.has_more) break;
 	}
 

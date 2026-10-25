@@ -21,14 +21,12 @@
 	"scripts": {
 		"start": "bun run src/index.ts",
 		"test": "bun test",
-		"fmt": "biome format --write .",
 		"lint": "biome lint --write .",
 		"typecheck": "bun check"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.13",
-		"@types/bun": "latest",
-		"typescript": "^7"
+		"@types/bun": "latest"
 	},
 	"dependencies": {
 		"cac": "^7.0.0"

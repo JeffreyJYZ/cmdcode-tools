@@ -47,9 +47,7 @@ export function tableBody(projections: Projection[]): string[] {
 				"right",
 			),
 			pad(
-				projection.requestsPerWeek === null
-					? "—"
-					: fmtCount(projection.requestsPerWeek),
+				projection.requestsPerWeek === null ? "—" : fmtCount(projection.requestsPerWeek),
 				CELL,
 				"right",
 			),

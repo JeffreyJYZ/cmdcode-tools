@@ -69,10 +69,7 @@ describe("collectBreakdown", () => {
 		});
 		const breakdown = await collectBreakdown(
 			fakeCtx({
-				messages: [
-					{ type: "user", text: "hello there" },
-					assistantTurn("the answer"),
-				],
+				messages: [{ type: "user", text: "hello there" }, assistantTurn("the answer")],
 				models: [
 					{
 						providerID: "command-code-openai",

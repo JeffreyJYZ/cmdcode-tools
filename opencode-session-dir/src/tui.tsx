@@ -15,13 +15,7 @@ import {
 	SLASH_LIST,
 	SLASH_REMOVE,
 } from "./ids";
-import {
-	addBinding,
-	bindingsFor,
-	expandHome,
-	isDirectory,
-	removeBinding,
-} from "./state";
+import { addBinding, bindingsFor, expandHome, isDirectory, removeBinding } from "./state";
 
 type Variant = "info" | "success" | "warning" | "error";
 
@@ -65,10 +59,7 @@ interface SelectOption {
  * subdirectories, go up with `..`, confirm the current directory, or fall back
  * to typing a path.
  */
-async function browse(
-	ctx: Tui.Context,
-	start: string,
-): Promise<string | undefined> {
+async function browse(ctx: Tui.Context, start: string): Promise<string | undefined> {
 	let current = start;
 	for (;;) {
 		const options: SelectOption[] = [
@@ -169,10 +160,7 @@ async function remove(ctx: Tui.Context): Promise<void> {
 	toast(ctx, "success", `Unbound ${selected}.`);
 }
 
-async function run(
-	ctx: Tui.Context,
-	command: () => Promise<void>,
-): Promise<void> {
+async function run(ctx: Tui.Context, command: () => Promise<void>): Promise<void> {
 	try {
 		await command();
 	} catch (error) {

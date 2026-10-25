@@ -6,8 +6,7 @@ import { hasV2, type RawMessage, readLegacy, readV2, text } from "./rows.ts";
 /** Default location of opencode's store. */
 export function defaultStorePath(): string {
 	if (process.env.OPENCODE_DB) return process.env.OPENCODE_DB;
-	const base =
-		process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share");
+	const base = process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share");
 	return join(base, "opencode", "opencode.db");
 }
 
@@ -80,9 +79,7 @@ function readSessionTable(
 	directory?: string | null;
 }> {
 	try {
-		return db
-			.query(`SELECT id, parent_id, directory FROM ${table}`)
-			.all() as Array<{
+		return db.query(`SELECT id, parent_id, directory FROM ${table}`).all() as Array<{
 			id?: string;
 			parent_id?: string | null;
 			directory?: string | null;

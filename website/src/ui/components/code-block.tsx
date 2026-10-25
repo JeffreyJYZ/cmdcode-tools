@@ -1,21 +1,13 @@
 "use client";
 
-import {
-	type ComponentPropsWithoutRef,
-	useCallback,
-	useRef,
-	useState,
-} from "react";
+import { type ComponentPropsWithoutRef, useCallback, useRef, useState } from "react";
 
 /**
  * `pre` replacement for docs code blocks: a copy button over the highlighted
  * `<pre>`. The button reads the rendered text (shiki has already split it into
  * spans), so it copies plain source regardless of highlighting.
  */
-export function CodeBlock({
-	children,
-	...props
-}: ComponentPropsWithoutRef<"pre">) {
+export function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<"pre">) {
 	const ref = useRef<HTMLPreElement>(null);
 	const [copied, setCopied] = useState(false);
 
@@ -29,12 +21,7 @@ export function CodeBlock({
 
 	return (
 		<div className="code-block">
-			<button
-				type="button"
-				className="code-copy"
-				onClick={onCopy}
-				aria-label="Copy code"
-			>
+			<button type="button" className="code-copy" onClick={onCopy} aria-label="Copy code">
 				{copied ? "Copied" : "Copy"}
 			</button>
 			<pre ref={ref} {...props}>

@@ -1,9 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-	costPerRequest,
-	lookupAbility,
-	lookupTps,
-} from "#~/cli/engine/index.ts";
+import { costPerRequest, lookupAbility, lookupTps } from "#~/cli/engine/index.ts";
 import { SPEED_TPS_FACTOR } from "#~/constants/scoring.ts";
 
 describe("costPerRequest", () => {
@@ -46,10 +42,7 @@ describe("costPerRequest", () => {
 			cacheWrite: 1_000,
 		};
 		expect(costPerRequest(glm, workload)).toBeCloseTo(0.0014, 10);
-		expect(costPerRequest({ ...glm, cacheWrite: 9 }, workload)).toBeCloseTo(
-			0.009,
-			10,
-		);
+		expect(costPerRequest({ ...glm, cacheWrite: 9 }, workload)).toBeCloseTo(0.009, 10);
 	});
 });
 
@@ -88,9 +81,7 @@ describe("lookupTps", () => {
 		expect(lookupTps(tps, "kimik27codehighspeed")).toBe(300);
 	});
 	test("a variant with no figure scales the base by SPEED_TPS_FACTOR", () => {
-		expect(lookupTps(tps, "deepseekv41flashfast")).toBe(
-			216 * SPEED_TPS_FACTOR,
-		);
+		expect(lookupTps(tps, "deepseekv41flashfast")).toBe(216 * SPEED_TPS_FACTOR);
 	});
 	test("flashx multiplies the flash tier, not the base", () => {
 		expect(lookupTps(tps, "glm53flashx")).toBe(51 * SPEED_TPS_FACTOR);

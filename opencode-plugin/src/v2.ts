@@ -17,20 +17,10 @@
 // window math and formatting (see ./cli.ts).
 import type { Plugin as PluginNs } from "@opencode/plugin";
 import { inputModalities, modelCost, reasoningVariants } from "./catalog";
-import {
-	arkuseArgs,
-	ocuseArgs,
-	runArkuse,
-	runCmduse,
-	runMpc,
-	runOcuse,
-} from "./cli";
+import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runMpc, runOcuse } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import { KNOWN_MODELS } from "./constants/gating";
-import {
-	DEFAULT_CONTEXT_LENGTH,
-	DEFAULT_OUTPUT_TOKENS,
-} from "./constants/models";
+import { DEFAULT_CONTEXT_LENGTH, DEFAULT_OUTPUT_TOKENS } from "./constants/models";
 import {
 	ARKUSE_TOOL_ARG_DESCRIPTION,
 	ARKUSE_TOOL_DESCRIPTION,
@@ -56,12 +46,8 @@ import { setupTimingLine, writeStartupLine } from "./startupLog";
 // editor types are derived from the context itself. Keeps the file free of
 // deep `@opencode/plugin/promise/*` imports (not a public subpath).
 type V2Context = PluginNs.Context;
-type ProviderEditor = Parameters<
-	Parameters<V2Context["provider"]["transform"]>[0]
->[0];
-type IntegrationEditor = Parameters<
-	Parameters<V2Context["integration"]["transform"]>[0]
->[0];
+type ProviderEditor = Parameters<Parameters<V2Context["provider"]["transform"]>[0]>[0];
+type IntegrationEditor = Parameters<Parameters<V2Context["integration"]["transform"]>[0]>[0];
 
 /** opencode cost entry: $/1M rates, or [] when the catalog has none. */
 function costEntry(id: string): Array<{
@@ -114,9 +100,7 @@ export function toV2Model(m: CmdModel, lane: Lane): unknown {
 			context: m.contextLength || DEFAULT_CONTEXT_LENGTH,
 			output: DEFAULT_OUTPUT_TOKENS,
 		},
-		...(lane.reasoningField
-			? { compatibility: { reasoningField: lane.reasoningField } }
-			: {}),
+		...(lane.reasoningField ? { compatibility: { reasoningField: lane.reasoningField } } : {}),
 	};
 	return info;
 }
@@ -143,10 +127,7 @@ export function staticSeedModels(): Record<Lane["id"], unknown[]> {
  * entries win field-by-field so context, rates, variants and modalities stay
  * fresh. Snapshot order is preserved; live-only models append in live order.
  */
-export function mergeModels(
-	snapshot: readonly unknown[],
-	live: readonly unknown[],
-): unknown[] {
+export function mergeModels(snapshot: readonly unknown[], live: readonly unknown[]): unknown[] {
 	const byId = new Map<string, unknown>();
 	const add = (model: unknown) => {
 		const id = (model as { id?: unknown })?.id;
@@ -171,19 +152,12 @@ type CredentialContext = {
  * only in opencode's credential store, so ask the connection before falling
  * back to CMD_API_KEY / ~/.commandcode/auth.json. Resolved per call — a
  * /connect mid-session must be picked up. */
-export async function credentialKey(
-	ctx: CredentialContext,
-): Promise<string | undefined> {
+export async function credentialKey(ctx: CredentialContext): Promise<string | undefined> {
 	try {
-		const connection =
-			await ctx.integration.connection.active(INTEGRATION_ID);
+		const connection = await ctx.integration.connection.active(INTEGRATION_ID);
 		if (connection) {
-			const credential = (await ctx.integration.connection.resolve(
-				connection,
-			)) as
-				| { type: "key"; key: string }
-				| { type: "oauth"; access: string }
-				| undefined;
+			const credential = (await ctx.integration.connection.resolve(connection)) as
+				{ type: "key"; key: string } | { type: "oauth"; access: string } | undefined;
 			if (credential?.type === "key") return credential.key;
 			if (credential?.type === "oauth") return credential.access;
 		}
@@ -223,9 +197,7 @@ export const commandCodeV2: PluginNs.Plugin = {
 		// behaves like the provider seed.
 		await ctx.integration.transform((editor: IntegrationEditor) => {
 			editor.update(INTEGRATION_ID, (integration) => {
-				if (
-					integration.name === (integration.id as unknown as string)
-				) {
+				if (integration.name === (integration.id as unknown as string)) {
 					integration.name = INTEGRATION_NAME;
 				}
 			});
@@ -243,8 +215,7 @@ export const commandCodeV2: PluginNs.Plugin = {
 		// parts and error surfacing are ours instead of opencode's internal
 		// `@opencode/ai/providers/*`. The hook fires per model with the merged
 		// settings (apiKey, baseURL) the host resolved for the connection.
-		const images = (modelId: string) =>
-			inputModalities(modelId).includes("image");
+		const images = (modelId: string) => inputModalities(modelId).includes("image");
 		for (const lane of LANES) {
 			await ctx.aisdk.hook(
 				"sdk",
@@ -252,17 +223,12 @@ export const commandCodeV2: PluginNs.Plugin = {
 					const options = event.options ?? {};
 					event.sdk = createCommandCode(
 						{
-							apiKey:
-								typeof options.apiKey === "string"
-									? options.apiKey
-									: undefined,
+							apiKey: typeof options.apiKey === "string" ? options.apiKey : undefined,
 							baseURL:
 								typeof options.baseURL === "string"
 									? options.baseURL
 									: PROVIDER_BASE,
-							headers: options.headers as
-								| Record<string, string>
-								| undefined,
+							headers: options.headers as Record<string, string> | undefined,
 						},
 						images,
 					);
@@ -438,9 +404,7 @@ export const commandCodeV2: PluginNs.Plugin = {
 		let connectionMs = 0;
 		try {
 			const connectionStart = Date.now();
-			hasConnection =
-				(await ctx.integration.connection.active(INTEGRATION_ID)) !==
-				undefined;
+			hasConnection = (await ctx.integration.connection.active(INTEGRATION_ID)) !== undefined;
 			connectionMs = Date.now() - connectionStart;
 		} catch {}
 		if (hasConnection) {
@@ -509,8 +473,7 @@ export const commandCodeV2: PluginNs.Plugin = {
 				// update the registry, and only when the ids actually change.
 				if (
 					!canTransform ||
-					(!idsDiffer(split.claude, appliedClaude) &&
-						!idsDiffer(split.open, appliedOpen))
+					(!idsDiffer(split.claude, appliedClaude) && !idsDiffer(split.open, appliedOpen))
 				) {
 					logTimings(Date.now() - refreshStart, modelCount);
 					return;

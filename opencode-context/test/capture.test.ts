@@ -43,10 +43,7 @@ describe("capture", () => {
 		writeFileSync(join(cacheDir, "ses_bad.json"), "not json");
 		expect(await readCapture("ses_bad")).toBeUndefined();
 		// Both sizes are required; `at` is not.
-		writeFileSync(
-			join(cacheDir, "ses_partial.json"),
-			JSON.stringify({ at: 5 }),
-		);
+		writeFileSync(join(cacheDir, "ses_partial.json"), JSON.stringify({ at: 5 }));
 		expect(await readCapture("ses_partial")).toBeUndefined();
 	});
 

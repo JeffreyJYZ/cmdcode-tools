@@ -38,11 +38,7 @@ export function CopyBlock({ value }: { value: string }) {
 		>
 			<span className="mono ink-fg">{value}</span>
 			<span className="ink-muted shrink-0 transition-colors group-hover:text-[var(--fg)]">
-				{copied ? (
-					<IconCheck className="size-4" />
-				) : (
-					<IconCopy className="size-4" />
-				)}
+				{copied ? <IconCheck className="size-4" /> : <IconCopy className="size-4" />}
 			</span>
 		</button>
 	);

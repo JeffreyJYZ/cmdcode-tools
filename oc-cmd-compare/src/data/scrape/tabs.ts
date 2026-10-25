@@ -34,9 +34,7 @@ export async function parseTabTables(html: string): Promise<TabTable[]> {
 		.on('[role="tab"]', {
 			element(el) {
 				const href = el.getAttribute("href");
-				panelId = href
-					? href.replace(/^#/, "")
-					: el.getAttribute("aria-controls");
+				panelId = href ? href.replace(/^#/, "") : el.getAttribute("aria-controls");
 				anchorText = "";
 				el.onEndTag(() => {
 					if (panelId) labels.set(panelId, anchorText.trim());
@@ -60,8 +58,7 @@ export async function parseTabTables(html: string): Promise<TabTable[]> {
 				table = [];
 				const start = table;
 				el.onEndTag(() => {
-					if (start)
-						tables.push({ label: label ?? "", table: start });
+					if (start) tables.push({ label: label ?? "", table: start });
 					table = null;
 				});
 			},

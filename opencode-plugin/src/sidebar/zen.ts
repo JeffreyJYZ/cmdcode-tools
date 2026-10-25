@@ -14,11 +14,7 @@
 // implementation. The rolling 5-hour/weekly windows get their reset from the
 // oldest request still inside them (see `rollingReset`), so they carry the same
 // continuation the CommandCode panel shows.
-import {
-	FIVE_HOUR_SECS,
-	GO_WINDOW_SHARE,
-	WEEKLY_SECS,
-} from "../constants/sidebar";
+import { FIVE_HOUR_SECS, GO_WINDOW_SHARE, WEEKLY_SECS } from "../constants/sidebar";
 import {
 	actionableAccountError,
 	allowanceLabel,
@@ -100,8 +96,7 @@ export interface ZenUsage {
 
 function totals(value: unknown): ZenTotals {
 	const v = (value ?? {}) as Record<string, unknown>;
-	const num = (key: string) =>
-		typeof v[key] === "number" ? (v[key] as number) : 0;
+	const num = (key: string) => (typeof v[key] === "number" ? (v[key] as number) : 0);
 	return {
 		requests: num("requests"),
 		cost: num("cost"),
@@ -150,22 +145,15 @@ export function parseZenJson(text: string): ZenUsage {
 				: typeof body.periodStart === "number"
 					? body.periodStart
 					: undefined,
-		periodEndAt:
-			typeof body.periodEndAt === "number" ? body.periodEndAt : undefined,
+		periodEndAt: typeof body.periodEndAt === "number" ? body.periodEndAt : undefined,
 		source: typeof body.source === "string" ? body.source : undefined,
 		// Absent on an ocuse that could not reach the endpoint (no Go key, no
 		// network, `--no-api`); the panel then falls back to the per-model rows.
 		account: body.account
 			? {
-					rolling: meter(
-						(body.account as Record<string, unknown>).rolling,
-					),
-					weekly: meter(
-						(body.account as Record<string, unknown>).weekly,
-					),
-					monthly: meter(
-						(body.account as Record<string, unknown>).monthly,
-					),
+					rolling: meter((body.account as Record<string, unknown>).rolling),
+					weekly: meter((body.account as Record<string, unknown>).weekly),
+					monthly: meter((body.account as Record<string, unknown>).monthly),
 				}
 			: undefined,
 		// Absent on an ocuse older than 0.7.14, which published no reason; the
@@ -187,12 +175,9 @@ export function parseZenJson(text: string): ZenUsage {
  * The billing period's end and length, when ocuse publishes both bounds; absent
  * on builds before `periodEndAt`, where the Monthly row keeps to spend alone.
  */
-function monthPeriod(
-	usage: ZenUsage,
-): { resetAt: number; durSecs: number } | undefined {
+function monthPeriod(usage: ZenUsage): { resetAt: number; durSecs: number } | undefined {
 	const { periodStart, periodEndAt } = usage;
-	if (typeof periodStart !== "number" || typeof periodEndAt !== "number")
-		return undefined;
+	if (typeof periodStart !== "number" || typeof periodEndAt !== "number") return undefined;
 	const durSecs = Math.round((periodEndAt - periodStart) / 1000);
 	if (durSecs <= 0) return undefined;
 	return { resetAt: periodEndAt, durSecs };
@@ -215,12 +200,8 @@ export interface ZenWindowStarts {
  * panel. Undefined when there is no oldest request (an empty window), so the row
  * keeps the same spend-only degrade it had before.
  */
-export function rollingReset(
-	startMs: number | undefined,
-	durSecs: number,
-): number | undefined {
-	if (typeof startMs !== "number" || !Number.isFinite(startMs))
-		return undefined;
+export function rollingReset(startMs: number | undefined, durSecs: number): number | undefined {
+	if (typeof startMs !== "number" || !Number.isFinite(startMs)) return undefined;
 	return startMs + durSecs * 1000;
 }
 
@@ -244,17 +225,10 @@ function zenWindow(
 	durSecs: number,
 	resetAt?: number,
 ): SidebarRow[] {
-	const cap =
-		typeof limit === "number" && limit > 0 ? limit * share : undefined;
+	const cap = typeof limit === "number" && limit > 0 ? limit * share : undefined;
 	if (cap === undefined) {
 		// No allowance to divide: the spend (and its request count) stands alone.
-		return [
-			[
-				label,
-				`${money(spent.cost)} · ${count(spent.requests)} req`,
-				"base",
-			],
-		];
+		return [[label, `${money(spent.cost)} · ${count(spent.requests)} req`, "base"]];
 	}
 	return windowRows(
 		label,
@@ -336,19 +310,13 @@ export function zenRows(
 	if (!usage) return [];
 	const now = Date.now();
 	const oc = meta?.oc;
-	const rows: SidebarRow[] = [
-		["Plan", `${oc?.plan ?? "Go"} · limits per model`, "base"],
-	];
+	const rows: SidebarRow[] = [["Plan", `${oc?.plan ?? "Go"} · limits per model`, "base"]];
 	// The reason the console's own numbers are missing belongs with the Plan row,
 	// not buried under the local rows: an expired key means the panel below is an
 	// estimate, and nothing else on screen says so. A transport fault is not that
 	// — it heals on the next poll, so printing it made the line flicker.
 	if (usage.accountError && actionableAccountError(usage.accountError)) {
-		rows.push([
-			"",
-			clip(`usage API: ${usage.accountError}`, valueWidth("")),
-			"warn",
-		]);
+		rows.push(["", clip(`usage API: ${usage.accountError}`, valueWidth("")), "warn"]);
 	}
 	// Go's limits are per model, so the windows read the active model's row
 	// rather than the account totals: the caps belong to that model's allowance.
@@ -471,11 +439,7 @@ export function zenRows(
 				typeof allowance === "number" && allowance > 0
 					? `${money(entry.month.cost)}/${money(allowance)}${share}`
 					: money(entry.month.cost);
-			rows.push([
-				clip(entry.id, valueWidth("") - value.length - 1),
-				value,
-				"base",
-			]);
+			rows.push([clip(entry.id, valueWidth("") - value.length - 1), value, "base"]);
 		}
 	}
 	rows.push(separator());
@@ -495,23 +459,15 @@ export function zenRows(
 	if (!meta) return rows;
 	if (oc?.rates) {
 		const cache = [`cache read ${rate(oc.rates.cacheRead)}`];
-		if (
-			typeof oc.rates.cacheWrite === "number" &&
-			oc.rates.cacheWrite > 0
-		) {
+		if (typeof oc.rates.cacheWrite === "number" && oc.rates.cacheWrite > 0) {
 			cache.push(`write ${rate(oc.rates.cacheWrite)}`);
 		}
-		rows.push([
-			"Rates",
-			`${rate(oc.rates.input)}/${rate(oc.rates.output)} in/out`,
-			"base",
-		]);
+		rows.push(["Rates", `${rate(oc.rates.input)}/${rate(oc.rates.output)} in/out`, "base"]);
 		rows.push(["", cache.join(" · "), "muted"]);
 	}
 	if (typeof oc?.ability === "number") {
 		rows.push(["Intelligence", String(oc.ability), "base"]);
 	}
-	if (typeof oc?.tps === "number")
-		rows.push(["Tok/s", String(oc.tps), "base"]);
+	if (typeof oc?.tps === "number") rows.push(["Tok/s", String(oc.tps), "base"]);
 	return rows;
 }

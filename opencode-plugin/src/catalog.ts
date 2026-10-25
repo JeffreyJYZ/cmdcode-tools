@@ -749,7 +749,5 @@ export function reasoningVariants(
 ): Record<string, { reasoningEffort: string }> | undefined {
 	const efforts = MODEL_CATALOG[id]?.efforts;
 	if (!efforts || efforts.length === 0) return undefined;
-	return Object.fromEntries(
-		efforts.map((effort) => [effort, { reasoningEffort: effort }]),
-	);
+	return Object.fromEntries(efforts.map((effort) => [effort, { reasoningEffort: effort }]));
 }

@@ -1,13 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -46,9 +39,7 @@ describe("stateDir", () => {
 
 	test("falls back under HOME without XDG_STATE_HOME", () => {
 		delete process.env.XDG_STATE_HOME;
-		expect(stateDir()).toBe(
-			join(dir, ".local", "state", "opencode", "shell-rc"),
-		);
+		expect(stateDir()).toBe(join(dir, ".local", "state", "opencode", "shell-rc"));
 	});
 });
 
@@ -116,19 +107,16 @@ describe("prepare", () => {
 	});
 
 	const hasZsh = Bun.which("zsh") !== null;
-	test.skipIf(!hasZsh)(
-		"aliases from ~/.zshrc resolve in a shimmed non-interactive zsh",
-		() => {
-			writeFileSync(join(dir, ".zshrc"), "alias gp='echo FAKE_PUSH'\n");
-			prepare();
-			expect(existsSync(`${stateFile()}.zwc`)).toBe(true);
-			const output = execFileSync("zsh", ["-c", "gp"], {
-				env: { ...process.env, ZDOTDIR: stateDir() },
-				encoding: "utf8",
-			});
-			expect(output.trim()).toBe("FAKE_PUSH");
-		},
-	);
+	test.skipIf(!hasZsh)("aliases from ~/.zshrc resolve in a shimmed non-interactive zsh", () => {
+		writeFileSync(join(dir, ".zshrc"), "alias gp='echo FAKE_PUSH'\n");
+		prepare();
+		expect(existsSync(`${stateFile()}.zwc`)).toBe(true);
+		const output = execFileSync("zsh", ["-c", "gp"], {
+			env: { ...process.env, ZDOTDIR: stateDir() },
+			encoding: "utf8",
+		});
+		expect(output.trim()).toBe("FAKE_PUSH");
+	});
 
 	test.skipIf(!hasZsh)("rc startup chatter never lands in the state", () => {
 		// A themed rc printing during startup is what wrote a coloured
@@ -155,29 +143,24 @@ describe("prepare", () => {
 		writeFileSync(stateFile(), "# stale capture\n");
 		writeFileSync(stateVersionFile(), "1\n");
 		prepare();
-		expect(readFileSync(stateFile(), "utf8")).toContain(
-			"alias gp='echo FAKE_PUSH'",
-		);
+		expect(readFileSync(stateFile(), "utf8")).toContain("alias gp='echo FAKE_PUSH'");
 	});
 
-	test.skipIf(!hasZsh)(
-		"a shimmed interactive zsh does NOT source the captured state",
-		() => {
-			writeFileSync(join(dir, ".zshrc"), "alias gp='echo FAKE_PUSH'\n");
-			prepare();
-			// Replace the captured state with a bare marker. Drop the `.zwc` too:
-			// it is compiled in the same mtime second, and zsh prefers it when it
-			// is not older, which would hide the marker.
-			rmSync(`${stateFile()}.zwc`, { force: true });
-			writeFileSync(stateFile(), "SHELL_RC_STATE_SOURCED=1\n");
-			const run = (flag: string): string =>
-				execFileSync("zsh", [flag, 'print -r -- "$SHELL_RC_STATE_SOURCED"'], {
-					env: { ...process.env, ZDOTDIR: stateDir(), HOME: dir },
-					encoding: "utf8",
-					stdio: ["ignore", "pipe", "ignore"],
-				}).trim();
-			expect(run("-ic")).toBe("");
-			expect(run("-c")).toBe("1");
-		},
-	);
+	test.skipIf(!hasZsh)("a shimmed interactive zsh does NOT source the captured state", () => {
+		writeFileSync(join(dir, ".zshrc"), "alias gp='echo FAKE_PUSH'\n");
+		prepare();
+		// Replace the captured state with a bare marker. Drop the `.zwc` too:
+		// it is compiled in the same mtime second, and zsh prefers it when it
+		// is not older, which would hide the marker.
+		rmSync(`${stateFile()}.zwc`, { force: true });
+		writeFileSync(stateFile(), "SHELL_RC_STATE_SOURCED=1\n");
+		const run = (flag: string): string =>
+			execFileSync("zsh", [flag, 'print -r -- "$SHELL_RC_STATE_SOURCED"'], {
+				env: { ...process.env, ZDOTDIR: stateDir(), HOME: dir },
+				encoding: "utf8",
+				stdio: ["ignore", "pipe", "ignore"],
+			}).trim();
+		expect(run("-ic")).toBe("");
+		expect(run("-c")).toBe("1");
+	});
 });

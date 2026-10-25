@@ -33,19 +33,14 @@ async function loadOne(spec: string, relativeTo: string): Promise<Bag> {
 		configDir: relativeTo,
 	};
 
-	if (
-		target.endsWith(".json") ||
-		(existsSync(target) && target.endsWith(".json"))
-	) {
+	if (target.endsWith(".json") || (existsSync(target) && target.endsWith(".json"))) {
 		return asBag(JSON.parse(readFileSync(target, "utf8")), spec);
 	}
 	try {
 		const mod = (await import(target)) as { default?: unknown };
 		const exported = mod.default ?? mod;
 		const value =
-			typeof exported === "function"
-				? await (exported as PluginFactory)(ctx)
-				: exported;
+			typeof exported === "function" ? await (exported as PluginFactory)(ctx) : exported;
 		return asBag(value, spec);
 	} catch (error) {
 		throw new Error(
@@ -55,10 +50,7 @@ async function loadOne(spec: string, relativeTo: string): Promise<Bag> {
 }
 
 /** Load plugins in order and layer them: later plugins win over earlier ones. */
-export async function loadPlugins(
-	specs: string[],
-	relativeTo: string,
-): Promise<Bag> {
+export async function loadPlugins(specs: string[], relativeTo: string): Promise<Bag> {
 	const merged: Bag = {};
 	for (const spec of specs) {
 		Object.assign(merged, await loadOne(spec, relativeTo));

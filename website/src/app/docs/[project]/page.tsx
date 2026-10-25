@@ -13,22 +13,14 @@ export function generateStaticParams(): Params[] {
 	return projects.map((project) => ({ project: project.slug }));
 }
 
-export async function generateMetadata({
-	params,
-}: {
-	params: Promise<Params>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
 	const project = projectBySlug((await params).project);
 	if (!project) return {};
 	const doc = await loadProjectDoc(project);
 	return { title: doc.title, description: doc.description };
 }
 
-export default async function ProjectDocPage({
-	params,
-}: {
-	params: Promise<Params>;
-}) {
+export default async function ProjectDocPage({ params }: { params: Promise<Params> }) {
 	const project = projectBySlug((await params).project);
 	if (!project) notFound();
 
@@ -36,21 +28,13 @@ export default async function ProjectDocPage({
 
 	return (
 		<div className="flex flex-col gap-10 lg:flex-row lg:gap-14">
-			<DocSidebar
-				projects={projects}
-				activeSlug={project.slug}
-				toc={doc.toc}
-			/>
+			<DocSidebar projects={projects} activeSlug={project.slug} toc={doc.toc} />
 			<article className="docs-prose min-w-0 max-w-[var(--prose-max)] flex-1">
 				<header className="mb-10">
 					<h1>{doc.title}</h1>
 					<p className="ink-muted mt-3">{doc.description}</p>
 				</header>
-				<MDXRemote
-					source={doc.body}
-					components={mdxComponents}
-					options={{ mdxOptions }}
-				/>
+				<MDXRemote source={doc.body} components={mdxComponents} options={{ mdxOptions }} />
 			</article>
 		</div>
 	);

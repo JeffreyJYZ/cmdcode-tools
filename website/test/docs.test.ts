@@ -29,9 +29,7 @@ describe("deriveDescription", () => {
 	});
 
 	test("skips a leading fenced code block (Review Focus 1)", () => {
-		expect(deriveDescription("# T\n\n```sh\nx\n```\n\nAfter.", "fb")).toBe(
-			"After.",
-		);
+		expect(deriveDescription("# T\n\n```sh\nx\n```\n\nAfter.", "fb")).toBe("After.");
 	});
 
 	test("falls back when the only block is a fence", () => {
@@ -39,9 +37,7 @@ describe("deriveDescription", () => {
 	});
 
 	test("falls back when a heading comes first (no prose)", () => {
-		expect(deriveDescription("# T\n\n## Heading\n\n### Sub", "fb")).toBe(
-			"fb",
-		);
+		expect(deriveDescription("# T\n\n## Heading\n\n### Sub", "fb")).toBe("fb");
 	});
 
 	test("falls back when a list comes first", () => {
@@ -49,26 +45,19 @@ describe("deriveDescription", () => {
 	});
 
 	test("falls back when a table comes first", () => {
-		expect(deriveDescription("# T\n\n| a | b |\n| - | - |", "fb")).toBe(
-			"fb",
-		);
+		expect(deriveDescription("# T\n\n| a | b |\n| - | - |", "fb")).toBe("fb");
 	});
 
 	test("does not read prose from inside a section (preamble only)", () => {
-		expect(
-			deriveDescription("# T\n\n## What it is\n\nReal prose here.", "fb"),
-		).toBe("fb");
+		expect(deriveDescription("# T\n\n## What it is\n\nReal prose here.", "fb")).toBe("fb");
 	});
 });
 
 describe("stripLeadParagraph", () => {
 	test("removes the lead paragraph and one following blank line", () => {
-		expect(
-			stripLeadParagraph(
-				"# T\n\ntagline here\n\n## X\n\nbody",
-				"tagline here",
-			),
-		).toBe("# T\n\n## X\n\nbody");
+		expect(stripLeadParagraph("# T\n\ntagline here\n\n## X\n\nbody", "tagline here")).toBe(
+			"# T\n\n## X\n\nbody",
+		);
 	});
 
 	test("leaves md unchanged when the first prose line is not the description (guard)", () => {
@@ -79,9 +68,7 @@ describe("stripLeadParagraph", () => {
 
 	test("skips a leading fenced block when finding the lead paragraph", () => {
 		const md = "# T\n\n```sh\nx\n```\n\nreal lead\n\n## X";
-		expect(stripLeadParagraph(md, "real lead")).toBe(
-			"# T\n\n```sh\nx\n```\n\n## X",
-		);
+		expect(stripLeadParagraph(md, "real lead")).toBe("# T\n\n```sh\nx\n```\n\n## X");
 	});
 
 	test("leaves a section's first paragraph alone when there is no tagline", () => {
@@ -91,8 +78,7 @@ describe("stripLeadParagraph", () => {
 });
 
 describe("stripBadgeBlock", () => {
-	const badge =
-		"[![CI](https://img.shields.io/github/actions/workflow/status/x)](https://x)";
+	const badge = "[![CI](https://img.shields.io/github/actions/workflow/status/x)](https://x)";
 
 	test("drops a three-line badge block", () => {
 		const md = `# T\n\ntagline\n\n[![a](https://img.shields.io/a)](u)\n${badge}\n[![c](https://img.shields.io/c)](u)\n\n## What it is\n`;
@@ -100,8 +86,7 @@ describe("stripBadgeBlock", () => {
 	});
 
 	test("is byte-identical with no badge line (Review Focus 3)", () => {
-		const md =
-			"# T\n\nThe first paragraph must survive.\n\n## What it is\n";
+		const md = "# T\n\nThe first paragraph must survive.\n\n## What it is\n";
 		expect(stripBadgeBlock(md)).toBe(md);
 	});
 
@@ -121,9 +106,7 @@ describe("rewriteLinks", () => {
 	};
 
 	test("leaves absolute links untouched (Review Focus 2)", () => {
-		expect(rewriteLinks("[x](https://a.b/c)", ctx)).toBe(
-			"[x](https://a.b/c)",
-		);
+		expect(rewriteLinks("[x](https://a.b/c)", ctx)).toBe("[x](https://a.b/c)");
 	});
 
 	test("leaves bare anchors untouched (Review Focus 2)", () => {
@@ -141,8 +124,6 @@ describe("rewriteLinks", () => {
 			...ctx,
 			projectByPath: { "oc-cmd-compare": "mpc" },
 		};
-		expect(rewriteLinks("[MPC](../oc-cmd-compare/README.md)", cross)).toBe(
-			"[MPC](/docs/mpc)",
-		);
+		expect(rewriteLinks("[MPC](../oc-cmd-compare/README.md)", cross)).toBe("[MPC](/docs/mpc)");
 	});
 });

@@ -18,8 +18,7 @@ export const SITE_URL = "https://cmdtools.jyz.land";
 export const REPO_URL = "https://github.com/JeffreyJYZ/cmdcode-tools";
 
 /** GitHub Releases API for this repo (the changelog snapshot source). */
-export const RELEASES_URL =
-	"https://api.github.com/repos/JeffreyJYZ/cmdcode-tools/releases";
+export const RELEASES_URL = "https://api.github.com/repos/JeffreyJYZ/cmdcode-tools/releases";
 
 /** User-facing GitHub Releases page. */
 export const RELEASES_PAGE_URL = `${REPO_URL}/releases`;

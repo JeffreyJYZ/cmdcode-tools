@@ -11,7 +11,6 @@
 	"scripts": {
 		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target bun --external @opencode/plugin && tsc -p tsconfig.build.json",
 		"test": "bun test",
-		"fmt": "biome format --write .",
 		"lint": "biome lint --write .",
 		"typecheck": "bun check"
 	},

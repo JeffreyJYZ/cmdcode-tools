@@ -115,9 +115,7 @@ export function rewriteLinks(md: string, ctx: LinkContext): string {
 		if (target.startsWith("#") || target.startsWith("/")) return whole;
 		if (target.startsWith("//") || SCHEME_RE.test(target)) return whole;
 		const resolved = resolvePath(ctx.projectPath, target);
-		const dir = resolved.includes("/")
-			? resolved.slice(0, resolved.lastIndexOf("/"))
-			: "";
+		const dir = resolved.includes("/") ? resolved.slice(0, resolved.lastIndexOf("/")) : "";
 		const isReadme = /(^|\/)README\.md$/.test(resolved);
 		if (isReadme) {
 			const slug = ctx.projectByPath[dir];

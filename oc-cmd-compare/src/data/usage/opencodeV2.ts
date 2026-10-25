@@ -58,10 +58,7 @@ export function readV2Turns(db: Database, sinceMs: number): Turn[] {
 		turns.push({
 			id: row.id,
 			modelID: model.id,
-			providerID:
-				typeof model.providerID === "string"
-					? model.providerID
-					: "unknown",
+			providerID: typeof model.providerID === "string" ? model.providerID : "unknown",
 			cost: typeof data.cost === "number" ? data.cost : 0,
 			tokens,
 		});

@@ -1,19 +1,11 @@
-import {
-	cellText,
-	headerIndex,
-	nameCell,
-	type Table,
-} from "#~/data/scrape/tables.ts";
+import { cellText, headerIndex, nameCell, type Table } from "#~/data/scrape/tables.ts";
 import { normalizeKey } from "#~/keys.ts";
 
 /**
  * Pull one numeric column out of any tables that carry it, keyed by model.
  * Used for benchmark columns like CommandCode's "Intelligence".
  */
-export function extractNumericColumn(
-	tables: Table[],
-	header: RegExp,
-): Map<string, number> {
+export function extractNumericColumn(tables: Table[], header: RegExp): Map<string, number> {
 	const scores = new Map<string, number>();
 	for (const table of tables) {
 		const headerCells = (table[0] ?? []).map(cellText);

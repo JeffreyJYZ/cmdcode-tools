@@ -12,7 +12,6 @@
 	"scripts": {
 		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target bun --external @opencode-ai/plugin --external @opencode/plugin --external @opencode/plugin/tui && bun scripts/build-tui.ts && tsc -p tsconfig.build.json",
 		"test": "bun test",
-		"fmt": "biome format --write .",
 		"lint": "biome lint --write .",
 		"typecheck": "bun check",
 		"build:tui": "bun scripts/build-tui.ts",

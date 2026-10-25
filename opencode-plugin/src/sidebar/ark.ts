@@ -99,10 +99,7 @@ function totals(value: unknown): ArkTotals {
 }
 
 function meter(value: unknown): ArkMeter {
-	const v = (value && typeof value === "object" ? value : {}) as Record<
-		string,
-		unknown
-	>;
+	const v = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
 	return {
 		status: typeof v.status === "string" ? v.status : "ok",
 		percent: typeof v.percent === "number" ? v.percent : 0,
@@ -150,10 +147,8 @@ export function parseArkJson(text: string): ArkUsage {
 	return {
 		plan: typeof body.plan === "string" ? body.plan : "medium",
 		profile: typeof body.profile === "string" ? body.profile : undefined,
-		periodStart:
-			typeof body.periodStart === "number" ? body.periodStart : undefined,
-		periodEndAt:
-			typeof body.periodEndAt === "number" ? body.periodEndAt : undefined,
+		periodStart: typeof body.periodStart === "number" ? body.periodStart : undefined,
+		periodEndAt: typeof body.periodEndAt === "number" ? body.periodEndAt : undefined,
 		summary: {
 			...totals(summary),
 			yuan: typeof summary.yuan === "number" ? summary.yuan : undefined,
@@ -181,14 +176,8 @@ export function parseArkJson(text: string): ArkUsage {
 			typeof body.accountError === "string" && body.accountError
 				? body.accountError
 				: undefined,
-		afpPerRequest:
-			typeof body.afpPerRequest === "number"
-				? body.afpPerRequest
-				: undefined,
-		reconciledPct:
-			typeof body.reconciledPct === "number"
-				? body.reconciledPct
-				: undefined,
+		afpPerRequest: typeof body.afpPerRequest === "number" ? body.afpPerRequest : undefined,
+		reconciledPct: typeof body.reconciledPct === "number" ? body.reconciledPct : undefined,
 		models,
 	};
 }
@@ -196,12 +185,9 @@ export function parseArkJson(text: string): ArkUsage {
 /** The billing period's length in seconds and its reset instant, from the
  *  bounds `arkuse` publishes. The monthly reset is the anniversary, so its
  *  length is its start-to-end span rather than a fixed 30 days. */
-function monthPeriod(
-	usage: ArkUsage,
-): { resetAt: number; durSecs: number } | undefined {
+function monthPeriod(usage: ArkUsage): { resetAt: number; durSecs: number } | undefined {
 	const { periodStart, periodEndAt } = usage;
-	if (typeof periodStart !== "number" || typeof periodEndAt !== "number")
-		return undefined;
+	if (typeof periodStart !== "number" || typeof periodEndAt !== "number") return undefined;
 	const durSecs = Math.round((periodEndAt - periodStart) / 1000);
 	if (durSecs <= 0) return undefined;
 	return { resetAt: periodEndAt, durSecs };
@@ -277,13 +263,8 @@ function localRows(
 ): SidebarRow[] {
 	const quota = window?.quota;
 	const percent = window?.percent;
-	if (
-		typeof quota !== "number" ||
-		quota <= 0 ||
-		typeof percent !== "number"
-	) {
-		const detail =
-			totals.requests > 0 ? ` · ${count(totals.requests)} req` : "";
+	if (typeof quota !== "number" || quota <= 0 || typeof percent !== "number") {
+		const detail = totals.requests > 0 ? ` · ${count(totals.requests)} req` : "";
 		return [[label, `${afp(totals.afp)}${detail}`, "base"]];
 	}
 	const pctText = percent.toFixed(1);
@@ -309,10 +290,7 @@ function localRows(
  * key `arkuse` uses, so the model block renders even when nothing else knows the
  * name.
  */
-export function arkRows(
-	usage: ArkUsage | undefined,
-	fallbackName?: string,
-): SidebarRow[] {
+export function arkRows(usage: ArkUsage | undefined, fallbackName?: string): SidebarRow[] {
 	if (!usage) return [];
 	const now = Date.now();
 	const rows: SidebarRow[] = [
@@ -331,87 +309,28 @@ export function arkRows(
 	// Transport faults are excluded — they heal on the next poll, and printing
 	// them made the row flicker.
 	if (usage.accountError && actionableAccountError(usage.accountError)) {
-		rows.push([
-			"",
-			clip(`usage API: ${usage.accountError}`, valueWidth("")),
-			"warn",
-		]);
+		rows.push(["", clip(`usage API: ${usage.accountError}`, valueWidth("")), "warn"]);
 	}
 	const period = monthPeriod(usage);
 	if (usage.account) {
 		const account = usage.account;
-		rows.push(
-			...meterRows(
-				"5-hour",
-				account.fiveHour,
-				usage.fiveHour,
-				now,
-				FIVE_HOUR_SECS,
-			),
-		);
+		rows.push(...meterRows("5-hour", account.fiveHour, usage.fiveHour, now, FIVE_HOUR_SECS));
 		if (account.daily) {
 			rows.push(
-				...meterRows(
-					"Daily",
-					account.daily,
-					usage.daily ?? usage.month,
-					now,
-					86_400,
-				),
+				...meterRows("Daily", account.daily, usage.daily ?? usage.month, now, 86_400),
 			);
 		}
-		rows.push(
-			...meterRows(
-				"Weekly",
-				account.weekly,
-				usage.weekly,
-				now,
-				WEEKLY_SECS,
-			),
-		);
-		rows.push(
-			...meterRows(
-				"Monthly",
-				account.monthly,
-				usage.month,
-				now,
-				period?.durSecs ?? 0,
-			),
-		);
+		rows.push(...meterRows("Weekly", account.weekly, usage.weekly, now, WEEKLY_SECS));
+		rows.push(...meterRows("Monthly", account.monthly, usage.month, now, period?.durSecs ?? 0));
 	} else {
 		const windows = usage.windows;
+		rows.push(...localRows("5-hour", usage.fiveHour, windows?.fiveHour, now, FIVE_HOUR_SECS));
+		rows.push(...localRows("Weekly", usage.weekly, windows?.weekly, now, WEEKLY_SECS));
 		rows.push(
-			...localRows(
-				"5-hour",
-				usage.fiveHour,
-				windows?.fiveHour,
-				now,
-				FIVE_HOUR_SECS,
-			),
-		);
-		rows.push(
-			...localRows(
-				"Weekly",
-				usage.weekly,
-				windows?.weekly,
-				now,
-				WEEKLY_SECS,
-			),
-		);
-		rows.push(
-			...localRows(
-				"Monthly",
-				usage.month,
-				windows?.monthly,
-				now,
-				period?.durSecs ?? 0,
-			),
+			...localRows("Monthly", usage.month, windows?.monthly, now, period?.durSecs ?? 0),
 		);
 	}
-	const yuan =
-		typeof usage.summary.yuan === "number"
-			? ` (${money(usage.summary.yuan)})`
-			: "";
+	const yuan = typeof usage.summary.yuan === "number" ? ` (${money(usage.summary.yuan)})` : "";
 	rows.push([
 		"Period",
 		clip(
@@ -427,22 +346,14 @@ export function arkRows(
 				: "";
 		rows.push([
 			"",
-			clip(
-				`${usage.afpPerRequest.toFixed(0)} AFP/request${drift}`,
-				valueWidth(""),
-			),
+			clip(`${usage.afpPerRequest.toFixed(0)} AFP/request${drift}`, valueWidth("")),
 			"muted",
 		]);
 	}
 	rows.push(separator());
 	if (!fallbackName) return rows;
 	const model = usage.models.get(fallbackName);
-	rows.push([
-		"Model",
-		clip(fallbackName, valueWidth("Model")),
-		"strong",
-		true,
-	]);
+	rows.push(["Model", clip(fallbackName, valueWidth("Model")), "strong", true]);
 	rows.push([
 		"AFP (this model)",
 		model

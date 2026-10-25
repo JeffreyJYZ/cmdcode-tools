@@ -81,16 +81,11 @@ describe("parseArkJson", () => {
 
 describe("arkRows", () => {
 	test("uses the plan's own quota and puts this store's AFP beside it", () => {
-		const rows = arkRows(
-			parseArkJson(withAccount()),
-			"deepseek-v4.1-flash",
-		);
+		const rows = arkRows(parseArkJson(withAccount()), "deepseek-v4.1-flash");
 		const five = rows.find((row) => row[0] === "5-hour");
 		expect(five?.[1]).toContain("/10K");
 		expect(five?.[1]).toContain("44.8%");
-		expect(rows.some((row) => row[1] === "4,300 AFP local · 231 req")).toBe(
-			true,
-		);
+		expect(rows.some((row) => row[1] === "4,300 AFP local · 231 req")).toBe(true);
 		// AFP, not dollars: no money symbol anywhere in the window block.
 		expect(five?.[1]).not.toContain("$");
 		const model = rows.find((row) => row[0] === "AFP (this model)");

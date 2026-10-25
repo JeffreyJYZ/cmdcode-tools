@@ -182,16 +182,12 @@ if (process.argv.includes("spans")) {
 			.join("")
 			.trimEnd()
 			.slice(0, 24);
-		console.log(
-			`[line ${String(index).padStart(2)}] bgs=${bgs.join(",")} | ${text}`,
-		);
+		console.log(`[line ${String(index).padStart(2)}] bgs=${bgs.join(",")} | ${text}`);
 	}
 	// The bar: does its painted run cover the full frame, or leave a seam?
 	const painted = (line: (typeof frame.lines)[number]) =>
 		line.spans.filter((s) => hex(s.bg) !== "#000000");
-	const bar = frame.lines.find(
-		(line) => new Set(painted(line).map((s) => hex(s.bg))).size >= 2,
-	);
+	const bar = frame.lines.find((line) => new Set(painted(line).map((s) => hex(s.bg))).size >= 2);
 	if (bar) {
 		// Walk the line and find gaps *between* painted runs (a seam), not just
 		// how many cells are painted.

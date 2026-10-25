@@ -1,21 +1,10 @@
 import { LABEL } from "#~/constants/layout.ts";
 import type { DropCount, Shape, Side } from "#~/types.ts";
-import {
-	bold,
-	dim,
-	fmtCount,
-	fmtDate,
-	fmtInt,
-	fmtPair,
-	pad,
-	prettyModel,
-} from "./format.ts";
+import { bold, dim, fmtCount, fmtDate, fmtInt, fmtPair, pad, prettyModel } from "./format.ts";
 
 export function block(label: string, lines: string[]): string[] {
 	return lines.map((line, index) =>
-		index === 0
-			? `${bold(pad(label, LABEL))}${line}`
-			: `${" ".repeat(LABEL)}${line}`,
+		index === 0 ? `${bold(pad(label, LABEL))}${line}` : `${" ".repeat(LABEL)}${line}`,
 	);
 }
 
@@ -97,12 +86,7 @@ export function position(shape: Shape): string[] {
 			dim(`${fmtInt(bucket.reqs)} reqs`),
 		].join("  "),
 	);
-	return [
-		dim(
-			"how far into its session the req sat — every call re-reads the context",
-		),
-		...rows,
-	];
+	return [dim("how far into its session the req sat — every call re-reads the context"), ...rows];
 }
 
 export function models(shape: Shape): string[] {
@@ -110,10 +94,7 @@ export function models(shape: Shape): string[] {
 	const rest = shape.models.length - 6;
 	const line = shape.models
 		.slice(0, 6)
-		.map(
-			(model) =>
-				`${prettyModel(model.name)} ${dim(fmtCount(model.reqs))}`,
-		)
+		.map((model) => `${prettyModel(model.name)} ${dim(fmtCount(model.reqs))}`)
 		.join(dim(" · "));
 	return [rest > 0 ? `${line}${dim(` …${rest} more`)}` : line];
 }

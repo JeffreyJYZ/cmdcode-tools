@@ -1,9 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-	computeBreakdown,
-	measuredTokensOf,
-	renderMarkdown,
-} from "../src/breakdown";
+import { computeBreakdown, measuredTokensOf, renderMarkdown } from "../src/breakdown";
 
 const assistant = (content: unknown[], tokens?: unknown) => ({
 	type: "assistant",
@@ -65,8 +61,7 @@ describe("computeBreakdown", () => {
 				]),
 			],
 		});
-		const children =
-			breakdown.buckets.find((b) => b.key === "outputs")?.children ?? [];
+		const children = breakdown.buckets.find((b) => b.key === "outputs")?.children ?? [];
 		expect(children.map((c) => c.label)).toEqual(["big", "small"]);
 	});
 
@@ -105,9 +100,7 @@ describe("computeBreakdown", () => {
 
 	test("percent comes from measured tokens over the limit", () => {
 		const breakdown = computeBreakdown({
-			messages: [
-				assistant([{ type: "text", text: "hi" }], { input: 50, output: 50 }),
-			],
+			messages: [assistant([{ type: "text", text: "hi" }], { input: 50, output: 50 })],
 			limit: 1000,
 		});
 		expect(breakdown.measuredTokens).toBe(100);

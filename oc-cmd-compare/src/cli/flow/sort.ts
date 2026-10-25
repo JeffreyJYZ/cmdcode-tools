@@ -17,8 +17,7 @@ const maxValue = (r: CompareRow): number | null => {
 	);
 	return values.length === 0 ? null : Math.max(...values);
 };
-const maxIndex = (r: CompareRow): number =>
-	Math.max(r.oc?.index ?? -1, r.cc?.index ?? -1);
+const maxIndex = (r: CompareRow): number => Math.max(r.oc?.index ?? -1, r.cc?.index ?? -1);
 const maxRequests = (r: CompareRow): number =>
 	Math.max(r.oc?.requestsPerMonth ?? -1, r.cc?.requestsPerMonth ?? -1);
 const minPay = (r: CompareRow): number => {
@@ -29,40 +28,24 @@ const minPay = (r: CompareRow): number => {
 };
 
 /** `asc` means "lower is better"; it flips each metric's default direction. */
-export function sortRows(
-	rows: CompareRow[],
-	metric: Metric,
-	asc: boolean,
-): CompareRow[] {
+export function sortRows(rows: CompareRow[], metric: Metric, asc: boolean): CompareRow[] {
 	switch (metric) {
 		case "name": {
-			const sorted = [...rows].sort((a, b) =>
-				a.name.localeCompare(b.name),
-			);
+			const sorted = [...rows].sort((a, b) => a.name.localeCompare(b.name));
 			return asc ? sorted : sorted.reverse();
 		}
 		case "val": {
 			const scored = rows
 				.filter((r) => maxValue(r) !== null)
-				.sort(
-					(a, b) =>
-						((maxValue(a) ?? 0) - (maxValue(b) ?? 0)) *
-						(asc ? 1 : -1),
-				);
+				.sort((a, b) => ((maxValue(a) ?? 0) - (maxValue(b) ?? 0)) * (asc ? 1 : -1));
 			const unscored = rows.filter((r) => maxValue(r) === null);
 			return [...scored, ...unscored];
 		}
 		case "cost":
-			return [...rows].sort(
-				(a, b) => (maxIndex(a) - maxIndex(b)) * (asc ? -1 : 1),
-			);
+			return [...rows].sort((a, b) => (maxIndex(a) - maxIndex(b)) * (asc ? -1 : 1));
 		case "perreq":
-			return [...rows].sort(
-				(a, b) => (minPay(a) - minPay(b)) * (asc ? -1 : 1),
-			);
+			return [...rows].sort((a, b) => (minPay(a) - minPay(b)) * (asc ? -1 : 1));
 		case "req":
-			return [...rows].sort(
-				(a, b) => (maxRequests(a) - maxRequests(b)) * (asc ? 1 : -1),
-			);
+			return [...rows].sort((a, b) => (maxRequests(a) - maxRequests(b)) * (asc ? 1 : -1));
 	}
 }

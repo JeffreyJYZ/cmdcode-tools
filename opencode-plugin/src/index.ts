@@ -9,14 +9,7 @@ import { z } from "zod";
 import pkg from "../package.json";
 import { whoami } from "./api";
 import { modelCost, supportsImage } from "./catalog";
-import {
-	arkuseArgs,
-	ocuseArgs,
-	runArkuse,
-	runCmduse,
-	runMpc,
-	runOcuse,
-} from "./cli";
+import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runMpc, runOcuse } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import {
 	DEFAULT_CONTEXT_LENGTH,
@@ -268,9 +261,7 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			// via the config hook, but zero command-code-anthropic/* — the anthropic
 			// lane is auth-gated (its /connect entry has no stored key headlessly).
 			// Confirm in the TUI after /connect, not via the CLI listing.
-			const claudeDefs = split
-				? toModelDefs(split.claude, ANTHROPIC.id, PROVIDER_NPM)
-				: {};
+			const claudeDefs = split ? toModelDefs(split.claude, ANTHROPIC.id, PROVIDER_NPM) : {};
 			const openDefs = split
 				? toModelDefs(split.open, OPENAI.id, PROVIDER_NPM, {
 						field: "reasoning_content",
@@ -308,24 +299,21 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			// /cmd-usage command -> agent calls the cmd_usage tool
 			cfg.command ??= {};
 			cfg.command["cmd-usage"] = {
-				description:
-					"Show Command Code plan, credits, and usage windows",
+				description: "Show Command Code plan, credits, and usage windows",
 				template:
 					"Call the cmd_usage tool and present its markdown output verbatim to the user. If the tool errors, tell the user to run /connect (Command Code (Anthropic)) and retry. $ARGUMENTS",
 			};
 			// /ocuse-usage command -> agent calls the ocuse_usage tool. Same
 			// shape as /cmd-usage above, for the Go/Zen side the sidebar shows.
 			cfg.command["ocuse-usage"] = {
-				description:
-					"Show OpenCode Go/Zen usage: account meters and per-model spend",
+				description: "Show OpenCode Go/Zen usage: account meters and per-model spend",
 				template:
 					"Call the ocuse_usage tool and present its markdown output verbatim to the user. If the tool errors, the Go key is missing or has no subscription — usage still shows where the store has it. $ARGUMENTS",
 			};
 			// /arkuse-usage command -> agent calls the arkuse_usage tool, for the
 			// Volcengine ARK side. Same shape again.
 			cfg.command["arkuse-usage"] = {
-				description:
-					"Show Volcengine ARK Agent Plan usage: AFP meters per model",
+				description: "Show Volcengine ARK Agent Plan usage: AFP meters per model",
 				template:
 					"Call the arkuse_usage tool and present its markdown output verbatim to the user. If the tool errors, arkcli or its agent-plan profile is missing — usage still shows where the store has it. $ARGUMENTS",
 			};
@@ -337,9 +325,7 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			models: async (_provider, ctx) => {
 				const key = await resolveKey(async () => {
 					const a = ctx.auth;
-					return a?.type === "api" && a.key
-						? { key: a.key }
-						: undefined;
+					return a?.type === "api" && a.key ? { key: a.key } : undefined;
 				});
 				const split = await loadModels(key);
 				return toModelDefs(split.claude, ANTHROPIC.id, PROVIDER_NPM);
@@ -369,10 +355,7 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			mpc_prices: tool({
 				description: MPC_TOOL_DESCRIPTION,
 				args: {
-					arg: z
-						.string()
-						.optional()
-						.describe(MPC_TOOL_ARG_DESCRIPTION),
+					arg: z.string().optional().describe(MPC_TOOL_ARG_DESCRIPTION),
 				},
 				// Rendering lives in the mpc binary; this is a thin
 				// spawn wrapper, same as cmd_usage above.
@@ -386,10 +369,7 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			ocuse_usage: tool({
 				description: OCUSE_TOOL_DESCRIPTION,
 				args: {
-					arg: z
-						.string()
-						.optional()
-						.describe(OCUSE_TOOL_ARG_DESCRIPTION),
+					arg: z.string().optional().describe(OCUSE_TOOL_ARG_DESCRIPTION),
 				},
 				// Rendering lives in the ocuse binary (Rust core); this is a
 				// thin spawn wrapper. Empty arg defaults to `-1` (see
@@ -401,10 +381,7 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			arkuse_usage: tool({
 				description: ARKUSE_TOOL_DESCRIPTION,
 				args: {
-					arg: z
-						.string()
-						.optional()
-						.describe(ARKUSE_TOOL_ARG_DESCRIPTION),
+					arg: z.string().optional().describe(ARKUSE_TOOL_ARG_DESCRIPTION),
 				},
 				// Same thin-spawn contract for ARK: empty arg means `-1`, never
 				// the watch loop.

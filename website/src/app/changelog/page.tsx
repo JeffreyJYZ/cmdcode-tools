@@ -31,10 +31,9 @@ export default function ChangelogPage() {
 			<div className="max-w-[var(--prose-max)]">
 				<h1>Changelog</h1>
 				<p className="ink-muted mt-4">
-					Every published release of these packages — GitHub Releases,
-					npm versions and crates.io versions — newest first, grouped
-					by package. Captured at build time from public registries;
-					the page makes no request of its own.
+					Every published release of these packages — GitHub Releases, npm versions and
+					crates.io versions — newest first, grouped by package. Captured at build time
+					from public registries; the page makes no request of its own.
 				</p>
 			</div>
 
@@ -45,8 +44,7 @@ export default function ChangelogPage() {
 				<time dateTime={snapshot.generatedAt}>
 					{formatGeneratedAt(snapshot.generatedAt)}
 				</time>
-				. Regenerate with{" "}
-				<code className="mono">bun snapshot:releases</code>.
+				. Regenerate with <code className="mono">bun snapshot:releases</code>.
 			</p>
 		</div>
 	);
