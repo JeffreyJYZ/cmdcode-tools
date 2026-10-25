@@ -15,6 +15,7 @@ import {
 	renderGuards,
 	syncGuards,
 } from "../src/guards";
+import { restoreEnv } from "./helpers";
 
 const saved = {
 	HOME: process.env.HOME,
@@ -31,9 +32,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-	process.env.HOME = saved.HOME;
-	process.env.XDG_STATE_HOME = saved.XDG_STATE_HOME;
-	process.env.XDG_CONFIG_HOME = saved.XDG_CONFIG_HOME;
+	restoreEnv("HOME", saved.HOME);
+	restoreEnv("XDG_STATE_HOME", saved.XDG_STATE_HOME);
+	restoreEnv("XDG_CONFIG_HOME", saved.XDG_CONFIG_HOME);
 	rmSync(dir, { recursive: true, force: true });
 });
 

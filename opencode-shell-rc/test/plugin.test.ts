@@ -5,7 +5,7 @@ import { join } from "node:path";
 import type { Plugin as PluginNs } from "@opencode/plugin";
 import { SHELL_RC_ID } from "../src/constants/shell-rc";
 import plugin, { shellRcPlugin } from "../src/index";
-import { type ShellCreateBefore, stateDir } from "./helpers";
+import { restoreEnv, type ShellCreateBefore, stateDir } from "./helpers";
 
 const saved = {
 	HOME: process.env.HOME,
@@ -20,8 +20,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-	process.env.HOME = saved.HOME;
-	process.env.XDG_STATE_HOME = saved.XDG_STATE_HOME;
+	restoreEnv("HOME", saved.HOME);
+	restoreEnv("XDG_STATE_HOME", saved.XDG_STATE_HOME);
 	rmSync(dir, { recursive: true, force: true });
 });
 

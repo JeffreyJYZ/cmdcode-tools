@@ -19,6 +19,7 @@ import {
 	stateFile,
 	stateVersionFile,
 } from "../src/shim";
+import { restoreEnv } from "./helpers";
 
 const saved = {
 	HOME: process.env.HOME,
@@ -33,8 +34,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-	process.env.HOME = saved.HOME;
-	process.env.XDG_STATE_HOME = saved.XDG_STATE_HOME;
+	restoreEnv("HOME", saved.HOME);
+	restoreEnv("XDG_STATE_HOME", saved.XDG_STATE_HOME);
 	rmSync(dir, { recursive: true, force: true });
 });
 
