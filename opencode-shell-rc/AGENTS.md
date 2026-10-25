@@ -50,7 +50,7 @@ No TUI half, no runtime dependencies (node builtins only).
 
 ## Tests
 
-Hermetic: every test points `HOME` and `XDG_STATE_HOME` at a temp dir and writes a fake `.zshrc`, so real user state never touched. The alias-resolution test (and zsh half of the hook test) is skipped when `zsh` absent. The interactive-guard test overwrites `state.zsh` with a marker and `rm`s its `.zwc` first: `zsh` prefers a `.zwc` that is not older than the source, and `zcompile` lands in the same mtime second, so appending to `state.zsh` alone is silently ignored.
+Hermetic: every test points `HOME` and `XDG_STATE_HOME` at a temp dir and writes a fake `.zshrc`, so real user state never touched. The alias-resolution test (and zsh half of the hook test) is skipped when `zsh` absent. The interactive-guard test overwrites `state.zsh` with a marker and `rm`s its `.zwc` first: `zsh` prefers a `.zwc` that is not older than the source, and `zcompile` lands in the same mtime second, so appending to `state.zsh` alone is silently ignored. Restore saved variables through `restoreEnv` in `test/helpers.ts`: `process.env.X = undefined` stores the string `"undefined"`, which made the alias index write `undefined/opencode/AGENTS.md` into the package directory for every later test in the process.
 
 ```sh
 bun install
