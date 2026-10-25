@@ -1,6 +1,6 @@
 {
 	"name": "@jeffreyjyz/opencode-context",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Context-window breakdown for opencode: a /context dialog plus a context_breakdown tool showing where the window went (system prompt, tool definitions, thinking, tool I/O, messages), delta.app style.",
 	"type": "module",
 	"main": "dist/index.js",
