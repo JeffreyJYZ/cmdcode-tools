@@ -52,8 +52,10 @@ test/                    cli, measure, market, view
 ```sh
 bun install
 bun test                       # unit tests
-bun run typecheck              # tsc --noEmit
-bunx biome check --write .     # format + lint (always before commit)
+bun check                      # types (Bun's own check, never tsc --noEmit)
+bun fmt                        # biome format --write
+bun lint                       # biome lint --write
+bunx biome check               # verify both, read-only
 bun run src/index.ts --help
 bun link                       # exposes the `reqshape` binary
 ```

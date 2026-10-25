@@ -30,7 +30,7 @@ No TUI half, no runtime dependencies (node builtins only).
 - **PATH/env deliberately not snapshotted.** Agent inherits opencode's start-up environment. Document that a `.zshrc` `PATH` change needs an opencode restart; alias/function changes self-refresh.
 
 - **The guard layer is opt-in, a speed bump, not a jail, and it is agent-shell-only on purpose.** `src/guards.ts` writes `guards.zsh` with a failing function per blocked name, taken from `~/.config/opencode/shell-rc.json`; `DEFAULT_BLOCKED` is **empty**, so a fresh install blocks nothing and no file is written (a config emptied later *removes* `guards.zsh`, so the shim's `-f` test skips it). What a user opts into is usually `grep`→`rg`, `find`→`fd`, `sed`→`sd`. zsh functions are **not exported**, so `git`, a Makefile, a binary or a `/bin/sh` script still gets the real binary — only the command the model types is shadowed (a `#!/bin/zsh` script is the exception: it inherits the shim's `ZDOTDIR` and is guarded too; measured by running both twins). `command grep` and `/usr/bin/grep` bypass it by design, while `\grep` does **not** (backslash skips aliases, never functions); do not "harden" this into a wrapper that execs the real tool, or the block stops forcing the alternative.
-- **A guard whose replacement is not on PATH is not written.** Blocking `find` on a machine without `fd` leaves the agent unable to search at all. A malformed config falls back to the **defaults** — with `DEFAULT_BLOCKED` empty that means no guards; never guess a list. **`cat` is never on the list** — it emits raw bytes, while `bat` reformats (headers, line numbers, decoration), so the blocked command would return something that is not the file.
+- **A guard whose replacement is not on PATH is not written.** Blocking `find` on a machine without `fd` leaves the agent unable to search at all. A malformed config falls back to the **defaults** — with `DEFAULT_BLOCKED` empty that means no guards; never guess a list. **`cat` is never on the list** — it emits raw bytes, while `bat` reformats (headers, line numbers, decoration), so the blocked command would return something that is not the file. **A guarded `npm` must whitelist `stage`** — `npm stage publish` is the agent's publish path (approval is the human's), and a name-level guard blocks it; override with a `stage`-aware `npm()` in `~/.config/opencode/shell.zsh`, never in the generated guard.
 
 ## Traps
 
@@ -55,7 +55,9 @@ Hermetic: every test points `HOME` and `XDG_STATE_HOME` at a temp dir and writes
 ```sh
 bun install
 bun test
-bun run typecheck
+bun check
+bun fmt
+bun lint
 bun run build
 ```
 

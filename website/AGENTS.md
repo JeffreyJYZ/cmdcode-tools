@@ -33,8 +33,10 @@ test/          bun:test (readmes.test.ts pins README skeleton)
 bun dev         # next dev
 bun run build   # next build — `bun build` is Bun's own bundler, so always `bun run`
 bun test        # bun:test
-bun typecheck   # tsc --noEmit
-bun check       # biome check
+bun check       # Bun's TS check — never name a script `check`, it shadows the builtin
+bun fmt         # biome format --write
+bun lint        # biome lint --write
+bunx biome check  # verify format + lint in one read-only pass
 ```
 
 <!-- BEGIN:nextjs-agent-rules -->

@@ -68,7 +68,7 @@ Set `OPENCODE_SESSION_DIR_INJECT_CONTEXT=1` to also fold each bound directory's 
 ```sh
 bun install
 bun test
-bun run typecheck
+bun check
 bun run build
 ```
 

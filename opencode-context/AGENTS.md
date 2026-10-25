@@ -49,7 +49,7 @@ index.js, tui.js  root shims for local-directory plugin loading (see Traps)
 ```sh
 bun install
 bun test          # breakdown + plugin-shape tests, hermetic
-bun run typecheck
+bun check
 bun run build     # server bundle + solid-transformed tui + declarations
 ```
 

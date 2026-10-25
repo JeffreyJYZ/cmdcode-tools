@@ -124,7 +124,7 @@ The user's escape hatch still wins: `~/.config/opencode/shell.zsh` is sourced af
 ```sh
 bun install
 bun test
-bun run typecheck
+bun check
 bun run build
 ```
 

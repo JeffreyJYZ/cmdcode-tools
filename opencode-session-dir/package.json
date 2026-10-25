@@ -12,7 +12,9 @@
 	"scripts": {
 		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target bun --external @opencode/plugin && bun scripts/build-tui.ts && tsc -p tsconfig.build.json",
 		"test": "bun test",
-		"typecheck": "tsc --noEmit"
+		"fmt": "biome format --write .",
+		"lint": "biome lint --write .",
+		"typecheck": "bun check"
 	},
 	"dependencies": {
 		"@opentui/core": "0.5.12",

@@ -51,7 +51,7 @@ Units: each row shows UTF-8 **bytes** (delta's size column) and the header shows
 ```sh
 bun install
 bun test
-bun run typecheck
+bun check
 bun run build
 ```
 

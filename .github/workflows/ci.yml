@@ -62,8 +62,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run build      # build before typecheck: next-env.d.ts imports the generated, gitignored .next/types
-      - run: bun typecheck
+      - run: bun run build      # build before check: next-env.d.ts imports the generated, gitignored .next/types
       - run: bun check
+      - run: bunx biome check
       - run: bun test
       - run: bun check:links

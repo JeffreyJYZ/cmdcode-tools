@@ -39,7 +39,7 @@ Hermetic: every test points `HOME` + `XDG_DATA_HOME` at temp dir. Plugin test st
 ```sh
 bun install
 bun test
-bun run typecheck
+bun check
 bun run build
 ```
 

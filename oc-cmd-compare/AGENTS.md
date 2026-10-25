@@ -57,13 +57,15 @@ Data flow: `loadOcGoCatalog` + `loadCcCatalog` -> `buildRows` (scoring across bo
 ```sh
 bun install
 bun test                       # unit tests
-bun run typecheck              # tsc --noEmit
-bunx biome check --write .     # format + lint (always before commit)
+bun check                      # types (Bun's own check, never tsc --noEmit)
+bun fmt                        # biome format --write
+bun lint                       # biome lint --write
+bunx biome check               # verify both, read-only
 bun run src/index.ts --help
 bun link                       # exposes the `mpc` binary
 ```
 
-Pre-commit: `bunx biome check --write .`, `bun run typecheck`, `bun test` all clean.
+Pre-commit: `bunx biome check`, `bun check`, `bun test` all clean.
 
 **`bun link` global entry can be pruned — bin dangles, `mpc` dies `ENOENT`.** `bun link` (in this repo) creates `~/.bun/bin/mpc` → `~/.bun/install/global/node_modules/mpc/src/index.ts`; that global `node_modules` shared with every `bun install -g`, so a global install/uninstall can remove entry while bin symlink stays. Silent: `command -v mpc` reports nothing (dangling symlink not executable); consumer spawning `mpc` gets `ENOENT`, no local symptom — plugin's model block degrades to name-only. Restore with `bun link` here; check target with `test -e ~/.bun/install/global/node_modules/mpc/src/index.ts` (bin's `ls -l` still *shows* old path, proves nothing).
 
