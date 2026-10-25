@@ -68,6 +68,9 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run build      # build before check: next-env.d.ts imports the generated, gitignored .next/types
       - run: bun check
-      - run: bunx biome check
+      # Formatting is Bun's; Biome only lints. `biome check` would grade the
+      # tree against Biome's formatter and fail files Bun legitimately rewrote.
+      - run: bun fmt --check
+      - run: bunx biome lint
       - run: bun test
       - run: bun check:links
