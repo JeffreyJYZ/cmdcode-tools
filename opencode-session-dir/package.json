@@ -1,6 +1,6 @@
 {
 	"name": "@jeffreyjyz/opencode-session-dir",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Bind extra working directories to a single opencode session, durably across restarts. Other sessions never see them.",
 	"type": "module",
 	"main": "dist/index.js",
