@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-10-25T09:34:53.186Z",
+	"generatedAt": "2026-10-25T13:55:24.368Z",
 	"github": [
 		{
 			"tag": "cmduse-v0.7.29",
@@ -202,6 +202,12 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.4"
 		},
 		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.5",
+			"date": "2026-10-25T13:39:05.883Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.5"
+		},
+		{
 			"package": "@jeffreyjyz/reqshape",
 			"version": "0.1.0",
 			"date": "2026-10-09T10:50:40.200Z",
@@ -224,6 +230,12 @@
 			"version": "0.2.0",
 			"date": "2026-10-12T12:42:24.718Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.2.0"
+		},
+		{
+			"package": "@jeffreyjyz/reqshape",
+			"version": "0.2.1",
+			"date": "2026-10-25T13:38:39.652Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.2.1"
 		},
 		{
 			"package": "@jeffreyjyz/opencode-command-code",
@@ -580,6 +592,12 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-context/v/0.1.1"
 		},
 		{
+			"package": "@jeffreyjyz/opencode-context",
+			"version": "0.1.2",
+			"date": "2026-10-25T13:38:53.607Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-context/v/0.1.2"
+		},
+		{
 			"package": "@jeffreyjyz/opencode-shell-rc",
 			"version": "0.1.0",
 			"date": "2026-10-04T08:24:49.587Z",
@@ -638,6 +656,12 @@
 			"version": "0.1.0",
 			"date": "2026-10-04T09:11:00.601Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-session-dir/v/0.1.0"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-session-dir",
+			"version": "0.1.1",
+			"date": "2026-10-25T13:37:27.358Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-session-dir/v/0.1.1"
 		}
 	],
 	"crates": [
