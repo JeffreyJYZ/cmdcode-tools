@@ -7,7 +7,7 @@
     },
     "oc-cmd-compare": {
       "name": "@jeffreyjyz/mpc",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "bin": {
         "mpc": "src/index.ts",
         "mpcdev": "src/index.ts",
@@ -18,11 +18,12 @@
       "devDependencies": {
         "@biomejs/biome": "^2.5.13",
         "@types/bun": "latest",
+        "typescript": "^7",
       },
     },
     "opencode-context": {
       "name": "@jeffreyjyz/opencode-context",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "dependencies": {
         "@opentui/core": "0.5.12",
         "@opentui/solid": "0.5.12",
@@ -36,7 +37,7 @@
     },
     "opencode-plugin": {
       "name": "@jeffreyjyz/opencode-command-code",
-      "version": "0.5.20",
+      "version": "0.5.21",
       "dependencies": {
         "@opentui/core": "^0.5.4",
         "@opentui/solid": "^0.5.4",
@@ -53,7 +54,7 @@
     },
     "opencode-session-dir": {
       "name": "@jeffreyjyz/opencode-session-dir",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@opentui/core": "0.5.12",
         "@opentui/solid": "0.5.12",
@@ -67,7 +68,7 @@
     },
     "opencode-shell-rc": {
       "name": "@jeffreyjyz/opencode-shell-rc",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "devDependencies": {
         "@opencode/plugin": "^2.0.11",
         "@types/bun": "latest",
@@ -76,7 +77,7 @@
     },
     "reqshape": {
       "name": "@jeffreyjyz/reqshape",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "bin": {
         "reqshape": "src/index.ts",
         "reqshapedev": "src/index.ts",
@@ -87,6 +88,7 @@
       "devDependencies": {
         "@biomejs/biome": "^2.5.13",
         "@types/bun": "latest",
+        "typescript": "^7",
       },
     },
   },

@@ -26,130 +26,131 @@ name: Publish npm package
 # `workflow_dispatch` with `dry_run` still exercises the whole build.
 
 on:
-  push:
-    tags:
-      - "plugin-v*"
-      - "shell-rc-v*"
-      - "context-v*"
-      - "session-dir-v*"
-      - "mpc-v*"
-      - "reqshape-v*"
-  workflow_dispatch:
-    inputs:
-      package:
-        description: Package directory to publish
-        type: choice
-        default: opencode-plugin
-        options:
-          - opencode-plugin
-          - opencode-shell-rc
-          - opencode-context
-          - opencode-session-dir
-          - oc-cmd-compare
-          - reqshape
-      dry_run:
-        description: Build and pack without publishing
-        type: boolean
-        default: true
+    push:
+        tags:
+            - "plugin-v*"
+            - "shell-rc-v*"
+            - "context-v*"
+            - "session-dir-v*"
+            - "mpc-v*"
+            - "reqshape-v*"
+    workflow_dispatch:
+        inputs:
+            package:
+                description: Package directory to publish
+                type: choice
+                default: opencode-plugin
+                options:
+                    - opencode-plugin
+                    - opencode-shell-rc
+                    - opencode-context
+                    - opencode-session-dir
+                    - oc-cmd-compare
+                    - reqshape
+            dry_run:
+                description: Build and pack without publishing
+                type: boolean
+                default: true
 
 concurrency:
-  group: npm-publish-${{ github.ref }}
-  cancel-in-progress: false
+    group: npm-publish-${{ github.ref }}
+    cancel-in-progress: false
 
 permissions:
-  contents: read
-  # The OIDC token the registry exchanges for a short-lived publish credential.
-  id-token: write
+    contents: read
+    # The OIDC token the registry exchanges for a short-lived publish credential.
+    id-token: write
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@v5
-        with:
-          # Trusted publishing needs npm >= 11.5.1; Node 24 ships a newer one.
-          node-version: "24"
-          registry-url: https://registry.npmjs.org
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: oven-sh/setup-bun@v2
+            - uses: actions/setup-node@v5
+              with:
+                  # Trusted publishing needs npm >= 11.5.1; Node 24 ships a newer one.
+                  node-version: "24"
+                  registry-url: https://registry.npmjs.org
 
-      - run: bun install --frozen-lockfile
+            - run: bun install --frozen-lockfile
 
-      # A tag names one package; a dispatch names one directly. The prefix is
-      # also the version check below, so a tag can never publish a neighbour.
-      - name: Resolve the package this run is about
-        id: pkg
-        run: |
-          set -euo pipefail
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            dir="${{ inputs.package }}"
-            tag=""
-          else
-            ref="$GITHUB_REF_NAME"
-            case "$ref" in
-              plugin-v*)      dir=opencode-plugin;       tag="${ref#plugin-v}" ;;
-              shell-rc-v*)    dir=opencode-shell-rc;     tag="${ref#shell-rc-v}" ;;
-              context-v*)     dir=opencode-context;      tag="${ref#context-v}" ;;
-              session-dir-v*) dir=opencode-session-dir;  tag="${ref#session-dir-v}" ;;
-              mpc-v*)         dir=oc-cmd-compare;        tag="${ref#mpc-v}" ;;
-              reqshape-v*)    dir=reqshape;              tag="${ref#reqshape-v}" ;;
-              *) echo "no package for tag $ref" >&2; exit 1 ;;
-            esac
-          fi
-          # Only the four packages with a build step get one; mpc and reqshape
-          # ship TypeScript source and run under bun.
-          case "$dir" in
-            opencode-plugin|opencode-shell-rc|opencode-context|opencode-session-dir)
-              build=true ;;
-            *) build=false ;;
-          esac
-          {
-            echo "dir=$dir"
-            echo "tag=$tag"
-            echo "build=$build"
-          } >> "$GITHUB_OUTPUT"
-          echo "publishing $dir (tag ${tag:-workflow_dispatch})"
+            # A tag names one package; a dispatch names one directly. The prefix is
+            # also the version check below, so a tag can never publish a neighbour.
+            - name: Resolve the package this run is about
+              id: pkg
+              run: |
+                  set -euo pipefail
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                    dir="${{ inputs.package }}"
+                    tag=""
+                  else
+                    ref="$GITHUB_REF_NAME"
+                    case "$ref" in
+                      plugin-v*)      dir=opencode-plugin;       tag="${ref#plugin-v}" ;;
+                      shell-rc-v*)    dir=opencode-shell-rc;     tag="${ref#shell-rc-v}" ;;
+                      context-v*)     dir=opencode-context;      tag="${ref#context-v}" ;;
+                      session-dir-v*) dir=opencode-session-dir;  tag="${ref#session-dir-v}" ;;
+                      mpc-v*)         dir=oc-cmd-compare;        tag="${ref#mpc-v}" ;;
+                      reqshape-v*)    dir=reqshape;              tag="${ref#reqshape-v}" ;;
+                      *) echo "no package for tag $ref" >&2; exit 1 ;;
+                    esac
+                  fi
+                  # Only the four packages with a build step get one; mpc and reqshape
+                  # ship TypeScript source and run under bun.
+                  case "$dir" in
+                    opencode-plugin|opencode-shell-rc|opencode-context|opencode-session-dir)
+                      build=true ;;
+                    *) build=false ;;
+                  esac
+                  {
+                    echo "dir=$dir"
+                    echo "tag=$tag"
+                    echo "build=$build"
+                  } >> "$GITHUB_OUTPUT"
+                  echo "publishing $dir (tag ${tag:-workflow_dispatch})"
 
-      - name: Test, typecheck and build
-        working-directory: ${{ steps.pkg.outputs.dir }}
-        run: |
-          bun test
-          bun check
-          bun fmt --check
-          bunx biome lint
-          if [ "${{ steps.pkg.outputs.build }}" = "true" ]; then bun run build; fi
+            - name: Test, typecheck and build
+              working-directory: ${{ steps.pkg.outputs.dir }}
+              run: |
+                  bun test
+                  bun check
+                  bun fmt --check
+                  bunx biome lint
+                  if [ "${{ steps.pkg.outputs.build }}" = "true" ]; then bun run build; fi
 
-      - name: The tag and the manifest must agree
-        id: manifest
-        working-directory: ${{ steps.pkg.outputs.dir }}
-        run: |
-          version=$(node -p "require('./package.json').version")
-          want="${{ steps.pkg.outputs.tag }}"
-          if [ -n "$want" ] && [ "$version" != "$want" ]; then
-            echo "package.json says $version, tag says $want" >&2
-            exit 1
-          fi
-          echo "publishing $version"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+            - name: The tag and the manifest must agree
+              id: manifest
+              working-directory: ${{ steps.pkg.outputs.dir }}
+              run: |
+                  version=$(node -p "require('./package.json').version")
+                  want="${{ steps.pkg.outputs.tag }}"
+                  if [ -n "$want" ] && [ "$version" != "$want" ]; then
+                    echo "package.json says $version, tag says $want" >&2
+                    exit 1
+                  fi
+                  echo "publishing $version"
+                  echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Publish
-        id: publish
-        working-directory: ${{ steps.pkg.outputs.dir }}
-        env:
-          NPM_CONFIG_PROVENANCE: "true"
-        run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            npm publish --provenance --access public --dry-run
-          else
-            npm publish --provenance --access public
-          fi
+            - name: Publish
+              id: publish
+              working-directory: ${{ steps.pkg.outputs.dir }}
+              env:
+                  NPM_CONFIG_PROVENANCE: "true"
+              run: |
+                  if [ "${{ inputs.dry_run }}" = "true" ]; then
+                    npm publish --provenance --access public --dry-run
+                  else
+                    npm publish --provenance --access public
+                  fi
 
-      # The registry serves the packument before the tarball, so a published
-      # version can 404 for a few minutes. Poll rather than trust the 202.
-      - name: Verify the tarball is actually served
-        if: ${{ inputs.dry_run != 'true' }}
-        run: >-
-          bun opencode-plugin/scripts/verify-release.ts
-          "${{ steps.pkg.outputs.tag || steps.manifest.outputs.version }}"
-          --dir "${{ steps.pkg.outputs.dir }}"
-          --tries 20
+            # The registry serves the packument before the tarball, so a published
+            # version can 404 for a few minutes. Poll rather than trust the 202.
+            - name: Verify the tarball is actually served
+              if: ${{ inputs.dry_run != 'true' }}
+              run: >-
+                  bun opencode-plugin/scripts/verify-release.ts
+                  "${{ steps.pkg.outputs.tag || steps.manifest.outputs.version }}"
+                  --dir "${{ steps.pkg.outputs.dir }}"
+                  --source
+                  --tries 20

@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
 	buildCmduseArgs,
 	buildMpcArgs,
@@ -70,6 +73,37 @@ describe("runCmduse", () => {
 	test.skipIf(!hasCmduse)("real binary on PATH (smoke)", async () => {
 		const out = await runCmduse("--version");
 		expect(out.trim()).toMatch(/\d+\.\d+\.\d+/);
+	});
+
+	test("hermetic: a fake cmduse shim on PATH runs through candidate resolution", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "cmduse-shim-"));
+		const shim = join(dir, "cmduse");
+		writeFileSync(shim, "#!/bin/sh\necho '{\"ok\":true}'\n");
+		chmodSync(shim, 0o755);
+		try {
+			const out = await runCmduse("", { candidates: [shim] });
+			expect(out.trim()).toBe('{"ok":true}');
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	});
+
+	test("a child ignoring SIGTERM is ultimately killed", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "cmduse-hang-"));
+		const shim = join(dir, "cmduse");
+		writeFileSync(shim, '#!/bin/sh\ntrap "" TERM\nwhile :; do sleep 1; done\n');
+		chmodSync(shim, 0o755);
+		const start = Date.now();
+		try {
+			await runCmduse("", { candidates: [shim], timeoutMs: 100 });
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			expect(msg).toContain("timed out after 100ms");
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+		const elapsed = Date.now() - start;
+		expect(elapsed).toBeLessThan(4500);
 	});
 	test("ENOENT across all candidates yields install hint", async () => {
 		try {

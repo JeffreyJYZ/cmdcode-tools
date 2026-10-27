@@ -18,7 +18,15 @@
 # reads the result back.
 set -eu
 TAG="${1:?usage: bump-tap.sh <tag> [formula]}"
-FORMULA="${2:-$(brew --prefix)/Library/Taps/jeffreyjyz/homebrew-tap/Formula/cmduse.rb}"
+if [ -n "${2:-}" ]; then
+  FORMULA="$2"
+else
+  if ! command -v brew >/dev/null 2>&1; then
+    echo "brew not found; pass the formula path as the second argument" >&2
+    exit 1
+  fi
+  FORMULA="$(brew --prefix)/Library/Taps/jeffreyjyz/homebrew-tap/Formula/cmduse.rb"
+fi
 SUMS="$(mktemp -t cmduse-sums)"
 trap 'rm -f "$SUMS"' EXIT
 

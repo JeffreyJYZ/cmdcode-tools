@@ -162,6 +162,9 @@ pub fn rel_time(reset_at: Option<f64>, now: Option<u64>) -> String {
 /// Elapsed % of a rolling window, one decimal: window length = dur_secs, ends
 /// at reset_at. Multiplied-rounded like `pct` so both ports agree at .x5.
 pub fn elapsed_pct(reset_at: Option<f64>, dur_secs: u64, now: Option<u64>) -> Option<f64> {
+    if dur_secs == 0 {
+        return None;
+    }
     let reset_ms = reset_at?;
     let now_s = now?;
     let reset_s = reset_ms as u64 / 1000;
@@ -227,7 +230,10 @@ pub fn canonical_model(model: &str) -> String {
     if let Some(k) = GATE_KNOWN.iter().find(|m| m.to_lowercase() == lower) {
         return (*k).to_string();
     }
-    if let Some((_, to)) = GATE_ALIASES.iter().find(|(from, _)| *from == lower) {
+    if let Some((_, to)) = GATE_ALIASES
+        .iter()
+        .find(|(from, _)| from.to_lowercase() == lower)
+    {
         return GATE_KNOWN
             .iter()
             .find(|m| m.to_lowercase() == to.to_lowercase())
@@ -289,7 +295,7 @@ pub fn gate(model: &str, plan_id: &str, unlocked: bool) -> (bool, &'static str) 
     let canonical = canonical_model(bare_model(model));
     let cl = canonical.to_lowercase();
     if let Some((_, list)) = GATE_HARD_BLOCKED.iter().find(|(p, _)| *p == plan_id) {
-        if list.iter().any(|m| m.to_lowercase() == cl) {
+        if list.iter().any(|m| bare_model(m).to_lowercase() == cl) {
             return (false, "blocked for this plan");
         }
     }
@@ -420,6 +426,7 @@ mod tests {
         assert_eq!(elapsed_pct(Some(reset), 5 * 3600, Some(now)), Some(50.0));
         assert_eq!(elapsed_pct(Some(1.0), 3600, Some(now)), None);
         assert_eq!(elapsed_pct(None, 3600, Some(now)), None);
+        assert_eq!(elapsed_pct(Some(reset), 0, Some(now)), None);
     }
 
     #[test]

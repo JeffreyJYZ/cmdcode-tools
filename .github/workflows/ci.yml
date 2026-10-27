@@ -1,76 +1,76 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+    push:
+        branches: [main]
+    pull_request:
 
 permissions:
-  contents: read
+    contents: read
 
 jobs:
-  workspace:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo fmt --all -- --check
-      - run: cargo test --all-targets
-      - run: cargo clippy --all-targets -- -D warnings
-      - run: cargo run -p cmd-usage -- -V          # binary smoke-test
-      - run: cargo package -p cmduse-core --allow-dirty  # crate packages + verifies
-      # Verifies the CLI tarball too. It resolves `cmduse-core` from the REGISTRY,
-      # so a core API change fails here until core is published — which is the
-      # release order (core first), not a false alarm.
-      - run: cargo package -p cmd-usage
+    workspace:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: dtolnay/rust-toolchain@stable
+            - uses: Swatinem/rust-cache@v2
+            - run: cargo fmt --all -- --check
+            - run: cargo test --all-targets
+            - run: cargo clippy --all-targets -- -D warnings
+            - run: cargo run -p cmd-usage -- -V # binary smoke-test
+            - run: cargo package -p cmduse-core --allow-dirty # crate packages + verifies
+            # Verifies the CLI tarball too. It resolves `cmduse-core` from the REGISTRY,
+            # so a core API change fails here until core is published — which is the
+            # release order (core first), not a false alarm.
+            - run: cargo package -p cmd-usage
 
-  typescript:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - package: opencode-plugin
-            build: true
-          - package: oc-cmd-compare
-          - package: reqshape
-          - package: opencode-context
-            build: true
-          - package: opencode-shell-rc
-            build: true
-          - package: opencode-session-dir
-            build: true
-    defaults:
-      run:
-        working-directory: ${{ matrix.package }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun test
-      - run: bun check
-      # Both read-only: `bun fmt` and `bun lint` are the writing pass, so a
-      # formatting or lint deviation has to fail here rather than be repaired.
-      - run: bun fmt --check
-      - run: bunx biome lint
-      - if: matrix.build
-        run: bun run build
+    typescript:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - package: opencode-plugin
+                      build: true
+                    - package: oc-cmd-compare
+                    - package: reqshape
+                    - package: opencode-context
+                      build: true
+                    - package: opencode-shell-rc
+                      build: true
+                    - package: opencode-session-dir
+                      build: true
+        defaults:
+            run:
+                working-directory: ${{ matrix.package }}
+        steps:
+            - uses: actions/checkout@v7
+            - uses: oven-sh/setup-bun@v2
+            - run: bun install --frozen-lockfile
+            - run: bun test
+            - run: bun check
+            # Both read-only: `bun fmt` and `bun lint` are the writing pass, so a
+            # formatting or lint deviation has to fail here rather than be repaired.
+            - run: bun fmt --check
+            - run: bunx biome lint
+            - if: matrix.build
+              run: bun run build
 
-  website:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: website
-    steps:
-      - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run build      # build before check: next-env.d.ts imports the generated, gitignored .next/types
-      - run: bun check
-      # Formatting is Bun's; Biome only lints. `biome check` would grade the
-      # tree against Biome's formatter and fail files Bun legitimately rewrote.
-      - run: bun fmt --check
-      - run: bunx biome lint
-      - run: bun test
-      - run: bun check:links
+    website:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: website
+        steps:
+            - uses: actions/checkout@v7
+            - uses: oven-sh/setup-bun@v2
+            - run: bun install --frozen-lockfile
+            - run: bun run build # build before check: next-env.d.ts imports the generated, gitignored .next/types
+            - run: bun check
+            # Formatting is Bun's; Biome only lints. `biome check` would grade the
+            # tree against Biome's formatter and fail files Bun legitimately rewrote.
+            - run: bun fmt --check
+            - run: bunx biome lint
+            - run: bun test
+            - run: bun check:links

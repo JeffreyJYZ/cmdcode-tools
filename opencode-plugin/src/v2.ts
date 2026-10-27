@@ -21,6 +21,7 @@ import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runMpc, runOcuse } from ".
 import { PROVIDER_BASE } from "./constants/endpoints";
 import { KNOWN_MODELS } from "./constants/gating";
 import { DEFAULT_CONTEXT_LENGTH, DEFAULT_OUTPUT_TOKENS } from "./constants/models";
+import { MODELS_CACHE_TTL_MS } from "./constants/timing";
 import {
 	ARKUSE_TOOL_ARG_DESCRIPTION,
 	ARKUSE_TOOL_DESCRIPTION,
@@ -175,6 +176,12 @@ export async function credentialKey(ctx: CredentialContext): Promise<string | un
  * only needed for types. Keeps the runtime dependency surface to opencode's
  * own rewrite list (@opentui/*, solid-js).
  */
+// Module-level registry so a repeated setup() (host re-invoking without
+// disposing the previous one) cannot stack two refresh loops / controllers.
+let v2Controller: AbortController | undefined;
+let v2FirstRefresh: ReturnType<typeof setTimeout> | undefined;
+let v2Timer: ReturnType<typeof setInterval> | undefined;
+
 export const commandCodeV2: PluginNs.Plugin = {
 	id: PLUGIN_ID,
 	async setup(ctx) {
@@ -243,7 +250,11 @@ export const commandCodeV2: PluginNs.Plugin = {
 		// refresh usually finds nothing to change (no second provider update while
 		// the TUI is painting).
 		const cached = await readModelsCache();
-		if (cached) {
+		if (
+			cached &&
+			typeof cached.fetchedAt === "number" &&
+			Date.now() - cached.fetchedAt < MODELS_CACHE_TTL_MS
+		) {
 			seed["command-code-anthropic"] = mergeModels(
 				seed["command-code-anthropic"],
 				cached.claude.map((m) => toV2Model(m, LANES[0])),
@@ -428,7 +439,12 @@ export const commandCodeV2: PluginNs.Plugin = {
 		// restart. Merge, not replace: a gated or partial response must never make
 		// a model vanish from the picker. Resolves credentials per attempt, so a
 		// /connect after load still fills the list.
+		// Idempotent setup: dispose any previous loops/controller first.
+		if (v2Controller) v2Controller.abort();
+		if (v2FirstRefresh) clearTimeout(v2FirstRefresh);
+		if (v2Timer) clearInterval(v2Timer);
 		const controller = new AbortController();
+		v2Controller = controller;
 		let refreshing = false;
 		// What the registry currently holds, so a refresh can tell a real change
 		// from a repeat of the same list (ids only — that is what a picker shows).
@@ -512,14 +528,17 @@ export const commandCodeV2: PluginNs.Plugin = {
 		};
 		// Land the first refresh after the startup paint: a transform at +2.5s
 		// otherwise re-publishes provider/model state while the TUI is drawing.
-		const firstRefresh = setTimeout(() => void refresh(), 3_000);
+		v2FirstRefresh = setTimeout(() => void refresh(), 3_000);
 		// 30 min: comfortably past models.ts's 5-min cache, so every tick is a
 		// real fetch. Guarded against overlap by `refreshing`.
-		const timer = setInterval(() => void refresh(), 30 * 60 * 1000);
+		v2Timer = setInterval(() => void refresh(), 30 * 60 * 1000);
 		return () => {
 			controller.abort();
-			clearTimeout(firstRefresh);
-			clearInterval(timer);
+			if (v2FirstRefresh) clearTimeout(v2FirstRefresh);
+			if (v2Timer) clearInterval(v2Timer);
+			if (v2Controller === controller) v2Controller = undefined;
+			v2FirstRefresh = undefined;
+			v2Timer = undefined;
 		};
 	},
 };

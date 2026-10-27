@@ -6,47 +6,47 @@ name: Snapshot releases data
 # (`bun snapshot:releases`) and commits only on material change. It fetches
 # public registries only, so unlike the mpc snapshot it needs no cmduse build.
 on:
-  schedule:
-    # 5-minutely, deliberately off the top of the hour: GitHub's scheduler piles
-    # up there and drops runs (the mpc snapshot sits off the hour for the same
-    # reason). GitHub also delays and coalesces scheduled runs — a 5-min cron is
-    # a request, not a guarantee — so the timeline may be hours old, never stale
-    # enough to matter, and a release can be snapshotted by hand any time.
-    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
-  workflow_dispatch:
+    schedule:
+        # 5-minutely, deliberately off the top of the hour: GitHub's scheduler piles
+        # up there and drops runs (the mpc snapshot sits off the hour for the same
+        # reason). GitHub also delays and coalesces scheduled runs — a 5-min cron is
+        # a request, not a guarantee — so the timeline may be hours old, never stale
+        # enough to matter, and a release can be snapshotted by hand any time.
+        - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
+    workflow_dispatch:
 
 permissions:
-  contents: write
+    contents: write
 
 # One run at a time so two crons cannot race the push.
 concurrency:
-  group: releases-snapshot
-  cancel-in-progress: false
+    group: releases-snapshot
+    cancel-in-progress: false
 
 jobs:
-  snapshot:
-    # Only the canonical repo: a fork's schedule would push into a mirror.
-    if: github.repository == 'JeffreyJYZ/cmdcode-tools'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-        working-directory: website
-      - run: bun run snapshot:releases
-        working-directory: website
-      - name: Commit on material change
-        run: |
-          # `generatedAt` churns every run; ignore it when deciding.
-          if git diff --ignore-matching-lines='"generatedAt"' --quiet -- website/src/data/releases.json; then
-            echo "no material change"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add website/src/data/releases.json
-          git commit -m "chore(data): refresh releases snapshot [skip ci]"
-          # The mpc snapshot pushes on its own schedule from another workflow;
-          # rebase so a concurrent push is a retry, not a failed run.
-          git pull --rebase --autostash
-          git push
+    snapshot:
+        # Only the canonical repo: a fork's schedule would push into a mirror.
+        if: github.repository == 'JeffreyJYZ/cmdcode-tools'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: oven-sh/setup-bun@v2
+            - run: bun install --frozen-lockfile
+              working-directory: website
+            - run: bun run snapshot:releases
+              working-directory: website
+            - name: Commit on material change
+              run: |
+                  # `generatedAt` churns every run; ignore it when deciding.
+                  if git diff --ignore-matching-lines='"generatedAt"' --quiet -- website/src/data/releases.json; then
+                    echo "no material change"
+                    exit 0
+                  fi
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add website/src/data/releases.json
+                  git commit -m "chore(data): refresh releases snapshot [skip ci]"
+                  # The mpc snapshot pushes on its own schedule from another workflow;
+                  # rebase so a concurrent push is a retry, not a failed run.
+                  git pull --rebase --autostash
+                  git push

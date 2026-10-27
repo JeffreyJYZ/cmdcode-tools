@@ -995,7 +995,11 @@ pub fn render_json(report: &Report) -> String {
         "clients": &report.clients,
         "plan": report.tier,
         "profile": report.profile,
+        "generatedAt": report.now_ms,
         "periodStart": report.since_ms,
+        // Period bounds in epoch ms, mirroring ocuse/cmduse (`periodStartAt`/
+        // `periodEndAt`); `periodStart` stays for existing readers.
+        "periodStartAt": report.since_ms,
         "periodEndAt": report.period_end_ms,
         "periodEnd": report.period_end_ms
             .map(|ms| date_of((ms + report.offset_secs * 1000).div_euclid(86_400_000))),
@@ -1937,5 +1941,28 @@ mod tests {
         assert!(json.contains("deepseek-v4.1-flash"));
         let csv = model_report(&report, None, Fmt::Csv);
         assert!(csv.starts_with("model,requests,tokens_in,tokens_out,cache_read,afp"));
+    }
+
+    #[test]
+    fn json_carries_the_period_bounds() {
+        let parsed: serde_json::Value = serde_json::from_str(&render_json(&report())).unwrap();
+        assert_eq!(parsed["periodStart"], report().since_ms);
+        assert_eq!(parsed["periodStartAt"], report().since_ms);
+        assert_eq!(parsed["periodStartAt"], parsed["periodStart"]);
+        assert!(parsed.get("generatedAt").is_some());
+        assert_ne!(parsed["generatedAt"], 0);
+        // `summary` is the period's own aggregate under the name cmduse and
+        // ocuse use; its AFP/tokens mirror the `monthly` block.
+        assert_eq!(parsed["summary"]["afp"], parsed["monthly"]["afp"]);
+        assert_eq!(parsed["summary"]["requests"], parsed["monthly"]["requests"]);
+        assert_eq!(parsed["summary"]["tokensIn"], parsed["monthly"]["tokensIn"]);
+        assert_eq!(
+            parsed["summary"]["tokensOut"],
+            parsed["monthly"]["tokensOut"]
+        );
+        assert_eq!(
+            parsed["summary"]["cacheRead"],
+            parsed["monthly"]["cacheRead"]
+        );
     }
 }

@@ -8,7 +8,7 @@ use std::io::Write;
 /// statusline all render elsewhere, and a spinner written to /dev/tty would
 /// paint over whatever program spawned them (e.g. a TUI sidebar). Callers pass
 /// `false` there.
-pub fn snapshot(spinner: bool) -> Snapshot {
+pub fn snapshot(spinner: bool, colors: bool) -> Snapshot {
     let mut s = empty_snapshot();
 
     let key = match api::api_key() {
@@ -34,12 +34,16 @@ pub fn snapshot(spinner: bool) -> Snapshot {
             let mut i = 0;
             while !stop.load(std::sync::atomic::Ordering::Relaxed) {
                 if let Some(f) = tty.as_mut() {
-                    write!(
-                        f,
-                        "\r\x1b[2K{CYAN}fetching usage… {}{RESET}",
-                        frames[i % frames.len()]
-                    )
-                    .ok();
+                    if colors {
+                        write!(
+                            f,
+                            "\r\x1b[2K{CYAN}fetching usage… {}{RESET}",
+                            frames[i % frames.len()]
+                        )
+                        .ok();
+                    } else {
+                        write!(f, "\r\x1b[2Kfetching usage… {}", frames[i % frames.len()]).ok();
+                    }
                     f.flush().ok();
                 }
                 i += 1;

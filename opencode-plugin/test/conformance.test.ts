@@ -63,6 +63,11 @@ describe("conformance vectors (shared with cmduse-core)", () => {
 			]);
 		}
 	});
+	// `rows.ts` has `count`, but its thresholds/rounding do not match the
+	// core's `compact` vectors (e.g. 999950 -> "1.0M" vs "1000.0K"), so no
+	// loop is added; the TS formatter is a presentation helper, not the shared
+	// implementation. Same for `money`/`rate`/`until` vs money/relTime/duration.
+
 	test("elapsedPct", () => {
 		type Case = {
 			resetAtMs: number | null;

@@ -5,48 +5,48 @@ name: Snapshot mpc data
 # Function; a scheduled CI job is the only place with Bun to run it. The
 # /compare page fetches the committed snapshot in the browser.
 on:
-  schedule:
-    # Off the top of the hour on purpose: the scheduler piles up there and can drop runs.
-    - cron: "7,17,27,37,47,57 * * * *"
-  workflow_dispatch:
+    schedule:
+        # Off the top of the hour on purpose: the scheduler piles up there and can drop runs.
+        - cron: "7,17,27,37,47,57 * * * *"
+    workflow_dispatch:
 
 permissions:
-  contents: write
+    contents: write
 
 # One run at a time so two crons cannot race the push.
 concurrency:
-  group: mpc-snapshot
-  cancel-in-progress: false
+    group: mpc-snapshot
+    cancel-in-progress: false
 
 jobs:
-  snapshot:
-    # Only the canonical repo: a fork's schedule would push into a mirror.
-    if: github.repository == 'JeffreyJYZ/cmdcode-tools'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
-      # mpc shells out to `cmduse` for the CommandCode plan table, and the
-      # runner has no `cmduse`; build it from this checkout and point mpc at it.
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo build -p cmd-usage
-      # Root install: the workspace, so mpc's `cac` dependency is present.
-      - run: bun install
-      - run: bun run --cwd website snapshot:mpc
-        env:
-          CMDUSE_BIN: ${{ github.workspace }}/target/debug/cmduse
-      - name: Commit on material change
-        run: |
-          # `generatedAt` churns every run; ignore it when deciding.
-          if git diff --ignore-matching-lines='"generatedAt"' --quiet -- website/src/data/mpc.json; then
-            echo "no material change"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add website/src/data/mpc.json
-          git commit -m "chore(data): refresh mpc snapshot [skip ci]"
-          # The releases snapshot pushes from its own workflow on its own
-          # schedule; rebase so a concurrent push is a retry, not a failed run.
-          git pull --rebase --autostash
-          git push
+    snapshot:
+        # Only the canonical repo: a fork's schedule would push into a mirror.
+        if: github.repository == 'JeffreyJYZ/cmdcode-tools'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: oven-sh/setup-bun@v2
+            # mpc shells out to `cmduse` for the CommandCode plan table, and the
+            # runner has no `cmduse`; build it from this checkout and point mpc at it.
+            - uses: Swatinem/rust-cache@v2
+            - run: cargo build --locked -p cmd-usage
+            # Root install: the workspace, so mpc's `cac` dependency is present.
+            - run: bun install
+            - run: bun run --cwd website snapshot:mpc
+              env:
+                  CMDUSE_BIN: ${{ github.workspace }}/target/debug/cmduse
+            - name: Commit on material change
+              run: |
+                  # `generatedAt` churns every run; ignore it when deciding.
+                  if git diff --ignore-matching-lines='"generatedAt"' --quiet -- website/src/data/mpc.json; then
+                    echo "no material change"
+                    exit 0
+                  fi
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add website/src/data/mpc.json
+                  git commit -m "chore(data): refresh mpc snapshot [skip ci]"
+                  # The releases snapshot pushes from its own workflow on its own
+                  # schedule; rebase so a concurrent push is a retry, not a failed run.
+                  git pull --rebase --autostash
+                  git push

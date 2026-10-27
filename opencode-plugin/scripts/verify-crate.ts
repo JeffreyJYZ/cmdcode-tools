@@ -218,7 +218,8 @@ async function servedCommit(bytes: Uint8Array, version: string): Promise<string 
 
 /** Repack at `sha` in a detached worktree and hash the result. */
 async function repackAt(sha: string, version: string): Promise<string | undefined> {
-	const dir = join(process.env.HOME ?? "", "dev/worktrees", basename(REPO), `repack-${version}`);
+	const worktreeBase = process.env.WORKTREE_BASE ?? join(process.env.HOME ?? "", "dev/worktrees");
+	const dir = join(worktreeBase, basename(REPO), `repack-${version}`);
 	// A detached worktree, so the checkout being verified is never written to —
 	// and the same path every time, so a leftover from an interrupted run cannot
 	// silently be the tree that gets packed.
@@ -318,11 +319,13 @@ async function main(): Promise<number> {
 	const tries = Number(value("--tries") ?? 40);
 
 	const formulaPath =
-		value("--formula") ??
-		join(
-			process.env.HOMEBREW_PREFIX ?? "/opt/homebrew",
-			"Library/Taps/jeffreyjyz/homebrew-tap/Formula/cmduse.rb",
+		value("--formula") ?? process.env.FORMULA_PATH ?? process.env.CMDUSE_FORMULA_PATH;
+	if (!formulaPath) {
+		console.error(
+			"no formula path: pass --formula <path> or set FORMULA_PATH/CMDUSE_FORMULA_PATH",
 		);
+		return 2;
+	}
 	const formulaFile = Bun.file(formulaPath);
 	const formula = (await formulaFile.exists())
 		? formulaPin(await formulaFile.text(), formulaPath)

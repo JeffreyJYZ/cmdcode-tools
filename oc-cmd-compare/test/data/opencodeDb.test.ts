@@ -128,6 +128,84 @@ describe("readOpencodeDb", () => {
 		expect(recent?.entries[0]?.requests).toBe(1);
 	});
 
+	test("v1 message and v2 session_message layouts agree on identical rows", () => {
+		// One logical row set, materialised in both layouts. Reasoning is carried
+		// in v2's tokens and must survive the v1 path too (v1's message.data
+		// tokens object can hold reasoning as well), so include it here to catch
+		// a drift in how reasoning is attributed.
+		const created = 1_780_000_000_000;
+		const v1Rows = [
+			assistant("a1", "deepseek/deepseek-v4.1-flash", created, 0.25),
+			{
+				id: "a2",
+				created: created + 100_000,
+				data: {
+					role: "assistant",
+					modelID: "deepseek/deepseek-v4.1-flash",
+					providerID: "command-code-openai",
+					cost: 0.25,
+					tokens: {
+						input: 100,
+						output: 50,
+						reasoning: 30,
+						cache: { read: 2000, write: 0 },
+					},
+					time: { created: created + 100_000, completed: created + 100_000 + 1000 },
+				},
+			},
+			assistant("a3", "z-ai/glm-5.3-flash", created + 200_000, 0.5),
+		];
+		const v2Rows = [
+			v2Turn("s1", "deepseek/deepseek-v4.1-flash", created, 0.25),
+			v2Turn("s2", "deepseek/deepseek-v4.1-flash", created + 100_000, 0.25, {
+				input: 100,
+				output: 50,
+				reasoning: 30,
+				cache: { read: 2000, write: 0 },
+			}),
+			v2Turn("s3", "z-ai/glm-5.3-flash", created + 200_000, 0.5),
+		];
+		const v1 = readOpencodeDb(dbWith(v1Rows));
+		const v2 = readOpencodeDb(dbV2With(v2Rows));
+		expect(v1).not.toBeNull();
+		expect(v2).not.toBeNull();
+		const summarise = (r: NonNullable<typeof v1>) => ({
+			records: r.records,
+			providers: r.providers,
+			requests: r.entries.reduce((a, e) => a + e.requests, 0),
+			tokensIn: r.entries.reduce((a, e) => a + e.tokensIn, 0),
+			tokensOut: r.entries.reduce((a, e) => a + e.tokensOut, 0),
+			cacheRead: r.entries.reduce((a, e) => a + e.cacheRead, 0),
+			reasoning: r.entries.reduce((a, e) => a + e.reasoning, 0),
+			costUsd: r.entries.reduce((a, e) => a + e.costUsd, 0),
+			models: r.entries
+				.map((e) => ({
+					key: e.key,
+					requests: e.requests,
+					tokensIn: e.tokensIn,
+					tokensOut: e.tokensOut,
+					cacheRead: e.cacheRead,
+					reasoning: e.reasoning,
+					costUsd: e.costUsd,
+				}))
+				.sort((a, b) => a.key.localeCompare(b.key)),
+		});
+		const v1Result = v1 as NonNullable<typeof v1>;
+		const v2Result = v2 as NonNullable<typeof v2>;
+		expect(summarise(v2Result)).toEqual(summarise(v1Result));
+
+		// Documented, legitimate difference: v2 can represent an in-flight turn
+		// (model known, no tokens yet) that the v1 `message` layout never stores,
+		// since v1 rows are only written once a turn completes. v2 skips such a
+		// turn until it finishes, so its record count stays below v1's only when
+		// v1 were to carry a placeholder — which it cannot. Assert the v2 reader
+		// skips in-flight turns rather than counting them as zero-token rows.
+		const v2WithInFlight = readOpencodeDb(
+			dbV2With([...v2Rows, v2InFlight("s4", "z-ai/glm-5.3-flash", created + 300_000)]),
+		);
+		expect(v2WithInFlight?.records).toBe(v2Rows.length);
+	});
+
 	test("returns null for a missing file or table", () => {
 		expect(readOpencodeDb("/nonexistent/opencode.db")).toBeNull();
 		const empty = join(mkdtempSync(join(tmpdir(), "mpc-db-")), "empty.db");

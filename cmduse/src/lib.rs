@@ -177,7 +177,7 @@ pub fn run() {
         if let Some(msg) = &update {
             eprintln!("{msg}");
         }
-        let s = snapshot::snapshot(false);
+        let s = snapshot::snapshot(false, render::color_enabled());
         if args.json {
             println!("{}", render::render_json(&s));
         } else if args.plain || !render::color_enabled() {
@@ -213,7 +213,7 @@ pub fn run() {
     // paint the terminal it was spawned from.
     let spinner = !args.plain && std::io::stdout().is_terminal();
     loop {
-        let s = snapshot::snapshot(spinner);
+        let s = snapshot::snapshot(spinner, use_color && !args.plain);
         let (rows, cols) = term_size().unwrap_or((0, 0));
         // <8x4 is not a usable dashboard even in compact form: keep drawing
         // the compact line anyway (clip keeps it stable), no hard exit.
@@ -272,7 +272,11 @@ pub fn run() {
             was_exceeded_wk = exwk;
         }
         let text = if compact {
-            compact_dashboard(&s, if burst_on { &history } else { &[] })
+            compact_dashboard(
+                &s,
+                if burst_on { &history } else { &[] },
+                use_color && !args.plain,
+            )
         } else if args.plain || !use_color {
             render::render_plain(&s)
         } else {
@@ -281,18 +285,30 @@ pub fn run() {
         let spark = if compact || !burst_on {
             String::new()
         } else if history.len() >= 2 && history.iter().any(|v| *v > 0.0) {
-            format!(
-                "{DIM}spend bursts ({}s samples){RESET} {}\n",
-                interval,
-                render::sparkline(&history)
-            )
+            if use_color && !args.plain {
+                format!(
+                    "{DIM}spend bursts ({}s samples){RESET} {}\n",
+                    interval,
+                    render::sparkline(&history)
+                )
+            } else {
+                format!(
+                    "spend bursts ({}s samples) {}\n",
+                    interval,
+                    render::sparkline(&history)
+                )
+            }
         } else {
             String::new() // idle (all-zero deltas) → no row, no flat-line noise
         };
         let update_box = update
             .as_ref()
             .map(|m| render::update_box(m, (cols > 0).then_some(cols), use_color && !args.plain));
-        let status_line = format!("{DIM}refreshing every {interval}s · ctrl-c to quit{RESET}");
+        let status_line = if use_color && !args.plain {
+            format!("{DIM}refreshing every {interval}s · ctrl-c to quit{RESET}")
+        } else {
+            format!("refreshing every {interval}s · ctrl-c to quit")
+        };
         let frame = match &update_box {
             Some(u) => format!("{u}{text}{spark}{status_line}"),
             None => format!("{text}{spark}{status_line}"),
@@ -302,9 +318,13 @@ pub fn run() {
         // countdown: rewrite just the status line each second (cursor already on it)
         for remaining in (1..interval).rev() {
             std::thread::sleep(std::time::Duration::from_secs(1));
-            let msg = format!(
-                "\r\x1b[2K{DIM}refreshing every {interval}s · next refresh in {remaining}s · ctrl-c to quit{RESET}"
-            );
+            let msg = if use_color && !args.plain {
+                format!(
+                    "\r\x1b[2K{DIM}refreshing every {interval}s · next refresh in {remaining}s · ctrl-c to quit{RESET}"
+                )
+            } else {
+                format!("\r\x1b[2Krefreshing every {interval}s · next refresh in {remaining}s · ctrl-c to quit")
+            };
             write!(out, "{}", clip_to_width(&msg, (cols > 0).then_some(cols))).ok();
             out.flush().ok();
         }
@@ -316,10 +336,14 @@ pub fn run() {
 /// where the full 14-row dashboard would scroll every refresh. When the
 /// spend-burst sparkline is active it is inlined at the end of the same line
 /// (clip trims it first on very narrow windows).
-fn compact_dashboard(s: &crate::render::Snapshot, history: &[f64]) -> String {
+fn compact_dashboard(s: &crate::render::Snapshot, history: &[f64], colors: bool) -> String {
     use crate::render::plan_name;
     if let Some(e) = &s.err {
-        return format!("{BOLD}error{RESET} {e}\n");
+        if colors {
+            return format!("{BOLD}error{RESET} {e}\n");
+        } else {
+            return format!("error {e}\n");
+        }
     }
     let cap = cmduse_core::plan_monthly_cap(&s.sub.plan_id);
     let cap_txt = cap.map(cmduse_core::money).unwrap_or_else(|| "-".into());
@@ -337,14 +361,25 @@ fn compact_dashboard(s: &crate::render::Snapshot, history: &[f64]) -> String {
         format!(" · {}", s.sub.status)
     };
     let spark = if history.len() >= 2 && history.iter().any(|v| *v > 0.0) {
-        format!(" {DIM}{}{RESET}", crate::render::sparkline(history))
+        if colors {
+            format!(" {DIM}{}{RESET}", crate::render::sparkline(history))
+        } else {
+            format!(" {}", crate::render::sparkline(history))
+        }
     } else {
         String::new()
     };
-    format!(
-        "{BOLD}{}{RESET} {rem_txt}/{cap_txt} · 5h {h5}{status}{spark}\n",
-        plan_name(&s.sub.plan_id)
-    )
+    if colors {
+        format!(
+            "{BOLD}{}{RESET} {rem_txt}/{cap_txt} · 5h {h5}{status}{spark}\n",
+            plan_name(&s.sub.plan_id)
+        )
+    } else {
+        format!(
+            "{} {rem_txt}/{cap_txt} · 5h {h5}{status}{spark}\n",
+            plan_name(&s.sub.plan_id)
+        )
+    }
 }
 
 /// Terminal (rows, cols) from `stty size`. None when not a tty or the probe
@@ -582,7 +617,7 @@ fn plans_cmd(args: &cli::Args) {
 
 /// One-shot dashboard, plain text (no SGR) — the MCP `usage` tool body.
 pub(crate) fn usage_output() -> String {
-    render::render_plain(&snapshot::snapshot(false))
+    render::render_plain(&snapshot::snapshot(false, render::color_enabled()))
 }
 
 /// Plan comparison table. `colors` off for MCP, `render::color_enabled()` for
@@ -821,7 +856,7 @@ fn statusline_json(
 
 fn statusline_cmd(args: &cli::Args) {
     let cfg = config::load(cli::Binary::Cmduse);
-    let s = snapshot::snapshot(false);
+    let s = snapshot::snapshot(false, render::color_enabled());
     let plan = render::plan_name(&s.sub.plan_id);
     let cap = render::plan_monthly_cap(&s.sub.plan_id).unwrap_or(0.0);
     if let Some(e) = &s.err {

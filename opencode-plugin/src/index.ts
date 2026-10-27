@@ -105,6 +105,11 @@ type SdkModel = {
 };
 
 /** Published $/1M rates, so opencode prices a subscription provider correctly. */
+/** Published $/1M rates, so opencode prices a subscription provider correctly.
+ * The host's v1 ProviderConfig model cost is a single (non-array) tier, so an
+ * unpriced model carries a zero-cost tier here; v2's host type accepts an
+ * empty array (see src/v2.ts costEntry). Both represent "no known price"
+ * in their host-native shape; neither invents a non-zero rate. */
 function costFor(id: string): {
 	input: number;
 	output: number;

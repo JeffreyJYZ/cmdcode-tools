@@ -46,8 +46,21 @@ pub fn run() {
 
 /// Handle one incoming message; `None` for notifications (no "id").
 pub fn handle(msg: &Value) -> Option<Value> {
-    let method = msg.get("method")?.as_str()?;
-    let id = msg.get("id")?;
+    let id = msg.get("id");
+    let method = match msg.get("method").and_then(|v| v.as_str()) {
+        Some(m) => m,
+        None => {
+            // Malformed request: missing method. A request carrying an id must
+            // get an error reply; a notification (no id) gets none.
+            return id.map(|id| {
+                json!({
+                    "jsonrpc": "2.0", "id": id,
+                    "error": { "code": -32600, "message": "invalid request" },
+                })
+            });
+        }
+    };
+    let id = id?;
     let result = match method {
         "initialize" => Ok(json!({
             // Echo the client's version so the negotiated pair is always

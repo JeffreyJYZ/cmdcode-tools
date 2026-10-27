@@ -217,7 +217,11 @@ export async function loadZen(plan: OcPlan = OC_PLAN_DEFAULT): Promise<ZenUsage>
 /** Process-lifetime cache for the ARK snapshot — see `ARK_SNAPSHOT_TTL_MS`:
  *  every `arkuse` run asks the control plane, so the 5s poll must not spawn one
  *  per tick. */
-let arkCache: { at: number; usage: ArkUsage } | undefined;
+// loadArk takes no args today: the arkcli profile and ARK tier are resolved by
+// arkcli's own default (no inputs reach this function), so the cache key is a
+// constant. Keying is kept so a future caller that selects profile/tier can
+// invalidate by changing the key instead of adding a new cache.
+let arkCache: { key: string; at: number; usage: ArkUsage } | undefined;
 
 /**
  * One Volcengine ARK snapshot from `arkuse -1 --json`: the plan's own meters
@@ -226,11 +230,12 @@ let arkCache: { at: number; usage: ArkUsage } | undefined;
  * missing or fails, and the caller then keeps the last snapshot.
  */
 export async function loadArk(): Promise<ArkUsage> {
+	const key = "default";
 	const now = Date.now();
-	if (arkCache && now - arkCache.at < ARK_SNAPSHOT_TTL_MS) {
+	if (arkCache && arkCache.key === key && now - arkCache.at < ARK_SNAPSHOT_TTL_MS) {
 		return arkCache.usage;
 	}
 	const usage = parseArkJson(await runArkuse("-1 --json", SIDEBAR_OPTS));
-	arkCache = { at: now, usage };
+	arkCache = { key, at: now, usage };
 	return usage;
 }

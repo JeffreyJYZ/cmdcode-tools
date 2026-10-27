@@ -253,6 +253,32 @@ function fixtureDb(): string {
 	return path;
 }
 
+/** v2-store mirror of fixtureDb(): same rows, v2 schema. */
+function dbV2With(): string {
+	const path = join(mkdtempSync(join(tmpdir(), "cc-v2with-")), "opencode.db");
+	const db = new Database(path);
+	db.run(
+		"CREATE TABLE session_message (id TEXT, session_id TEXT, type TEXT, time_created INTEGER, data TEXT)",
+	);
+	const now = Date.now();
+	const model = "deepseek/deepseek-v4.1-flash";
+	const ins = (id: string, type: string, data: object, at: number) =>
+		db.run("INSERT INTO session_message VALUES (?, ?, ?, ?, ?)", [
+			id,
+			"ses_x",
+			type,
+			at,
+			JSON.stringify(data),
+		]);
+	ins("m1", "assistant", { model: { id: model }, cost: 0.5 }, now - 1_000);
+	ins("m2", "assistant", { model: { id: model }, cost: 1.25 }, now - 2_000);
+	ins("m3", "assistant", { model: { id: "other/model" }, cost: 9 }, now - 1_000);
+	ins("m4", "user", { model: { id: model }, cost: 3 }, now - 1_000);
+	ins("m5", "assistant", { model: { id: model }, cost: 5 }, now - 40 * 86_400_000);
+	db.close();
+	return path;
+}
+
 describe("loadModelUsage", () => {
 	test("sums the window for one model only", () => {
 		const path = fixtureDb();
@@ -266,6 +292,16 @@ describe("loadModelUsage", () => {
 	});
 	test("returns null without a store", () => {
 		expect(loadModelUsage("deepseek/deepseek-v4.1-flash", 0, "/nope/missing.db")).toBeNull();
+	});
+
+	test("sums the window for one model only (v2 store)", () => {
+		const path = dbV2With();
+		const week = Date.now() - 7 * 86_400_000;
+		expect(loadModelUsage("deepseek/deepseek-v4.1-flash", week, path)).toEqual({
+			requests: 2,
+			cost: 1.75,
+		});
+		expect(loadModelUsage("deepseek-v4.1-flash", week, path)?.requests).toBe(2);
 	});
 });
 

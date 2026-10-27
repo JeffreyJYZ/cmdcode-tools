@@ -1,4 +1,4 @@
-.TH CMDUSE 1 "2026-10" "cmd-usage 0.7.8" "User Commands"
+.TH CMDUSE 1 "2026-10" "cmd-usage 0.7.30" "User Commands"
 .SH NAME
 cmduse \- live Command Code (commandcode.ai) usage dashboard and reporter
 .br
@@ -167,7 +167,7 @@ text the corresponding subcommands print.  The seven tools and their
 arguments are identical across \fBcmduse\fR, \fBocuse\fR and \fBarkuse\fR
 (each adds \fBplan\fR, the plan its source needs): \fBmodels\fR takes
 \fIgated\fR, \fBdaily\fR/\fBhourly\fR take \fItz\fR, and
-\fBsession\fR/\fBmodel\fR take \fIsince\fR, \fIdays\fR and \fIrows\fR.
+\fBsession\fR/\fBmodel\fR take \fIsince\fR, \fIdays\fR, \fItz\fR and \fIrows\fR, and \fBmodel\fR also takes \fIid\fR.
 Tool execution errors are returned as
 results with isError true, not JSON\-RPC errors.  Intended for MCP hosts
 such as Zed's context_servers ("command": "cmduse", "args": ["mcp"]).

@@ -94,9 +94,13 @@ function PanelV2(props: { ctx: TuiPluginNs.Context; sessionID: string }) {
 }
 
 // Plain object, not `Plugin.define` — identity function there too.
+const tuiSetupSeen = new WeakSet<object>();
+
 export const commandCodeTui: TuiPluginNs.Definition = {
 	id: TUI_ID,
 	setup(ctx) {
+		if (tuiSetupSeen.has(ctx as object)) return;
+		tuiSetupSeen.add(ctx as object);
 		ctx.ui.slot({
 			append: "sidebar.content",
 			render: (input) => <PanelV2 ctx={ctx} sessionID={input.sessionID} />,

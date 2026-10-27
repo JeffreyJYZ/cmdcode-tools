@@ -119,3 +119,13 @@ fn clip_keeps_leading_carriage_return_when_truncated() {
         "CR kept + clipped: {out:?}"
     );
 }
+
+#[test]
+fn mcp_missing_method_with_id_is_error() {
+    use serde_json::json;
+    let msg = json!({"jsonrpc":"2.0","id":1});
+    let resp = crate::mcp::handle(&msg).expect("error reply");
+    assert_eq!(resp["error"]["code"], -32600);
+    let msg2 = json!({"jsonrpc":"2.0"});
+    assert!(crate::mcp::handle(&msg2).is_none());
+}

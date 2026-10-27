@@ -164,7 +164,13 @@ function runOnce(bin: string, args: string[], opts: RunOptions, name = "cmduse")
 				: setTimeout(() => {
 						if (settled) return;
 						settled = true;
-						child.kill();
+						child.stdout.removeAllListeners("data");
+						child.stderr.removeAllListeners("data");
+						child.removeAllListeners("error");
+						child.removeAllListeners("close");
+						child.kill("SIGTERM");
+						const killTimer = setTimeout(() => child.kill("SIGKILL"), 3000);
+						killTimer.unref();
 						reject(
 							new Error(
 								`${name} ${args.join(" ")}: timed out after ${opts.timeoutMs}ms`,
@@ -178,6 +184,10 @@ function runOnce(bin: string, args: string[], opts: RunOptions, name = "cmduse")
 			settled = true;
 			if (timer) clearTimeout(timer);
 			opts.signal?.removeEventListener("abort", onAbort);
+			child.stdout.removeAllListeners("data");
+			child.stderr.removeAllListeners("data");
+			child.removeAllListeners("error");
+			child.removeAllListeners("close");
 			fn();
 		};
 		child.stdout.on("data", (d: Buffer) => out.push(d));

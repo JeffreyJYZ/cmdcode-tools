@@ -203,7 +203,11 @@ pub fn daily_from_cumulative(labels: &[String], cums: &[UsageSummary]) -> ByDay 
             break;
         }
         let t = per_bucket(cums, i);
-        if t.requests == 0 && t.usage.cost_usd == 0.0 {
+        if t.requests == 0
+            && t.usage.cost_usd == 0.0
+            && t.usage.input_tokens == 0
+            && t.usage.output_tokens == 0
+        {
             continue;
         }
         out.insert(label.clone(), t);
@@ -337,6 +341,20 @@ mod tests {
             .expect("day 27 (in progress = cum)");
         assert_eq!(day27.requests, 4);
         assert_eq!(day27.usage.cost_usd, 2.0);
+    }
+
+    #[test]
+    fn daily_keeps_token_only_bucket_drops_empty() {
+        // zero requests + zero cost but non-zero tokens → kept
+        let labels = vec!["2026-09-26".to_string()];
+        let cums = vec![summary(0, 0.0, 5, 0)];
+        let by_day = daily_from_cumulative(&labels, &cums);
+        assert!(by_day.contains_key("2026-09-26"), "token-only bucket kept");
+        // genuinely empty single bucket dropped
+        let labels3 = vec!["2026-09-26".to_string()];
+        let cums3 = vec![summary(0, 0.0, 0, 0)];
+        let by_day3 = daily_from_cumulative(&labels3, &cums3);
+        assert!(by_day3.is_empty(), "empty bucket dropped");
     }
 
     #[test]

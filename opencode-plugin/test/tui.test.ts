@@ -35,4 +35,16 @@ describe("tui plugin definition", () => {
 		expect(app).toBeDefined();
 		expect(app?.render(undefined as never)).toBeUndefined();
 	});
+
+	test("calling setup twice does not double-register slots", () => {
+		const claims: any[] = [];
+		const ctx = {
+			ui: { slot: (claim: any) => void claims.push(claim) },
+			keymap: { layer: () => {} },
+		};
+		tuiPlugin.setup?.(ctx as never);
+		const first = claims.length;
+		tuiPlugin.setup?.(ctx as never);
+		expect(claims.length).toBe(first);
+	});
 });
