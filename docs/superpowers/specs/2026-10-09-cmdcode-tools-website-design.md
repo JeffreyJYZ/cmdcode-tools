@@ -6,18 +6,18 @@ Date: 2026-10-09 Status: approved in conversation; awaiting spec review Scope: n
 
 `JeffreyJYZ/cmdcode-tools` is one repo holding independently published packages across **six projects — six `README.md` docs pages** (the cmduse project groups the `core` / `cmduse` / `opencode-plugin` components and documents them in one README). Components and their published identities:
 
-| Component | Dir | Kind |
-| --- | --- | --- |
-| `cmd-usage` CLI (`cmduse` / `ocuse`) | `cmduse/` | Rust crate (crates.io) |
-| `cmduse-core` | `core/` | Rust crate (crates.io) |
-| `@jeffreyjyz/opencode-command-code` | `opencode-plugin/` | npm plugin |
-| `mpc` | `oc-cmd-compare/` | npm CLI |
-| `reqshape` | `reqshape/` | npm CLI |
-| `@jeffreyjyz/opencode-context` | `opencode-context/` | npm plugin |
-| `@jeffreyjyz/opencode-shell-rc` | `opencode-shell-rc/` | npm plugin |
-| `@jeffreyjyz/opencode-session-dir` | `opencode-session-dir/` | npm plugin |
+| Component                            | Dir                     | Kind                   |
+| ------------------------------------ | ----------------------- | ---------------------- |
+| `cmd-usage` CLI (`cmduse` / `ocuse`) | `cmduse/`               | Rust crate (crates.io) |
+| `cmduse-core`                        | `core/`                 | Rust crate (crates.io) |
+| `@jeffreyjyz/opencode-command-code`  | `opencode-plugin/`      | npm plugin             |
+| `mpc`                                | `oc-cmd-compare/`       | npm CLI                |
+| `reqshape`                           | `reqshape/`             | npm CLI                |
+| `@jeffreyjyz/opencode-context`       | `opencode-context/`     | npm plugin             |
+| `@jeffreyjyz/opencode-shell-rc`      | `opencode-shell-rc/`    | npm plugin             |
+| `@jeffreyjyz/opencode-session-dir`   | `opencode-session-dir/` | npm plugin             |
 
-There is no site today. The repo rule *"docs always move with code — any user-visible change updates the READMEs … in the same commit"* means the site must not become a second copy of the docs.
+There is no site today. The repo rule _"docs always move with code — any user-visible change updates the READMEs … in the same commit"_ means the site must not become a second copy of the docs.
 
 ## Goals
 
@@ -87,14 +87,14 @@ website/
 
 ```ts
 type Project = {
-  slug: string;            // "/docs" route segment
-  name: string;            // display name
-  tagline: string;         // one line (fallback if README has none)
-  kind: "crate" | "npm-plugin" | "npm-cli";
-  repoPath: string;        // e.g. "cmduse" — dir under repo root holding README.md
-  links: { github?: string; npm?: string; crates?: string; source: string };
-  order: number;
-  icon?: string;
+	slug: string; // "/docs" route segment
+	name: string; // display name
+	tagline: string; // one line (fallback if README has none)
+	kind: "crate" | "npm-plugin" | "npm-cli";
+	repoPath: string; // e.g. "cmduse" — dir under repo root holding README.md
+	links: { github?: string; npm?: string; crates?: string; source: string };
+	order: number;
+	icon?: string;
 };
 ```
 
@@ -108,24 +108,24 @@ Title and description for each docs page are **derived** from the README's H1 an
 2. Derive `title` (H1) and `description` (first paragraph); locate and drop the shields badge line.
 3. Rewrite links: relative repo paths → GitHub blob URLs; cross-README links → site routes (`/docs/<slug>`); anchors preserved.
 4. Compile through `next-mdx-remote/rsc` with:
-   - `remark-gfm` (tables), `remark-strip-badges`, `remark-rewrite-links`, TOC extraction;
-   - `rehype-slug`, `rehype-autolink-headings`, `rehype-pretty-code` (shiki, dark theme).
+    - `remark-gfm` (tables), `remark-strip-badges`, `remark-rewrite-links`, TOC extraction;
+    - `rehype-slug`, `rehype-autolink-headings`, `rehype-pretty-code` (shiki, dark theme).
 5. Render through an MDX `components` map styled to the design tokens (headings with anchors, tables, code blocks with `CopyBlock`, links, blockquotes).
 
 READMEs render as one page per project. The sidebar is the docs tree: it lists every project, and the active project's sections (H2, nested H3) appear as anchor links with a scrollspy highlight. There is no separate right-rail TOC — the sections live in the sidebar. Splitting per-H2 into sub-routes is deferred unless it earns its place.
 
 ## Routes
 
-| Route | Content |
-| --- | --- |
-| `/` | Landing: what the repo is, project grid, install one-liners |
-| `/docs` | Docs index (all projects + guides) |
+| Route             | Content                                                                        |
+| ----------------- | ------------------------------------------------------------------------------ |
+| `/`               | Landing: what the repo is, project grid, install one-liners                    |
+| `/docs`           | Docs index (all projects + guides)                                             |
 | `/docs/[project]` | README-rendered project docs; sidebar shows its sections as anchors; prev/next |
-| `/guides` | Guides index |
-| `/guides/[slug]` | Authored MDX guide |
-| `/compare` | Interactive mpc comparison (build-time snapshot) |
-| `/changelog` | Releases timeline (build-time snapshot) |
-| `not-found` | 404 |
+| `/guides`         | Guides index                                                                   |
+| `/guides/[slug]`  | Authored MDX guide                                                             |
+| `/compare`        | Interactive mpc comparison (build-time snapshot)                               |
+| `/changelog`      | Releases timeline (build-time snapshot)                                        |
+| `not-found`       | 404                                                                            |
 
 All routes are statically generated (`output: "export"`), so each dynamic route provides `generateStaticParams` from the manifest / guide list.
 

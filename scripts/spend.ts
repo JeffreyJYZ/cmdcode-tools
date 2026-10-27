@@ -249,8 +249,7 @@ function readTurns(db: Database, sinceMs: number): Turn[] {
 function parse(text: string): Record<string, unknown> | undefined {
 	try {
 		const value: unknown = JSON.parse(text);
-		if (value === null || typeof value !== "object" || Array.isArray(value))
-			return undefined;
+		if (value === null || typeof value !== "object" || Array.isArray(value)) return undefined;
 		return value as Record<string, unknown>;
 	} catch {
 		return undefined;
@@ -318,7 +317,11 @@ const usd = (value: number): string => {
 };
 
 const compact = (value: number): string =>
-	value >= 1e6 ? `${(value / 1e6).toFixed(1)}M` : value >= 1e3 ? `${(value / 1e3).toFixed(1)}K` : `${value}`;
+	value >= 1e6
+		? `${(value / 1e6).toFixed(1)}M`
+		: value >= 1e3
+			? `${(value / 1e3).toFixed(1)}K`
+			: `${value}`;
 
 function main(): void {
 	const opts = parseArgs(process.argv.slice(2));

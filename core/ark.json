@@ -56,38 +56,248 @@
 		{ "id": "enterprise-max", "label": "Enterprise Max", "price": 3000 }
 	],
 	"models": [
-		{ "id": "doubao-seed-2.0-mini", "name": "Doubao Seed 2.0 Mini", "kind": "text", "coef": 0.25, "minPlan": "small", "note": "audio input 2.5" },
-		{ "id": "doubao-seed-2.1-lite", "name": "Doubao Seed 2.1 Lite", "kind": "text", "coef": 0.5, "minPlan": "small" },
-		{ "id": "deepseek-v4-flash", "name": "DeepSeek V4 Flash", "kind": "text", "coef": 0.5, "minPlan": "small" },
-		{ "id": "glm-5.3-flash", "name": "GLM 5.3 Flash", "kind": "text", "coef": 0.5, "minPlan": "small", "note": "image input" },
-		{ "id": "doubao-seed-2.1-pro", "name": "Doubao Seed 2.1 Pro", "kind": "text", "coef": 2.5, "minPlan": "small" },
-		{ "id": "doubao-seed-evolving", "name": "Doubao Seed Evolving", "kind": "text", "coef": 2.5, "minPlan": "small" },
-		{ "id": "minimax-m3", "name": "MiniMax M3", "kind": "text", "coef": 2.5, "minPlan": "small", "note": "retiring" },
-		{ "id": "glm-5.3", "name": "GLM 5.3", "kind": "text", "coef": 4.5, "minPlan": "small", "note": "thinking always on" },
-		{ "id": "kimi-k2.7-code", "name": "Kimi K2.7 Code", "kind": "text", "coef": 4.5, "minPlan": "small", "note": "retiring" },
-		{ "id": "kimi-k2.8-preview", "name": "Kimi K2.8 Preview", "kind": "text", "coef": 8, "promoCoef": 4.8, "promoUntil": "2026-12-14", "minPlan": "small" },
-		{ "id": "deepseek-v4-pro", "name": "DeepSeek V4 Pro", "kind": "text", "coef": 5.5, "minPlan": "small" },
-		{ "id": "kimi-k3", "name": "Kimi K3", "kind": "text", "coef": 10, "promoCoef": 5, "promoUntil": "2026-10-25", "minPlan": "medium", "note": "thinking always on" },
-		{ "id": "deepseek-v4.1-flash", "name": "DeepSeek V4.1 Flash", "kind": "text", "coef": 2.5, "promoCoef": 1.25, "promoUntil": "2026-12-30", "minPlan": "small", "note": "native visual understanding" },
-		{ "id": "doubao-embedding-vision", "name": "Doubao Embedding Vision", "kind": "embedding", "coef": 0.5, "minPlan": "small" },
-		{ "id": "auto-mode", "name": "Auto mode", "kind": "text", "coef": 0.5, "promoCoef": 0.5, "promoUntil": "2026-11-08", "minPlan": "small", "note": "router, not a model" }
+		{
+			"id": "doubao-seed-2.0-mini",
+			"name": "Doubao Seed 2.0 Mini",
+			"kind": "text",
+			"coef": 0.25,
+			"minPlan": "small",
+			"note": "audio input 2.5"
+		},
+		{
+			"id": "doubao-seed-2.1-lite",
+			"name": "Doubao Seed 2.1 Lite",
+			"kind": "text",
+			"coef": 0.5,
+			"minPlan": "small"
+		},
+		{
+			"id": "deepseek-v4-flash",
+			"name": "DeepSeek V4 Flash",
+			"kind": "text",
+			"coef": 0.5,
+			"minPlan": "small"
+		},
+		{
+			"id": "glm-5.3-flash",
+			"name": "GLM 5.3 Flash",
+			"kind": "text",
+			"coef": 0.5,
+			"minPlan": "small",
+			"note": "image input"
+		},
+		{
+			"id": "doubao-seed-2.1-pro",
+			"name": "Doubao Seed 2.1 Pro",
+			"kind": "text",
+			"coef": 2.5,
+			"minPlan": "small"
+		},
+		{
+			"id": "doubao-seed-evolving",
+			"name": "Doubao Seed Evolving",
+			"kind": "text",
+			"coef": 2.5,
+			"minPlan": "small"
+		},
+		{
+			"id": "minimax-m3",
+			"name": "MiniMax M3",
+			"kind": "text",
+			"coef": 2.5,
+			"minPlan": "small",
+			"note": "retiring"
+		},
+		{
+			"id": "glm-5.3",
+			"name": "GLM 5.3",
+			"kind": "text",
+			"coef": 4.5,
+			"minPlan": "small",
+			"note": "thinking always on"
+		},
+		{
+			"id": "kimi-k2.7-code",
+			"name": "Kimi K2.7 Code",
+			"kind": "text",
+			"coef": 4.5,
+			"minPlan": "small",
+			"note": "retiring"
+		},
+		{
+			"id": "kimi-k2.8-preview",
+			"name": "Kimi K2.8 Preview",
+			"kind": "text",
+			"coef": 8,
+			"promoCoef": 4.8,
+			"promoUntil": "2026-12-14",
+			"minPlan": "small"
+		},
+		{
+			"id": "deepseek-v4-pro",
+			"name": "DeepSeek V4 Pro",
+			"kind": "text",
+			"coef": 5.5,
+			"minPlan": "small"
+		},
+		{
+			"id": "kimi-k3",
+			"name": "Kimi K3",
+			"kind": "text",
+			"coef": 10,
+			"promoCoef": 5,
+			"promoUntil": "2026-10-25",
+			"minPlan": "medium",
+			"note": "thinking always on"
+		},
+		{
+			"id": "deepseek-v4.1-flash",
+			"name": "DeepSeek V4.1 Flash",
+			"kind": "text",
+			"coef": 2.5,
+			"promoCoef": 1.25,
+			"promoUntil": "2026-12-30",
+			"minPlan": "small",
+			"note": "native visual understanding"
+		},
+		{
+			"id": "doubao-embedding-vision",
+			"name": "Doubao Embedding Vision",
+			"kind": "embedding",
+			"coef": 0.5,
+			"minPlan": "small"
+		},
+		{
+			"id": "auto-mode",
+			"name": "Auto mode",
+			"kind": "text",
+			"coef": 0.5,
+			"promoCoef": 0.5,
+			"promoUntil": "2026-11-08",
+			"minPlan": "small",
+			"note": "router, not a model"
+		}
 	],
 	"media": [
-		{ "id": "doubao-seedream-5-0-pro", "name": "Seedream 5.0 Pro", "kind": "image", "minPlan": "small", "unit": "images", "coef": 150, "coefHigh": 300, "note": "output per image ≤1.5K / >1.5K; input image 1 free, then 10; layer split 75/150" },
-		{ "id": "doubao-seedance-2.0", "name": "Seedance 2.0", "kind": "video", "minPlan": "large", "unit": "tokens/10k", "coef": 80, "coefHigh": 255, "note": "70–255 by resolution and input-video" },
-		{ "id": "doubao-seedance-2.0-fast", "name": "Seedance 2.0 Fast", "kind": "video", "minPlan": "large", "unit": "tokens/10k", "coef": 110, "coefHigh": 185 },
-		{ "id": "doubao-seedance-2.0-mini", "name": "Seedance 2.0 Mini", "kind": "video", "minPlan": "large", "unit": "tokens/10k", "coef": 70, "coefHigh": 115 },
-		{ "id": "doubao-seedance-2.5", "name": "Seedance 2.5", "kind": "video", "minPlan": "large", "unit": "tokens/10k", "coef": 210, "coefHigh": 385 },
-		{ "id": "doubao-seed-tts-2.0", "name": "Seed TTS 2.0", "kind": "voice", "minPlan": "small", "unit": "chars/10k", "coef": 1350 },
-		{ "id": "doubao-seed-asr-2.0", "name": "Seed ASR 2.0", "kind": "voice", "minPlan": "small", "unit": "hours", "coef": 450 }
+		{
+			"id": "doubao-seedream-5-0-pro",
+			"name": "Seedream 5.0 Pro",
+			"kind": "image",
+			"minPlan": "small",
+			"unit": "images",
+			"coef": 150,
+			"coefHigh": 300,
+			"note": "output per image ≤1.5K / >1.5K; input image 1 free, then 10; layer split 75/150"
+		},
+		{
+			"id": "doubao-seedance-2.0",
+			"name": "Seedance 2.0",
+			"kind": "video",
+			"minPlan": "large",
+			"unit": "tokens/10k",
+			"coef": 80,
+			"coefHigh": 255,
+			"note": "70–255 by resolution and input-video"
+		},
+		{
+			"id": "doubao-seedance-2.0-fast",
+			"name": "Seedance 2.0 Fast",
+			"kind": "video",
+			"minPlan": "large",
+			"unit": "tokens/10k",
+			"coef": 110,
+			"coefHigh": 185
+		},
+		{
+			"id": "doubao-seedance-2.0-mini",
+			"name": "Seedance 2.0 Mini",
+			"kind": "video",
+			"minPlan": "large",
+			"unit": "tokens/10k",
+			"coef": 70,
+			"coefHigh": 115
+		},
+		{
+			"id": "doubao-seedance-2.5",
+			"name": "Seedance 2.5",
+			"kind": "video",
+			"minPlan": "large",
+			"unit": "tokens/10k",
+			"coef": 210,
+			"coefHigh": 385
+		},
+		{
+			"id": "doubao-seed-tts-2.0",
+			"name": "Seed TTS 2.0",
+			"kind": "voice",
+			"minPlan": "small",
+			"unit": "chars/10k",
+			"coef": 1350
+		},
+		{
+			"id": "doubao-seed-asr-2.0",
+			"name": "Seed ASR 2.0",
+			"kind": "voice",
+			"minPlan": "small",
+			"unit": "hours",
+			"coef": 450
+		}
 	],
 	"harness": [
-		{ "id": "datasets", "name": "专业数据集", "kind": "harness", "minPlan": "small", "unit": "calls", "coef": 12, "coefHigh": 240 },
-		{ "id": "doubao-search", "name": "豆包搜索", "kind": "harness", "minPlan": "small", "unit": "calls", "coef": 5, "free": 500 },
-		{ "id": "agent-memory", "name": "Agent 记忆", "kind": "harness", "minPlan": "small", "unit": "hours", "coef": 5, "free": 50 },
-		{ "id": "evolve", "name": "Agent 进化", "kind": "harness", "minPlan": "small", "unit": "tokens/1M", "coef": 250, "free": 50 },
-		{ "id": "cua", "name": "Computer Use Agent", "kind": "harness", "minPlan": "medium", "unit": "CU-hours", "coef": 312.5, "promoCoef": 62.5, "note": "docs conflict: plan matrix says Medium+, harness rules say Large/Max" },
-		{ "id": "ai-native", "name": "AI Native 底座", "kind": "harness", "minPlan": "small", "unit": "rate × quantity", "coef": 250 }
+		{
+			"id": "datasets",
+			"name": "专业数据集",
+			"kind": "harness",
+			"minPlan": "small",
+			"unit": "calls",
+			"coef": 12,
+			"coefHigh": 240
+		},
+		{
+			"id": "doubao-search",
+			"name": "豆包搜索",
+			"kind": "harness",
+			"minPlan": "small",
+			"unit": "calls",
+			"coef": 5,
+			"free": 500
+		},
+		{
+			"id": "agent-memory",
+			"name": "Agent 记忆",
+			"kind": "harness",
+			"minPlan": "small",
+			"unit": "hours",
+			"coef": 5,
+			"free": 50
+		},
+		{
+			"id": "evolve",
+			"name": "Agent 进化",
+			"kind": "harness",
+			"minPlan": "small",
+			"unit": "tokens/1M",
+			"coef": 250,
+			"free": 50
+		},
+		{
+			"id": "cua",
+			"name": "Computer Use Agent",
+			"kind": "harness",
+			"minPlan": "medium",
+			"unit": "CU-hours",
+			"coef": 312.5,
+			"promoCoef": 62.5,
+			"note": "docs conflict: plan matrix says Medium+, harness rules say Large/Max"
+		},
+		{
+			"id": "ai-native",
+			"name": "AI Native 底座",
+			"kind": "harness",
+			"minPlan": "small",
+			"unit": "rate × quantity",
+			"coef": 250
+		}
 	],
 	"notes": {
 		"formula": "AFP = (input + cache_read + output) × coef / 10,000 — cache-read is billed (measured)",

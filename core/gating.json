@@ -90,9 +90,7 @@
 	},
 	"plans": {
 		"individual-go": {
-			"allowedCategories": [
-				"opensource"
-			],
+			"allowedCategories": ["opensource"],
 			"blockedModels": [
 				"vercel-ai-gateway:meta/muse-spark-1.2",
 				"vercel-ai-gateway:meta/muse-spark-1.3",
@@ -106,9 +104,7 @@
 			]
 		},
 		"individual-go-v1": {
-			"allowedCategories": [
-				"opensource"
-			],
+			"allowedCategories": ["opensource"],
 			"blockedModels": [
 				"vercel-ai-gateway:meta/muse-spark-1.2",
 				"vercel-ai-gateway:meta/muse-spark-1.3",
@@ -122,16 +118,11 @@
 			]
 		},
 		"individual-goat": {
-			"allowedCategories": [
-				"opensource"
-			],
+			"allowedCategories": ["opensource"],
 			"blockedModels": []
 		},
 		"individual-pro": {
-			"allowedCategories": [
-				"premium",
-				"opensource"
-			],
+			"allowedCategories": ["premium", "opensource"],
 			"blockedModels": [
 				"anthropic:claude-fable-5-1",
 				"anthropic:claude-fable-5",
@@ -147,10 +138,7 @@
 			]
 		},
 		"individual-pro-v1": {
-			"allowedCategories": [
-				"premium",
-				"opensource"
-			],
+			"allowedCategories": ["premium", "opensource"],
 			"blockedModels": [
 				"anthropic:claude-fable-5-1",
 				"anthropic:claude-fable-5",
@@ -166,33 +154,19 @@
 			]
 		},
 		"individual-provider": {
-			"allowedCategories": [
-				"premium",
-				"opensource"
-			],
-			"blockedModels": [
-				"openai:gpt-6.1-sol"
-			]
+			"allowedCategories": ["premium", "opensource"],
+			"blockedModels": ["openai:gpt-6.1-sol"]
 		},
 		"individual-max": {
-			"allowedCategories": [
-				"premium",
-				"opensource"
-			],
+			"allowedCategories": ["premium", "opensource"],
 			"blockedModels": []
 		},
 		"individual-ultra": {
-			"allowedCategories": [
-				"premium",
-				"opensource"
-			],
+			"allowedCategories": ["premium", "opensource"],
 			"blockedModels": []
 		},
 		"teams-pro": {
-			"allowedCategories": [
-				"premium",
-				"opensource"
-			],
+			"allowedCategories": ["premium", "opensource"],
 			"blockedModels": []
 		}
 	},

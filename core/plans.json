@@ -28,8 +28,20 @@
 		{ "name": "GOAT", "price": "$10", "monthly": "$70", "fiveHour": "$14", "weekly": "$35" },
 		{ "name": "Pro", "price": "$20", "monthly": "$80", "fiveHour": "$16", "weekly": "$40" },
 		{ "name": "Provider", "price": "$15", "monthly": "PAYG", "fiveHour": "—", "weekly": "—" },
-		{ "name": "Max 10x", "price": "$100", "monthly": "$150", "fiveHour": "$45", "weekly": "$90" },
-		{ "name": "Max 20x", "price": "$200", "monthly": "$300", "fiveHour": "$90", "weekly": "$180" },
+		{
+			"name": "Max 10x",
+			"price": "$100",
+			"monthly": "$150",
+			"fiveHour": "$45",
+			"weekly": "$90"
+		},
+		{
+			"name": "Max 20x",
+			"price": "$200",
+			"monthly": "$300",
+			"fiveHour": "$90",
+			"weekly": "$180"
+		},
 		{ "name": "Team Pro", "price": "$40", "monthly": "$40", "fiveHour": "$12", "weekly": "$24" }
 	]
 }

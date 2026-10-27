@@ -2,30 +2,30 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/JeffreyJYZ/cmdcode-tools/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/JeffreyJYZ/cmdcode-tools/actions/workflows/ci.yml) [![crates.io](https://img.shields.io/crates/v/cmd-usage?style=flat-square)](https://crates.io/crates/cmd-usage) [![npm](https://img.shields.io/npm/v/@jeffreyjyz/opencode-command-code?style=flat-square)](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code) [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](#license)
 
-Personal tooling for [opencode](https://opencode.ai) and Command Code, kept in one repo. Each subdirectory is an independent package — Cargo crates, npm plugins, and CLIs — sharing no code; coupling is by *installed* binaries and published plugins (via env vars such as `CMDUSE_BIN` / `MPC_BIN` / `REQSHAPE_BIN`, each defaulting to the global command name), never by a relative path. This repo was formerly the standalone `cmduse` repo plus five sibling repos, now folded together at the root.
+Personal tooling for [opencode](https://opencode.ai) and Command Code, kept in one repo. Each subdirectory is an independent package — Cargo crates, npm plugins, and CLIs — sharing no code; coupling is by _installed_ binaries and published plugins (via env vars such as `CMDUSE_BIN` / `MPC_BIN` / `REQSHAPE_BIN`, each defaulting to the global command name), never by a relative path. This repo was formerly the standalone `cmduse` repo plus five sibling repos, now folded together at the root.
 
 ## Projects
 
-| Project | Dir | What it is |
-| --- | --- | --- |
-| cmduse | [`core/`](core) · [`cmduse/`](cmduse) · [`opencode-plugin/`](opencode-plugin) | Everything Command Code usage: the `cmd-usage` CLI (`cmduse` / `ocuse` / `arkuse`), the shared `cmduse-core`, and the opencode plugin (`@jeffreyjyz/opencode-command-code`). |
-| [`mpc`](oc-cmd-compare) | `oc-cmd-compare/` | Compare model pricing across OpenCode Go and Command Code plans. |
-| [`reqshape`](reqshape) | `reqshape/` | Measure the shape of your requests from opencode's own history, then price it against any model. |
-| [opencode-context](opencode-context) | `opencode-context/` | opencode plugin: a `/context` dialog plus a `context_breakdown` tool showing where the window went. |
-| [opencode-shell-rc](opencode-shell-rc) | `opencode-shell-rc/` | opencode plugin: make the agent's non-interactive `zsh` load your aliases and functions via a fast `ZDOTDIR` shim. |
-| [opencode-session-dir](opencode-session-dir) | `opencode-session-dir/` | opencode plugin: bind extra working directories to a single session, durably across restarts. |
+| Project                                      | Dir                                                                           | What it is                                                                                                                                                                   |
+| -------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| cmduse                                       | [`core/`](core) · [`cmduse/`](cmduse) · [`opencode-plugin/`](opencode-plugin) | Everything Command Code usage: the `cmd-usage` CLI (`cmduse` / `ocuse` / `arkuse`), the shared `cmduse-core`, and the opencode plugin (`@jeffreyjyz/opencode-command-code`). |
+| [`mpc`](oc-cmd-compare)                      | `oc-cmd-compare/`                                                             | Compare model pricing across OpenCode Go and Command Code plans.                                                                                                             |
+| [`reqshape`](reqshape)                       | `reqshape/`                                                                   | Measure the shape of your requests from opencode's own history, then price it against any model.                                                                             |
+| [opencode-context](opencode-context)         | `opencode-context/`                                                           | opencode plugin: a `/context` dialog plus a `context_breakdown` tool showing where the window went.                                                                          |
+| [opencode-shell-rc](opencode-shell-rc)       | `opencode-shell-rc/`                                                          | opencode plugin: make the agent's non-interactive `zsh` load your aliases and functions via a fast `ZDOTDIR` shim.                                                           |
+| [opencode-session-dir](opencode-session-dir) | `opencode-session-dir/`                                                       | opencode plugin: bind extra working directories to a single session, durably across restarts.                                                                                |
 
 Everything Command Code (commandcode.ai) usage lives under `core/` + `cmduse/` + `opencode-plugin/`: a terminal dashboard with a built-in MCP server, and an opencode provider. One Cargo workspace shares the plan table and window math via `cmduse-core`; the opencode plugin is a separate TS package that registers the providers and delegates usage rendering to the `cmduse` CLI. The three `opencode-*` plugins are opencode v2 plugins (server half, and a TUI half where needed). See each project's `AGENTS.md` for design rules and the traps found the hard way.
 
 ## cmduse components
 
-| Component | Crate / dir | Install | Docs |
-|---|---|---|---|
-| `cmduse` CLI | `cmduse/` (crate `cmd-usage`, bin `cmduse`) | [crates.io](https://crates.io/crates/cmd-usage) · [brew](https://github.com/JeffreyJYZ/homebrew-tap) | **[cmduse/README.md](cmduse/README.md)** · [man page](cmduse/cmduse.1) |
-| `ocuse` (same crate) | `cmduse/` (bin `ocuse`) | same crate as `cmduse` | OpenCode Go/Zen usage — Go's own usage endpoint plus local data — see below |
-| `arkuse` (same crate) | `cmduse/` (bin `arkuse`) | same crate as `cmduse` | Volcengine ARK Agent Plan usage in AFP — control-plane meters plus local data — see below |
-| Shared core | `core/` (crate `cmduse-core`) | [crates.io](https://crates.io/crates/cmduse-core) | [docs.rs/cmduse-core](https://docs.rs/cmduse-core) · versioned on its own `2.x` line, not as a pair with the CLI |
-| opencode plugin | `opencode-plugin/` (`@jeffreyjyz/opencode-command-code`) | [npm](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code) | [opencode-plugin/src/index.ts](opencode-plugin/src/index.ts) |
+| Component             | Crate / dir                                              | Install                                                                                              | Docs                                                                                                             |
+| --------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `cmduse` CLI          | `cmduse/` (crate `cmd-usage`, bin `cmduse`)              | [crates.io](https://crates.io/crates/cmd-usage) · [brew](https://github.com/JeffreyJYZ/homebrew-tap) | **[cmduse/README.md](cmduse/README.md)** · [man page](cmduse/cmduse.1)                                           |
+| `ocuse` (same crate)  | `cmduse/` (bin `ocuse`)                                  | same crate as `cmduse`                                                                               | OpenCode Go/Zen usage — Go's own usage endpoint plus local data — see below                                      |
+| `arkuse` (same crate) | `cmduse/` (bin `arkuse`)                                 | same crate as `cmduse`                                                                               | Volcengine ARK Agent Plan usage in AFP — control-plane meters plus local data — see below                        |
+| Shared core           | `core/` (crate `cmduse-core`)                            | [crates.io](https://crates.io/crates/cmduse-core)                                                    | [docs.rs/cmduse-core](https://docs.rs/cmduse-core) · versioned on its own `2.x` line, not as a pair with the CLI |
+| opencode plugin       | `opencode-plugin/` (`@jeffreyjyz/opencode-command-code`) | [npm](https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code)                               | [opencode-plugin/src/index.ts](opencode-plugin/src/index.ts)                                                     |
 
 ## Install the CLI
 
@@ -78,7 +78,7 @@ Install (opencode v2 uses `plugins`; v1's singular `plugin` is auto-normalized):
 
 ```json
 {
-  "plugins": ["@jeffreyjyz/opencode-command-code"]
+	"plugins": ["@jeffreyjyz/opencode-command-code"]
 }
 ```
 
@@ -143,11 +143,11 @@ Two differences from `cmduse` are worth knowing up front, both from upstream:
 - **Go has a usage API, and `ocuse` reads it.** `GET https://opencode.ai/zen/go/v1/usage` (the credential `/connect` stored, or `OCUSE_API_KEY`/`OPENCODE_API_KEY`) answers the console's three meters — `rolling` (5-hour), `weekly` and `monthly`, each a percent and a reset instant. Those are the only window figures that agree with `opencode.ai/console`, because the server's windows are not local ones: its 5-hour window is a block with its own reset, its week is anchored to Monday 00:00 UTC, its month is the subscription anniversary, and it meters with its own price basis. Everything else — per-model totals, `daily`/`hourly`, the model table — comes from local usage: opencode.db, which records `cost`, tokens and the model for every request, for both providers, plus the `pi` and `dsh` session logs on the same providers, so the totals are not opencode's alone (the header names each client it read). With no key, no network, or `--no-api`, the windows fall back to a **local estimate** and the dashboard says so.
 - **Go's allowance is per model**, not per account: each model has a monthly dollar limit, with windows of 5h = 20%, weekly = 50%, monthly = 100%. The dashboard shows each model against its own limit, and the header's window lines sum the caps of the models you used. Go ships **two plans** — Go ($10/mo) and Go Plus ($40/mo) — with the same token prices but different per-model limits; nothing local records which one you have (the subscription lives in the console, and the usage endpoint reports percentages rather than a plan id), so select it with `--plan go|go-plus` (default `go`).
 
-The monthly *period* comes from the endpoint's own reset instant when it answers (the billing anniversary, which is why the dashboard reads `Go billing month`); without it the default is the calendar month, `--period-start YYYY-MM-DD` pins a real one and `--window all|<n>d` reports other ranges (inference from your first Go request exists behind `--infer-anniversary`, but it guesses wrong on sparse history).
+The monthly _period_ comes from the endpoint's own reset instant when it answers (the billing anniversary, which is why the dashboard reads `Go billing month`); without it the default is the calendar month, `--period-start YYYY-MM-DD` pins a real one and `--window all|<n>d` reports other ranges (inference from your first Go request exists behind `--infer-anniversary`, but it guesses wrong on sparse history).
 
 Limits and rates come from `core/zen.json`, regenerated with `bun scripts/extract-zen.ts` from OpenCode's own docs sources.
 
-The watch frame is `cmduse`'s: the same palette, severity-coloured gauges (green <70%, yellow 70–90%, red ≥90%), an over-cap window flagged `LIMIT EXCEEDED`, and in-place redraw, so resizing or a shrinking frame never scrolls. A model over any of its own windows carries the same flag beside its name — Go meters per model *and* per window, so being over the 5-hour cap counts like being over the month — and every row ends with that model's share of the period's spend. A spend-burst sparkline appears once the 5-hour window moves between refreshes (delta spend, not the cumulative figure — that only ever rises). Every subcommand colours the same way — `daily`, `hourly`, `session`, `model`, `plans` and `statusline` included, with secondary text dimmed and figures in cyan. `--plain`, `NO_COLOR` and a piped stdout drop the colour and the gauges, so scripted output stays escape-free.
+The watch frame is `cmduse`'s: the same palette, severity-coloured gauges (green <70%, yellow 70–90%, red ≥90%), an over-cap window flagged `LIMIT EXCEEDED`, and in-place redraw, so resizing or a shrinking frame never scrolls. A model over any of its own windows carries the same flag beside its name — Go meters per model _and_ per window, so being over the 5-hour cap counts like being over the month — and every row ends with that model's share of the period's spend. A spend-burst sparkline appears once the 5-hour window moves between refreshes (delta spend, not the cumulative figure — that only ever rises). Every subcommand colours the same way — `daily`, `hourly`, `session`, `model`, `plans` and `statusline` included, with secondary text dimmed and figures in cyan. `--plain`, `NO_COLOR` and a piped stdout drop the colour and the gauges, so scripted output stays escape-free.
 
 ## Volcengine ARK Agent Plan usage (`arkuse`)
 
@@ -182,9 +182,9 @@ Zed (`~/.config/zed/settings.json`):
 
 ```json
 {
-  "context_servers": {
-    "cmduse": { "source": "custom", "command": "cmduse", "args": ["mcp"] }
-  }
+	"context_servers": {
+		"cmduse": { "source": "custom", "command": "cmduse", "args": ["mcp"] }
+	}
 }
 ```
 

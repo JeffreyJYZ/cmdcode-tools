@@ -62,7 +62,9 @@ async function loadCliMjs(): Promise<{ src: string; version: string }> {
 	try {
 		return await fetchPublished();
 	} catch (error) {
-		console.warn(`[extract-gating] published bundle unavailable (${(error as Error).message}); falling back to a local install`);
+		console.warn(
+			`[extract-gating] published bundle unavailable (${(error as Error).message}); falling back to a local install`,
+		);
 	}
 	const local = findCliMjs();
 	console.log(`[extract-gating] using local ${local}`);
@@ -84,11 +86,17 @@ const CDNS = [
 ];
 
 /** One member of the published package, from the tarball first then the CDNs. */
-async function publishedMember(version: string, member: string, cdn?: (base: string, v: string) => string): Promise<string> {
+async function publishedMember(
+	version: string,
+	member: string,
+	cdn?: (base: string, v: string) => string,
+): Promise<string> {
 	try {
 		const dir = mkdtempSync(join(tmpdir(), "cc-pkg-"));
 		const file = join(dir, "p.tgz");
-		const response = await fetch(`https://registry.npmjs.org/command-code/-/command-code-${version}.tgz`);
+		const response = await fetch(
+			`https://registry.npmjs.org/command-code/-/command-code-${version}.tgz`,
+		);
 		if (!response.ok) throw new Error(`tarball ${response.status}`);
 		writeFileSync(file, Buffer.from(await response.arrayBuffer()));
 		const tar = Bun.spawnSync(["tar", "-xzOf", file, `package/${member}`]);
@@ -106,7 +114,11 @@ async function publishedMember(version: string, member: string, cdn?: (base: str
 	let last = "";
 	for (const cdnBase of CDNS) {
 		const url = cdn ? cdn(cdnBase, version) : `${cdnBase}/command-code@${version}/${member}`;
-		const response = await fetch(url).catch((error) => ({ ok: false, status: 0, text: async () => String(error) }));
+		const response = await fetch(url).catch((error) => ({
+			ok: false,
+			status: 0,
+			text: async () => String(error),
+		}));
 		const body = response.ok ? await response.text() : "";
 		if (body.length > 0) {
 			console.warn(`[extract] ${member} from ${new URL(url).host} (${body.length} bytes)`);
@@ -245,10 +257,8 @@ for (const m of src.matchAll(/([A-Za-z_$][\w$]*)=(\["[^[\]]*"\])/g)) {
 }
 const plansLiteral = objectLiteralAfter(generation.plans)
 	.replace(/blockedModels:([A-Za-z_$][\w$]*)=\[/g, "blockedModels:[")
-	.replace(
-		/blockedModels:([A-Za-z_$][\w$]*)(?![\w$])/g,
-		(all, id: string) =>
-			arrayVars.has(id) ? `blockedModels:${arrayVars.get(id)}` : all,
+	.replace(/blockedModels:([A-Za-z_$][\w$]*)(?![\w$])/g, (all, id: string) =>
+		arrayVars.has(id) ? `blockedModels:${arrayVars.get(id)}` : all,
 	);
 const plans: Record<string, { allowedCategories: string[]; blockedModels: string[] }> = {};
 for (const m of expand(plansLiteral).matchAll(

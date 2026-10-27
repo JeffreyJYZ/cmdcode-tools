@@ -1,0 +1,8 @@
+node_modules
+**/dist
+**/.next
+**/target
+website/public/pagefind
+bun.lock
+website/bun.lock
+Cargo.lock
