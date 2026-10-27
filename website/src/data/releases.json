@@ -1,6 +1,13 @@
 {
-	"generatedAt": "2026-10-25T13:55:24.368Z",
+	"generatedAt": "2026-10-27T12:17:14.122Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.7.30",
+			"name": "cmduse-v0.7.30",
+			"publishedAt": "2026-10-27T09:53:22Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.30",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.29...cmduse-v0.7.30"
+		},
 		{
 			"tag": "cmduse-v0.7.29",
 			"name": "cmduse-v0.7.29",
@@ -208,6 +215,12 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.5"
 		},
 		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.6",
+			"date": "2026-10-27T09:50:13.562Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.6"
+		},
+		{
 			"package": "@jeffreyjyz/reqshape",
 			"version": "0.1.0",
 			"date": "2026-10-09T10:50:40.200Z",
@@ -236,6 +249,12 @@
 			"version": "0.2.1",
 			"date": "2026-10-25T13:38:39.652Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.2.1"
+		},
+		{
+			"package": "@jeffreyjyz/reqshape",
+			"version": "0.2.2",
+			"date": "2026-10-27T09:50:11.297Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/reqshape/v/0.2.2"
 		},
 		{
 			"package": "@jeffreyjyz/opencode-command-code",
@@ -578,6 +597,12 @@
 			"version": "0.5.21",
 			"date": "2026-10-25T08:57:42.463Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.21"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.22",
+			"date": "2026-10-27T09:50:31.131Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.22"
 		},
 		{
 			"package": "@jeffreyjyz/opencode-context",
