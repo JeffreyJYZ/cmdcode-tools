@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-10-27T12:17:14.122Z",
+	"generatedAt": "2026-10-27T18:06:52.485Z",
 	"github": [
 		{
 			"tag": "cmduse-v0.7.30",
@@ -692,6 +692,12 @@
 	"crates": [
 		{
 			"crate": "cmd-usage",
+			"version": "0.7.30",
+			"date": "2026-10-27T14:26:04.237606Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.30"
+		},
+		{
+			"crate": "cmd-usage",
 			"version": "0.7.29",
 			"date": "2026-10-25T07:37:31.355375Z",
 			"url": "https://crates.io/crates/cmd-usage/0.7.29"
@@ -1115,6 +1121,12 @@
 			"version": "0.1.0",
 			"date": "2026-09-04T07:50:07.640696Z",
 			"url": "https://crates.io/crates/cmd-usage/0.1.0"
+		},
+		{
+			"crate": "cmduse-core",
+			"version": "2.2.1",
+			"date": "2026-10-27T14:25:42.995185Z",
+			"url": "https://crates.io/crates/cmduse-core/2.2.1"
 		},
 		{
 			"crate": "cmduse-core",
