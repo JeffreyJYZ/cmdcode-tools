@@ -33,6 +33,7 @@ export const NAV_LINKS = [
 	{ href: "/guides", label: "Guides" },
 	{ href: "/compare", label: "Compare" },
 	{ href: "/changelog", label: "Changelog" },
+	{ href: "https://jyz.land", label: "jyz.land" },
 ] as const;
 
 export type { Project } from "@/content/projects";
