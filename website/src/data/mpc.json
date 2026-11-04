@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-04T07:25:41.103Z",
+	"generatedAt": "2026-11-04T21:34:00.455Z",
 	"plans": [
 		{
 			"key": "go",
@@ -47,13 +47,13 @@
 			"key": "go",
 			"label": "Go",
 			"price": 10,
-			"credits": 1050
+			"credits": 1110
 		},
 		{
 			"key": "go-plus",
 			"label": "Go Plus",
 			"price": 40,
-			"credits": 3250
+			"credits": 3490
 		}
 	],
 	"byPlan": {
@@ -2122,6 +2122,33 @@
 						}
 					},
 					{
+						"key": "hy4",
+						"name": "Hy4",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.834,
+								"output": 2.501,
+								"cacheRead": 0.042,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 18363.224582236642,
+							"requestsPerFiveHour": 3672.644916447329,
+							"requestsPerWeek": 9181.612291118321,
+							"costPerRequest": 0.0032673999999999997,
+							"payPerRequest": 0.0005445666666666665,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 60,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
 						"key": "hy4preview",
 						"name": "Tencent Hy4 Preview",
 						"oc": {
@@ -2346,7 +2373,7 @@
 					"ocWins": 1,
 					"ccWins": 21,
 					"ties": 1,
-					"ocOnly": 7,
+					"ocOnly": 8,
 					"ccOnly": 36
 				}
 			},
@@ -4414,6 +4441,33 @@
 						}
 					},
 					{
+						"key": "hy4",
+						"name": "Hy4",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.834,
+								"output": 2.501,
+								"cacheRead": 0.042,
+								"cacheWrite": null
+							},
+							"allowance": 240,
+							"requestsPerMonth": 73452.89832894657,
+							"requestsPerFiveHour": 14690.579665789315,
+							"requestsPerWeek": 36726.449164473284,
+							"costPerRequest": 0.0032673999999999997,
+							"payPerRequest": 0.0005445666666666665,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 73,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
 						"key": "hy4preview",
 						"name": "Tencent Hy4 Preview",
 						"oc": {
@@ -4638,7 +4692,7 @@
 					"ocWins": 0,
 					"ccWins": 23,
 					"ties": 0,
-					"ocOnly": 7,
+					"ocOnly": 8,
 					"ccOnly": 36
 				}
 			}
@@ -6966,6 +7020,33 @@
 						}
 					},
 					{
+						"key": "hy4",
+						"name": "Hy4",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.834,
+								"output": 2.501,
+								"cacheRead": 0.042,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 18363.224582236642,
+							"requestsPerFiveHour": 3672.644916447329,
+							"requestsPerWeek": 9181.612291118321,
+							"costPerRequest": 0.0032673999999999997,
+							"payPerRequest": 0.0005445666666666665,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 50,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
 						"key": "hy4preview",
 						"name": "Tencent Hy4 Preview",
 						"oc": {
@@ -7271,7 +7352,7 @@
 					"ocWins": 8,
 					"ccWins": 14,
 					"ties": 3,
-					"ocOnly": 5,
+					"ocOnly": 6,
 					"ccOnly": 47
 				}
 			},
@@ -9597,6 +9678,33 @@
 						}
 					},
 					{
+						"key": "hy4",
+						"name": "Hy4",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.834,
+								"output": 2.501,
+								"cacheRead": 0.042,
+								"cacheWrite": null
+							},
+							"allowance": 240,
+							"requestsPerMonth": 73452.89832894657,
+							"requestsPerFiveHour": 14690.579665789315,
+							"requestsPerWeek": 36726.449164473284,
+							"costPerRequest": 0.0032673999999999997,
+							"payPerRequest": 0.0005445666666666665,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 70,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
 						"key": "hy4preview",
 						"name": "Tencent Hy4 Preview",
 						"oc": {
@@ -9902,7 +10010,7 @@
 					"ocWins": 8,
 					"ccWins": 16,
 					"ties": 1,
-					"ocOnly": 5,
+					"ocOnly": 6,
 					"ccOnly": 47
 				}
 			}
@@ -12656,6 +12764,33 @@
 						}
 					},
 					{
+						"key": "hy4",
+						"name": "Hy4",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.834,
+								"output": 2.501,
+								"cacheRead": 0.042,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 18363.224582236642,
+							"requestsPerFiveHour": 3672.644916447329,
+							"requestsPerWeek": 9181.612291118321,
+							"costPerRequest": 0.0032673999999999997,
+							"payPerRequest": 0.0005445666666666665,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 48,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
 						"key": "hy4preview",
 						"name": "Tencent Hy4 Preview",
 						"oc": {
@@ -12961,7 +13096,7 @@
 					"ocWins": 15,
 					"ccWins": 2,
 					"ties": 9,
-					"ocOnly": 4,
+					"ocOnly": 5,
 					"ccOnly": 62
 				}
 			},
@@ -15713,6 +15848,33 @@
 						}
 					},
 					{
+						"key": "hy4",
+						"name": "Hy4",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.834,
+								"output": 2.501,
+								"cacheRead": 0.042,
+								"cacheWrite": null
+							},
+							"allowance": 240,
+							"requestsPerMonth": 73452.89832894657,
+							"requestsPerFiveHour": 14690.579665789315,
+							"requestsPerWeek": 36726.449164473284,
+							"costPerRequest": 0.0032673999999999997,
+							"payPerRequest": 0.0005445666666666665,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 66,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
 						"key": "hy4preview",
 						"name": "Tencent Hy4 Preview",
 						"oc": {
@@ -16018,7 +16180,7 @@
 					"ocWins": 14,
 					"ccWins": 4,
 					"ties": 8,
-					"ocOnly": 4,
+					"ocOnly": 5,
 					"ccOnly": 62
 				}
 			}
@@ -18901,6 +19063,33 @@
 						}
 					},
 					{
+						"key": "hy4",
+						"name": "Hy4",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.834,
+								"output": 2.501,
+								"cacheRead": 0.042,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 18363.224582236642,
+							"requestsPerFiveHour": 3672.644916447329,
+							"requestsPerWeek": 9181.612291118321,
+							"costPerRequest": 0.0032673999999999997,
+							"payPerRequest": 0.0005445666666666665,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 39,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
 						"key": "hy4preview",
 						"name": "Tencent Hy4 Preview",
 						"oc": {
@@ -19359,7 +19548,7 @@
 					"ocWins": 15,
 					"ccWins": 4,
 					"ties": 7,
-					"ocOnly": 4,
+					"ocOnly": 5,
 					"ccOnly": 73
 				}
 			},
@@ -22240,6 +22429,33 @@
 						}
 					},
 					{
+						"key": "hy4",
+						"name": "Hy4",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.834,
+								"output": 2.501,
+								"cacheRead": 0.042,
+								"cacheWrite": null
+							},
+							"allowance": 240,
+							"requestsPerMonth": 73452.89832894657,
+							"requestsPerFiveHour": 14690.579665789315,
+							"requestsPerWeek": 36726.449164473284,
+							"costPerRequest": 0.0032673999999999997,
+							"payPerRequest": 0.0005445666666666665,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 49,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
 						"key": "hy4preview",
 						"name": "Tencent Hy4 Preview",
 						"oc": {
@@ -22698,7 +22914,7 @@
 					"ocWins": 16,
 					"ccWins": 4,
 					"ties": 6,
-					"ocOnly": 4,
+					"ocOnly": 5,
 					"ccOnly": 73
 				}
 			}
@@ -25581,6 +25797,33 @@
 						}
 					},
 					{
+						"key": "hy4",
+						"name": "Hy4",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.834,
+								"output": 2.501,
+								"cacheRead": 0.042,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 18363.224582236642,
+							"requestsPerFiveHour": 3672.644916447329,
+							"requestsPerWeek": 9181.612291118321,
+							"costPerRequest": 0.0032673999999999997,
+							"payPerRequest": 0.0005445666666666665,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 36,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
 						"key": "hy4preview",
 						"name": "Tencent Hy4 Preview",
 						"oc": {
@@ -26039,7 +26282,7 @@
 					"ocWins": 15,
 					"ccWins": 4,
 					"ties": 7,
-					"ocOnly": 4,
+					"ocOnly": 5,
 					"ccOnly": 73
 				}
 			},
@@ -28920,6 +29163,33 @@
 						}
 					},
 					{
+						"key": "hy4",
+						"name": "Hy4",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.834,
+								"output": 2.501,
+								"cacheRead": 0.042,
+								"cacheWrite": null
+							},
+							"allowance": 240,
+							"requestsPerMonth": 73452.89832894657,
+							"requestsPerFiveHour": 14690.579665789315,
+							"requestsPerWeek": 36726.449164473284,
+							"costPerRequest": 0.0032673999999999997,
+							"payPerRequest": 0.0005445666666666665,
+							"multiplier": 6,
+							"ability": null,
+							"tps": null,
+							"index": 42,
+							"valueIndex": null,
+							"free": false
+						},
+						"cc": null
+					},
+					{
 						"key": "hy4preview",
 						"name": "Tencent Hy4 Preview",
 						"oc": {
@@ -29378,7 +29648,7 @@
 					"ocWins": 16,
 					"ccWins": 4,
 					"ties": 6,
-					"ocOnly": 4,
+					"ocOnly": 5,
 					"ccOnly": 73
 				}
 			}
