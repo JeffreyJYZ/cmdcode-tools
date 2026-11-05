@@ -30,6 +30,13 @@ export const GUARDS_FILE = "guards.zsh";
 export const SHELL_RC_CONFIG = "shell-rc.json";
 
 /**
+ * The custom environment the config exports into agent shells. The file is only
+ * written when the config names at least one variable: the shim's `-f` test then
+ * skips the source entirely instead of reading a no-op script per command.
+ */
+export const ENV_FILE = "env.zsh";
+
+/**
  * Nothing is blocked until the config says so: shadowing `grep` is a strong
  * opinion, and an agent shell that silently refuses a command is a surprise for
  * anyone who did not ask for it. `~/.config/opencode/shell-rc.json` opts in.

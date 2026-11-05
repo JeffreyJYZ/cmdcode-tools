@@ -121,6 +121,27 @@ Three properties are deliberate:
 
 The user's escape hatch still wins: `~/.config/opencode/shell.zsh` is sourced after the guards, so a single machine can undo one.
 
+## Custom environment
+
+The same config file exports variables into agent shells, so a setting the agent needs does not have to live in `.zshrc`, where it would also reach every interactive shell:
+
+```json
+{
+	"env": {
+		"JYZ_ENV": "staging",
+		"API_BASE": "http://localhost:8080"
+	}
+}
+```
+
+Values are **literal**, single-quoted into the generated `env.zsh`, so spaces, `$`, backticks and quotes survive unchanged. Malformed names (`1BAD`, `not-a-name`) and non-string values are dropped instead of written into a script every command sources — one bad line would break every agent shell. No `env` entry means no file at all.
+
+A value that must be computed (a token minted on demand) belongs in `~/.config/opencode/shell.zsh` instead, which is sourced after this layer and can call a command:
+
+```sh
+export GH_TOKEN="$(gh auth token --user some-machine-account 2>/dev/null)"
+```
+
 ## Development
 
 ```sh
