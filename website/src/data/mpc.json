@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-04T21:34:00.455Z",
+	"generatedAt": "2026-11-05T01:47:10.253Z",
 	"plans": [
 		{
 			"key": "go",
@@ -2336,36 +2336,6 @@
 							"valueIndex": null,
 							"free": false
 						}
-					},
-					{
-						"key": "lagunas21",
-						"name": "Laguna S 2.1",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 10,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
 					}
 				],
 				"tally": {
@@ -2374,7 +2344,7 @@
 					"ccWins": 21,
 					"ties": 1,
 					"ocOnly": 8,
-					"ccOnly": 36
+					"ccOnly": 35
 				}
 			},
 			"go-plus": {
@@ -4655,36 +4625,6 @@
 							"valueIndex": null,
 							"free": false
 						}
-					},
-					{
-						"key": "lagunas21",
-						"name": "Laguna S 2.1",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 10,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
 					}
 				],
 				"tally": {
@@ -4693,7 +4633,7 @@
 					"ccWins": 23,
 					"ties": 0,
 					"ocOnly": 8,
-					"ccOnly": 36
+					"ccOnly": 35
 				}
 			}
 		},
@@ -7315,36 +7255,6 @@
 							"valueIndex": null,
 							"free": false
 						}
-					},
-					{
-						"key": "lagunas21",
-						"name": "Laguna S 2.1",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 2,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
 					}
 				],
 				"tally": {
@@ -7353,7 +7263,7 @@
 					"ccWins": 14,
 					"ties": 3,
 					"ocOnly": 6,
-					"ccOnly": 47
+					"ccOnly": 46
 				}
 			},
 			"go-plus": {
@@ -9973,36 +9883,6 @@
 							"valueIndex": null,
 							"free": false
 						}
-					},
-					{
-						"key": "lagunas21",
-						"name": "Laguna S 2.1",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 2,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
 					}
 				],
 				"tally": {
@@ -10011,7 +9891,7 @@
 					"ccWins": 16,
 					"ties": 1,
 					"ocOnly": 6,
-					"ccOnly": 47
+					"ccOnly": 46
 				}
 			}
 		},
@@ -13059,36 +12939,6 @@
 							"valueIndex": null,
 							"free": false
 						}
-					},
-					{
-						"key": "lagunas21",
-						"name": "Laguna S 2.1",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 1.5,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
 					}
 				],
 				"tally": {
@@ -13097,7 +12947,7 @@
 					"ccWins": 2,
 					"ties": 9,
 					"ocOnly": 5,
-					"ccOnly": 62
+					"ccOnly": 61
 				}
 			},
 			"go-plus": {
@@ -16143,36 +15993,6 @@
 							"valueIndex": null,
 							"free": false
 						}
-					},
-					{
-						"key": "lagunas21",
-						"name": "Laguna S 2.1",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 1.5,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
 					}
 				],
 				"tally": {
@@ -16181,7 +16001,7 @@
 					"ccWins": 4,
 					"ties": 8,
 					"ocOnly": 5,
-					"ccOnly": 62
+					"ccOnly": 61
 				}
 			}
 		},
@@ -19138,33 +18958,6 @@
 						}
 					},
 					{
-						"key": "lagunas21",
-						"name": "Laguna S 2.1",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						}
-					},
-					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -19549,7 +19342,7 @@
 					"ccWins": 4,
 					"ties": 7,
 					"ocOnly": 5,
-					"ccOnly": 73
+					"ccOnly": 72
 				}
 			},
 			"go-plus": {
@@ -22504,33 +22297,6 @@
 						}
 					},
 					{
-						"key": "lagunas21",
-						"name": "Laguna S 2.1",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						}
-					},
-					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -22915,7 +22681,7 @@
 					"ccWins": 4,
 					"ties": 6,
 					"ocOnly": 5,
-					"ccOnly": 73
+					"ccOnly": 72
 				}
 			}
 		},
@@ -25872,33 +25638,6 @@
 						}
 					},
 					{
-						"key": "lagunas21",
-						"name": "Laguna S 2.1",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						}
-					},
-					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -26283,7 +26022,7 @@
 					"ccWins": 4,
 					"ties": 7,
 					"ocOnly": 5,
-					"ccOnly": 73
+					"ccOnly": 72
 				}
 			},
 			"go-plus": {
@@ -29238,33 +28977,6 @@
 						}
 					},
 					{
-						"key": "lagunas21",
-						"name": "Laguna S 2.1",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						}
-					},
-					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -29649,7 +29361,7 @@
 					"ccWins": 4,
 					"ties": 6,
 					"ocOnly": 5,
-					"ccOnly": 73
+					"ccOnly": 72
 				}
 			}
 		}
