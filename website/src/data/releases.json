@@ -1,6 +1,13 @@
 {
-	"generatedAt": "2026-10-27T18:06:52.485Z",
+	"generatedAt": "2026-11-05T10:37:40.048Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.7.31",
+			"name": "cmduse-v0.7.31",
+			"publishedAt": "2026-11-05T10:08:51Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.31",
+			"notes": "## What's Changed\n* feat(site): link back to jyz.land by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/1\n* fix(cmduse): find the live API key instead of the one auth.json kept by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/2\n* feat(shell-rc): export a configured environment into agent shells by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/3\n* chore(release): patch bumps for the env layer and the key fix by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/4\n\n## New Contributors\n* @jyzbot made their first contribution in https://github.com/JeffreyJYZ/cmdcode-tools/pull/1\n\n**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.30...cmduse-v0.7.31"
+		},
 		{
 			"tag": "cmduse-v0.7.30",
 			"name": "cmduse-v0.7.30",
@@ -677,6 +684,12 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.4.1"
 		},
 		{
+			"package": "@jeffreyjyz/opencode-shell-rc",
+			"version": "0.4.2",
+			"date": "2026-11-05T10:06:51.271Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.4.2"
+		},
+		{
 			"package": "@jeffreyjyz/opencode-session-dir",
 			"version": "0.1.0",
 			"date": "2026-10-04T09:11:00.601Z",
@@ -690,6 +703,12 @@
 		}
 	],
 	"crates": [
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.31",
+			"date": "2026-11-05T10:26:36.011600Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.31"
+		},
 		{
 			"crate": "cmd-usage",
 			"version": "0.7.30",
