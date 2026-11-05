@@ -26,6 +26,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { agentsFile, hasBlock, syncAliases } from "./aliases";
 import { CAPTURE_MARKER, LINKED, STATE_VERSION } from "./constants/shell-rc";
+import { syncEnv } from "./env";
 import { syncGuards } from "./guards";
 
 /** Read `HOME` per call so tests can point it at a temp directory. */
@@ -68,6 +69,10 @@ export function shimContent(): string {
 		// Non-interactive only: an interactive shell gets its aliases and
 		// functions from the real rc, symlinked below.
 		'if [[ ! -o interactive && -n "$ZDOTDIR" && -f "$ZDOTDIR/state.zsh" ]]; then source "$ZDOTDIR/state.zsh"; fi',
+		// Custom environment from `shell-rc.json`, so a variable the agent needs
+		// (an API base, a token, a tool flag) does not have to live in `.zshrc`
+		// where it would also reach every interactive shell.
+		'if [[ ! -o interactive && -n "$ZDOTDIR" && -f "$ZDOTDIR/env.zsh" ]]; then source "$ZDOTDIR/env.zsh"; fi',
 		// Guard layer, agent shells only: `find`/`grep` fail here and name the
 		// tool to use instead. A real script still gets the real binaries.
 		'if [[ ! -o interactive && -n "$ZDOTDIR" && -f "$ZDOTDIR/guards.zsh" ]]; then source "$ZDOTDIR/guards.zsh"; fi',
@@ -240,5 +245,13 @@ export function prepare(): void {
 		syncGuards();
 	} catch {
 		// No guards is the pre-feature behaviour: the real binaries run.
+	}
+
+	// Same contract for the custom environment: one read and a compare, and an
+	// absent file simply means the shim sources nothing.
+	try {
+		syncEnv();
+	} catch {
+		// No custom variables is the pre-feature behaviour.
 	}
 }
