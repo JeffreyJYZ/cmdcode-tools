@@ -65,12 +65,18 @@ tracks a Volcengine ARK Agent Plan in the plan's own unit (AFP) and is
 documented under
 .BR ARKUSE .
 .PP
-Authentication is read from
+Authentication is read from opencode's own credential store first (the
+.B commandcode
+entry in the
+.B credential
+table, active row first), then from
 .IR ~/.commandcode/auth.json ,
-the login state written by the official Command Code CLI (\fBcmd login\fR).
-The file is a JSON object containing an \fBapiKey\fR field.  There is no
-separate cmduse login; without that file every network command fails with an
-error naming the missing key.
+the login state written by the official Command Code CLI (\fBcmd login\fR);
+the latter is a JSON object containing an \fBapiKey\fR field.  A key the API
+refuses with 401 is skipped for the next candidate, so a login superseded by a
+re-connect through opencode still reads.  There is no separate cmduse login;
+without either source every network command fails with an error naming the
+missing key.
 .SH EXIT STATUS
 .TP
 0
@@ -496,7 +502,8 @@ and the next interval retries; no fake zero data is shown.
 .SH FILES
 .TP
 .I ~/.commandcode/auth.json
-Read; API key.  Written by the Command Code CLI.
+Read; API key.  Written by the Command Code CLI.  Read after opencode's own
+credential store, which is where a re\-connect through opencode writes the key.
 .TP
 .I ~/.commandcode/projects
 Read; per\-project CLI usage logs used by \fBdaily\fR/\fBhourly\fR

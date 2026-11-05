@@ -1,6 +1,8 @@
 mod api;
 pub mod cli;
 mod config;
+// Where the API key comes from: opencode's store first, then the legacy files.
+mod credentials;
 mod mcp;
 mod notify;
 // OpenCode Go/Zen half (the `ocuse` bin): local usage from opencode.db plus the

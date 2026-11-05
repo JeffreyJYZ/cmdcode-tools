@@ -96,7 +96,7 @@ Color: SGR escapes are suppressed when stdout is not a terminal or when `NO_COLO
 
 The tool _names_ are the same in all three servers, and an argument means the same thing wherever it exists. Where a source forces a difference it is stated rather than papered over: `ocuse` and `arkuse` add `plan` (the plan their source cannot report), and their `session`/`model` carry no `tz` — their store is already bucketed in the offset the server reports — while `cmduse`'s `session`/`model` do take `tz` and their `daily`/`hourly` additionally take `local`. Tests pin each server's own list.
 
-Auth is the same as the CLI (`CMD_API_KEY`, then `~/.commandcode/auth.json`). Tool errors come back as `isError: true` results; stdout carries protocol traffic only. Zed config:
+Auth is the same as the CLI (`CMD_API_KEY`, then the key opencode's own credential store holds for the `commandcode` provider, then the legacy `~/.commandcode/auth.json`). A key the API refuses is skipped for the next one, so a superseded login costs one 401 rather than a dead dashboard. Tool errors come back as `isError: true` results; stdout carries protocol traffic only. Zed config:
 
 ```json
 {
@@ -149,7 +149,7 @@ Multi-line templates work (newlines allowed). Unknown placeholders are dropped. 
 status() { cmduse statusline 2>/dev/null; }
 ```
 
-`CMD_API_KEY` env var overrides the stored key — point `cmduse` at any account without touching `~/.commandcode/auth.json`.
+`CMD_API_KEY` env var overrides the stored key — point `cmduse` at any account without touching the credential opencode's store holds for the `commandcode` provider.
 
 ## Config
 
@@ -189,7 +189,7 @@ cmduse config set dismissed_update=<ver>
 
 ## Requirements
 
-Logged-in [Command Code CLI](https://commandcode.ai) — reads your API key from `~/.commandcode/auth.json` (run `cmd login` if missing), or set `CMD_API_KEY`.
+Keyed on a Command Code account — either one connected through opencode (v2 keeps provider credentials in its store's `credential` table, and `cmduse` reads the `commandcode` entry, active row first) or the official CLI's `~/.commandcode/auth.json` (run `cmd login` if neither exists), or set `CMD_API_KEY`. A key the API answers 401 for is skipped for the next candidate, so a login superseded by a re-connect does not read as a broken dashboard.
 
 ## How it works
 

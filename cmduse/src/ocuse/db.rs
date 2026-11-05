@@ -109,30 +109,63 @@ pub fn default_path() -> String {
 /// account, and the endpoint answers an entitlement refusal for a Zen key
 /// rather than silence, which is more useful than no key at all.
 pub fn credential_key() -> Option<String> {
-    credential_key_at(&default_path())
+    credential_keys(&PROVIDERS).into_iter().next()
 }
 
-fn credential_key_at(path: &str) -> Option<String> {
-    let connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY).ok()?;
-    let mut statement = connection
-        .prepare(
-            // The boolean ordering puts `opencode-go` ahead of `opencode`, then
-            // newest first: a re-connected key supersedes the row it replaced.
-            "SELECT value FROM credential WHERE integration_id IN ('opencode-go', 'opencode') \
-             ORDER BY (integration_id = 'opencode-go') DESC, time_updated DESC",
-        )
-        .ok()?;
-    let values: Vec<String> = statement
-        .query_map([], |row| row.get::<_, String>(0))
-        .ok()?
-        .flatten()
-        .collect();
-    drop(statement);
-    values
+/// Every stored key for `providers`, best first: an active row beats an
+/// inactive one, then the order the caller listed the providers in, then the
+/// newest row. A re-connected account leaves the superseded row behind as
+/// inactive, so "first" is the credential opencode itself would use.
+pub fn credential_keys(providers: &[&str]) -> Vec<String> {
+    credential_keys_at(&default_path(), providers)
+}
+
+pub fn credential_keys_at(path: &str, providers: &[&str]) -> Vec<String> {
+    if providers.is_empty() {
+        return Vec::new();
+    }
+    let Ok(connection) = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY) else {
+        return Vec::new();
+    };
+    let list = vec!["?"; providers.len()].join(", ");
+    let sql = format!(
+        "SELECT value, integration_id, active, time_updated FROM credential \
+         WHERE integration_id IN ({list})"
+    );
+    let Ok(mut statement) = connection.prepare(&sql) else {
+        return Vec::new();
+    };
+    let params: Vec<&dyn rusqlite::ToSql> = providers
         .iter()
-        .filter_map(|value| serde_json::from_str::<Credential>(value).ok())
-        .filter_map(|credential| credential.key)
-        .find(|key| !key.is_empty())
+        .map(|p| p as &dyn rusqlite::ToSql)
+        .collect();
+    let Ok(rows) = statement.query_map(params.as_slice(), |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, Option<String>>(1)?,
+            row.get::<_, Option<i64>>(2)?.unwrap_or(0),
+            row.get::<_, i64>(3)?,
+        ))
+    }) else {
+        return Vec::new();
+    };
+    let mut ranked: Vec<(i64, usize, i64, String)> = rows
+        .flatten()
+        .filter_map(|(value, provider, active, updated)| {
+            let credential: Credential = serde_json::from_str(&value).ok()?;
+            let provider = provider?;
+            let rank = providers.iter().position(|p| *p == provider)?;
+            Some((active, rank, updated, credential.key?))
+        })
+        .collect();
+    ranked.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)).then(b.2.cmp(&a.2)));
+    let mut keys: Vec<String> = Vec::new();
+    for (_, _, _, key) in ranked {
+        if !key.is_empty() && !keys.contains(&key) {
+            keys.push(key);
+        }
+    }
+    keys
 }
 
 /// `credential.value` is the connector's own JSON — `{"type":"key","key":"…"}`
@@ -415,43 +448,57 @@ mod tests {
         connection
             .execute_batch(
                 "CREATE TABLE credential (\
-                 id TEXT, integration_id TEXT, value TEXT, time_updated INTEGER);",
+                 id TEXT PRIMARY KEY, integration_id TEXT, label TEXT NOT NULL, \
+                 value TEXT NOT NULL, connector_id TEXT, method_id TEXT, active INTEGER, \
+                 time_created INTEGER NOT NULL, time_updated INTEGER NOT NULL);",
             )
             .unwrap();
-        let insert = |integration: &str, key: &str, at: i64| {
+        let insert = |integration: &str, key: &str, active: i64, at: i64| {
             connection
                 .execute(
-                    "INSERT INTO credential VALUES (?, ?, ?, ?)",
+                    "INSERT INTO credential (id, integration_id, label, value, active, \
+                     time_created, time_updated) VALUES (?, ?, 'x', ?, ?, ?, ?)",
                     (
                         format!("cred_{at}"),
                         integration,
                         format!(r#"{{"type":"key","key":"{key}"}}"#),
+                        active,
+                        at,
                         at,
                     ),
                 )
                 .unwrap();
         };
-        insert("opencode", "zen", 9_000);
-        insert("opencode-go", "go-old", 1_000);
-        insert("opencode-go", "go-new", 2_000);
+        insert("opencode", "zen", 1, 9_000);
+        insert("opencode-go", "go-old", 0, 1_000);
+        insert("opencode-go", "go-new", 1, 2_000);
         let path = path.to_string_lossy().into_owned();
-        // Go beats Zen and the newest Go row beats the one it replaced, whatever
+        // An active Go row beats Zen and the inactive row it replaced, whatever
         // the timestamps say (Zen's is the newest here).
-        assert_eq!(credential_key_at(&path).as_deref(), Some("go-new"));
+        assert_eq!(
+            credential_keys_at(&path, &PROVIDERS)
+                .first()
+                .map(String::as_str),
+            Some("go-new")
+        );
 
         // An empty key is not a key: nothing to send.
         connection
             .execute(
-                "INSERT INTO credential VALUES ('cred_empty', 'opencode-go', '{\"type\":\"key\",\"key\":\"\"}', 3_000)",
+                "INSERT INTO credential (id, integration_id, label, value, active, \
+                 time_created, time_updated) VALUES ('cred_empty', 'opencode-go', 'x', \
+                 '{\"type\":\"key\",\"key\":\"\"}', 1, 3_000, 3_000)",
                 [],
             )
             .unwrap();
-        assert_eq!(credential_key_at(&path).as_deref(), Some("go-new"));
+        assert!(!credential_keys_at(&path, &PROVIDERS)
+            .iter()
+            .any(String::is_empty));
 
         // A store with no such table (v1) reads as "ask the legacy file".
         let legacy = dir.path().join("legacy.db");
         Connection::open(&legacy).unwrap();
-        assert!(credential_key_at(&legacy.to_string_lossy()).is_none());
+        assert!(credential_keys_at(&legacy.to_string_lossy(), &PROVIDERS).is_empty());
     }
 
     /// A v2 store: `session_message`, role in `type`, model ref nested.
