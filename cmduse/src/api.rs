@@ -4,30 +4,50 @@ use serde::{Deserialize, Serialize};
 
 const API_BASE: &str = "https://api.commandcode.ai";
 
+/// The key the dashboard starts with: the most current one this machine can
+/// offer (see [`crate::credentials`]). A stale head is recovered by [`get`],
+/// which walks the rest of the list when the API refuses it.
 pub fn api_key() -> std::io::Result<String> {
-    // CMD_API_KEY override: use any account key without touching auth.json
-    // (multi-account / testing)
-    if let Ok(k) = std::env::var("CMD_API_KEY") {
-        if !k.is_empty() {
-            return Ok(k);
-        }
+    crate::credentials::candidates()
+        .into_iter()
+        .next()
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "no API key"))
+}
+
+/// `key` first, then the other candidates — the caller's key is a hint, and a
+/// 401 on it moves to the next rather than failing the dashboard.
+fn candidates_from(key: &str) -> Vec<String> {
+    let mut all = crate::credentials::candidates();
+    all.sort_by_key(|candidate| candidate != key);
+    all.dedup();
+    if all.is_empty() {
+        all.push(key.to_string());
     }
-    let path = crate::paths::home().join(".commandcode/auth.json");
-    let text = std::fs::read_to_string(path)?;
-    let v: serde_json::Value = serde_json::from_str(&text)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
-    v["apiKey"]
-        .as_str()
-        .map(|s| s.to_string())
-        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "no apiKey"))
+    all
 }
 
 fn get(path: &str, key: &str) -> Result<Vec<u8>, String> {
+    let mut last_err = String::new();
+    for candidate in candidates_from(key) {
+        match get_with(path, &candidate) {
+            Ok(body) => return Ok(body),
+            // 401 = this key is not the account's current one; try the next.
+            Err((error, true)) => last_err = error,
+            Err((error, _)) => return Err(error),
+        }
+    }
+    Err(last_err)
+}
+
+/// One request against one key. The flag says the failure was an auth refusal,
+/// which is the only kind the caller may retry with a different key.
+fn get_with(path: &str, key: &str) -> Result<Vec<u8>, (String, bool)> {
     const MAX_RETRIES: u32 = 5;
     const BASE_DELAY_MS: u64 = 1000;
     const MAX_DELAY_MS: u64 = 8000;
 
     let mut last_err = String::new();
+    let mut unauthorized = false;
     for attempt in 0..=MAX_RETRIES {
         let resp = ureq::get(&format!("{API_BASE}{path}"))
             .set("Authorization", &format!("Bearer {key}"))
@@ -57,6 +77,7 @@ fn get(path: &str, key: &str) -> Result<Vec<u8>, String> {
                 // 429/5xx retry, other 4xx client errors are fatal.
                 let is_transient = match &e {
                     ureq::Error::Status(code, resp) => {
+                        unauthorized = *code == 401;
                         // honor a numeric Retry-After (seconds); capped so a
                         // hostile/huge value can't stall the watch loop for long.
                         // ponytail: HTTP-date form ignored — servers use seconds
@@ -71,7 +92,7 @@ fn get(path: &str, key: &str) -> Result<Vec<u8>, String> {
                     }
                     ureq::Error::Transport(_) => true,
                 };
-                if !is_transient || attempt == MAX_RETRIES {
+                if unauthorized || !is_transient || attempt == MAX_RETRIES {
                     break;
                 }
             }
@@ -88,7 +109,7 @@ fn get(path: &str, key: &str) -> Result<Vec<u8>, String> {
             std::thread::sleep(std::time::Duration::from_millis(delay + jitter));
         }
     }
-    Err(last_err)
+    Err((last_err, unauthorized))
 }
 
 use std::io::Read;
