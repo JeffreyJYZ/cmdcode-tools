@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-06T17:38:26.491Z",
+	"generatedAt": "2026-11-06T22:26:17.729Z",
 	"plans": [
 		{
 			"key": "go",
@@ -7209,6 +7209,33 @@
 						}
 					},
 					{
+						"key": "deepseekv41flashultrafast",
+						"name": "DeepSeek V4.1 Flash Ultrafast",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 2.4,
+								"output": 9.6,
+								"cacheRead": 0.048,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": 3205.128205128205,
+							"requestsPerFiveHour": 641.0256410256411,
+							"requestsPerWeek": 1602.5641025641025,
+							"costPerRequest": 0.00624,
+							"payPerRequest": 0.00312,
+							"multiplier": 2,
+							"ability": null,
+							"tps": null,
+							"index": 25,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "jev",
 						"name": "Jev",
 						"oc": null,
@@ -7326,7 +7353,7 @@
 					"ccWins": 14,
 					"ties": 4,
 					"ocOnly": 6,
-					"ccOnly": 45
+					"ccOnly": 46
 				}
 			},
 			"go-plus": {
@@ -9858,6 +9885,33 @@
 						}
 					},
 					{
+						"key": "deepseekv41flashultrafast",
+						"name": "DeepSeek V4.1 Flash Ultrafast",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 2.4,
+								"output": 9.6,
+								"cacheRead": 0.048,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": 3205.128205128205,
+							"requestsPerFiveHour": 641.0256410256411,
+							"requestsPerWeek": 1602.5641025641025,
+							"costPerRequest": 0.00624,
+							"payPerRequest": 0.00312,
+							"multiplier": 2,
+							"ability": null,
+							"tps": null,
+							"index": 25,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "jev",
 						"name": "Jev",
 						"oc": null,
@@ -9975,7 +10029,7 @@
 					"ccWins": 16,
 					"ties": 2,
 					"ocOnly": 6,
-					"ccOnly": 45
+					"ccOnly": 46
 				}
 			}
 		},
@@ -12935,6 +12989,33 @@
 						}
 					},
 					{
+						"key": "deepseekv41flashultrafast",
+						"name": "DeepSeek V4.1 Flash Ultrafast",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 2.4,
+								"output": 9.6,
+								"cacheRead": 0.048,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": 4807.692307692308,
+							"requestsPerFiveHour": 961.5384615384615,
+							"requestsPerWeek": 2403.846153846154,
+							"costPerRequest": 0.00624,
+							"payPerRequest": 0.00416,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 30,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "jev",
 						"name": "Jev",
 						"oc": null,
@@ -13052,7 +13133,7 @@
 					"ccWins": 2,
 					"ties": 10,
 					"ocOnly": 5,
-					"ccOnly": 60
+					"ccOnly": 61
 				}
 			},
 			"go-plus": {
@@ -16010,6 +16091,33 @@
 						}
 					},
 					{
+						"key": "deepseekv41flashultrafast",
+						"name": "DeepSeek V4.1 Flash Ultrafast",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 2.4,
+								"output": 9.6,
+								"cacheRead": 0.048,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": 4807.692307692308,
+							"requestsPerFiveHour": 961.5384615384615,
+							"requestsPerWeek": 2403.846153846154,
+							"costPerRequest": 0.00624,
+							"payPerRequest": 0.00416,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 29,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "jev",
 						"name": "Jev",
 						"oc": null,
@@ -16127,7 +16235,7 @@
 					"ccWins": 4,
 					"ties": 9,
 					"ocOnly": 5,
-					"ccOnly": 60
+					"ccOnly": 61
 				}
 			}
 		},
@@ -19186,6 +19294,33 @@
 						}
 					},
 					{
+						"key": "deepseekv41flashultrafast",
+						"name": "DeepSeek V4.1 Flash Ultrafast",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 2.4,
+								"output": 9.6,
+								"cacheRead": 0.048,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 24038.46153846154,
+							"requestsPerFiveHour": 7211.538461538462,
+							"requestsPerWeek": 14423.076923076924,
+							"costPerRequest": 0.00624,
+							"payPerRequest": 0.00416,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 42,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen38omniflash",
 						"name": "Qwen 3.8 Omni Flash",
 						"oc": null,
@@ -19462,7 +19597,7 @@
 					"ccWins": 3,
 					"ties": 8,
 					"ocOnly": 5,
-					"ccOnly": 70
+					"ccOnly": 71
 				}
 			},
 			"go-plus": {
@@ -22519,6 +22654,33 @@
 						}
 					},
 					{
+						"key": "deepseekv41flashultrafast",
+						"name": "DeepSeek V4.1 Flash Ultrafast",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 2.4,
+								"output": 9.6,
+								"cacheRead": 0.048,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 24038.46153846154,
+							"requestsPerFiveHour": 7211.538461538462,
+							"requestsPerWeek": 14423.076923076924,
+							"costPerRequest": 0.00624,
+							"payPerRequest": 0.00416,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 35,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen38omniflash",
 						"name": "Qwen 3.8 Omni Flash",
 						"oc": null,
@@ -22795,7 +22957,7 @@
 					"ccWins": 3,
 					"ties": 7,
 					"ocOnly": 5,
-					"ccOnly": 70
+					"ccOnly": 71
 				}
 			}
 		},
@@ -25854,6 +26016,33 @@
 						}
 					},
 					{
+						"key": "deepseekv41flashultrafast",
+						"name": "DeepSeek V4.1 Flash Ultrafast",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 2.4,
+								"output": 9.6,
+								"cacheRead": 0.048,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 48076.92307692308,
+							"requestsPerFiveHour": 14423.076923076924,
+							"requestsPerWeek": 28846.153846153848,
+							"costPerRequest": 0.00624,
+							"payPerRequest": 0.00416,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 46,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen38omniflash",
 						"name": "Qwen 3.8 Omni Flash",
 						"oc": null,
@@ -26130,7 +26319,7 @@
 					"ccWins": 3,
 					"ties": 8,
 					"ocOnly": 5,
-					"ccOnly": 70
+					"ccOnly": 71
 				}
 			},
 			"go-plus": {
@@ -29187,6 +29376,33 @@
 						}
 					},
 					{
+						"key": "deepseekv41flashultrafast",
+						"name": "DeepSeek V4.1 Flash Ultrafast",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 2.4,
+								"output": 9.6,
+								"cacheRead": 0.048,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 48076.92307692308,
+							"requestsPerFiveHour": 14423.076923076924,
+							"requestsPerWeek": 28846.153846153848,
+							"costPerRequest": 0.00624,
+							"payPerRequest": 0.00416,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 37,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen38omniflash",
 						"name": "Qwen 3.8 Omni Flash",
 						"oc": null,
@@ -29463,7 +29679,7 @@
 					"ccWins": 3,
 					"ties": 7,
 					"ocOnly": 5,
-					"ccOnly": 70
+					"ccOnly": 71
 				}
 			}
 		}
