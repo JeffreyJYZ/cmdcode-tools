@@ -298,4 +298,65 @@ describe("createCommandCode", () => {
 				.doStream({ prompt: [] } as LanguageModelV3CallOptions),
 		).rejects.toThrow(/anthropic 403/);
 	});
+
+	test("a refused key is retried with the next candidate", async () => {
+		const body = sse([
+			{ choices: [{ delta: { content: "hi" } }] },
+			{ choices: [{ delta: {}, finish_reason: "stop" }] },
+		]);
+		const used: string[] = [];
+		const provider = createCommandCode(
+			{
+				baseURL: "https://example.test",
+				apiKey: "stale",
+				keys: async () => ["stale", "live"],
+				fetch: (async (_url: string, init: RequestInit) => {
+					const key = new Headers(init.headers).get("authorization") ?? "";
+					used.push(key);
+					if (key === "Bearer stale") {
+						return new Response(
+							JSON.stringify({
+								error: { message: "Invalid 'Authorization' header or token." },
+							}),
+							{ status: 401 },
+						);
+					}
+					return new Response(body, {
+						status: 200,
+						headers: { "content-type": "text/event-stream" },
+					});
+				}) as unknown as typeof fetch,
+			},
+			() => false,
+		);
+		const { stream } = await provider.languageModel("deepseek/x").doStream({
+			prompt: [{ role: "user", content: [{ type: "text", text: "hi" }] }],
+		} as LanguageModelV3CallOptions);
+		const reader = stream.getReader();
+		for (;;) {
+			const { done } = await reader.read();
+			if (done) break;
+		}
+		expect(used).toEqual(["Bearer stale", "Bearer live"]);
+	});
+
+	test("every candidate refused keeps the 401 and its message", async () => {
+		const provider = createCommandCode(
+			{
+				baseURL: "https://example.test",
+				apiKey: "stale",
+				keys: async () => ["also-stale"],
+				fetch: (async () =>
+					new Response("Invalid 'Authorization' header or token.", {
+						status: 401,
+					})) as unknown as typeof fetch,
+			},
+			() => false,
+		);
+		await expect(
+			provider
+				.languageModel("deepseek/x")
+				.doStream({ prompt: [] } as LanguageModelV3CallOptions),
+		).rejects.toThrow(/openai 401.*Invalid 'Authorization'/);
+	});
 });

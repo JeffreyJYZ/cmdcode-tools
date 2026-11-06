@@ -36,7 +36,7 @@ import {
 	PLUGIN_ID,
 	TOOL_DESCRIPTION,
 } from "./constants/providers";
-import { resolveKey } from "./key";
+import { candidateKeys, resolveKey } from "./key";
 import { type CmdModel, isClaude, loadModels } from "./models";
 import { idsDiffer, readModelsCache, writeModelsCache } from "./modelsCache";
 import { createCommandCode } from "./provider";
@@ -236,6 +236,10 @@ export const commandCodeV2: PluginNs.Plugin = {
 									? options.baseURL
 									: PROVIDER_BASE,
 							headers: options.headers as Record<string, string> | undefined,
+							// A host setting can carry the key a re-connect replaced;
+							// hand the transport every candidate so a 401 costs one
+							// request instead of the whole turn.
+							keys: () => candidateKeys(),
 						},
 						images,
 					);
