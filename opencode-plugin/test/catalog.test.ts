@@ -11,6 +11,7 @@ import {
 	inputModalities,
 	isReasoningModel,
 	minPlan,
+	modelContext,
 	modelCost,
 	supportsImage,
 } from "../src/catalog";
@@ -107,6 +108,8 @@ describe("generated catalog", () => {
 			cacheWrite: 0,
 		});
 		expect(modelCost("definitely/not-a-model")).toBeUndefined();
+		expect(modelContext("deepseek/deepseek-v4.1-flash")).toBe(1_000_000);
+		expect(modelContext("definitely/not-a-model")).toBeUndefined();
 		expect(isReasoningModel("claude-sonnet-5")).toBe(true);
 		expect(isReasoningModel("definitely/not-a-model")).toBe(false);
 	});
