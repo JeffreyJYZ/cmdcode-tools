@@ -733,6 +733,13 @@ export function modelCost(id: string): ModelCost | undefined {
 	return MODEL_CATALOG[id]?.cost;
 }
 
+/** Context window the generated table carries, or undefined for an unknown id.
+ * The static seed needs this: without it every seeded model claims the 128k
+ * fallback and a 1M-context model compacts at a fraction of its real window. */
+export function modelContext(id: string): number | undefined {
+	return MODEL_CATALOG[id]?.context;
+}
+
 export function minPlan(id: string): string | null {
 	return MODEL_CATALOG[id]?.minPlan ?? null;
 }
