@@ -29,6 +29,10 @@ export interface CommandCodeProviderOptions {
 	headers?: Record<string, string>;
 	/** Reasoning effort the host wants (`providerOptions.commandcode.reasoning`). */
 	reasoningEffort?: string;
+	/** Other keys to try when the API refuses `apiKey` with 401: a re-connect
+	 * leaves a stale key in a host setting, and one refused request beats a
+	 * provider that cannot answer at all. */
+	keys?: () => Promise<string[]>;
 	/** Injected for tests. */
 	fetch?: typeof fetch;
 }
@@ -81,6 +85,41 @@ export function createCommandCode(
 ): CommandCodeProvider {
 	const baseURL = (options.baseURL ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
 	const doFetch = options.fetch ?? fetch;
+	// The key that last worked. The host may keep handing us a superseded one
+	// from its own settings, so a success elsewhere wins for the rest of the
+	// process instead of paying a 401 on every turn.
+	let workingKey: string | undefined;
+
+	/** POST with failover: `apiKey`, the last key that worked, then whatever
+	 * `keys()` can find. Only a 401 moves to the next candidate — a 429/5xx is
+	 * the same rejection for every key. */
+	async function post(
+		url: string,
+		init: RequestInit,
+	): Promise<{ response: Response; detail: string }> {
+		const supplied = await options.keys?.().catch(() => []);
+		const keys = [workingKey, options.apiKey, ...(supplied ?? [])].filter(
+			(key): key is string => typeof key === "string",
+		);
+		const candidates = keys.length > 0 ? [...new Set(keys)] : [""];
+		let detail = "";
+		let response: Response | undefined;
+		for (const key of candidates) {
+			response = await doFetch(url, {
+				...init,
+				headers: {
+					...(init.headers as Record<string, string>),
+					Authorization: `Bearer ${key}`,
+				},
+			});
+			if (response.status !== 401) {
+				if (key) workingKey = key;
+				return { response, detail: "" };
+			}
+			detail = await response.text().catch(() => "");
+		}
+		return { response: response as Response, detail };
+	}
 
 	function model(modelId: string): LanguageModelV3 {
 		const lane = laneOf(modelId);
@@ -99,11 +138,10 @@ export function createCommandCode(
 					reasoningEffort: effortFrom(callOptions) ?? options.reasoningEffort,
 					images: images(modelId),
 				});
-				const response = await doFetch(`${baseURL}${endpoint(lane)}`, {
+				const { response, detail } = await post(`${baseURL}${endpoint(lane)}`, {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
-						Authorization: `Bearer ${options.apiKey ?? ""}`,
 						...(options.headers ?? {}),
 						...(callOptions.headers ?? {}),
 					},
@@ -111,9 +149,9 @@ export function createCommandCode(
 					signal: callOptions.abortSignal,
 				});
 				if (!response.ok || !response.body) {
-					const detail = await response.text().catch(() => "");
+					const text = detail || (await response.text().catch(() => ""));
 					throw new Error(
-						`command-code ${lane} ${response.status}: ${detail.slice(0, 300)}`,
+						`command-code ${lane} ${response.status}: ${text.slice(0, 300)}`,
 					);
 				}
 
