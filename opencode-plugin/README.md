@@ -17,7 +17,7 @@ The model list is fetched live from Command Code's listing API, split by wire, a
 
 Each model is registered with Command Code's published $/1M rates, so opencode's own cost display works for a subscription provider instead of showing $0. Vision support and reasoning-effort variants come from a generated catalog, because the listing API publishes no capabilities.
 
-Credentials resolve in one order everywhere: `CMD_API_KEY`, then the key `/connect` stored in opencode's credential store, then `~/.commandcode/auth.json` from `cmd login`.
+Credentials resolve in one order everywhere: `CMD_API_KEY`, then opencode's credential store (the `commandcode`/`command-code` rows, active first, newest first), then opencode's legacy `auth.json`, then `~/.commandcode/auth.json` from `cmd login`. The store ranks first because a re-connect leaves both files on the key it replaced — and if the API still answers 401, the request is retried with the next candidate rather than failing the turn.
 
 ## Install
 
