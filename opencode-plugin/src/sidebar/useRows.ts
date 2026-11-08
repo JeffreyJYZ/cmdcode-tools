@@ -4,7 +4,7 @@
 // starts (Go/Zen resets) and this session's totals (the account APIs have no
 // per-model, per-session dimension).
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
-import { minPlan } from "../catalog";
+import { liveMinPlan } from "../catalogLive";
 import {
 	ARK_PROVIDER_ID,
 	GO_PROVIDER_ID,
@@ -373,7 +373,7 @@ export function useRows(
 			? {
 					...found,
 					tier: found.tier ?? (id ? tierFor(id) : undefined),
-					minPlan: id ? minPlan(id) : undefined,
+					minPlan: id ? liveMinPlan(id) : undefined,
 				}
 			: undefined;
 		// Account block, a rule, then the model block: two different subjects, and

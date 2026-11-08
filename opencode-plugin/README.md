@@ -17,6 +17,8 @@ The model list is fetched live from Command Code's listing API, split by wire, a
 
 Each model is registered with Command Code's published $/1M rates, so opencode's own cost display works for a subscription provider instead of showing $0. Vision support and reasoning-effort variants come from a generated catalog, because the listing API publishes no capabilities.
 
+That catalog is refreshed at runtime: the plugin fetches Command Code's own `models.md` (bundled in their published CLI, served from the npm CDN), caches it for a day under `~/.cache/command-code/catalog-live.json`, and overlays prices, context windows and efforts on the baked snapshot before each model refresh — so a price change reaches a running install without waiting for a plugin release. The baked table stays as the offline and first-run fallback, and vision stays baked because it only exists in the CLI bundle. `catalogSource()` reports which table a given lookup used.
+
 Credentials resolve in one order everywhere: `CMD_API_KEY`, then opencode's credential store (the `commandcode`/`command-code` rows, active first, newest first), then opencode's legacy `auth.json`, then `~/.commandcode/auth.json` from `cmd login`. The store ranks first because a re-connect leaves both files on the key it replaced — and if the API still answers 401, the request is retried with the next candidate rather than failing the turn.
 
 ## Install

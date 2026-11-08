@@ -8,7 +8,7 @@ import type { Plugin as PluginV1 } from "@opencode-ai/plugin";
 import { z } from "zod";
 import pkg from "../package.json";
 import { whoami } from "./api";
-import { modelCost, supportsImage } from "./catalog";
+import { liveCost, supportsImage } from "./catalogLive";
 import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runMpc, runOcuse } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import {
@@ -115,7 +115,7 @@ function costFor(id: string): {
 	output: number;
 	cache: { read: number; write: number };
 } {
-	const cost = modelCost(id);
+	const cost = liveCost(id);
 	return {
 		input: cost?.input ?? 0,
 		output: cost?.output ?? 0,
