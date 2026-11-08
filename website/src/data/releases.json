@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-06T03:42:43.075Z",
+	"generatedAt": "2026-11-08T10:31:53.597Z",
 	"github": [
 		{
 			"tag": "cmduse-v0.7.31",
@@ -616,6 +616,24 @@
 			"version": "0.5.23",
 			"date": "2026-11-06T03:14:40.949Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.23"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.24",
+			"date": "2026-11-08T05:28:27.927Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.24"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.25",
+			"date": "2026-11-08T05:30:39.242Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.25"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.26",
+			"date": "2026-11-08T05:44:21.691Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.26"
 		},
 		{
 			"package": "@jeffreyjyz/opencode-context",
