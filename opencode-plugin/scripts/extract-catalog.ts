@@ -46,6 +46,11 @@ const OUT = new URL("../src/catalog.ts", import.meta.url).pathname;
 
 export type InputModality = "text" | "image" | "audio" | "video" | "pdf";
 
+/** The union above, as a lookup: a bundle that grows a modality the host cannot
+ * declare (1.88.5 added "file") must not leak an unknown string into
+ * `capabilities.input`, so anything else is dropped at parse time. */
+const KNOWN_MODALITIES: ReadonlySet<string> = new Set(["text", "image", "audio", "video", "pdf"]);
+
 /** $/1M rates as published, plus reasoning efforts when advertised. */
 export interface CatalogEntry {
 	name: string;
@@ -86,7 +91,7 @@ export function parseModalities(bundle: string): Record<string, InputModality[]>
 		if (!id) continue;
 		const modalities = [...(match[2] ?? "").matchAll(/"([a-z]+)"/g)]
 			.map((m) => m[1] as InputModality)
-			.filter(Boolean);
+			.filter((m) => KNOWN_MODALITIES.has(m));
 		if (modalities.length) out[id] = modalities;
 	}
 	return out;
@@ -240,6 +245,12 @@ export function supportsImage(id: string): boolean {
 
 export function modelCost(id: string): ModelCost | undefined {
 	return MODEL_CATALOG[id]?.cost
+}
+
+/** Context window the table carries, or undefined for an unknown id. The static
+ * seed needs this: contextLength 0 becomes the 128k fallback at the host. */
+export function modelContext(id: string): number | undefined {
+	return MODEL_CATALOG[id]?.context
 }
 
 export function minPlan(id: string): string | null {
