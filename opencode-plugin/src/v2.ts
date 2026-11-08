@@ -16,7 +16,7 @@
 // cmd_usage tool both spawn the cmduse CLI (Rust cmduse-core), which owns all
 // window math and formatting (see ./cli.ts).
 import type { Plugin as PluginNs } from "@opencode/plugin";
-import { inputModalities, modelCost, reasoningVariants } from "./catalog";
+import { inputModalities, modelContext, modelCost, reasoningVariants } from "./catalog";
 import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runMpc, runOcuse } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import { KNOWN_MODELS } from "./constants/gating";
@@ -116,7 +116,7 @@ export function staticSeedModels(): Record<Lane["id"], unknown[]> {
 	for (const lane of LANES) {
 		const models = KNOWN_MODELS.filter(
 			(id) => isClaude(id) === (lane.reasoningField === undefined),
-		).map((id) => toV2Model({ id, name: id, contextLength: 0 }, lane));
+		).map((id) => toV2Model({ id, name: id, contextLength: modelContext(id) ?? 0 }, lane));
 		seed[lane.id] = models;
 	}
 	return seed;

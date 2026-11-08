@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { modelContext } from "../src/catalog";
 import { KNOWN_MODELS } from "../src/constants/gating";
 import { DEFAULT_CONTEXT_LENGTH, DEFAULT_OUTPUT_TOKENS } from "../src/constants/models";
 import { INTEGRATION_ID, type Lane } from "../src/constants/providers";
@@ -105,15 +106,25 @@ describe("credentialKey", () => {
 });
 
 describe("staticSeedModels", () => {
-	test("splits known models by lane, no context length yet", () => {
+	test("splits known models by lane and seeds the catalog's context window", () => {
 		const seed = staticSeedModels();
 		const claude = seed["command-code-anthropic"] as Array<Record<string, unknown>>;
 		const open = seed["command-code-openai"] as Array<Record<string, unknown>>;
 		expect(claude.length + open.length).toBe(KNOWN_MODELS.length);
 		for (const m of claude) expect(isClaude(m.id as string)).toBe(true);
 		for (const m of open) expect(isClaude(m.id as string)).toBe(false);
-		for (const m of [...claude, ...open])
-			expect((m.limit as { context: number }).context).toBe(DEFAULT_CONTEXT_LENGTH);
+		// The seed must not flatten a 1M-context model to the 128k fallback: that
+		// window is what the host compacts against before the live list arrives.
+		// A catalogued 0 means "unknown", exactly as toV2Model reads it.
+		for (const m of [...claude, ...open]) {
+			const id = m.id as string;
+			expect((m.limit as { context: number }).context).toBe(
+				modelContext(id) || DEFAULT_CONTEXT_LENGTH,
+			);
+		}
+		const flash = [...open].find((m) => m.id === "deepseek/deepseek-v4.1-flash");
+		expect(flash).toBeDefined();
+		expect((flash?.limit as { context: number } | undefined)?.context).toBe(1_000_000);
 	});
 });
 
