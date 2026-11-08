@@ -16,7 +16,14 @@
 // cmd_usage tool both spawn the cmduse CLI (Rust cmduse-core), which owns all
 // window math and formatting (see ./cli.ts).
 import type { Plugin as PluginNs } from "@opencode/plugin";
-import { inputModalities, modelContext, modelCost, reasoningVariants } from "./catalog";
+import {
+	inputModalities,
+	liveContext,
+	liveCost,
+	liveReasoningVariants,
+	primeLiveCatalog,
+	refreshLiveCatalog,
+} from "./catalogLive";
 import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runMpc, runOcuse } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import { KNOWN_MODELS } from "./constants/gating";
@@ -56,7 +63,7 @@ function costEntry(id: string): Array<{
 	output: number;
 	cache: { read: number; write: number };
 }> {
-	const cost = modelCost(id);
+	const cost = liveCost(id);
 	return cost
 		? [
 				{
@@ -76,7 +83,7 @@ export function toV2Model(m: CmdModel, lane: Lane): unknown {
 	// the CLI bundle is the only source that lists per-model effort levels. v2
 	// carries the effort in the variant's `settings`, which the host projects
 	// into the model's provider options; models with no effort list stay empty.
-	const efforts = reasoningVariants(m.id);
+	const efforts = liveReasoningVariants(m.id);
 	const variants = efforts
 		? Object.entries(efforts).map(([id, settings]) => ({ id, settings }))
 		: [];
@@ -116,7 +123,7 @@ export function staticSeedModels(): Record<Lane["id"], unknown[]> {
 	for (const lane of LANES) {
 		const models = KNOWN_MODELS.filter(
 			(id) => isClaude(id) === (lane.reasoningField === undefined),
-		).map((id) => toV2Model({ id, name: id, contextLength: modelContext(id) ?? 0 }, lane));
+		).map((id) => toV2Model({ id, name: id, contextLength: liveContext(id) ?? 0 }, lane));
 		seed[lane.id] = models;
 	}
 	return seed;
@@ -471,6 +478,10 @@ export const commandCodeV2: PluginNs.Plugin = {
 			refreshing = true;
 			const refreshStart = Date.now();
 			try {
+				// Prices, context and efforts come from the published CLI document, not the
+				// listing API; refresh it first so this pass builds models off the live table.
+				// Cached for a day, and a failure just leaves the baked snapshot in place.
+				await refreshLiveCatalog();
 				const key = await credentialKey(ctx);
 				if (!key) return;
 				const split = await loadModels(key);
@@ -533,6 +544,9 @@ export const commandCodeV2: PluginNs.Plugin = {
 		// Land the first refresh after the startup paint: a transform at +2.5s
 		// otherwise re-publishes provider/model state while the TUI is drawing.
 		v2FirstRefresh = setTimeout(() => void refresh(), 3_000);
+		// Prime the live catalogue immediately (disk copy first, network after), so the
+		// first transform already sees fetched prices when a cache exists.
+		void primeLiveCatalog();
 		// 30 min: comfortably past models.ts's 5-min cache, so every tick is a
 		// real fetch. Guarded against overlap by `refreshing`.
 		v2Timer = setInterval(() => void refresh(), 30 * 60 * 1000);
