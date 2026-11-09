@@ -1,4 +1,4 @@
-import { SPEED_SUFFIXES, SPEED_TPS_FACTOR } from "#~/constants/scoring.ts";
+import { SPEED_SUFFIXES, SPEED_TPS_FACTOR, TPS_OVERRIDES } from "#~/constants/scoring.ts";
 
 /**
  * The base key a speed variant shares weights with, or undefined. FlashX is the
@@ -41,6 +41,9 @@ export function lookupTps(
 	suffixes: string[] = SPEED_SUFFIXES,
 	factor: number = SPEED_TPS_FACTOR,
 ): number | null {
+	// A published figure wins over anything derived, including the borrow below.
+	const stated = TPS_OVERRIDES[key];
+	if (stated !== undefined) return stated;
 	const direct = scores.get(key);
 	if (direct !== undefined) return direct;
 	const base = baseKey(key, suffixes);

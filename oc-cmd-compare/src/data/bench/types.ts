@@ -5,6 +5,9 @@ export interface BenchData {
 	intelligence: Map<string, number>;
 	/** Output tokens per second, when the source publishes it. */
 	tps: Map<string, number>;
+	/** AA's index version for these scores (`v5.0.1`); absent for other sources.
+	 * Scores are only comparable within one major version. */
+	indexVersion?: string;
 }
 
 export interface AbilityResult extends BenchData {
