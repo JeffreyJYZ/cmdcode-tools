@@ -25,6 +25,15 @@ bun link
 mpc --help
 ```
 
+Working on the CLI itself? `bun run dev:link` points `mpcdev` at this checkout, so the
+published `mpc` keeps running the installed release while `mpcdev` runs your edits:
+
+```sh
+bun run dev:link
+mpcdev --version    # this checkout
+mpc --version       # the published install
+```
+
 ## Usage
 
 ```sh
