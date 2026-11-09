@@ -26,11 +26,21 @@ async function fetchTextWithKey(url: string, key: string): Promise<string> {
 		headers: { "x-api-key": key, "user-agent": "mpc/0.1" },
 	});
 	if (!res.ok) {
-		throw new Error(
-			`Artificial Analysis API ${res.status}: set AA_API_KEY or use --bench cc / aa-web`,
-		);
+		throw new Error(`Artificial Analysis API ${res.status}: ${statusHint(res.status)}`);
 	}
 	return res.text();
+}
+
+/** One line per cause: a retired path is not a bad key, and the old message
+ * blamed credentials for every status. */
+function statusHint(status: number): string {
+	if (status === 401) return "AA_API_KEY rejected, replace the key";
+	if (status === 403)
+		return "this endpoint needs a Pro subscription, the free list is /language/models/free";
+	if (status === 404 || status === 410)
+		return "endpoint retired, see artificialanalysis.ai/data-api";
+	if (status === 429) return "daily quota spent, use --bench cc / aa-web";
+	return "unexpected response, use --bench cc / aa-web";
 }
 
 /** Keep the best variant per key; AA lists a row per reasoning effort. */

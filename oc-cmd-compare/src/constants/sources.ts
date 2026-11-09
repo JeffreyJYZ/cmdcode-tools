@@ -79,7 +79,10 @@ export const DEFAULT_OC_PLAN = "go";
 export const DOC_URL = "https://opencode.ai/v2/docs/console/go/";
 export const OC_MODELS_URL = "https://opencode.ai/zen/go/v1/models";
 
-export const API_URL = "https://artificialanalysis.ai/api/v2/data/llms/models";
+/** Artificial Analysis retired `/api/v2/data/*` on 2026-11-04 (410 Gone). The free
+ * tier serves the same index and median output speed mpc reads, so no Pro plan
+ * is needed; the paid list at `/api/v2/language/models` answers 403 without one. */
+export const API_URL = "https://artificialanalysis.ai/api/v2/language/models/free";
 export const AA_MODELS_URL = "https://artificialanalysis.ai/models";
 
 // CommandCode only publishes Intelligence and Tok/s on the GOAT/Pro catalogs.
