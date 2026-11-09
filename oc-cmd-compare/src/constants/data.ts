@@ -16,6 +16,9 @@ export const ALIASES: Record<string, string> = {
 	// AA's slug keeps the vendor the catalogs drop: "tencent-hy4", "reflection-beam".
 	tencenthy4: "hy4",
 	reflectionbeam: "beam10",
+	// OpenCode's "Beam Free" is the same model CommandCode sells as "Beam 1.0";
+	// the trailing "Free" is stripped generically, so the bare key is what lands here.
+	beam: "beam10",
 	// AA suffixes the bake date onto the slug: "mimo-v2-5-0424".
 	mimov250424: "mimov25",
 	// CommandCode lists the same Jev build twice, once with its version suffix.

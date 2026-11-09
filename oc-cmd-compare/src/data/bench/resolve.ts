@@ -60,17 +60,32 @@ export async function resolvePrimary(opts: AbilityOptions): Promise<Resolved> {
 			if (!key) {
 				throw new Error("--bench aa needs a key: set AA_API_KEY or pass --aa-key");
 			}
-			const data = await loadAaApi(key);
-			if (data.intelligence.size === 0) {
-				throw new Error(
-					"Artificial Analysis returned no scores — check the API key and response shape",
-				);
+			try {
+				const data = await loadAaApi(key);
+				if (data.intelligence.size === 0) {
+					throw new Error(
+						"Artificial Analysis returned no scores — check the key and response shape",
+					);
+				}
+				return {
+					scheme: "aa",
+					data,
+					label: `Artificial Analysis (${data.intelligence.size} models, ${data.tps.size} speed${
+						data.indexVersion ? `, index ${data.indexVersion}` : ""
+					})`,
+				};
+			} catch (error) {
+				// A spent daily quota, a rotated key or a retired path must not break every
+				// run: the keyless page carries the same index, just for fewer models.
+				const reason = error instanceof Error ? error.message : String(error);
+				const data = await loadAaWeb();
+				if (data.intelligence.size === 0) throw error;
+				return {
+					scheme: "aa-web",
+					data,
+					label: `Artificial Analysis (web, partial — API: ${reason})`,
+				};
 			}
-			return {
-				scheme: "aa",
-				data,
-				label: `Artificial Analysis (${data.intelligence.size} models, ${data.tps.size} speed)`,
-			};
 		}
 		case "file":
 			if (!arg) throw new Error("--bench file:<path> needs a path");

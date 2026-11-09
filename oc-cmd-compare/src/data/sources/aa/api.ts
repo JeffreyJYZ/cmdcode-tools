@@ -4,21 +4,24 @@ import { parseAaApi } from "./parse.ts";
 /** Full catalog via the Artificial Analysis API. Needs a key. Paginated. */
 export async function loadAaApi(
 	key: string,
-): Promise<{ intelligence: Map<string, number>; tps: Map<string, number> }> {
+): Promise<{ intelligence: Map<string, number>; tps: Map<string, number>; indexVersion?: string }> {
 	const intelligence = new Map<string, number>();
 	const tps = new Map<string, number>();
 	const pageSize = 200;
 	const maxPages = 20;
+	let indexVersion: string | undefined;
 
 	for (let page = 1; page <= maxPages; page++) {
 		const res = await fetchTextWithKey(`${API_URL}?page=${page}&page_size=${pageSize}`, key);
 		const body = JSON.parse(res) as unknown;
-		mergeAaPage(parseAaApi(body), intelligence, tps);
+		const parsed = parseAaApi(body);
+		indexVersion ??= parsed.indexVersion;
+		mergeAaPage(parsed, intelligence, tps);
 		const pagination = (body as { pagination?: { has_more?: boolean } }).pagination;
 		if (!pagination?.has_more) break;
 	}
 
-	return { intelligence, tps };
+	return indexVersion ? { intelligence, tps, indexVersion } : { intelligence, tps };
 }
 
 async function fetchTextWithKey(url: string, key: string): Promise<string> {

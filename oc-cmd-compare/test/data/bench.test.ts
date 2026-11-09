@@ -58,4 +58,11 @@ describe("parseAaApi", () => {
 		expect(tps.get("glm53flash")).toBeCloseTo(114.9, 2);
 		expect(intelligence.has("noscoresh")).toBe(false);
 	});
+
+	test("carries the index version, which is what makes scores comparable", () => {
+		const versioned = { ...BODY, intelligence_index_version: "v5.0.1" };
+		expect(parseAaApi(versioned).indexVersion).toBe("v5.0.1");
+		// Older payloads and fixtures carry no version; absence is not an error.
+		expect(parseAaApi(BODY).indexVersion).toBeUndefined();
+	});
 });

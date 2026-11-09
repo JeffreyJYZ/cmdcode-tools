@@ -4,6 +4,7 @@ import { normalizeKey } from "#~/keys.ts";
 export function parseAaApi(body: unknown): {
 	intelligence: Map<string, number>;
 	tps: Map<string, number>;
+	indexVersion?: string;
 } {
 	const root = (body ?? {}) as Record<string, unknown>;
 	const rows = Array.isArray(root.data)
@@ -13,6 +14,12 @@ export function parseAaApi(body: unknown): {
 			: Object.values(root).filter((v) => v && typeof v === "object");
 	const intelligence = new Map<string, number>();
 	const tps = new Map<string, number>();
+	// AA versions the index in-band and keeps the field name stable, so the score is
+	// only interpretable beside this: v4 and v5 numbers are not comparable.
+	const indexVersion =
+		typeof root.intelligence_index_version === "string"
+			? root.intelligence_index_version
+			: undefined;
 
 	for (const row of rows) {
 		if (!row || typeof row !== "object") continue;
@@ -38,7 +45,7 @@ export function parseAaApi(body: unknown): {
 			}
 		}
 	}
-	return { intelligence, tps };
+	return indexVersion ? { intelligence, tps, indexVersion } : { intelligence, tps };
 }
 
 /** Depth-first search for the first finite number under a matching key. */

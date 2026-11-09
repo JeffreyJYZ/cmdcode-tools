@@ -25,6 +25,8 @@ describe("normalizeKey", () => {
 		expect(normalizeKey("mimo-v2-5-0424")).toBe(normalizeKey("MiMo-V2.5"));
 		// CommandCode lists the same Jev build with and without its version.
 		expect(normalizeKey("Jev 1.14.0")).toBe(normalizeKey("Jev"));
+		// OpenCode sells "Beam Free"; CommandCode the same model as "Beam 1.0".
+		expect(normalizeKey("Beam Free")).toBe(normalizeKey("Beam 1.0"));
 		expect(normalizeKey("DeepSeek V4 Flash Vision (exp)")).toBe("deepseekv4flashvisionexp");
 		// Alibaba's release name for the model CommandCode sells as "Qwen 3.8
 		// Flash", so the AA index lands on the row that is listed here.
