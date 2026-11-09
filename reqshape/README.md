@@ -28,6 +28,15 @@ bun run src/index.ts --help
 bun link
 ```
 
+Working on the CLI itself? `bun run dev:link` points `reqshapedev` at this checkout, and
+`--mpc mpcdev` (or `MPC_BIN=mpcdev`) makes it price through a working-copy `mpc` instead of
+the installed one:
+
+```sh
+bun run dev:link
+reqshapedev --format json --mpc mpcdev
+```
+
 ## Usage
 
 ```sh
