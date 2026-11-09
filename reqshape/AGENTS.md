@@ -63,6 +63,8 @@ bun link                       # exposes the `reqshape` binary
 
 **`bun link` must be re-run after the repo moves, and can be silently pruned.** Writes `~/.bun/bin/reqshape` → `~/.bun/install/global/node_modules/reqshape/src/index.ts` (an **absolute** path), so a moved checkout leaves it dangling — and a later `bun link` in a sibling repo prunes the entry (only `mpc`, which shells it, notices). Fix: `bun link` here; verify `test -e ~/.bun/install/global/node_modules/reqshape/src/index.ts` (`ls -l` proves nothing — the symlink survives dangling).
 
+- **`reqshapedev` needs `bun run dev:link`, and `mpcdev` for a working-copy `mpc`** — `bun link` points both bins at the _global install_, so the dev twin ran published code and shelled the published `mpc`; `dev:link` writes `~/.bun/bin/reqshapedev` at `src/index.ts`, and `--mpc mpcdev` (or `MPC_BIN`) is what keeps its pricing current without reinstalling (2026-11-09).
+
 ## The lexicon
 
 - **req** — one model call (`assistant` row); sidebar and billing unit. Agentic ask = many reqs.

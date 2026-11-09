@@ -1,6 +1,6 @@
 {
 	"name": "@jeffreyjyz/reqshape",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"description": "Measure the shape of your requests from opencode's own history, then price it against any model",
 	"license": "MIT",
 	"type": "module",
@@ -22,7 +22,8 @@
 		"start": "bun run src/index.ts",
 		"test": "bun test",
 		"lint": "biome lint --write .",
-		"typecheck": "bun check"
+		"typecheck": "bun check",
+		"dev:link": "ln -sfn \"$PWD/src/index.ts\" \"$HOME/.bun/bin/reqshapedev\""
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.13",
