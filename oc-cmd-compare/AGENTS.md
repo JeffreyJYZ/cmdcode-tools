@@ -113,6 +113,7 @@ Same prune hits every `bun link` in group (`reqshape` too); global symlink store
 - Contracts to preserve:
     - `buildMetrics` invariant: `payPerRequest * requestsPerMonth === plan.price`.
     - Free models: `costPerRequest === 0` ⇒ `requestsPerMonth = Infinity`, `index = 100`. JSON has no `Infinity`, so `renderJson` (plain `JSON.stringify` of `rows`) emits `requestsPerMonth: null` — and `requestsPerFiveHour`/`requestsPerWeek` with it. **`null` means unbounded, not unknown.** Consumer treating it as missing data (or comparing numerically) wrong; `sortProjections` in reqshape guards it explicitly for this reason.
+- **A free model wins VAL volume term, never VAL itself** — infinite requests is the best volume, but the row still enters the composite, so a weak free model no longer reads 100 (Beam 1.0 at ability 17.7 went 100 → 82, behind three DeepSeek rows).
     - One shared index scale across both providers (`buildRows` scores concatenated list).
 - Keep README user-facing; agent/design notes here.
 - **Size limits (pragmatic, not a game):**
