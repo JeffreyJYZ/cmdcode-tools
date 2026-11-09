@@ -141,6 +141,8 @@ Everything below was a real bug. Keep them in mind when touching `src/data/scrap
 
 `normalizeKey` lowercases, drops vendor prefix and parentheticals, strips punctuation, then applies `ALIASES` table in `constants/data.ts`. Add alias whenever model appears on one side only from branding (check `mpc --check`, lists `only in OpenCode` / `only in CommandCode`). OpenCode's free `… Free` rows drop the trailing marker in `normalizeKey` itself (the suffix is systematic, docs-only); the CommandCode free-handling is a separate mechanism (rate-only pass + `fillDeals`), not a key alias. Speed variants (GLM-5.2 Fast, Kimi K2.7 Code HighSpeed, MiMo V2.6 Pro UltraSpeed) intentionally distinct keys.
 
+- **AA slugs carry what the catalogs drop, so those need aliases too** — a vendor prefix (`reflection-beam`, `tencent-hy4`) and a bake date (`mimo-v2-5-0424`) both miss the bare key, leaving a scored model with no ability; `Jev 1.14.0` is the same CommandCode build listed twice and aliases back to `jev` so the row collapses.
+
 ## Metrics semantics
 
 - `payPerRequest = planPrice * costPerRequest / allowance` — plan-relative. Cheaper subscription can post lower per-request cost while buying fewer requests, so `$/1K` effective rate, `req/mo` volume signal.
