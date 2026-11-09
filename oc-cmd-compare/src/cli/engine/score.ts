@@ -76,19 +76,19 @@ export function assignValueIndex(metrics: EntryMetrics[], config: ScoreConfig): 
 	const byAbility = of(scored, ability);
 	const bySpeed = of(speeded, speed);
 
-	// Unpriced models have unlimited requests, so they sit at the top of the
-	// scale and stay out of the range below.
+	// Unlimited requests win the volume term outright — you cannot buy more than
+	// infinite — but the model still enters the composite, so a free model with a
+	// low ability no longer outranks everything by virtue of being free.
+	const volumeTerm = (m: EntryMetrics) =>
+		Number.isFinite(m.requestsPerMonth) ? (byVolume.get(m) ?? 0.5) : 1;
+
 	const composites = new Map<EntryMetrics, number>();
 	for (const m of scored) {
-		if (!Number.isFinite(m.requestsPerMonth)) {
-			m.valueIndex = 100;
-			continue;
-		}
 		composites.set(
 			m,
 			100 * (wAbility ?? 0) * (byAbility.get(m) ?? 0.5) +
 				100 * (wTps ?? 0) * (bySpeed.get(m) ?? 0.5) +
-				100 * (wVolume ?? 0) * (byVolume.get(m) ?? 0.5) +
+				100 * (wVolume ?? 0) * volumeTerm(m) +
 				100 * (wCache ?? 0) * (1 - (byCache.get(m) ?? 0.5)) +
 				100 * (wOutput ?? 0) * (1 - (byOutput.get(m) ?? 0.5)),
 		);

@@ -102,4 +102,32 @@ describe("ability value index", () => {
 			}
 		}
 	});
+
+	test("a free model wins volume, not the whole index", () => {
+		// Free means unlimited requests, which is the best possible volume; it must not
+		// also erase ability, tps and rates, or a weak free model outranks everything.
+		const paid = { input: 1, output: 4, cacheRead: 0.1, cacheWrite: null };
+		const free = { input: 0, output: 0, cacheRead: 0, cacheWrite: null };
+		const entries = [
+			entry({ key: "strong", pricing: paid }),
+			entry({ key: "weakfree", pricing: free }),
+		];
+		const ability = new Map([
+			["strong", 72],
+			["weakfree", 12],
+		]);
+		const metrics = buildMetrics(
+			entries,
+			new Map([["cc", ccPlan]]),
+			workloads,
+			ability,
+			new Map(),
+			DEFAULT_SCORE,
+		);
+		const byKey = new Map(entries.map((e, i) => [e.key, metrics[i]]));
+		const weakFree = byKey.get("weakfree");
+		expect(weakFree?.requestsPerMonth).toBe(Number.POSITIVE_INFINITY);
+		expect(weakFree?.valueIndex).toBeLessThan(100);
+		expect(byKey.get("strong")?.valueIndex).toBeGreaterThan(weakFree?.valueIndex ?? 0);
+	});
 });

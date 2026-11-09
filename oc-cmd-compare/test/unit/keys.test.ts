@@ -18,6 +18,13 @@ describe("normalizeKey", () => {
 	test("aliases vendor-branded variants", () => {
 		expect(normalizeKey("Tencent Hy3")).toBe("hy3");
 		expect(normalizeKey("Tencent Hy4 Preview")).toBe("hy4preview");
+		// AA keeps the vendor in its slug; the catalogs do not.
+		expect(normalizeKey("tencent-hy4")).toBe(normalizeKey("Hy4"));
+		expect(normalizeKey("reflection-beam")).toBe(normalizeKey("Beam 1.0"));
+		// AA appends the bake date to the slug.
+		expect(normalizeKey("mimo-v2-5-0424")).toBe(normalizeKey("MiMo-V2.5"));
+		// CommandCode lists the same Jev build with and without its version.
+		expect(normalizeKey("Jev 1.14.0")).toBe(normalizeKey("Jev"));
 		expect(normalizeKey("DeepSeek V4 Flash Vision (exp)")).toBe("deepseekv4flashvisionexp");
 		// Alibaba's release name for the model CommandCode sells as "Qwen 3.8
 		// Flash", so the AA index lands on the row that is listed here.

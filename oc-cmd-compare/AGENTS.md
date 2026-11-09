@@ -113,6 +113,7 @@ Same prune hits every `bun link` in group (`reqshape` too); global symlink store
 - Contracts to preserve:
     - `buildMetrics` invariant: `payPerRequest * requestsPerMonth === plan.price`.
     - Free models: `costPerRequest === 0` ⇒ `requestsPerMonth = Infinity`, `index = 100`. JSON has no `Infinity`, so `renderJson` (plain `JSON.stringify` of `rows`) emits `requestsPerMonth: null` — and `requestsPerFiveHour`/`requestsPerWeek` with it. **`null` means unbounded, not unknown.** Consumer treating it as missing data (or comparing numerically) wrong; `sortProjections` in reqshape guards it explicitly for this reason.
+- **A free model wins VAL volume term, never VAL itself** — infinite requests is the best volume, but the row still enters the composite, so a weak free model no longer reads 100 (Beam 1.0 at ability 17.7 went 100 → 82, behind three DeepSeek rows).
     - One shared index scale across both providers (`buildRows` scores concatenated list).
 - Keep README user-facing; agent/design notes here.
 - **Size limits (pragmatic, not a game):**
@@ -139,6 +140,8 @@ Everything below was a real bug. Keep them in mind when touching `src/data/scrap
 ## Model matching
 
 `normalizeKey` lowercases, drops vendor prefix and parentheticals, strips punctuation, then applies `ALIASES` table in `constants/data.ts`. Add alias whenever model appears on one side only from branding (check `mpc --check`, lists `only in OpenCode` / `only in CommandCode`). OpenCode's free `… Free` rows drop the trailing marker in `normalizeKey` itself (the suffix is systematic, docs-only); the CommandCode free-handling is a separate mechanism (rate-only pass + `fillDeals`), not a key alias. Speed variants (GLM-5.2 Fast, Kimi K2.7 Code HighSpeed, MiMo V2.6 Pro UltraSpeed) intentionally distinct keys.
+
+- **AA slugs carry what the catalogs drop, so those need aliases too** — a vendor prefix (`reflection-beam`, `tencent-hy4`) and a bake date (`mimo-v2-5-0424`) both miss the bare key, leaving a scored model with no ability; `Jev 1.14.0` is the same CommandCode build listed twice and aliases back to `jev` so the row collapses.
 
 ## Metrics semantics
 

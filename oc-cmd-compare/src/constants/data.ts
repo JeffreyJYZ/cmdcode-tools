@@ -13,6 +13,13 @@ export const ALIASES: Record<string, string> = {
 	// CommandCode prefixes these with "Tencent"; OpenCode Go does not.
 	tencenthy3: "hy3",
 	tencenthy4preview: "hy4preview",
+	// AA's slug keeps the vendor the catalogs drop: "tencent-hy4", "reflection-beam".
+	tencenthy4: "hy4",
+	reflectionbeam: "beam10",
+	// AA suffixes the bake date onto the slug: "mimo-v2-5-0424".
+	mimov250424: "mimov25",
+	// CommandCode lists the same Jev build twice, once with its version suffix.
+	jev1140: "jev",
 	// CommandCode writes "(exp)"; OpenCode Go writes "-exp".
 	deepseekv4flashvision: "deepseekv4flashvisionexp",
 	// Alibaba's "Qwen3.8-Flash-Next" is the release name of the model

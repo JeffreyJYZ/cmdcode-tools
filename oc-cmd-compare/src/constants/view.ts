@@ -100,7 +100,10 @@ export const LEGEND: [string, string][] = [
 	["ability", "benchmark score for the model (source above)"],
 	["tps", "output tokens per second (source above)"],
 	["COST", "0-100 volume index: requests/mo, lower is better (no ability)"],
-	["VAL", "0-100 ability-aware value: ability + speed + volume + cache + output"],
+	[
+		"VAL",
+		"0-100 ability-aware value: ability + speed + volume + cache + output · a free row wins volume only, so it can post COST 0 and a mid VAL",
+	],
 ];
 
 export const CSV_HEADER = [
