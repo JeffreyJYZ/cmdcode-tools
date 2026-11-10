@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-10T00:28:16.032Z",
+	"generatedAt": "2026-11-10T21:38:45.824Z",
 	"plans": [
 		{
 			"key": "go",
@@ -2221,36 +2221,6 @@
 						}
 					},
 					{
-						"key": "croutonalpha",
-						"name": "Crouton Alpha",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 10,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
-					},
-					{
 						"key": "ornith15122b",
 						"name": "Ornith 1.5 122B",
 						"oc": null,
@@ -2368,7 +2338,7 @@
 					"ccWins": 21,
 					"ties": 1,
 					"ocOnly": 9,
-					"ccOnly": 35
+					"ccOnly": 34
 				}
 			},
 			"go-plus": {
@@ -4534,36 +4504,6 @@
 						}
 					},
 					{
-						"key": "croutonalpha",
-						"name": "Crouton Alpha",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 10,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
-					},
-					{
 						"key": "ornith15122b",
 						"name": "Ornith 1.5 122B",
 						"oc": null,
@@ -4681,7 +4621,7 @@
 					"ccWins": 23,
 					"ties": 0,
 					"ocOnly": 9,
-					"ccOnly": 35
+					"ccOnly": 34
 				}
 			}
 		},
@@ -7242,36 +7182,6 @@
 						}
 					},
 					{
-						"key": "croutonalpha",
-						"name": "Crouton Alpha",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 2,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
-					},
-					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -7335,7 +7245,7 @@
 					"ccWins": 14,
 					"ties": 3,
 					"ocOnly": 7,
-					"ccOnly": 46
+					"ccOnly": 45
 				}
 			},
 			"go-plus": {
@@ -9894,36 +9804,6 @@
 						}
 					},
 					{
-						"key": "croutonalpha",
-						"name": "Crouton Alpha",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 2,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
-					},
-					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -9987,7 +9867,7 @@
 					"ccWins": 16,
 					"ties": 1,
 					"ocOnly": 7,
-					"ccOnly": 46
+					"ccOnly": 45
 				}
 			}
 		},
@@ -12974,36 +12854,6 @@
 						}
 					},
 					{
-						"key": "croutonalpha",
-						"name": "Crouton Alpha",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 1.5,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
-					},
-					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -13067,7 +12917,7 @@
 					"ccWins": 2,
 					"ties": 9,
 					"ocOnly": 6,
-					"ccOnly": 61
+					"ccOnly": 60
 				}
 			},
 			"go-plus": {
@@ -16052,36 +15902,6 @@
 						}
 					},
 					{
-						"key": "croutonalpha",
-						"name": "Crouton Alpha",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 1.5,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true,
-							"deal": {
-								"badge": "Free"
-							}
-						}
-					},
-					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -16145,7 +15965,7 @@
 					"ccWins": 4,
 					"ties": 8,
 					"ocOnly": 6,
-					"ccOnly": 61
+					"ccOnly": 60
 				}
 			}
 		},
@@ -19183,33 +19003,6 @@
 						}
 					},
 					{
-						"key": "croutonalpha",
-						"name": "Crouton Alpha",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						}
-					},
-					{
 						"key": "ornith15122b",
 						"name": "Ornith 1.5 122B",
 						"oc": null,
@@ -19513,7 +19306,7 @@
 					"ccWins": 3,
 					"ties": 7,
 					"ocOnly": 6,
-					"ccOnly": 72
+					"ccOnly": 71
 				}
 			},
 			"go-plus": {
@@ -22549,33 +22342,6 @@
 						}
 					},
 					{
-						"key": "croutonalpha",
-						"name": "Crouton Alpha",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						}
-					},
-					{
 						"key": "ornith15122b",
 						"name": "Ornith 1.5 122B",
 						"oc": null,
@@ -22879,7 +22645,7 @@
 					"ccWins": 3,
 					"ties": 6,
 					"ocOnly": 6,
-					"ccOnly": 72
+					"ccOnly": 71
 				}
 			}
 		},
@@ -25917,33 +25683,6 @@
 						}
 					},
 					{
-						"key": "croutonalpha",
-						"name": "Crouton Alpha",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						}
-					},
-					{
 						"key": "ornith15122b",
 						"name": "Ornith 1.5 122B",
 						"oc": null,
@@ -26247,7 +25986,7 @@
 					"ccWins": 3,
 					"ties": 7,
 					"ocOnly": 6,
-					"ccOnly": 72
+					"ccOnly": 71
 				}
 			},
 			"go-plus": {
@@ -29283,33 +29022,6 @@
 						}
 					},
 					{
-						"key": "croutonalpha",
-						"name": "Crouton Alpha",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0,
-								"output": 0,
-								"cacheRead": 0,
-								"cacheWrite": null
-							},
-							"allowance": 0,
-							"requestsPerMonth": null,
-							"requestsPerFiveHour": null,
-							"requestsPerWeek": null,
-							"costPerRequest": 0,
-							"payPerRequest": 0,
-							"multiplier": 0,
-							"ability": null,
-							"tps": null,
-							"index": 100,
-							"valueIndex": null,
-							"free": true
-						}
-					},
-					{
 						"key": "ornith15122b",
 						"name": "Ornith 1.5 122B",
 						"oc": null,
@@ -29613,7 +29325,7 @@
 					"ccWins": 3,
 					"ties": 6,
 					"ocOnly": 6,
-					"ccOnly": 72
+					"ccOnly": 71
 				}
 			}
 		}
