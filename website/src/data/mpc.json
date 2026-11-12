@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-12T11:55:19.803Z",
+	"generatedAt": "2026-11-12T19:44:00.914Z",
 	"plans": [
 		{
 			"key": "go",
@@ -113,6 +113,36 @@
 							"free": false
 						},
 						"cc": null
+					},
+					{
+						"key": "inkling2small",
+						"name": "Inkling 2 Small",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 10,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 10,
+							"ability": 30.6286781498958,
+							"tps": null,
+							"index": 100,
+							"valueIndex": 89,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
 					},
 					{
 						"key": "mimov26pro",
@@ -2338,7 +2368,7 @@
 					"ccWins": 21,
 					"ties": 1,
 					"ocOnly": 9,
-					"ccOnly": 34
+					"ccOnly": 35
 				}
 			},
 			"go-plus": {
@@ -2395,6 +2425,36 @@
 							"index": 59,
 							"valueIndex": 93,
 							"free": false
+						}
+					},
+					{
+						"key": "inkling2small",
+						"name": "Inkling 2 Small",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 10,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 10,
+							"ability": 30.6286781498958,
+							"tps": null,
+							"index": 100,
+							"valueIndex": 87,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
 						}
 					},
 					{
@@ -4621,13 +4681,43 @@
 					"ccWins": 23,
 					"ties": 0,
 					"ocOnly": 9,
-					"ccOnly": 34
+					"ccOnly": 35
 				}
 			}
 		},
 		"goat": {
 			"go": {
 				"rows": [
+					{
+						"key": "inkling2small",
+						"name": "Inkling 2 Small",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 2,
+							"ability": 30.6286781498958,
+							"tps": null,
+							"index": 100,
+							"valueIndex": 100,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
+					},
 					{
 						"key": "museember",
 						"name": "Muse Ember",
@@ -4651,7 +4741,7 @@
 							"ability": 36.0212987864912,
 							"tps": null,
 							"index": 65,
-							"valueIndex": 100,
+							"valueIndex": 73,
 							"free": false
 						}
 					},
@@ -4677,7 +4767,7 @@
 							"ability": 17.7307282547205,
 							"tps": null,
 							"index": 100,
-							"valueIndex": 98,
+							"valueIndex": 72,
 							"free": true
 						},
 						"cc": null
@@ -4704,7 +4794,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 53,
-							"valueIndex": 86,
+							"valueIndex": 63,
 							"free": false
 						},
 						"cc": {
@@ -4726,7 +4816,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 57,
-							"valueIndex": 90,
+							"valueIndex": 66,
 							"free": false
 						}
 					},
@@ -4753,7 +4843,7 @@
 							"ability": 54.54133407109,
 							"tps": null,
 							"index": 11,
-							"valueIndex": 83,
+							"valueIndex": 61,
 							"free": false
 						}
 					},
@@ -4779,7 +4869,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 52,
-							"valueIndex": 68,
+							"valueIndex": 50,
 							"free": false
 						},
 						"cc": {
@@ -4801,7 +4891,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 57,
-							"valueIndex": 72,
+							"valueIndex": 53,
 							"free": false
 						}
 					},
@@ -4827,7 +4917,7 @@
 							"ability": 34.5552385392508,
 							"tps": null,
 							"index": 50,
-							"valueIndex": 68,
+							"valueIndex": 50,
 							"free": false
 						},
 						"cc": null
@@ -4854,7 +4944,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 53,
-							"valueIndex": 60,
+							"valueIndex": 44,
 							"free": false
 						},
 						"cc": {
@@ -4876,7 +4966,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 57,
-							"valueIndex": 64,
+							"valueIndex": 47,
 							"free": false
 						}
 					},
@@ -4903,7 +4993,7 @@
 							"ability": 29.570119369837,
 							"tps": null,
 							"index": 57,
-							"valueIndex": 61,
+							"valueIndex": 45,
 							"free": false
 						}
 					},
@@ -4929,7 +5019,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 10,
-							"valueIndex": 55,
+							"valueIndex": 41,
 							"free": false
 						},
 						"cc": {
@@ -4951,7 +5041,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 14,
-							"valueIndex": 59,
+							"valueIndex": 44,
 							"free": false
 						}
 					},
@@ -4978,34 +5068,7 @@
 							"ability": 20.1068756031705,
 							"tps": null,
 							"index": 54,
-							"valueIndex": 28,
-							"free": false
-						}
-					},
-					{
-						"key": "gemini38flash",
-						"name": "Gemini 3.8 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 1.5,
-								"output": 7.5,
-								"cacheRead": 0.15,
-								"cacheWrite": null
-							},
-							"allowance": 40,
-							"requestsPerMonth": 3921.5686274509803,
-							"requestsPerFiveHour": 784.3137254901961,
-							"requestsPerWeek": 1960.7843137254902,
-							"costPerRequest": 0.0102,
-							"payPerRequest": 0.00255,
-							"multiplier": 4,
-							"ability": 30.8468119957291,
-							"tps": null,
-							"index": 28,
-							"valueIndex": 28,
+							"valueIndex": 21,
 							"free": false
 						}
 					},
@@ -5031,7 +5094,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 9,
-							"valueIndex": 16,
+							"valueIndex": 12,
 							"free": false
 						},
 						"cc": {
@@ -5053,7 +5116,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 13,
-							"valueIndex": 20,
+							"valueIndex": 15,
 							"free": false
 						}
 					},
@@ -5080,7 +5143,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 14,
-							"valueIndex": 16,
+							"valueIndex": 12,
 							"free": false
 						}
 					},
@@ -5106,7 +5169,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 9,
-							"valueIndex": 11,
+							"valueIndex": 8,
 							"free": false
 						},
 						"cc": {
@@ -5128,7 +5191,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 13,
-							"valueIndex": 15,
+							"valueIndex": 11,
 							"free": false
 						}
 					},
@@ -5154,7 +5217,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 0,
-							"valueIndex": 11,
+							"valueIndex": 8,
 							"free": false
 						},
 						"cc": {
@@ -5176,7 +5239,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 4,
-							"valueIndex": 15,
+							"valueIndex": 11,
 							"free": false
 						}
 					},
@@ -5203,7 +5266,7 @@
 							"ability": 26.1249946754784,
 							"tps": null,
 							"index": 20,
-							"valueIndex": 8,
+							"valueIndex": 6,
 							"free": false
 						}
 					},
@@ -6318,6 +6381,33 @@
 						}
 					},
 					{
+						"key": "gemini38flash",
+						"name": "Gemini 3.8 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 1.5,
+								"output": 7.5,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 40,
+							"requestsPerMonth": 3921.5686274509803,
+							"requestsPerFiveHour": 784.3137254901961,
+							"requestsPerWeek": 1960.7843137254902,
+							"costPerRequest": 0.0102,
+							"payPerRequest": 0.00255,
+							"multiplier": 4,
+							"ability": null,
+							"tps": null,
+							"index": 28,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen37max",
 						"name": "Qwen 3.7 Max",
 						"oc": null,
@@ -7245,11 +7335,41 @@
 					"ccWins": 14,
 					"ties": 3,
 					"ocOnly": 7,
-					"ccOnly": 45
+					"ccOnly": 46
 				}
 			},
 			"go-plus": {
 				"rows": [
+					{
+						"key": "inkling2small",
+						"name": "Inkling 2 Small",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 2,
+							"ability": 30.6286781498958,
+							"tps": null,
+							"index": 100,
+							"valueIndex": 100,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
+					},
 					{
 						"key": "claudehaiku55",
 						"name": "Claude Haiku 5.5",
@@ -7272,7 +7392,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 73,
-							"valueIndex": 100,
+							"valueIndex": 77,
 							"free": false
 						},
 						"cc": {
@@ -7294,7 +7414,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 57,
-							"valueIndex": 86,
+							"valueIndex": 66,
 							"free": false
 						}
 					},
@@ -7321,7 +7441,7 @@
 							"ability": 36.0212987864912,
 							"tps": null,
 							"index": 65,
-							"valueIndex": 95,
+							"valueIndex": 73,
 							"free": false
 						}
 					},
@@ -7347,7 +7467,7 @@
 							"ability": 17.7307282547205,
 							"tps": null,
 							"index": 100,
-							"valueIndex": 93,
+							"valueIndex": 72,
 							"free": true
 						},
 						"cc": null
@@ -7374,7 +7494,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 72,
-							"valueIndex": 83,
+							"valueIndex": 64,
 							"free": false
 						},
 						"cc": {
@@ -7396,7 +7516,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 56,
-							"valueIndex": 68,
+							"valueIndex": 53,
 							"free": false
 						}
 					},
@@ -7422,7 +7542,7 @@
 							"ability": 34.5552385392508,
 							"tps": null,
 							"index": 70,
-							"valueIndex": 83,
+							"valueIndex": 64,
 							"free": false
 						},
 						"cc": null
@@ -7450,7 +7570,7 @@
 							"ability": 54.54133407109,
 							"tps": null,
 							"index": 10,
-							"valueIndex": 78,
+							"valueIndex": 60,
 							"free": false
 						}
 					},
@@ -7476,7 +7596,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 73,
-							"valueIndex": 75,
+							"valueIndex": 58,
 							"free": false
 						},
 						"cc": {
@@ -7498,7 +7618,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 57,
-							"valueIndex": 61,
+							"valueIndex": 47,
 							"free": false
 						}
 					},
@@ -7524,7 +7644,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 29,
-							"valueIndex": 71,
+							"valueIndex": 54,
 							"free": false
 						},
 						"cc": {
@@ -7546,7 +7666,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 14,
-							"valueIndex": 56,
+							"valueIndex": 43,
 							"free": false
 						}
 					},
@@ -7573,7 +7693,7 @@
 							"ability": 29.570119369837,
 							"tps": null,
 							"index": 57,
-							"valueIndex": 58,
+							"valueIndex": 45,
 							"free": false
 						}
 					},
@@ -7599,7 +7719,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 38,
-							"valueIndex": 38,
+							"valueIndex": 29,
 							"free": false
 						},
 						"cc": {
@@ -7621,7 +7741,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 12,
-							"valueIndex": 14,
+							"valueIndex": 11,
 							"free": false
 						}
 					},
@@ -7647,7 +7767,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 28,
-							"valueIndex": 33,
+							"valueIndex": 26,
 							"free": false
 						},
 						"cc": {
@@ -7669,7 +7789,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 12,
-							"valueIndex": 19,
+							"valueIndex": 15,
 							"free": false
 						}
 					},
@@ -7695,7 +7815,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 19,
-							"valueIndex": 28,
+							"valueIndex": 22,
 							"free": false
 						},
 						"cc": {
@@ -7717,7 +7837,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 3,
-							"valueIndex": 14,
+							"valueIndex": 11,
 							"free": false
 						}
 					},
@@ -7744,34 +7864,7 @@
 							"ability": 20.1068756031705,
 							"tps": null,
 							"index": 54,
-							"valueIndex": 27,
-							"free": false
-						}
-					},
-					{
-						"key": "gemini38flash",
-						"name": "Gemini 3.8 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 1.5,
-								"output": 7.5,
-								"cacheRead": 0.15,
-								"cacheWrite": null
-							},
-							"allowance": 40,
-							"requestsPerMonth": 3921.5686274509803,
-							"requestsPerFiveHour": 784.3137254901961,
-							"requestsPerWeek": 1960.7843137254902,
-							"costPerRequest": 0.0102,
-							"payPerRequest": 0.00255,
-							"multiplier": 4,
-							"ability": 30.8468119957291,
-							"tps": null,
-							"index": 28,
-							"valueIndex": 26,
+							"valueIndex": 21,
 							"free": false
 						}
 					},
@@ -7798,7 +7891,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 13,
-							"valueIndex": 15,
+							"valueIndex": 12,
 							"free": false
 						}
 					},
@@ -7825,7 +7918,7 @@
 							"ability": 26.1249946754784,
 							"tps": null,
 							"index": 20,
-							"valueIndex": 7,
+							"valueIndex": 6,
 							"free": false
 						}
 					},
@@ -8940,6 +9033,33 @@
 						}
 					},
 					{
+						"key": "gemini38flash",
+						"name": "Gemini 3.8 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 1.5,
+								"output": 7.5,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 40,
+							"requestsPerMonth": 3921.5686274509803,
+							"requestsPerFiveHour": 784.3137254901961,
+							"requestsPerWeek": 1960.7843137254902,
+							"costPerRequest": 0.0102,
+							"payPerRequest": 0.00255,
+							"multiplier": 4,
+							"ability": null,
+							"tps": null,
+							"index": 28,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen37max",
 						"name": "Qwen 3.7 Max",
 						"oc": null,
@@ -9867,13 +9987,43 @@
 					"ccWins": 16,
 					"ties": 1,
 					"ocOnly": 7,
-					"ccOnly": 45
+					"ccOnly": 46
 				}
 			}
 		},
 		"pro": {
 			"go": {
 				"rows": [
+					{
+						"key": "inkling2small",
+						"name": "Inkling 2 Small",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 1.5,
+							"ability": 30.6286781498958,
+							"tps": null,
+							"index": 100,
+							"valueIndex": 100,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
+					},
 					{
 						"key": "gemini4carbon",
 						"name": "Gemini 4 Carbon",
@@ -9897,7 +10047,7 @@
 							"ability": 60.025738829526,
 							"tps": null,
 							"index": 25,
-							"valueIndex": 100,
+							"valueIndex": 74,
 							"free": false
 						}
 					},
@@ -9923,7 +10073,7 @@
 							"ability": 17.7307282547205,
 							"tps": null,
 							"index": 100,
-							"valueIndex": 99,
+							"valueIndex": 73,
 							"free": true
 						},
 						"cc": null
@@ -9951,7 +10101,7 @@
 							"ability": 36.0212987864912,
 							"tps": null,
 							"index": 67,
-							"valueIndex": 97,
+							"valueIndex": 71,
 							"free": false
 						}
 					},
@@ -9977,7 +10127,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 50,
-							"valueIndex": 77,
+							"valueIndex": 57,
 							"free": false
 						},
 						"cc": {
@@ -9999,7 +10149,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 59,
-							"valueIndex": 87,
+							"valueIndex": 64,
 							"free": false
 						}
 					},
@@ -10026,7 +10176,7 @@
 							"ability": 51.3265188577015,
 							"tps": null,
 							"index": 29,
-							"valueIndex": 84,
+							"valueIndex": 62,
 							"free": false
 						}
 					},
@@ -10053,7 +10203,7 @@
 							"ability": 54.54133407109,
 							"tps": null,
 							"index": 20,
-							"valueIndex": 79,
+							"valueIndex": 58,
 							"free": false
 						}
 					},
@@ -10079,7 +10229,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 50,
-							"valueIndex": 60,
+							"valueIndex": 44,
 							"free": false
 						},
 						"cc": {
@@ -10101,7 +10251,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 59,
-							"valueIndex": 70,
+							"valueIndex": 52,
 							"free": false
 						}
 					},
@@ -10127,7 +10277,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 50,
-							"valueIndex": 53,
+							"valueIndex": 39,
 							"free": false
 						},
 						"cc": {
@@ -10149,7 +10299,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 59,
-							"valueIndex": 62,
+							"valueIndex": 46,
 							"free": false
 						}
 					},
@@ -10175,7 +10325,7 @@
 							"ability": 34.5552385392508,
 							"tps": null,
 							"index": 48,
-							"valueIndex": 59,
+							"valueIndex": 43,
 							"free": false
 						},
 						"cc": null
@@ -10203,7 +10353,7 @@
 							"ability": 29.570119369837,
 							"tps": null,
 							"index": 55,
-							"valueIndex": 54,
+							"valueIndex": 40,
 							"free": false
 						}
 					},
@@ -10229,7 +10379,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 10,
-							"valueIndex": 43,
+							"valueIndex": 32,
 							"free": false
 						},
 						"cc": {
@@ -10251,7 +10401,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 19,
-							"valueIndex": 53,
+							"valueIndex": 39,
 							"free": false
 						}
 					},
@@ -10278,34 +10428,7 @@
 							"ability": 20.1068756031705,
 							"tps": null,
 							"index": 53,
-							"valueIndex": 23,
-							"free": false
-						}
-					},
-					{
-						"key": "gemini38flash",
-						"name": "Gemini 3.8 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 1.5,
-								"output": 7.5,
-								"cacheRead": 0.15,
-								"cacheWrite": null
-							},
-							"allowance": 50,
-							"requestsPerMonth": 4901.9607843137255,
-							"requestsPerFiveHour": 980.3921568627452,
-							"requestsPerWeek": 2450.9803921568628,
-							"costPerRequest": 0.0102,
-							"payPerRequest": 0.00408,
-							"multiplier": 2.5,
-							"ability": 30.8468119957291,
-							"tps": null,
-							"index": 30,
-							"valueIndex": 22,
+							"valueIndex": 17,
 							"free": false
 						}
 					},
@@ -10332,7 +10455,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 22,
-							"valueIndex": 17,
+							"valueIndex": 12,
 							"free": false
 						}
 					},
@@ -10358,7 +10481,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 8,
-							"valueIndex": 6,
+							"valueIndex": 4,
 							"free": false
 						},
 						"cc": {
@@ -10380,7 +10503,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 17,
-							"valueIndex": 15,
+							"valueIndex": 11,
 							"free": false
 						}
 					},
@@ -10428,7 +10551,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 18,
-							"valueIndex": 11,
+							"valueIndex": 8,
 							"free": false
 						}
 					},
@@ -10476,7 +10599,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 9,
-							"valueIndex": 10,
+							"valueIndex": 7,
 							"free": false
 						}
 					},
@@ -10503,7 +10626,7 @@
 							"ability": 26.1249946754784,
 							"tps": null,
 							"index": 25,
-							"valueIndex": 5,
+							"valueIndex": 4,
 							"free": false
 						}
 					},
@@ -11634,6 +11757,33 @@
 							"ability": null,
 							"tps": null,
 							"index": 65,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
+						"key": "gemini38flash",
+						"name": "Gemini 3.8 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 1.5,
+								"output": 7.5,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 50,
+							"requestsPerMonth": 4901.9607843137255,
+							"requestsPerFiveHour": 980.3921568627452,
+							"requestsPerWeek": 2450.9803921568628,
+							"costPerRequest": 0.0102,
+							"payPerRequest": 0.00408,
+							"multiplier": 2.5,
+							"ability": null,
+							"tps": null,
+							"index": 30,
 							"valueIndex": null,
 							"free": false
 						}
@@ -12944,11 +13094,41 @@
 					"ccWins": 2,
 					"ties": 9,
 					"ocOnly": 6,
-					"ccOnly": 61
+					"ccOnly": 62
 				}
 			},
 			"go-plus": {
 				"rows": [
+					{
+						"key": "inkling2small",
+						"name": "Inkling 2 Small",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 1.5,
+							"ability": 30.6286781498958,
+							"tps": null,
+							"index": 100,
+							"valueIndex": 100,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
+					},
 					{
 						"key": "beam10",
 						"name": "Beam Free",
@@ -12971,7 +13151,7 @@
 							"ability": 17.7307282547205,
 							"tps": null,
 							"index": 100,
-							"valueIndex": 100,
+							"valueIndex": 73,
 							"free": true
 						},
 						"cc": null
@@ -12999,7 +13179,7 @@
 							"ability": 60.025738829526,
 							"tps": null,
 							"index": 25,
-							"valueIndex": 100,
+							"valueIndex": 73,
 							"free": false
 						}
 					},
@@ -13025,7 +13205,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 69,
-							"valueIndex": 97,
+							"valueIndex": 71,
 							"free": false
 						},
 						"cc": {
@@ -13047,7 +13227,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 59,
-							"valueIndex": 87,
+							"valueIndex": 64,
 							"free": false
 						}
 					},
@@ -13074,7 +13254,7 @@
 							"ability": 36.0212987864912,
 							"tps": null,
 							"index": 67,
-							"valueIndex": 97,
+							"valueIndex": 71,
 							"free": false
 						}
 					},
@@ -13101,7 +13281,7 @@
 							"ability": 51.3265188577015,
 							"tps": null,
 							"index": 29,
-							"valueIndex": 84,
+							"valueIndex": 62,
 							"free": false
 						}
 					},
@@ -13127,7 +13307,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 68,
-							"valueIndex": 80,
+							"valueIndex": 59,
 							"free": false
 						},
 						"cc": {
@@ -13149,7 +13329,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 59,
-							"valueIndex": 70,
+							"valueIndex": 51,
 							"free": false
 						}
 					},
@@ -13176,7 +13356,7 @@
 							"ability": 54.54133407109,
 							"tps": null,
 							"index": 19,
-							"valueIndex": 79,
+							"valueIndex": 58,
 							"free": false
 						}
 					},
@@ -13202,7 +13382,7 @@
 							"ability": 34.5552385392508,
 							"tps": null,
 							"index": 66,
-							"valueIndex": 78,
+							"valueIndex": 57,
 							"free": false
 						},
 						"cc": null
@@ -13229,7 +13409,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 69,
-							"valueIndex": 72,
+							"valueIndex": 53,
 							"free": false
 						},
 						"cc": {
@@ -13251,7 +13431,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 59,
-							"valueIndex": 63,
+							"valueIndex": 46,
 							"free": false
 						}
 					},
@@ -13277,7 +13457,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 28,
-							"valueIndex": 62,
+							"valueIndex": 46,
 							"free": false
 						},
 						"cc": {
@@ -13299,7 +13479,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 18,
-							"valueIndex": 52,
+							"valueIndex": 38,
 							"free": false
 						}
 					},
@@ -13326,7 +13506,7 @@
 							"ability": 29.570119369837,
 							"tps": null,
 							"index": 55,
-							"valueIndex": 54,
+							"valueIndex": 40,
 							"free": false
 						}
 					},
@@ -13352,7 +13532,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 36,
-							"valueIndex": 30,
+							"valueIndex": 22,
 							"free": false
 						},
 						"cc": {
@@ -13374,7 +13554,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 17,
-							"valueIndex": 11,
+							"valueIndex": 8,
 							"free": false
 						}
 					},
@@ -13400,7 +13580,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 26,
-							"valueIndex": 25,
+							"valueIndex": 18,
 							"free": false
 						},
 						"cc": {
@@ -13422,7 +13602,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 17,
-							"valueIndex": 15,
+							"valueIndex": 11,
 							"free": false
 						}
 					},
@@ -13449,34 +13629,7 @@
 							"ability": 20.1068756031705,
 							"tps": null,
 							"index": 53,
-							"valueIndex": 23,
-							"free": false
-						}
-					},
-					{
-						"key": "gemini38flash",
-						"name": "Gemini 3.8 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 1.5,
-								"output": 7.5,
-								"cacheRead": 0.15,
-								"cacheWrite": null
-							},
-							"allowance": 50,
-							"requestsPerMonth": 4901.9607843137255,
-							"requestsPerFiveHour": 980.3921568627452,
-							"requestsPerWeek": 2450.9803921568628,
-							"costPerRequest": 0.0102,
-							"payPerRequest": 0.00408,
-							"multiplier": 2.5,
-							"ability": 30.8468119957291,
-							"tps": null,
-							"index": 29,
-							"valueIndex": 21,
+							"valueIndex": 17,
 							"free": false
 						}
 					},
@@ -13502,7 +13655,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 18,
-							"valueIndex": 19,
+							"valueIndex": 14,
 							"free": false
 						},
 						"cc": {
@@ -13524,7 +13677,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 9,
-							"valueIndex": 9,
+							"valueIndex": 7,
 							"free": false
 						}
 					},
@@ -13551,7 +13704,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 22,
-							"valueIndex": 16,
+							"valueIndex": 12,
 							"free": false
 						}
 					},
@@ -13578,7 +13731,7 @@
 							"ability": 26.1249946754784,
 							"tps": null,
 							"index": 24,
-							"valueIndex": 5,
+							"valueIndex": 4,
 							"free": false
 						}
 					},
@@ -14709,6 +14862,33 @@
 							"ability": null,
 							"tps": null,
 							"index": 65,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
+						"key": "gemini38flash",
+						"name": "Gemini 3.8 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 1.5,
+								"output": 7.5,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 50,
+							"requestsPerMonth": 4901.9607843137255,
+							"requestsPerFiveHour": 980.3921568627452,
+							"requestsPerWeek": 2450.9803921568628,
+							"costPerRequest": 0.0102,
+							"payPerRequest": 0.00408,
+							"multiplier": 2.5,
+							"ability": null,
+							"tps": null,
+							"index": 29,
 							"valueIndex": null,
 							"free": false
 						}
@@ -16019,13 +16199,40 @@
 					"ccWins": 4,
 					"ties": 8,
 					"ocOnly": 6,
-					"ccOnly": 61
+					"ccOnly": 62
 				}
 			}
 		},
 		"max10": {
 			"go": {
 				"rows": [
+					{
+						"key": "inkling2small",
+						"name": "Inkling 2 Small",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": 30.6286781498958,
+							"tps": null,
+							"index": 100,
+							"valueIndex": 100,
+							"free": true
+						}
+					},
 					{
 						"key": "gemini4carbon",
 						"name": "Gemini 4 Carbon",
@@ -16049,7 +16256,7 @@
 							"ability": 60.025738829526,
 							"tps": null,
 							"index": 39,
-							"valueIndex": 100,
+							"valueIndex": 81,
 							"free": false
 						}
 					},
@@ -16076,7 +16283,7 @@
 							"ability": 36.0212987864912,
 							"tps": null,
 							"index": 73,
-							"valueIndex": 95,
+							"valueIndex": 76,
 							"free": false
 						}
 					},
@@ -16102,7 +16309,7 @@
 							"ability": 17.7307282547205,
 							"tps": null,
 							"index": 100,
-							"valueIndex": 93,
+							"valueIndex": 75,
 							"free": true
 						},
 						"cc": null
@@ -16130,7 +16337,7 @@
 							"ability": 64.563595756626,
 							"tps": null,
 							"index": 22,
-							"valueIndex": 89,
+							"valueIndex": 72,
 							"free": false
 						}
 					},
@@ -16156,7 +16363,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 41,
-							"valueIndex": 62,
+							"valueIndex": 50,
 							"free": false
 						},
 						"cc": {
@@ -16178,7 +16385,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 67,
-							"valueIndex": 87,
+							"valueIndex": 70,
 							"free": false
 						}
 					},
@@ -16205,7 +16412,7 @@
 							"ability": 54.54133407109,
 							"tps": null,
 							"index": 39,
-							"valueIndex": 87,
+							"valueIndex": 70,
 							"free": false
 						}
 					},
@@ -16232,7 +16439,7 @@
 							"ability": 51.3265188577015,
 							"tps": null,
 							"index": 42,
-							"valueIndex": 86,
+							"valueIndex": 70,
 							"free": false
 						}
 					},
@@ -16259,7 +16466,7 @@
 							"ability": 54.6087338138148,
 							"tps": null,
 							"index": 34,
-							"valueIndex": 83,
+							"valueIndex": 67,
 							"free": false
 						}
 					},
@@ -16286,7 +16493,7 @@
 							"ability": 59.1060336078904,
 							"tps": null,
 							"index": 26,
-							"valueIndex": 82,
+							"valueIndex": 66,
 							"free": false
 						}
 					},
@@ -16312,7 +16519,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 41,
-							"valueIndex": 48,
+							"valueIndex": 39,
 							"free": false
 						},
 						"cc": {
@@ -16334,7 +16541,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 66,
-							"valueIndex": 73,
+							"valueIndex": 58,
 							"free": false
 						}
 					},
@@ -16360,7 +16567,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 41,
-							"valueIndex": 41,
+							"valueIndex": 33,
 							"free": false
 						},
 						"cc": {
@@ -16382,7 +16589,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 67,
-							"valueIndex": 66,
+							"valueIndex": 53,
 							"free": false
 						}
 					},
@@ -16408,7 +16615,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 8,
-							"valueIndex": 36,
+							"valueIndex": 29,
 							"free": false
 						},
 						"cc": {
@@ -16430,7 +16637,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 33,
-							"valueIndex": 60,
+							"valueIndex": 48,
 							"free": false
 						}
 					},
@@ -16457,7 +16664,7 @@
 							"ability": 56.8538559596797,
 							"tps": null,
 							"index": 11,
-							"valueIndex": 54,
+							"valueIndex": 43,
 							"free": false
 						}
 					},
@@ -16483,7 +16690,7 @@
 							"ability": 34.5552385392508,
 							"tps": null,
 							"index": 39,
-							"valueIndex": 46,
+							"valueIndex": 37,
 							"free": false
 						},
 						"cc": null
@@ -16511,7 +16718,7 @@
 							"ability": 29.570119369837,
 							"tps": null,
 							"index": 49,
-							"valueIndex": 45,
+							"valueIndex": 36,
 							"free": false
 						}
 					},
@@ -16538,7 +16745,7 @@
 							"ability": 43.5748225998431,
 							"tps": null,
 							"index": 26,
-							"valueIndex": 45,
+							"valueIndex": 36,
 							"free": false
 						}
 					},
@@ -16565,7 +16772,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 41,
-							"valueIndex": 34,
+							"valueIndex": 27,
 							"free": false
 						}
 					},
@@ -16613,34 +16820,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 32,
-							"valueIndex": 29,
-							"free": false
-						}
-					},
-					{
-						"key": "gemini38flash",
-						"name": "Gemini 3.8 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 1.5,
-								"output": 7.5,
-								"cacheRead": 0.15,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 14705.882352941175,
-							"requestsPerFiveHour": 4411.764705882352,
-							"requestsPerWeek": 8823.529411764704,
-							"costPerRequest": 0.0102,
-							"payPerRequest": 0.0068000000000000005,
-							"multiplier": 1.5,
-							"ability": 30.8468119957291,
-							"tps": null,
-							"index": 37,
-							"valueIndex": 28,
+							"valueIndex": 23,
 							"free": false
 						}
 					},
@@ -16688,7 +16868,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 32,
-							"valueIndex": 25,
+							"valueIndex": 20,
 							"free": false
 						}
 					},
@@ -16736,7 +16916,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 26,
-							"valueIndex": 24,
+							"valueIndex": 20,
 							"free": false
 						}
 					},
@@ -16763,7 +16943,7 @@
 							"ability": 20.1068756031705,
 							"tps": null,
 							"index": 51,
-							"valueIndex": 22,
+							"valueIndex": 18,
 							"free": false
 						}
 					},
@@ -16790,7 +16970,7 @@
 							"ability": 26.1249946754784,
 							"tps": null,
 							"index": 38,
-							"valueIndex": 20,
+							"valueIndex": 16,
 							"free": false
 						}
 					},
@@ -16817,7 +16997,7 @@
 							"ability": 13.6203422723141,
 							"tps": null,
 							"index": 53,
-							"valueIndex": 14,
+							"valueIndex": 11,
 							"free": false
 						}
 					},
@@ -18976,6 +19156,33 @@
 						}
 					},
 					{
+						"key": "gemini38flash",
+						"name": "Gemini 3.8 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 1.5,
+								"output": 7.5,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 14705.882352941175,
+							"requestsPerFiveHour": 4411.764705882352,
+							"requestsPerWeek": 8823.529411764704,
+							"costPerRequest": 0.0102,
+							"payPerRequest": 0.0068000000000000005,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 37,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini37flash",
 						"name": "Gemini 3.7 Flash",
 						"oc": null,
@@ -19387,11 +19594,38 @@
 					"ccWins": 3,
 					"ties": 7,
 					"ocOnly": 6,
-					"ccOnly": 72
+					"ccOnly": 73
 				}
 			},
 			"go-plus": {
 				"rows": [
+					{
+						"key": "inkling2small",
+						"name": "Inkling 2 Small",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": 30.6286781498958,
+							"tps": null,
+							"index": 100,
+							"valueIndex": 100,
+							"free": true
+						}
+					},
 					{
 						"key": "beam10",
 						"name": "Beam Free",
@@ -19414,7 +19648,7 @@
 							"ability": 17.7307282547205,
 							"tps": null,
 							"index": 100,
-							"valueIndex": 100,
+							"valueIndex": 74,
 							"free": true
 						},
 						"cc": null
@@ -19442,7 +19676,7 @@
 							"ability": 60.025738829526,
 							"tps": null,
 							"index": 31,
-							"valueIndex": 99,
+							"valueIndex": 74,
 							"free": false
 						}
 					},
@@ -19469,7 +19703,7 @@
 							"ability": 36.0212987864912,
 							"tps": null,
 							"index": 70,
-							"valueIndex": 98,
+							"valueIndex": 73,
 							"free": false
 						}
 					},
@@ -19495,7 +19729,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 51,
-							"valueIndex": 76,
+							"valueIndex": 56,
 							"free": false
 						},
 						"cc": {
@@ -19517,7 +19751,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 62,
-							"valueIndex": 88,
+							"valueIndex": 65,
 							"free": false
 						}
 					},
@@ -19544,34 +19778,7 @@
 							"ability": 64.563595756626,
 							"tps": null,
 							"index": 13,
-							"valueIndex": 85,
-							"free": false
-						}
-					},
-					{
-						"key": "gpt61terra",
-						"name": "GPT-6.1 Terra",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 1,
-								"output": 5,
-								"cacheRead": 0.05,
-								"cacheWrite": 1.25
-							},
-							"allowance": 100,
-							"requestsPerMonth": 23255.81395348837,
-							"requestsPerFiveHour": 6976.744186046511,
-							"requestsPerWeek": 13953.488372093021,
-							"costPerRequest": 0.0043,
-							"payPerRequest": 0.0043,
-							"multiplier": 1,
-							"ability": 51.3265188577015,
-							"tps": null,
-							"index": 34,
-							"valueIndex": 85,
+							"valueIndex": 63,
 							"free": false
 						}
 					},
@@ -19598,7 +19805,34 @@
 							"ability": 54.54133407109,
 							"tps": null,
 							"index": 31,
-							"valueIndex": 84,
+							"valueIndex": 63,
+							"free": false
+						}
+					},
+					{
+						"key": "gpt61terra",
+						"name": "GPT-6.1 Terra",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 1,
+								"output": 5,
+								"cacheRead": 0.05,
+								"cacheWrite": 1.25
+							},
+							"allowance": 100,
+							"requestsPerMonth": 23255.81395348837,
+							"requestsPerFiveHour": 6976.744186046511,
+							"requestsPerWeek": 13953.488372093021,
+							"costPerRequest": 0.0043,
+							"payPerRequest": 0.0043,
+							"multiplier": 1,
+							"ability": 51.3265188577015,
+							"tps": null,
+							"index": 34,
+							"valueIndex": 63,
 							"free": false
 						}
 					},
@@ -19625,7 +19859,7 @@
 							"ability": 54.6087338138148,
 							"tps": null,
 							"index": 26,
-							"valueIndex": 79,
+							"valueIndex": 59,
 							"free": false
 						}
 					},
@@ -19652,7 +19886,7 @@
 							"ability": 59.1060336078904,
 							"tps": null,
 							"index": 17,
-							"valueIndex": 77,
+							"valueIndex": 57,
 							"free": false
 						}
 					},
@@ -19678,7 +19912,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 51,
-							"valueIndex": 60,
+							"valueIndex": 44,
 							"free": false
 						},
 						"cc": {
@@ -19700,7 +19934,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 62,
-							"valueIndex": 72,
+							"valueIndex": 53,
 							"free": false
 						}
 					},
@@ -19726,7 +19960,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 51,
-							"valueIndex": 52,
+							"valueIndex": 39,
 							"free": false
 						},
 						"cc": {
@@ -19748,7 +19982,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 62,
-							"valueIndex": 65,
+							"valueIndex": 48,
 							"free": false
 						}
 					},
@@ -19774,7 +20008,7 @@
 							"ability": 34.5552385392508,
 							"tps": null,
 							"index": 49,
-							"valueIndex": 57,
+							"valueIndex": 43,
 							"free": false
 						},
 						"cc": null
@@ -19801,7 +20035,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 14,
-							"valueIndex": 41,
+							"valueIndex": 31,
 							"free": false
 						},
 						"cc": {
@@ -19823,7 +20057,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 25,
-							"valueIndex": 54,
+							"valueIndex": 40,
 							"free": false
 						}
 					},
@@ -19850,7 +20084,7 @@
 							"ability": 56.8538559596797,
 							"tps": null,
 							"index": 0,
-							"valueIndex": 43,
+							"valueIndex": 32,
 							"free": false
 						}
 					},
@@ -19877,7 +20111,7 @@
 							"ability": 29.570119369837,
 							"tps": null,
 							"index": 42,
-							"valueIndex": 39,
+							"valueIndex": 29,
 							"free": false
 						}
 					},
@@ -19904,7 +20138,7 @@
 							"ability": 43.5748225998431,
 							"tps": null,
 							"index": 17,
-							"valueIndex": 35,
+							"valueIndex": 26,
 							"free": false
 						}
 					},
@@ -19931,7 +20165,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 33,
-							"valueIndex": 25,
+							"valueIndex": 19,
 							"free": false
 						}
 					},
@@ -19957,7 +20191,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 12,
-							"valueIndex": 6,
+							"valueIndex": 4,
 							"free": false
 						},
 						"cc": {
@@ -19979,34 +20213,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 24,
-							"valueIndex": 18,
-							"free": false
-						}
-					},
-					{
-						"key": "gemini38flash",
-						"name": "Gemini 3.8 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 1.5,
-								"output": 7.5,
-								"cacheRead": 0.15,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 14705.882352941175,
-							"requestsPerFiveHour": 4411.764705882352,
-							"requestsPerWeek": 8823.529411764704,
-							"costPerRequest": 0.0102,
-							"payPerRequest": 0.0068000000000000005,
-							"multiplier": 1.5,
-							"ability": 30.8468119957291,
-							"tps": null,
-							"index": 29,
-							"valueIndex": 17,
+							"valueIndex": 13,
 							"free": false
 						}
 					},
@@ -20032,7 +20239,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 21,
-							"valueIndex": 11,
+							"valueIndex": 8,
 							"free": false
 						},
 						"cc": {
@@ -20054,7 +20261,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 24,
-							"valueIndex": 14,
+							"valueIndex": 10,
 							"free": false
 						}
 					},
@@ -20081,7 +20288,7 @@
 							"ability": 20.1068756031705,
 							"tps": null,
 							"index": 44,
-							"valueIndex": 13,
+							"valueIndex": 10,
 							"free": false
 						}
 					},
@@ -20129,7 +20336,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 16,
-							"valueIndex": 12,
+							"valueIndex": 9,
 							"free": false
 						}
 					},
@@ -20156,7 +20363,7 @@
 							"ability": 26.1249946754784,
 							"tps": null,
 							"index": 30,
-							"valueIndex": 8,
+							"valueIndex": 6,
 							"free": false
 						}
 					},
@@ -20183,7 +20390,7 @@
 							"ability": 13.6203422723141,
 							"tps": null,
 							"index": 48,
-							"valueIndex": 5,
+							"valueIndex": 3,
 							"free": false
 						}
 					},
@@ -22342,6 +22549,33 @@
 						}
 					},
 					{
+						"key": "gemini38flash",
+						"name": "Gemini 3.8 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 1.5,
+								"output": 7.5,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 14705.882352941175,
+							"requestsPerFiveHour": 4411.764705882352,
+							"requestsPerWeek": 8823.529411764704,
+							"costPerRequest": 0.0102,
+							"payPerRequest": 0.0068000000000000005,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 29,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini37flash",
 						"name": "Gemini 3.7 Flash",
 						"oc": null,
@@ -22753,13 +22987,40 @@
 					"ccWins": 3,
 					"ties": 6,
 					"ocOnly": 6,
-					"ccOnly": 72
+					"ccOnly": 73
 				}
 			}
 		},
 		"max20": {
 			"go": {
 				"rows": [
+					{
+						"key": "inkling2small",
+						"name": "Inkling 2 Small",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": 30.6286781498958,
+							"tps": null,
+							"index": 100,
+							"valueIndex": 100,
+							"free": true
+						}
+					},
 					{
 						"key": "gemini4carbon",
 						"name": "Gemini 4 Carbon",
@@ -22783,7 +23044,7 @@
 							"ability": 60.025738829526,
 							"tps": null,
 							"index": 43,
-							"valueIndex": 100,
+							"valueIndex": 84,
 							"free": false
 						}
 					},
@@ -22810,7 +23071,7 @@
 							"ability": 36.0212987864912,
 							"tps": null,
 							"index": 75,
-							"valueIndex": 93,
+							"valueIndex": 78,
 							"free": false
 						}
 					},
@@ -22837,7 +23098,7 @@
 							"ability": 64.563595756626,
 							"tps": null,
 							"index": 28,
-							"valueIndex": 91,
+							"valueIndex": 76,
 							"free": false
 						}
 					},
@@ -22863,7 +23124,7 @@
 							"ability": 17.7307282547205,
 							"tps": null,
 							"index": 100,
-							"valueIndex": 89,
+							"valueIndex": 75,
 							"free": true
 						},
 						"cc": null
@@ -22891,7 +23152,7 @@
 							"ability": 54.54133407109,
 							"tps": null,
 							"index": 43,
-							"valueIndex": 87,
+							"valueIndex": 73,
 							"free": false
 						}
 					},
@@ -22918,7 +23179,7 @@
 							"ability": 51.3265188577015,
 							"tps": null,
 							"index": 46,
-							"valueIndex": 87,
+							"valueIndex": 73,
 							"free": false
 						}
 					},
@@ -22944,7 +23205,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 38,
-							"valueIndex": 57,
+							"valueIndex": 48,
 							"free": false
 						},
 						"cc": {
@@ -22966,34 +23227,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 69,
-							"valueIndex": 85,
-							"free": false
-						}
-					},
-					{
-						"key": "gpt61sol",
-						"name": "GPT-6.1 Sol",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": 2.5
-							},
-							"allowance": 200,
-							"requestsPerMonth": 23255.81395348837,
-							"requestsPerFiveHour": 6976.744186046511,
-							"requestsPerWeek": 13953.488372093021,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.0086,
-							"multiplier": 1,
-							"ability": 54.6087338138148,
-							"tps": null,
-							"index": 39,
-							"valueIndex": 84,
+							"valueIndex": 72,
 							"free": false
 						}
 					},
@@ -23020,7 +23254,34 @@
 							"ability": 59.1060336078904,
 							"tps": null,
 							"index": 32,
-							"valueIndex": 83,
+							"valueIndex": 70,
+							"free": false
+						}
+					},
+					{
+						"key": "gpt61sol",
+						"name": "GPT-6.1 Sol",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": 2.5
+							},
+							"allowance": 200,
+							"requestsPerMonth": 23255.81395348837,
+							"requestsPerFiveHour": 6976.744186046511,
+							"requestsPerWeek": 13953.488372093021,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 54.6087338138148,
+							"tps": null,
+							"index": 39,
+							"valueIndex": 70,
 							"free": false
 						}
 					},
@@ -23046,7 +23307,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 38,
-							"valueIndex": 43,
+							"valueIndex": 36,
 							"free": false
 						},
 						"cc": {
@@ -23068,7 +23329,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 69,
-							"valueIndex": 72,
+							"valueIndex": 60,
 							"free": false
 						}
 					},
@@ -23094,7 +23355,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 38,
-							"valueIndex": 37,
+							"valueIndex": 31,
 							"free": false
 						},
 						"cc": {
@@ -23116,7 +23377,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 69,
-							"valueIndex": 66,
+							"valueIndex": 55,
 							"free": false
 						}
 					},
@@ -23142,7 +23403,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 7,
-							"valueIndex": 34,
+							"valueIndex": 28,
 							"free": false
 						},
 						"cc": {
@@ -23164,7 +23425,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 38,
-							"valueIndex": 62,
+							"valueIndex": 52,
 							"free": false
 						}
 					},
@@ -23191,7 +23452,7 @@
 							"ability": 56.8538559596797,
 							"tps": null,
 							"index": 17,
-							"valueIndex": 57,
+							"valueIndex": 48,
 							"free": false
 						}
 					},
@@ -23218,7 +23479,7 @@
 							"ability": 43.5748225998431,
 							"tps": null,
 							"index": 32,
-							"valueIndex": 48,
+							"valueIndex": 40,
 							"free": false
 						}
 					},
@@ -23245,7 +23506,7 @@
 							"ability": 29.570119369837,
 							"tps": null,
 							"index": 52,
-							"valueIndex": 47,
+							"valueIndex": 39,
 							"free": false
 						}
 					},
@@ -23271,7 +23532,7 @@
 							"ability": 34.5552385392508,
 							"tps": null,
 							"index": 36,
-							"valueIndex": 42,
+							"valueIndex": 35,
 							"free": false
 						},
 						"cc": null
@@ -23299,7 +23560,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 45,
-							"valueIndex": 36,
+							"valueIndex": 31,
 							"free": false
 						}
 					},
@@ -23325,7 +23586,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 6,
-							"valueIndex": 4,
+							"valueIndex": 3,
 							"free": false
 						},
 						"cc": {
@@ -23347,34 +23608,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 37,
-							"valueIndex": 32,
-							"free": false
-						}
-					},
-					{
-						"key": "gemini38flash",
-						"name": "Gemini 3.8 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 1.5,
-								"output": 7.5,
-								"cacheRead": 0.15,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 29411.76470588235,
-							"requestsPerFiveHour": 8823.529411764704,
-							"requestsPerWeek": 17647.05882352941,
-							"costPerRequest": 0.0102,
-							"payPerRequest": 0.0068000000000000005,
-							"multiplier": 1.5,
-							"ability": 30.8468119957291,
-							"tps": null,
-							"index": 41,
-							"valueIndex": 31,
+							"valueIndex": 27,
 							"free": false
 						}
 					},
@@ -23422,7 +23656,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 37,
-							"valueIndex": 28,
+							"valueIndex": 24,
 							"free": false
 						}
 					},
@@ -23470,7 +23704,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 31,
-							"valueIndex": 28,
+							"valueIndex": 24,
 							"free": false
 						}
 					},
@@ -23497,7 +23731,7 @@
 							"ability": 20.1068756031705,
 							"tps": null,
 							"index": 54,
-							"valueIndex": 25,
+							"valueIndex": 21,
 							"free": false
 						}
 					},
@@ -23524,7 +23758,7 @@
 							"ability": 26.1249946754784,
 							"tps": null,
 							"index": 43,
-							"valueIndex": 23,
+							"valueIndex": 19,
 							"free": false
 						}
 					},
@@ -23551,7 +23785,7 @@
 							"ability": 13.6203422723141,
 							"tps": null,
 							"index": 57,
-							"valueIndex": 17,
+							"valueIndex": 14,
 							"free": false
 						}
 					},
@@ -25710,6 +25944,33 @@
 						}
 					},
 					{
+						"key": "gemini38flash",
+						"name": "Gemini 3.8 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 1.5,
+								"output": 7.5,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 29411.76470588235,
+							"requestsPerFiveHour": 8823.529411764704,
+							"requestsPerWeek": 17647.05882352941,
+							"costPerRequest": 0.0102,
+							"payPerRequest": 0.0068000000000000005,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 41,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini37flash",
 						"name": "Gemini 3.7 Flash",
 						"oc": null,
@@ -26121,11 +26382,38 @@
 					"ccWins": 3,
 					"ties": 7,
 					"ocOnly": 6,
-					"ccOnly": 72
+					"ccOnly": 73
 				}
 			},
 			"go-plus": {
 				"rows": [
+					{
+						"key": "inkling2small",
+						"name": "Inkling 2 Small",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": 30.6286781498958,
+							"tps": null,
+							"index": 100,
+							"valueIndex": 100,
+							"free": true
+						}
+					},
 					{
 						"key": "gemini4carbon",
 						"name": "Gemini 4 Carbon",
@@ -26149,7 +26437,7 @@
 							"ability": 60.025738829526,
 							"tps": null,
 							"index": 33,
-							"valueIndex": 100,
+							"valueIndex": 77,
 							"free": false
 						}
 					},
@@ -26175,7 +26463,7 @@
 							"ability": 17.7307282547205,
 							"tps": null,
 							"index": 100,
-							"valueIndex": 98,
+							"valueIndex": 75,
 							"free": true
 						},
 						"cc": null
@@ -26203,7 +26491,7 @@
 							"ability": 36.0212987864912,
 							"tps": null,
 							"index": 71,
-							"valueIndex": 98,
+							"valueIndex": 75,
 							"free": false
 						}
 					},
@@ -26229,7 +26517,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 45,
-							"valueIndex": 69,
+							"valueIndex": 53,
 							"free": false
 						},
 						"cc": {
@@ -26251,7 +26539,7 @@
 							"ability": 36.4845435880142,
 							"tps": null,
 							"index": 64,
-							"valueIndex": 88,
+							"valueIndex": 68,
 							"free": false
 						}
 					},
@@ -26278,7 +26566,7 @@
 							"ability": 64.563595756626,
 							"tps": null,
 							"index": 16,
-							"valueIndex": 87,
+							"valueIndex": 67,
 							"free": false
 						}
 					},
@@ -26305,7 +26593,7 @@
 							"ability": 54.54133407109,
 							"tps": null,
 							"index": 33,
-							"valueIndex": 86,
+							"valueIndex": 66,
 							"free": false
 						}
 					},
@@ -26332,7 +26620,7 @@
 							"ability": 51.3265188577015,
 							"tps": null,
 							"index": 37,
-							"valueIndex": 86,
+							"valueIndex": 66,
 							"free": false
 						}
 					},
@@ -26359,7 +26647,7 @@
 							"ability": 54.6087338138148,
 							"tps": null,
 							"index": 29,
-							"valueIndex": 81,
+							"valueIndex": 62,
 							"free": false
 						}
 					},
@@ -26386,7 +26674,7 @@
 							"ability": 59.1060336078904,
 							"tps": null,
 							"index": 20,
-							"valueIndex": 80,
+							"valueIndex": 61,
 							"free": false
 						}
 					},
@@ -26412,7 +26700,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 44,
-							"valueIndex": 54,
+							"valueIndex": 41,
 							"free": false
 						},
 						"cc": {
@@ -26434,7 +26722,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 64,
-							"valueIndex": 73,
+							"valueIndex": 56,
 							"free": false
 						}
 					},
@@ -26460,7 +26748,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 45,
-							"valueIndex": 47,
+							"valueIndex": 36,
 							"free": false
 						},
 						"cc": {
@@ -26482,7 +26770,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 64,
-							"valueIndex": 67,
+							"valueIndex": 51,
 							"free": false
 						}
 					},
@@ -26508,7 +26796,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 9,
-							"valueIndex": 38,
+							"valueIndex": 29,
 							"free": false
 						},
 						"cc": {
@@ -26530,7 +26818,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 28,
-							"valueIndex": 58,
+							"valueIndex": 44,
 							"free": false
 						}
 					},
@@ -26556,7 +26844,7 @@
 							"ability": 34.5552385392508,
 							"tps": null,
 							"index": 42,
-							"valueIndex": 52,
+							"valueIndex": 40,
 							"free": false
 						},
 						"cc": null
@@ -26584,7 +26872,7 @@
 							"ability": 56.8538559596797,
 							"tps": null,
 							"index": 4,
-							"valueIndex": 49,
+							"valueIndex": 38,
 							"free": false
 						}
 					},
@@ -26611,7 +26899,7 @@
 							"ability": 29.570119369837,
 							"tps": null,
 							"index": 44,
-							"valueIndex": 43,
+							"valueIndex": 33,
 							"free": false
 						}
 					},
@@ -26638,7 +26926,7 @@
 							"ability": 43.5748225998431,
 							"tps": null,
 							"index": 20,
-							"valueIndex": 41,
+							"valueIndex": 31,
 							"free": false
 						}
 					},
@@ -26665,7 +26953,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 36,
-							"valueIndex": 31,
+							"valueIndex": 23,
 							"free": false
 						}
 					},
@@ -26691,7 +26979,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 7,
-							"valueIndex": 5,
+							"valueIndex": 4,
 							"free": false
 						},
 						"cc": {
@@ -26713,34 +27001,7 @@
 							"ability": 33.6545627367888,
 							"tps": null,
 							"index": 26,
-							"valueIndex": 25,
-							"free": false
-						}
-					},
-					{
-						"key": "gemini38flash",
-						"name": "Gemini 3.8 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 1.5,
-								"output": 7.5,
-								"cacheRead": 0.15,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 29411.76470588235,
-							"requestsPerFiveHour": 8823.529411764704,
-							"requestsPerWeek": 17647.05882352941,
-							"costPerRequest": 0.0102,
-							"payPerRequest": 0.0068000000000000005,
-							"multiplier": 1.5,
-							"ability": 30.8468119957291,
-							"tps": null,
-							"index": 31,
-							"valueIndex": 24,
+							"valueIndex": 19,
 							"free": false
 						}
 					},
@@ -26766,7 +27027,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 16,
-							"valueIndex": 9,
+							"valueIndex": 7,
 							"free": false
 						},
 						"cc": {
@@ -26788,7 +27049,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 27,
-							"valueIndex": 21,
+							"valueIndex": 16,
 							"free": false
 						}
 					},
@@ -26836,7 +27097,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 19,
-							"valueIndex": 19,
+							"valueIndex": 15,
 							"free": false
 						}
 					},
@@ -26863,7 +27124,7 @@
 							"ability": 20.1068756031705,
 							"tps": null,
 							"index": 46,
-							"valueIndex": 19,
+							"valueIndex": 15,
 							"free": false
 						}
 					},
@@ -26890,7 +27151,7 @@
 							"ability": 26.1249946754784,
 							"tps": null,
 							"index": 33,
-							"valueIndex": 15,
+							"valueIndex": 12,
 							"free": false
 						}
 					},
@@ -26917,7 +27178,7 @@
 							"ability": 13.6203422723141,
 							"tps": null,
 							"index": 49,
-							"valueIndex": 11,
+							"valueIndex": 8,
 							"free": false
 						}
 					},
@@ -29076,6 +29337,33 @@
 						}
 					},
 					{
+						"key": "gemini38flash",
+						"name": "Gemini 3.8 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 1.5,
+								"output": 7.5,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 29411.76470588235,
+							"requestsPerFiveHour": 8823.529411764704,
+							"requestsPerWeek": 17647.05882352941,
+							"costPerRequest": 0.0102,
+							"payPerRequest": 0.0068000000000000005,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 31,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini37flash",
 						"name": "Gemini 3.7 Flash",
 						"oc": null,
@@ -29487,7 +29775,7 @@
 					"ccWins": 3,
 					"ties": 6,
 					"ocOnly": 6,
-					"ccOnly": 72
+					"ccOnly": 73
 				}
 			}
 		}
