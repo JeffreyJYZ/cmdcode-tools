@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-12T19:44:00.914Z",
+	"generatedAt": "2026-11-13T00:43:24.868Z",
 	"plans": [
 		{
 			"key": "go",
@@ -5046,6 +5046,54 @@
 						}
 					},
 					{
+						"key": "glm53",
+						"name": "GLM-5.3",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1.4,
+								"output": 4.4,
+								"cacheRead": 0.26,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 1000,
+							"requestsPerFiveHour": 200,
+							"requestsPerWeek": 500,
+							"costPerRequest": 0.015,
+							"payPerRequest": 0.01,
+							"multiplier": 1.5,
+							"ability": 31.653381843882,
+							"tps": null,
+							"index": 9,
+							"valueIndex": 8,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 1.4,
+								"output": 4.4,
+								"cacheRead": 0.26,
+								"cacheWrite": null
+							},
+							"allowance": 70,
+							"requestsPerMonth": 4666.666666666667,
+							"requestsPerFiveHour": 933.3333333333335,
+							"requestsPerWeek": 2333.3333333333335,
+							"costPerRequest": 0.015,
+							"payPerRequest": 0.002142857142857143,
+							"multiplier": 7,
+							"ability": 31.653381843882,
+							"tps": null,
+							"index": 31,
+							"valueIndex": 24,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen3827b",
 						"name": "Qwen 3.8 27B",
 						"oc": null,
@@ -5144,54 +5192,6 @@
 							"tps": null,
 							"index": 14,
 							"valueIndex": 12,
-							"free": false
-						}
-					},
-					{
-						"key": "glm53",
-						"name": "GLM-5.3",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1.4,
-								"output": 4.4,
-								"cacheRead": 0.26,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 1000,
-							"requestsPerFiveHour": 200,
-							"requestsPerWeek": 500,
-							"costPerRequest": 0.015,
-							"payPerRequest": 0.01,
-							"multiplier": 1.5,
-							"ability": 31.653381843882,
-							"tps": null,
-							"index": 9,
-							"valueIndex": 8,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 1.4,
-								"output": 4.4,
-								"cacheRead": 0.26,
-								"cacheWrite": null
-							},
-							"allowance": 20,
-							"requestsPerMonth": 1333.3333333333335,
-							"requestsPerFiveHour": 266.6666666666667,
-							"requestsPerWeek": 666.6666666666667,
-							"costPerRequest": 0.015,
-							"payPerRequest": 0.0075,
-							"multiplier": 2,
-							"ability": 31.653381843882,
-							"tps": null,
-							"index": 13,
-							"valueIndex": 11,
 							"free": false
 						}
 					},
@@ -7731,17 +7731,17 @@
 								"cacheRead": 0.26,
 								"cacheWrite": null
 							},
-							"allowance": 20,
-							"requestsPerMonth": 1333.3333333333335,
-							"requestsPerFiveHour": 266.6666666666667,
-							"requestsPerWeek": 666.6666666666667,
+							"allowance": 70,
+							"requestsPerMonth": 4666.666666666667,
+							"requestsPerFiveHour": 933.3333333333335,
+							"requestsPerWeek": 2333.3333333333335,
 							"costPerRequest": 0.015,
-							"payPerRequest": 0.0075,
-							"multiplier": 2,
+							"payPerRequest": 0.002142857142857143,
+							"multiplier": 7,
 							"ability": 31.653381843882,
 							"tps": null,
-							"index": 12,
-							"valueIndex": 11,
+							"index": 30,
+							"valueIndex": 24,
 							"free": false
 						}
 					},
@@ -9983,8 +9983,8 @@
 				],
 				"tally": {
 					"headToHead": 25,
-					"ocWins": 8,
-					"ccWins": 16,
+					"ocWins": 7,
+					"ccWins": 17,
 					"ties": 1,
 					"ocOnly": 7,
 					"ccOnly": 46
@@ -10406,6 +10406,54 @@
 						}
 					},
 					{
+						"key": "glm53",
+						"name": "GLM-5.3",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1.4,
+								"output": 4.4,
+								"cacheRead": 0.26,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 1000,
+							"requestsPerFiveHour": 200,
+							"requestsPerWeek": 500,
+							"costPerRequest": 0.015,
+							"payPerRequest": 0.01,
+							"multiplier": 1.5,
+							"ability": 31.653381843882,
+							"tps": null,
+							"index": 8,
+							"valueIndex": 1,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 1.4,
+								"output": 4.4,
+								"cacheRead": 0.26,
+								"cacheWrite": null
+							},
+							"allowance": 80,
+							"requestsPerMonth": 5333.333333333334,
+							"requestsPerFiveHour": 1066.6666666666667,
+							"requestsPerWeek": 2666.666666666667,
+							"costPerRequest": 0.015,
+							"payPerRequest": 0.00375,
+							"multiplier": 4,
+							"ability": 31.653381843882,
+							"tps": null,
+							"index": 31,
+							"valueIndex": 18,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen3827b",
 						"name": "Qwen 3.8 27B",
 						"oc": null,
@@ -10504,54 +10552,6 @@
 							"tps": null,
 							"index": 17,
 							"valueIndex": 11,
-							"free": false
-						}
-					},
-					{
-						"key": "glm53",
-						"name": "GLM-5.3",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1.4,
-								"output": 4.4,
-								"cacheRead": 0.26,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 1000,
-							"requestsPerFiveHour": 200,
-							"requestsPerWeek": 500,
-							"costPerRequest": 0.015,
-							"payPerRequest": 0.01,
-							"multiplier": 1.5,
-							"ability": 31.653381843882,
-							"tps": null,
-							"index": 8,
-							"valueIndex": 1,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 1.4,
-								"output": 4.4,
-								"cacheRead": 0.26,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": 2000,
-							"requestsPerFiveHour": 400,
-							"requestsPerWeek": 1000,
-							"costPerRequest": 0.015,
-							"payPerRequest": 0.01,
-							"multiplier": 1.5,
-							"ability": 31.653381843882,
-							"tps": null,
-							"index": 18,
-							"valueIndex": 8,
 							"free": false
 						}
 					},
@@ -13091,8 +13091,8 @@
 				"tally": {
 					"headToHead": 26,
 					"ocWins": 15,
-					"ccWins": 2,
-					"ties": 9,
+					"ccWins": 3,
+					"ties": 8,
 					"ocOnly": 6,
 					"ccOnly": 62
 				}
@@ -13544,17 +13544,17 @@
 								"cacheRead": 0.26,
 								"cacheWrite": null
 							},
-							"allowance": 30,
-							"requestsPerMonth": 2000,
-							"requestsPerFiveHour": 400,
-							"requestsPerWeek": 1000,
+							"allowance": 80,
+							"requestsPerMonth": 5333.333333333334,
+							"requestsPerFiveHour": 1066.6666666666667,
+							"requestsPerWeek": 2666.666666666667,
 							"costPerRequest": 0.015,
-							"payPerRequest": 0.01,
-							"multiplier": 1.5,
+							"payPerRequest": 0.00375,
+							"multiplier": 4,
 							"ability": 31.653381843882,
 							"tps": null,
-							"index": 17,
-							"valueIndex": 8,
+							"index": 30,
+							"valueIndex": 18,
 							"free": false
 						}
 					},
@@ -16195,8 +16195,8 @@
 				],
 				"tally": {
 					"headToHead": 26,
-					"ocWins": 14,
-					"ccWins": 4,
+					"ocWins": 13,
+					"ccWins": 5,
 					"ties": 8,
 					"ocOnly": 6,
 					"ccOnly": 62
