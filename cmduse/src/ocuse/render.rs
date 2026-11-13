@@ -1228,7 +1228,10 @@ pub fn model_report(report: &Report, id: Option<&str>, fmt: Fmt) -> String {
             serde_json::json!({
                 "scope": "local",
                 "source": "opencode",
+                // `sinceMs` is this binary's native form; `since` is the ISO spelling
+                // cmduse and mpc use, so one name serves both readers.
                 "sinceMs": report.since_ms,
+                "since": cmduse_core::dates::iso_instant((report.since_ms.max(0) / 1000) as u64),
                 "models": map,
             })
             .to_string()
@@ -1412,7 +1415,10 @@ pub fn session_text(
             serde_json::json!({
                 "scope": "local",
                 "source": "opencode",
-                "sessions": keyed,
+                "sessions": keyed.clone(),
+                // cmduse has always spelled this collection `projects`; both names
+                // carry the same rows so a consumer reads either.
+                "projects": keyed,
             })
             .to_string()
         }

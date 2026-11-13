@@ -207,6 +207,9 @@ pub fn table(
     match fmt {
         Fmt::Json => serde_json::json!({
             "scope": scope,
+            // Same key every binary carries, so a consumer never branches on
+            // which binary produced the report: the account API or this machine.
+            "source": if scope == "account" { "command-code" } else { "local" },
             "total": totals_json(total),
             "days": totals_map(by_day.iter()),
         })
@@ -268,12 +271,21 @@ pub fn hourly_table(
     colors: bool,
 ) -> String {
     match fmt {
-        Fmt::Json => serde_json::json!({
-            "scope": "hourly",
-            "source": source.replace(' ', "-"),
-            "hours": totals_map(rows.iter().map(|(h, t)| (h, t))),
-        })
-        .to_string(),
+        Fmt::Json => {
+            // Same envelope as the day table and as ocuse/arkuse: `total` sums the
+            // buckets, so a consumer reads one shape on every binary.
+            let mut total = crate::reports::Totals::default();
+            for (_, t) in rows {
+                total.merge(t);
+            }
+            serde_json::json!({
+                "scope": "hourly",
+                "source": source.replace(' ', "-"),
+                "total": totals_json(&total),
+                "hours": totals_map(rows.iter().map(|(h, t)| (h, t))),
+            })
+            .to_string()
+        }
         Fmt::Csv => {
             let mut o = String::from("hour,requests,tokens_in,tokens_out,cost_usd\n");
             for (h, t) in rows {
@@ -338,7 +350,18 @@ pub fn project_table(
     rows: usize,
 ) -> String {
     match fmt {
-        Fmt::Json => serde_json::json!({ "projects": totals_map(by_project.iter()) }).to_string(),
+        Fmt::Json => {
+            // `sessions` is the shared key (ocuse/arkuse emit it); `projects` stays
+            // as the alias this binary has always written.
+            let rows = totals_map(by_project.iter());
+            serde_json::json!({
+                "scope": "local",
+                "source": "local",
+                "sessions": rows.clone(),
+                "projects": rows,
+            })
+            .to_string()
+        }
         Fmt::Csv => {
             let mut o = String::from("project,requests,tokens,cost_usd\n");
             for (p, t) in by_spend(by_project) {
@@ -387,7 +410,11 @@ pub fn model_table(
     match fmt {
         Fmt::Json => serde_json::json!({
             "source": "local",
+            "scope": "local",
             "since": since,
+            // Epoch ms beside the ISO string: ocuse/arkuse carry `sinceMs` only, and
+            // one name per concept is the parity rule. `since` stays for mpc.
+            "sinceMs": since.and_then(cmduse_core::dates::parse_iso_utc),
             "models": totals_map(by_model.iter()),
         })
         .to_string(),
