@@ -37,7 +37,7 @@ cargo install cmd-usage                # build from source (any platform)
 
 Then run `cmduse` for the live dashboard, or `cmduse plans` / `cmduse models`.
 
-`cmduse model [--days N | --since ISO] [--json]` reports local per-model usage; without a window it is all-time, so pass one when you mean a billing period. `--json` includes `source` and `since`. There is no account-side per-model endpoint (the API only exposes totals), so local logs are the only per-model source and may miss other machines or harnesses — though not other local ones: the `pi` and `dsh` session logs are read beside the CLI's, keeping only their `command-code*` calls.
+`cmduse model [--days N | --since ISO] [--json]` reports local per-model usage; without a window it is all-time, so pass one when you mean a billing period. `--json` includes `source` and `since`. There is no account-side per-model endpoint (the API only exposes totals), so local logs are the only per-model source and may miss other machines or harnesses — though not other local ones: the `pi` and `dsh` session logs are read beside the CLI's, keeping only their `command-code*` calls. The dashboard carries the same table too, capped at six rows and labelled as local, so the plain view shows the mix the way `ocuse` and `arkuse` do.
 
 ### Development binary
 

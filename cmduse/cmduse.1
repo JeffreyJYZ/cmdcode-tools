@@ -89,7 +89,10 @@ Runtime failure (network, auth, config write, report fetch).
 Argument parse error; a message was printed to stderr.
 .SH SUBCOMMANDS
 With no subcommand, \fBcmduse\fR runs the live dashboard in watch mode.  With
-\fB\-1\fR it fetches once and prints.
+\fB\-1\fR it fetches once and prints.  The dashboard closes with a \fBBy model\fR
+table of the top six models by cost, read from this machine's local sessions (the
+account API has no per\-model dimension), the same panel \fBocuse\fR and
+\fBarkuse\fR show.
 .TP
 .B daily
 Account usage by UTC day for the last \fI\-\-days\fR N days (default 7, max
