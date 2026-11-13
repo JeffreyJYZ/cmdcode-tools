@@ -354,7 +354,20 @@ fn snapshot_fixture() -> Snapshot {
         },
         now: 1_789_368_000_000 / 1000,
         err: None,
+        models: None,
     }
+}
+
+#[test]
+fn per_model_panel_rides_both_dashboards() {
+    // Parity with ocuse: its frame carries a per-model block, so cmduse's must too.
+    // The panel is pre-rendered by the model table, and absence stays absence.
+    let mut s = snapshot_fixture();
+    assert!(!render(&s, 20).contains("By model"));
+    assert!(!render_plain(&s).contains("By model"));
+    s.models = Some("\nBy model\n Model   Reqs\n deepseek/x  3\n".to_string());
+    assert!(render(&s, 20).contains("deepseek/x"));
+    assert!(render_plain(&s).contains("deepseek/x"));
 }
 
 #[test]

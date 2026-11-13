@@ -225,6 +225,11 @@ pub struct Snapshot {
     pub summary: UsageSummary,
     pub now: u64,
     pub err: Option<String>,
+    /// Per-model panel rendered from the local stores, the same source
+    /// `cmduse model` reads. `ocuse` shows one on its dashboard, and parity is a
+    /// standing rule; the Account API has no per-model dimension, so this block
+    /// is a local subset and says so.
+    pub models: Option<String>,
 }
 
 pub fn render(s: &Snapshot, bar_width: usize) -> String {
@@ -360,6 +365,10 @@ pub fn render(s: &Snapshot, bar_width: usize) -> String {
         s.summary.success_rate.unwrap_or(0.0),
     ));
 
+    if let Some(models) = &s.models {
+        o.push_str(models);
+    }
+
     o
 }
 
@@ -440,6 +449,9 @@ pub fn render_plain(s: &Snapshot) -> String {
         compact(s.summary.total_tokens_in.unwrap_or(0)),
         compact(s.summary.total_tokens_out.unwrap_or(0)),
     ));
+    if let Some(models) = &s.models {
+        o.push_str(models);
+    }
     o
 }
 

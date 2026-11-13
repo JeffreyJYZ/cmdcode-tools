@@ -101,8 +101,29 @@ pub fn snapshot(spinner: bool, colors: bool) -> Snapshot {
         s.err = Some(errs.join("; "));
     }
 
+    // Per-model panel. The Account API carries no per-model dimension, so this is
+    // the local stores' view — the same rows `cmduse model` prints — and it is
+    // therefore a subset of the account totals above. `ocuse` shows one from its
+    // own store; parity is a standing rule, and the header says where it comes from.
+    if s.err.is_none() {
+        let local = crate::reports::load_local(0);
+        if !local.by_model.is_empty() {
+            s.models = Some(crate::report_render::model_table(
+                &local.by_model,
+                crate::report_render::Fmt::Table,
+                colors,
+                None,
+                MODEL_ROWS,
+            ));
+        }
+    }
+
     s
 }
+
+/// Rows in the dashboard's per-model panel: enough to see the shape of the mix,
+/// short enough to fit the frame. `cmduse model` prints every row.
+const MODEL_ROWS: usize = 6;
 
 /// Warn once per process when the API returns a plan id no NAME_RULE knows:
 /// the dashboard would label it "Free" with no monthly cap until plans.json
@@ -148,5 +169,6 @@ fn empty_snapshot() -> Snapshot {
         },
         now,
         err: None,
+        models: None,
     }
 }
