@@ -1,6 +1,13 @@
 {
-	"generatedAt": "2026-11-09T16:38:43.583Z",
+	"generatedAt": "2026-11-13T07:21:11.139Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.7.33",
+			"name": "cmduse-v0.7.33",
+			"publishedAt": "2026-11-13T04:17:41Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.33",
+			"notes": "## What's Changed\n* docs: the release tag does not publish the crate by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/5\n* fix(plugin): resolve the live key from opencode's credential store by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/6\n* fix(plugin): seed the catalog context window instead of the 128k fallback by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/8\n* fix(plugin): strip bun's bundle path comments so the tarball verifies by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/7\n* feat(catalog): refresh from command-code@1.88.5 (96 models) by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/9\n* feat(catalog): fetch prices, context and efforts at runtime by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/10\n* fix(mpc): read AA's free list; the legacy data path is retired by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/11\n* feat(mpc): ship an mpcdev twin pointed at the checkout by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/12\n* fix(mpc): free models rank on ability, AA slugs match, Jev stops duplicating by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/13\n* feat(reqshape): ship a reqshapedev twin pointed at the checkout by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/14\n* fix(mpc): Beam merges, Ultrafast states 1000 tps, AA index version surfaced by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/15\n* feat(cmduse): per-model panel on the dashboard (parity with ocuse/arkuse) by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/16\n* feat(reports): one JSON envelope across cmduse, ocuse and arkuse by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/17\n* test(reports): pin the shared JSON envelope on all three binaries by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/18\n\n\n**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.31...cmduse-v0.7.33"
+		},
 		{
 			"tag": "cmduse-v0.7.31",
 			"name": "cmduse-v0.7.31",
@@ -751,6 +758,12 @@
 		}
 	],
 	"crates": [
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.33",
+			"date": "2026-11-13T04:12:44.640193Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.33"
+		},
 		{
 			"crate": "cmd-usage",
 			"version": "0.7.31",
