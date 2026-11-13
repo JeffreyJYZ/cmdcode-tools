@@ -544,3 +544,55 @@ fn update_box_borders_align_and_wraps() {
     assert_eq!(colored.lines().count(), 3, "{colored}");
     assert!(colored.contains("\x1b[33m") && colored.contains("update available"));
 }
+
+#[test]
+fn report_json_envelopes_are_the_shared_contract() {
+    // Parity is enforced, not eyeballed: the three binaries emit one envelope per
+    // report, and each asserts its own emitter against the core constants.
+    use crate::report_render::{hourly_table, model_table, project_table, table, Fmt};
+    use crate::report_render::{
+        REPORT_DAILY_KEYS, REPORT_HOURLY_KEYS, REPORT_MODEL_KEYS, REPORT_SESSION_KEYS,
+    };
+    use crate::reports::{ByDay, ByModel, ByProject, Totals};
+
+    let keys = |body: String| -> Vec<String> {
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        v.as_object().unwrap().keys().cloned().collect()
+    };
+
+    let empty_day = ByDay::new();
+    let empty_model = ByModel::new();
+    let empty_project = ByProject::new();
+    let total = Totals::default();
+
+    assert_eq!(
+        keys(table(
+            "local",
+            "",
+            &empty_day,
+            &total,
+            None,
+            Fmt::Json,
+            false
+        )),
+        REPORT_DAILY_KEYS.to_vec()
+    );
+    assert_eq!(
+        keys(hourly_table(&[], Fmt::Json, "local", false)),
+        REPORT_HOURLY_KEYS.to_vec()
+    );
+    assert_eq!(
+        keys(model_table(
+            &empty_model,
+            Fmt::Json,
+            false,
+            None,
+            usize::MAX
+        )),
+        REPORT_MODEL_KEYS.to_vec()
+    );
+    assert_eq!(
+        keys(project_table(&empty_project, Fmt::Json, false, usize::MAX)),
+        REPORT_SESSION_KEYS.to_vec()
+    );
+}

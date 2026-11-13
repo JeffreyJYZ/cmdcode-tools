@@ -2504,4 +2504,42 @@ mod tests {
         assert!(!compact_line(&report(), &[], false).contains('\x1b'));
         assert!(compact_line(&report(), &[], true).contains(crate::render::BOLD));
     }
+
+    #[test]
+    fn report_json_envelopes_are_the_shared_contract() {
+        // Same constants cmduse asserts: one envelope per report on all three.
+        use crate::report_render::{
+            REPORT_DAILY_KEYS, REPORT_HOURLY_KEYS, REPORT_MODEL_KEYS, REPORT_SESSION_KEYS,
+        };
+        let keys = |body: String| -> Vec<String> {
+            let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+            v.as_object().unwrap().keys().cloned().collect()
+        };
+        let now = 1_800_000_000_000;
+        let day = 86_400_000;
+        assert_eq!(
+            keys(bucket_text(&[], now, 2 * day, day, 0, false, Fmt::Json)),
+            REPORT_DAILY_KEYS.to_vec()
+        );
+        assert_eq!(
+            keys(bucket_text(
+                &[],
+                now,
+                2 * 3_600_000,
+                3_600_000,
+                0,
+                false,
+                Fmt::Json
+            )),
+            REPORT_HOURLY_KEYS.to_vec()
+        );
+        assert_eq!(
+            keys(model_report(&report(), None, Fmt::Json)),
+            REPORT_MODEL_KEYS.to_vec()
+        );
+        assert_eq!(
+            keys(session_text(&[], 5, false, Fmt::Json)),
+            REPORT_SESSION_KEYS.to_vec()
+        );
+    }
 }

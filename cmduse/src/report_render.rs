@@ -1,5 +1,21 @@
 use crate::render::{color_for, compact, money, BOLD, CYAN, DIM, RESET};
 
+/// JSON envelope keys for the four report commands. All three binaries live in
+/// this crate and each asserts its own emitter against these in a unit test, so
+/// the envelopes cannot drift apart the way they did on 2026-11-13 (`cmduse` said
+/// `projects` where the others said `sessions`, and had no `source` on `daily`).
+/// Sorted, so a test can compare directly against a map's key order.
+/// Test-only on purpose: production code must not read the contract back and
+/// assert itself, or a wrong emitter would agree with a wrong constant.
+#[cfg(test)]
+pub const REPORT_DAILY_KEYS: [&str; 4] = ["days", "scope", "source", "total"];
+#[cfg(test)]
+pub const REPORT_HOURLY_KEYS: [&str; 4] = ["hours", "scope", "source", "total"];
+#[cfg(test)]
+pub const REPORT_MODEL_KEYS: [&str; 5] = ["models", "scope", "since", "sinceMs", "source"];
+#[cfg(test)]
+pub const REPORT_SESSION_KEYS: [&str; 4] = ["projects", "scope", "sessions", "source"];
+
 /// Output format for the report tables. JSON and CSV are machine-readable
 /// (never colored); `Table` honors the caller's color decision.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
