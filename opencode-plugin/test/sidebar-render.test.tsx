@@ -62,7 +62,7 @@ describe("rendered panel", () => {
 		expect(hex(find("GOAT · $70/mo credits")?.fg as RGBA)).toBe(hex(colors.headline));
 		expect(hex(find("Model: ")?.fg as RGBA)).toBe(hex(colors.headline));
 		expect(hex(find("DeepSeek V4.1 Flash")?.fg as RGBA)).toBe(hex(colors.headline));
-		expect(hex(colors.headline)).not.toBe(hex(colors.label));
+		expect(hex(colors.headline)).toBe(hex(colors.label));
 		expect(hex(find("open source")?.fg as RGBA)).toBe(hex(colors.base));
 		expect(hex(find("$57.40 / $70 (82%)")?.fg as RGBA)).toBe(hex(colors.warn));
 		// Labels are plain text now; bold, not hue, is what marks them apart.

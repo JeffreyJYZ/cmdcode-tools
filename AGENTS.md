@@ -2,7 +2,7 @@
 
 Monorepo root (`JeffreyJYZ/cmdcode-tools`): everything at this root is ONE git repo — the former `cmduse` repo's history, plus five packages absorbed from sibling repos (each kept its own published identity + GitHub remote; only local checkouts were merged). Root `Cargo.toml` = Rust workspace (`core`, `cmduse`); root `package.json` = bun workspace (`opencode-plugin`, `oc-cmd-compare`, `reqshape`, `opencode-context`, `opencode-shell-rc`, `opencode-session-dir`); ONE root `bun.lock`, no per-package lockfiles. Nested `.github/workflows` are inert — CI lives only in root `.github/workflows`. Packages share no code; coupling is via installed binaries + published plugins, never relative paths.
 
-Current versions: `cmduse-core` 2.2.1 · `cmd-usage` 0.7.32 · `@jeffreyjyz/opencode-command-code` 0.5.27 · `mpc` 0.1.10 · `reqshape` 0.2.3. Per-release history lives in `git log` and the READMEs — do **not** grow a changelog in this file; record a fact here only when it still constrains the code.
+Current versions: `cmduse-core` 2.2.1 · `cmd-usage` 0.7.32 · `@jeffreyjyz/opencode-command-code` 0.5.30 · `mpc` 0.1.10 · `reqshape` 0.2.3. Per-release history lives in `git log` and the READMEs — do **not** grow a changelog in this file; record a fact here only when it still constrains the code.
 
 ## Layout
 

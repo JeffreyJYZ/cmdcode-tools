@@ -39,13 +39,12 @@ export interface HostTheme {
 }
 
 /**
- * v2 host theme -> panel colours. `mode` matters for one thing: the accent hue
- * is a usable purple in dark themes (#9d7cd8) but a peach in light ones, so the
- * headline shade is only taken from it in dark mode. A lighter cyan was tried
- * first and failed: terminals fold one-step-apart cyans onto the same ANSI
- * colour, so the headline rows read identical to the rest.
+ * v2 host theme -> panel colours. There is no accent left on purpose: the
+ * accent hue is #9d7cd8 (purple) in dark themes and a peach in light ones, and
+ * a heading in either read as decoration rather than hierarchy. Bold marks the
+ * headings; the only hues are amber and red on a limit that needs attention.
  */
-export function hostColors(theme: HostTheme, mode: "dark" | "light" = "dark"): PanelColors {
+export function hostColors(theme: HostTheme): PanelColors {
 	return {
 		base: theme.text.base,
 		muted: theme.text.muted,
@@ -56,7 +55,7 @@ export function hostColors(theme: HostTheme, mode: "dark" | "light" = "dark"): P
 		// figure stays plain: painting every percentage green made "12% of limit"
 		// and "98% of session" read identically.
 		label: theme.text.base,
-		headline: mode === "dark" ? (theme.hue?.accent?.[200] ?? theme.text.base) : theme.text.base,
+		headline: theme.text.base,
 		// `ok` is now only the deal badge: a promotion is news worth a tint, while a
 		// healthy percentage no longer is (see pctTone).
 		ok: theme.text.feedback.success.base,
@@ -72,7 +71,7 @@ export function legacyColors(theme: { text: RGBA; textMuted: RGBA }): PanelColor
 		muted: theme.textMuted,
 		strong: theme.text,
 		label: theme.text,
-		headline: RGBA.fromValues(0.62, 0.49, 0.85, 1),
+		headline: theme.text,
 		ok: theme.text,
 		warn: RGBA.fromValues(0.96, 0.65, 0.26, 1),
 		crit: RGBA.fromValues(0.88, 0.42, 0.46, 1),
