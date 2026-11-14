@@ -24,10 +24,15 @@ export type Tone = "base" | "muted" | "strong" | "ok" | "warn" | "crit";
 export type SidebarRow = [label: string, value: string, tone?: Tone, headline?: true];
 
 /** Headroom severity: comfortable to 70%, tight to 90%, over after that. */
+/**
+ * A percentage only earns colour once it is a problem: plain text below 70%,
+ * amber from 70, red from 90. The panel used to paint every healthy figure
+ * green, so "98% of session" and "12% of limit" read the same.
+ */
 export function pctTone(pct: number): Tone {
 	if (pct >= 90) return "crit";
 	if (pct >= 70) return "warn";
-	return "ok";
+	return "base";
 }
 
 /**

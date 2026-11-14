@@ -45,19 +45,21 @@ export interface HostTheme {
  * first and failed: terminals fold one-step-apart cyans onto the same ANSI
  * colour, so the headline rows read identical to the rest.
  */
-export function hostColors(theme: HostTheme): PanelColors {
+export function hostColors(theme: HostTheme, mode: "dark" | "light" = "dark"): PanelColors {
 	return {
 		base: theme.text.base,
 		muted: theme.text.muted,
 		// Bold is the emphasis; `strong` shares the plain text colour so the
 		// model name never borrows a chromatic token.
 		strong: theme.text.base,
-		// Labels used to borrow `feedback.info` (cyan) and headlines a purple
-		// accent, so one 37-column panel carried cyan, purple and green/amber/red
-		// at once. With colour on, only a row that needs attention is tinted.
-		label: theme.text.muted,
-		headline: theme.text.base,
-		ok: theme.text.base,
+		// One accent for headings, one traffic scale for percentages. A healthy
+		// figure stays plain: painting every percentage green made "12% of limit"
+		// and "98% of session" read identically.
+		label: theme.text.base,
+		headline: mode === "dark" ? (theme.hue?.accent?.[200] ?? theme.text.base) : theme.text.base,
+		// `ok` is now only the deal badge: a promotion is news worth a tint, while a
+		// healthy percentage no longer is (see pctTone).
+		ok: theme.text.feedback.success.base,
 		warn: theme.text.feedback.warning.base,
 		crit: theme.text.feedback.error.base,
 	};
@@ -69,8 +71,8 @@ export function legacyColors(theme: { text: RGBA; textMuted: RGBA }): PanelColor
 		base: theme.text,
 		muted: theme.textMuted,
 		strong: theme.text,
-		label: theme.textMuted,
-		headline: theme.text,
+		label: theme.text,
+		headline: RGBA.fromValues(0.62, 0.49, 0.85, 1),
 		ok: theme.text,
 		warn: RGBA.fromValues(0.96, 0.65, 0.26, 1),
 		crit: RGBA.fromValues(0.88, 0.42, 0.46, 1),
@@ -125,9 +127,11 @@ function Row(props: { row: SidebarRow; colors: PanelColors }) {
 	return (
 		<text>
 			<span {...spanStyle(fg.label)}>
-				<b>{label}</b>
+				{tone === "strong" || props.row[3] ? <b>{label}</b> : label}
 			</span>
-			<span {...spanStyle(fg.value)}>{tone === "strong" ? <b>{value}</b> : value}</span>
+			<span {...spanStyle(fg.value)}>
+				{tone === "strong" || props.row[3] ? <b>{value}</b> : value}
+			</span>
 		</text>
 	);
 }

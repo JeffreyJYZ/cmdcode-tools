@@ -74,9 +74,9 @@ describe("zenRows", () => {
 		const find = (label: string) => rows.find((row) => row[0] === label);
 		expect(find("Plan")).toEqual(["Plan", "Go · limits per model", "base"]);
 		// 5h = 20% of $60 = $12; 50% of the odd half-cent is traced back exactly.
-		expect(find("5-hour")).toEqual(["5-hour", "$0.50/$12 (4.2%)", "ok"]);
-		expect(find("Weekly")).toEqual(["Weekly", "$1/$30 (3.3%)", "ok"]);
-		expect(find("Monthly")).toEqual(["Monthly", "$12/$60 (20.0%)", "ok"]);
+		expect(find("5-hour")).toEqual(["5-hour", "$0.50/$12 (4.2%)", "base"]);
+		expect(find("Weekly")).toEqual(["Weekly", "$1/$30 (3.3%)", "base"]);
+		expect(find("Monthly")).toEqual(["Monthly", "$12/$60 (20.0%)", "base"]);
 		expect(find("Period")).toEqual(["Period", "58 requests · $17", "base"]);
 		expect(find("Model")).toEqual(["Model", "GLM 5.3 Flash", "strong", true]);
 		// The store-backed rows sit where the CommandCode panel puts them: this
@@ -110,9 +110,9 @@ describe("zenRows", () => {
 			"glm-5.3-flash",
 		);
 		const find = (label: string) => rows.find((row) => row[0] === label);
-		expect(find("5-hour")).toEqual(["5-hour", "$0.50/$12 (4.2%)", "ok"]);
-		expect(find("Weekly")).toEqual(["Weekly", "$1/$30 (3.3%)", "ok"]);
-		expect(find("Monthly")).toEqual(["Monthly", "$12/$60 (20.0%)", "ok"]);
+		expect(find("5-hour")).toEqual(["5-hour", "$0.50/$12 (4.2%)", "base"]);
+		expect(find("Weekly")).toEqual(["Weekly", "$1/$30 (3.3%)", "base"]);
+		expect(find("Monthly")).toEqual(["Monthly", "$12/$60 (20.0%)", "base"]);
 		expect(find("Allowance")).toEqual(["Allowance", "$60/mo", "base"]);
 		expect(find("Model")?.[1]).toBe("glm-5.3-flash");
 		// mpc-only rows are the ones that drop out.
@@ -177,7 +177,7 @@ describe("zenRows", () => {
 		});
 		const rows = zenRows(parseZenJson(bounded), meta);
 		const monthly = rows.findIndex((row) => row[0] === "Monthly");
-		expect(rows[monthly]).toEqual(["Monthly", "$12/$60 (20.0%)", "ok"]);
+		expect(rows[monthly]).toEqual(["Monthly", "$12/$60 (20.0%)", "base"]);
 		expect(rows[monthly + 1]?.[1]).toBe("99.5% elapsed · resets 3h 50m");
 		expect(rows[monthly + 2]?.[1]).toBe("58 req");
 	});
@@ -187,7 +187,7 @@ describe("zenRows", () => {
 		// so there is no resets countdown and no elapsed share to show.
 		const rows = zenRows(parseZenJson(sample), meta);
 		const monthly = rows.findIndex((row) => row[0] === "Monthly");
-		expect(rows[monthly]).toEqual(["Monthly", "$12/$60 (20.0%)", "ok"]);
+		expect(rows[monthly]).toEqual(["Monthly", "$12/$60 (20.0%)", "base"]);
 		// The request count survives; the elapsed/resets continuation does not.
 		expect(rows[monthly + 1]?.[1]).toBe("40 req");
 		expect(rows.some((row) => (row[1] ?? "").includes("elapsed"))).toBe(false);
@@ -348,7 +348,7 @@ describe("rolling window ageing-out (derived reset)", () => {
 			weekly: age(WEEKLY_SECS / 7), // a day into the week
 		});
 		const five = rows.findIndex((row) => row[0] === "5-hour");
-		expect(rows[five]).toEqual(["5-hour", "$0.50/$12 (4.2%)", "ok"]);
+		expect(rows[five]).toEqual(["5-hour", "$0.50/$12 (4.2%)", "base"]);
 		expect(rows[five + 1]).toEqual(["", "20.0% elapsed · resets 4h", "muted"]);
 		// The request count rides on after the continuation, as before.
 		expect(rows[five + 2]?.[1]).toBe("1 req");
@@ -500,7 +500,7 @@ describe("the account's own meters", () => {
 			expect((row?.[0] ?? "").length + 2 + (row?.[1] ?? "").length).toBeLessThanOrEqual(37);
 		}
 		// The reset countdown rides on the continuation, as on the CC side.
-		expect(find("5-hour")?.[2]).toBe("ok");
+		expect(find("5-hour")?.[2]).toBe("base");
 		const five = rows.findIndex((row) => row[0] === "5-hour");
 		expect(rows[five + 1]?.[1]).toContain("resets ");
 	});
