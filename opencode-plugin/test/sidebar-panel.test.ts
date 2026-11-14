@@ -32,19 +32,24 @@ describe("panel colours", () => {
 		expect(colors.crit).toBe(text.feedback.error.base);
 	});
 
-	test("only the accent hue and the feedback scale can tint a row", () => {
+	test("no hue scale or info token can tint a row", () => {
 		const purple = c(0.62);
 		const accented = { ...theme, hue: { accent: { 200: purple } } };
-		const dark = hostColors(accented);
-		expect(dark.headline).toBe(purple);
-		expect(dark.label).toBe(text.base);
-		expect(dark.label).not.toBe(text.feedback.info.base);
+		const colors = hostColors(accented);
 		const plain = hostColors(theme);
-		for (const tone of ["base", "muted", "strong", "label", "ok", "warn", "crit"] as const) {
-			expect(dark[tone]).toBe(plain[tone]);
+		for (const tone of [
+			"base",
+			"muted",
+			"strong",
+			"label",
+			"headline",
+			"warn",
+			"crit",
+		] as const) {
+			expect(colors[tone]).toBe(plain[tone]);
 		}
-		// Light themes put a peach in the accent slot, so headings stay plain there.
-		expect(hostColors(accented, "light").headline).toBe(text.base);
+		expect(colors.headline).toBe(text.base);
+		expect(colors.label).not.toBe(text.feedback.info.base);
 	});
 
 	test("legacy hosts keep their text pair and get literal semantic colours", () => {
