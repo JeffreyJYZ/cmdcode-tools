@@ -156,7 +156,12 @@ export function SettingsDialog(props: { ctx: TuiPluginNs.Context }) {
 
 	return (
 		<box flexDirection="column" gap={1} paddingBottom={1}>
-			<box flexDirection="row" justifyContent="space-between" paddingLeft={4} paddingRight={4}>
+			<box
+				flexDirection="row"
+				justifyContent="space-between"
+				paddingLeft={4}
+				paddingRight={4}
+			>
 				<text fg={colors.base}>
 					<b>Command Code settings</b>
 				</text>

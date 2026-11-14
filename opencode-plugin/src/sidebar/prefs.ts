@@ -92,7 +92,9 @@ function numberFrom(
 ): number {
 	if (value === undefined) return fallback;
 	if (typeof value === "number" && choices.includes(value)) return value;
-	console.warn(`[command-code] ignoring unknown ${name} ${JSON.stringify(value)}; using ${fallback}`);
+	console.warn(
+		`[command-code] ignoring unknown ${name} ${JSON.stringify(value)}; using ${fallback}`,
+	);
 	return fallback;
 }
 

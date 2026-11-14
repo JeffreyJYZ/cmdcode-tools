@@ -36,7 +36,10 @@ const onOff = (value: boolean): string => (value ? "on" : "off");
  * a snapshot: the dialog re-reads after each change so a hidden row appears the
  * moment the cost mode leaves `off`.
  */
-export function settingRows(prefs: () => Prefs, save: (patch: Partial<Prefs>) => void): SettingRow[] {
+export function settingRows(
+	prefs: () => Prefs,
+	save: (patch: Partial<Prefs>) => void,
+): SettingRow[] {
 	return [
 		{
 			title: "Colours",
