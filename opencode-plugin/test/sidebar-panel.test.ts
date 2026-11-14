@@ -23,28 +23,28 @@ describe("panel colours", () => {
 		expect(colors.base).toBe(text.base);
 		expect(colors.muted).toBe(text.muted);
 		expect(colors.strong).toBe(text.base);
-		expect(colors.label).toBe(text.feedback.info.base);
-		// No accent hue in this fixture, so headlines share the label hue.
-		expect(colors.headline).toBe(text.feedback.info.base);
+		// One accent for headings and one traffic scale for percentages; labels
+		// are plain text, which is the cyan the panel no longer spends.
+		expect(colors.label).toBe(text.base);
+		expect(colors.headline).toBe(text.base);
 		expect(colors.ok).toBe(text.feedback.success.base);
 		expect(colors.warn).toBe(text.feedback.warning.base);
 		expect(colors.crit).toBe(text.feedback.error.base);
 	});
 
-	test("the accent hue is read for headlines only, and only in dark mode", () => {
+	test("only the accent hue and the feedback scale can tint a row", () => {
 		const purple = c(0.62);
 		const accented = { ...theme, hue: { accent: { 200: purple } } };
 		const dark = hostColors(accented);
 		expect(dark.headline).toBe(purple);
-		// Every other tone comes from the text palette, so the peach `primary` /
-		// `interactive` scales (the earlier dark orange) cannot reach a row.
+		expect(dark.label).toBe(text.base);
+		expect(dark.label).not.toBe(text.feedback.info.base);
 		const plain = hostColors(theme);
-		for (const tone of ["base", "muted", "strong", "ok", "warn", "crit"] as const) {
+		for (const tone of ["base", "muted", "strong", "label", "ok", "warn", "crit"] as const) {
 			expect(dark[tone]).toBe(plain[tone]);
 		}
-		// Light themes put a peach in the accent slot, so headlines keep the
-		// label hue there instead of turning orange.
-		expect(hostColors(accented, "light").headline).toBe(hostColors(accented, "light").label);
+		// Light themes put a peach in the accent slot, so headings stay plain there.
+		expect(hostColors(accented, "light").headline).toBe(text.base);
 	});
 
 	test("legacy hosts keep their text pair and get literal semantic colours", () => {

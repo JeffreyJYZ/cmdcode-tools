@@ -52,11 +52,13 @@ export function hostColors(theme: HostTheme, mode: "dark" | "light" = "dark"): P
 		// Bold is the emphasis; `strong` shares the plain text colour so the
 		// model name never borrows a chromatic token.
 		strong: theme.text.base,
-		label: theme.text.feedback.info.base,
-		headline:
-			mode === "dark"
-				? (theme.hue?.accent?.[200] ?? theme.text.feedback.info.base)
-				: theme.text.feedback.info.base,
+		// One accent for headings, one traffic scale for percentages. A healthy
+		// figure stays plain: painting every percentage green made "12% of limit"
+		// and "98% of session" read identically.
+		label: theme.text.base,
+		headline: mode === "dark" ? (theme.hue?.accent?.[200] ?? theme.text.base) : theme.text.base,
+		// `ok` is now only the deal badge: a promotion is news worth a tint, while a
+		// healthy percentage no longer is (see pctTone).
 		ok: theme.text.feedback.success.base,
 		warn: theme.text.feedback.warning.base,
 		crit: theme.text.feedback.error.base,
@@ -69,9 +71,9 @@ export function legacyColors(theme: { text: RGBA; textMuted: RGBA }): PanelColor
 		base: theme.text,
 		muted: theme.textMuted,
 		strong: theme.text,
-		label: RGBA.fromValues(0.34, 0.71, 0.76, 1),
+		label: theme.text,
 		headline: RGBA.fromValues(0.62, 0.49, 0.85, 1),
-		ok: RGBA.fromValues(0.5, 0.85, 0.56, 1),
+		ok: theme.text,
 		warn: RGBA.fromValues(0.96, 0.65, 0.26, 1),
 		crit: RGBA.fromValues(0.88, 0.42, 0.46, 1),
 	};
@@ -125,9 +127,11 @@ function Row(props: { row: SidebarRow; colors: PanelColors }) {
 	return (
 		<text>
 			<span {...spanStyle(fg.label)}>
-				<b>{label}</b>
+				{tone === "strong" || props.row[3] ? <b>{label}</b> : label}
 			</span>
-			<span {...spanStyle(fg.value)}>{tone === "strong" ? <b>{value}</b> : value}</span>
+			<span {...spanStyle(fg.value)}>
+				{tone === "strong" || props.row[3] ? <b>{value}</b> : value}
+			</span>
 		</text>
 	);
 }

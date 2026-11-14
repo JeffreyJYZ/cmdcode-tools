@@ -55,7 +55,7 @@ describe("rendered panel", () => {
 		const find = (text: string) => spans.find((span) => span.text.includes(text));
 
 		// The point of the whole exercise: no row may collapse to one colour,
-		// and labels wear their own hue rather than the value's.
+		// and headlines keep their own shade.
 		expect(hex(find("Tier: ")?.fg as RGBA)).toBe(hex(colors.label));
 		// The two headline rows are whole-line: label and value share one shade.
 		expect(hex(find("Plan: ")?.fg as RGBA)).toBe(hex(colors.headline));
@@ -65,10 +65,13 @@ describe("rendered panel", () => {
 		expect(hex(colors.headline)).not.toBe(hex(colors.label));
 		expect(hex(find("open source")?.fg as RGBA)).toBe(hex(colors.base));
 		expect(hex(find("$57.40 / $70 (82%)")?.fg as RGBA)).toBe(hex(colors.warn));
-		expect(hex(colors.label)).not.toBe(hex(colors.base));
+		// Labels are plain text now; bold, not hue, is what marks them apart.
+		expect(hex(colors.label)).toBe(hex(colors.base));
 
-		// Labels are bold (attributes set), values are not.
-		expect(find("Tier: ")?.attributes).not.toBe(0);
+		// Headlines are bold; every other row is plain, so bold marks structure
+		// rather than decorating every label.
+		expect(find("Plan: ")?.attributes).not.toBe(0);
+		expect(find("Tier: ")?.attributes).toBe(0);
 		expect(find("open source")?.attributes).toBe(0);
 
 		// Continuations and the rule stay dim.

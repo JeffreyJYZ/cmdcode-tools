@@ -55,7 +55,7 @@ describe("usageRows", () => {
 		const rows = usageRows(usage, 1_000_000_000_000 - 5 * 60_000);
 		expect(rows[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base", true]);
 		expect(rows[1]).toEqual(["Monthly", "$50.56 / $70 (72.2%)", "warn"]);
-		expect(rows[2]).toEqual(["5-hour", "$1.17/$14 (8.4%)", "ok"]);
+		expect(rows[2]).toEqual(["5-hour", "$1.17/$14 (8.4%)", "base"]);
 		expect(rows[3]?.[0]).toBe("");
 		expect(rows[3]?.[1]).toContain("elapsed");
 		expect(rows[3]?.[1]).toContain("resets 5m");
@@ -96,7 +96,7 @@ describe("usageRows", () => {
 			monthlyCap: 70,
 			monthlyCredits: 84.5,
 		});
-		expect(rows[1]).toEqual(["Monthly", "$0 / $70 (0.0%)", "ok"]);
+		expect(rows[1]).toEqual(["Monthly", "$0 / $70 (0.0%)", "base"]);
 	});
 	test("an over-cap window is flagged and coloured, not just high", () => {
 		const now = 1_000_000_000_000;
@@ -179,7 +179,7 @@ describe("windowRows", () => {
 	const window = { cap: 14, used: 7, resetAt: now + 9_000_000 };
 	test("four arguments match what the CommandCode panel always drew", () => {
 		expect(windowRows("5-hour", window, now, 5 * 3600)).toEqual([
-			["5-hour", "$7/$14 (50.0%)", "ok"],
+			["5-hour", "$7/$14 (50.0%)", "base"],
 			["", "50.0% elapsed · resets 2h 30m", "muted"],
 		]);
 	});
@@ -187,7 +187,7 @@ describe("windowRows", () => {
 		const rows = windowRows("5-hour", window, now, 5 * 3600, "3 req");
 		expect(rows[rows.length - 1]).toEqual(["", "3 req", "muted"]);
 		// Still the same use line and detail.
-		expect(rows[0]).toEqual(["5-hour", "$7/$14 (50.0%)", "ok"]);
+		expect(rows[0]).toEqual(["5-hour", "$7/$14 (50.0%)", "base"]);
 		expect(rows[1]).toEqual(["", "50.0% elapsed · resets 2h 30m", "muted"]);
 	});
 	test("over-cap leads the continuation and tones the row crit", () => {
@@ -331,8 +331,8 @@ describe("modelRows", () => {
 
 describe("tones", () => {
 	test("severity steps at 70% and 90%", () => {
-		expect(pctTone(0)).toBe("ok");
-		expect(pctTone(69)).toBe("ok");
+		expect(pctTone(0)).toBe("base");
+		expect(pctTone(69)).toBe("base");
 		expect(pctTone(70)).toBe("warn");
 		expect(pctTone(89)).toBe("warn");
 		expect(pctTone(90)).toBe("crit");
