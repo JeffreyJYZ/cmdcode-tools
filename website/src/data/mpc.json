@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-13T00:43:24.868Z",
+	"generatedAt": "2026-11-14T01:52:07.312Z",
 	"plans": [
 		{
 			"key": "go",
@@ -345,6 +345,33 @@
 					{
 						"key": "ling31flash1019",
 						"name": "Ling 3.1 Flash 1019",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.3,
+								"output": 0.9,
+								"cacheRead": 0.06,
+								"cacheWrite": null
+							},
+							"allowance": 10,
+							"requestsPerMonth": 2923.976608187135,
+							"requestsPerFiveHour": 877.1929824561404,
+							"requestsPerWeek": 1754.3859649122808,
+							"costPerRequest": 0.00342,
+							"payPerRequest": 0.00034199999999999996,
+							"multiplier": 10,
+							"ability": 29.570119369837,
+							"tps": null,
+							"index": 32,
+							"valueIndex": 37,
+							"free": false
+						}
+					},
+					{
+						"key": "ling31flash",
+						"name": "Ling 3.1 Flash",
 						"oc": null,
 						"cc": {
 							"provider": "cc",
@@ -1630,33 +1657,6 @@
 						}
 					},
 					{
-						"key": "ling31flash",
-						"name": "Ling 3.1 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.3,
-								"output": 0.9,
-								"cacheRead": 0.06,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": 2923.976608187135,
-							"requestsPerFiveHour": 877.1929824561404,
-							"requestsPerWeek": 1754.3859649122808,
-							"costPerRequest": 0.00342,
-							"payPerRequest": 0.00034199999999999996,
-							"multiplier": 10,
-							"ability": null,
-							"tps": null,
-							"index": 32,
-							"valueIndex": null,
-							"free": false
-						}
-					},
-					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -2658,6 +2658,33 @@
 					{
 						"key": "ling31flash1019",
 						"name": "Ling 3.1 Flash 1019",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.3,
+								"output": 0.9,
+								"cacheRead": 0.06,
+								"cacheWrite": null
+							},
+							"allowance": 10,
+							"requestsPerMonth": 2923.976608187135,
+							"requestsPerFiveHour": 877.1929824561404,
+							"requestsPerWeek": 1754.3859649122808,
+							"costPerRequest": 0.00342,
+							"payPerRequest": 0.00034199999999999996,
+							"multiplier": 10,
+							"ability": 29.570119369837,
+							"tps": null,
+							"index": 29,
+							"valueIndex": 34,
+							"free": false
+						}
+					},
+					{
+						"key": "ling31flash",
+						"name": "Ling 3.1 Flash",
 						"oc": null,
 						"cc": {
 							"provider": "cc",
@@ -3943,33 +3970,6 @@
 						}
 					},
 					{
-						"key": "ling31flash",
-						"name": "Ling 3.1 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Go",
-							"pricing": {
-								"input": 0.3,
-								"output": 0.9,
-								"cacheRead": 0.06,
-								"cacheWrite": null
-							},
-							"allowance": 10,
-							"requestsPerMonth": 2923.976608187135,
-							"requestsPerFiveHour": 877.1929824561404,
-							"requestsPerWeek": 1754.3859649122808,
-							"costPerRequest": 0.00342,
-							"payPerRequest": 0.00034199999999999996,
-							"multiplier": 10,
-							"ability": null,
-							"tps": null,
-							"index": 29,
-							"valueIndex": null,
-							"free": false
-						}
-					},
-					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -4967,6 +4967,33 @@
 							"tps": null,
 							"index": 57,
 							"valueIndex": 47,
+							"free": false
+						}
+					},
+					{
+						"key": "ling31flash",
+						"name": "Ling 3.1 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 0.3,
+								"output": 0.9,
+								"cacheRead": 0.06,
+								"cacheWrite": null
+							},
+							"allowance": 100,
+							"requestsPerMonth": 29239.766081871345,
+							"requestsPerFiveHour": 5847.95321637427,
+							"requestsPerWeek": 14619.883040935672,
+							"costPerRequest": 0.00342,
+							"payPerRequest": 0.000342,
+							"multiplier": 10,
+							"ability": 29.570119369837,
+							"tps": null,
+							"index": 57,
+							"valueIndex": 45,
 							"free": false
 						}
 					},
@@ -6298,33 +6325,6 @@
 							"free": false
 						},
 						"cc": null
-					},
-					{
-						"key": "ling31flash",
-						"name": "Ling 3.1 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 0.3,
-								"output": 0.9,
-								"cacheRead": 0.06,
-								"cacheWrite": null
-							},
-							"allowance": 100,
-							"requestsPerMonth": 29239.766081871345,
-							"requestsPerFiveHour": 5847.95321637427,
-							"requestsPerWeek": 14619.883040935672,
-							"costPerRequest": 0.00342,
-							"payPerRequest": 0.000342,
-							"multiplier": 10,
-							"ability": null,
-							"tps": null,
-							"index": 57,
-							"valueIndex": null,
-							"free": false
-						}
 					},
 					{
 						"key": "deepseekv4flash",
@@ -7671,6 +7671,33 @@
 						}
 					},
 					{
+						"key": "ling31flash",
+						"name": "Ling 3.1 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 0.3,
+								"output": 0.9,
+								"cacheRead": 0.06,
+								"cacheWrite": null
+							},
+							"allowance": 100,
+							"requestsPerMonth": 29239.766081871345,
+							"requestsPerFiveHour": 5847.95321637427,
+							"requestsPerWeek": 14619.883040935672,
+							"costPerRequest": 0.00342,
+							"payPerRequest": 0.000342,
+							"multiplier": 10,
+							"ability": 29.570119369837,
+							"tps": null,
+							"index": 57,
+							"valueIndex": 45,
+							"free": false
+						}
+					},
+					{
 						"key": "ling31flash1019",
 						"name": "Ling 3.1 Flash 1019",
 						"oc": null,
@@ -8950,33 +8977,6 @@
 							"free": false
 						},
 						"cc": null
-					},
-					{
-						"key": "ling31flash",
-						"name": "Ling 3.1 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "GOAT",
-							"pricing": {
-								"input": 0.3,
-								"output": 0.9,
-								"cacheRead": 0.06,
-								"cacheWrite": null
-							},
-							"allowance": 100,
-							"requestsPerMonth": 29239.766081871345,
-							"requestsPerFiveHour": 5847.95321637427,
-							"requestsPerWeek": 14619.883040935672,
-							"costPerRequest": 0.00342,
-							"payPerRequest": 0.000342,
-							"multiplier": 10,
-							"ability": null,
-							"tps": null,
-							"index": 57,
-							"valueIndex": null,
-							"free": false
-						}
 					},
 					{
 						"key": "deepseekv4flash",
@@ -10331,6 +10331,33 @@
 						"cc": null
 					},
 					{
+						"key": "ling31flash",
+						"name": "Ling 3.1 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 0.3,
+								"output": 0.9,
+								"cacheRead": 0.06,
+								"cacheWrite": null
+							},
+							"allowance": 110,
+							"requestsPerMonth": 32163.74269005848,
+							"requestsPerFiveHour": 6432.748538011696,
+							"requestsPerWeek": 16081.87134502924,
+							"costPerRequest": 0.00342,
+							"payPerRequest": 0.0006218181818181818,
+							"multiplier": 5.5,
+							"ability": 29.570119369837,
+							"tps": null,
+							"index": 55,
+							"valueIndex": 40,
+							"free": false
+						}
+					},
+					{
 						"key": "ling31flash1019",
 						"name": "Ling 3.1 Flash 1019",
 						"oc": null,
@@ -11676,33 +11703,6 @@
 							"ability": null,
 							"tps": null,
 							"index": 20,
-							"valueIndex": null,
-							"free": false
-						}
-					},
-					{
-						"key": "ling31flash",
-						"name": "Ling 3.1 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 0.3,
-								"output": 0.9,
-								"cacheRead": 0.06,
-								"cacheWrite": null
-							},
-							"allowance": 110,
-							"requestsPerMonth": 32163.74269005848,
-							"requestsPerFiveHour": 6432.748538011696,
-							"requestsPerWeek": 16081.87134502924,
-							"costPerRequest": 0.00342,
-							"payPerRequest": 0.0006218181818181818,
-							"multiplier": 5.5,
-							"ability": null,
-							"tps": null,
-							"index": 55,
 							"valueIndex": null,
 							"free": false
 						}
@@ -13484,6 +13484,33 @@
 						}
 					},
 					{
+						"key": "ling31flash",
+						"name": "Ling 3.1 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 0.3,
+								"output": 0.9,
+								"cacheRead": 0.06,
+								"cacheWrite": null
+							},
+							"allowance": 110,
+							"requestsPerMonth": 32163.74269005848,
+							"requestsPerFiveHour": 6432.748538011696,
+							"requestsPerWeek": 16081.87134502924,
+							"costPerRequest": 0.00342,
+							"payPerRequest": 0.0006218181818181818,
+							"multiplier": 5.5,
+							"ability": 29.570119369837,
+							"tps": null,
+							"index": 55,
+							"valueIndex": 40,
+							"free": false
+						}
+					},
+					{
 						"key": "ling31flash1019",
 						"name": "Ling 3.1 Flash 1019",
 						"oc": null,
@@ -14781,33 +14808,6 @@
 							"ability": null,
 							"tps": null,
 							"index": 19,
-							"valueIndex": null,
-							"free": false
-						}
-					},
-					{
-						"key": "ling31flash",
-						"name": "Ling 3.1 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 0.3,
-								"output": 0.9,
-								"cacheRead": 0.06,
-								"cacheWrite": null
-							},
-							"allowance": 110,
-							"requestsPerMonth": 32163.74269005848,
-							"requestsPerFiveHour": 6432.748538011696,
-							"requestsPerWeek": 16081.87134502924,
-							"costPerRequest": 0.00342,
-							"payPerRequest": 0.0006218181818181818,
-							"multiplier": 5.5,
-							"ability": null,
-							"tps": null,
-							"index": 55,
 							"valueIndex": null,
 							"free": false
 						}
@@ -16698,6 +16698,33 @@
 					{
 						"key": "ling31flash1019",
 						"name": "Ling 3.1 Flash 1019",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 0.3,
+								"output": 0.9,
+								"cacheRead": 0.06,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 43859.64912280702,
+							"requestsPerFiveHour": 13157.894736842107,
+							"requestsPerWeek": 26315.789473684214,
+							"costPerRequest": 0.00342,
+							"payPerRequest": 0.00228,
+							"multiplier": 1.5,
+							"ability": 29.570119369837,
+							"tps": null,
+							"index": 49,
+							"valueIndex": 36,
+							"free": false
+						}
+					},
+					{
+						"key": "ling31flash",
+						"name": "Ling 3.1 Flash",
 						"oc": null,
 						"cc": {
 							"provider": "cc",
@@ -18643,33 +18670,6 @@
 						}
 					},
 					{
-						"key": "ling31flash",
-						"name": "Ling 3.1 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0.3,
-								"output": 0.9,
-								"cacheRead": 0.06,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 43859.64912280702,
-							"requestsPerFiveHour": 13157.894736842107,
-							"requestsPerWeek": 26315.789473684214,
-							"costPerRequest": 0.00342,
-							"payPerRequest": 0.00228,
-							"multiplier": 1.5,
-							"ability": null,
-							"tps": null,
-							"index": 49,
-							"valueIndex": null,
-							"free": false
-						}
-					},
-					{
 						"key": "step37flash",
 						"name": "Step 3.7 Flash",
 						"oc": null,
@@ -20091,6 +20091,33 @@
 					{
 						"key": "ling31flash1019",
 						"name": "Ling 3.1 Flash 1019",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 0.3,
+								"output": 0.9,
+								"cacheRead": 0.06,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 43859.64912280702,
+							"requestsPerFiveHour": 13157.894736842107,
+							"requestsPerWeek": 26315.789473684214,
+							"costPerRequest": 0.00342,
+							"payPerRequest": 0.00228,
+							"multiplier": 1.5,
+							"ability": 29.570119369837,
+							"tps": null,
+							"index": 42,
+							"valueIndex": 29,
+							"free": false
+						}
+					},
+					{
+						"key": "ling31flash",
+						"name": "Ling 3.1 Flash",
 						"oc": null,
 						"cc": {
 							"provider": "cc",
@@ -22036,33 +22063,6 @@
 						}
 					},
 					{
-						"key": "ling31flash",
-						"name": "Ling 3.1 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 0.3,
-								"output": 0.9,
-								"cacheRead": 0.06,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 43859.64912280702,
-							"requestsPerFiveHour": 13157.894736842107,
-							"requestsPerWeek": 26315.789473684214,
-							"costPerRequest": 0.00342,
-							"payPerRequest": 0.00228,
-							"multiplier": 1.5,
-							"ability": null,
-							"tps": null,
-							"index": 42,
-							"valueIndex": null,
-							"free": false
-						}
-					},
-					{
 						"key": "step37flash",
 						"name": "Step 3.7 Flash",
 						"oc": null,
@@ -23486,6 +23486,33 @@
 					{
 						"key": "ling31flash1019",
 						"name": "Ling 3.1 Flash 1019",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 0.3,
+								"output": 0.9,
+								"cacheRead": 0.06,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 87719.29824561405,
+							"requestsPerFiveHour": 26315.789473684214,
+							"requestsPerWeek": 52631.57894736843,
+							"costPerRequest": 0.00342,
+							"payPerRequest": 0.00228,
+							"multiplier": 1.5,
+							"ability": 29.570119369837,
+							"tps": null,
+							"index": 52,
+							"valueIndex": 39,
+							"free": false
+						}
+					},
+					{
+						"key": "ling31flash",
+						"name": "Ling 3.1 Flash",
 						"oc": null,
 						"cc": {
 							"provider": "cc",
@@ -25431,33 +25458,6 @@
 						}
 					},
 					{
-						"key": "ling31flash",
-						"name": "Ling 3.1 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0.3,
-								"output": 0.9,
-								"cacheRead": 0.06,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 87719.29824561405,
-							"requestsPerFiveHour": 26315.789473684214,
-							"requestsPerWeek": 52631.57894736843,
-							"costPerRequest": 0.00342,
-							"payPerRequest": 0.00228,
-							"multiplier": 1.5,
-							"ability": null,
-							"tps": null,
-							"index": 52,
-							"valueIndex": null,
-							"free": false
-						}
-					},
-					{
 						"key": "step37flash",
 						"name": "Step 3.7 Flash",
 						"oc": null,
@@ -26879,6 +26879,33 @@
 					{
 						"key": "ling31flash1019",
 						"name": "Ling 3.1 Flash 1019",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 0.3,
+								"output": 0.9,
+								"cacheRead": 0.06,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 87719.29824561405,
+							"requestsPerFiveHour": 26315.789473684214,
+							"requestsPerWeek": 52631.57894736843,
+							"costPerRequest": 0.00342,
+							"payPerRequest": 0.00228,
+							"multiplier": 1.5,
+							"ability": 29.570119369837,
+							"tps": null,
+							"index": 44,
+							"valueIndex": 33,
+							"free": false
+						}
+					},
+					{
+						"key": "ling31flash",
+						"name": "Ling 3.1 Flash",
 						"oc": null,
 						"cc": {
 							"provider": "cc",
@@ -28819,33 +28846,6 @@
 							"ability": null,
 							"tps": null,
 							"index": 72,
-							"valueIndex": null,
-							"free": false
-						}
-					},
-					{
-						"key": "ling31flash",
-						"name": "Ling 3.1 Flash",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 0.3,
-								"output": 0.9,
-								"cacheRead": 0.06,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 87719.29824561405,
-							"requestsPerFiveHour": 26315.789473684214,
-							"requestsPerWeek": 52631.57894736843,
-							"costPerRequest": 0.00342,
-							"payPerRequest": 0.00228,
-							"multiplier": 1.5,
-							"ability": null,
-							"tps": null,
-							"index": 44,
 							"valueIndex": null,
 							"free": false
 						}
