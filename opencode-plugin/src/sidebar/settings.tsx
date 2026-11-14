@@ -1,21 +1,15 @@
 /** @jsxImportSource @opentui/solid */
-// /cmd-settings dialog: one row per sidebar preference, each cycling through
-// the labels `settings-rows.ts` already knows. Rows are data there; this file
-// is the only place that knows how a row becomes a terminal line — the same
-// split the sidebar panel uses.
+// /cmd-settings dialog: one row per sidebar preference, cycling the labels
+// settings-rows.ts owns. Modelled on opencode-wallpapers' Picker: the modal
+// keymap layer lives in the component body, so it dies with the dialog instead
+// of swallowing arrow keys in the prompt afterwards.
 //
-// Modelled on opencode-wallpapers' Picker: the modal keymap layer is created
-// inside the component body, so it lives exactly as long as the dialog and is
-// gone when the dialog closes. `esc` closes through `dialog.clear()` because a
-// modal layer's own `escape` binding is the one route that always works, even
-// when the host dialog has already claimed the key.
-//
-// Colours come from the theme's `dialog` surface when the host exposes one
-// (`theme.surface("dialog")`), otherwise from the base text tokens. The `hue`
-// scales are widget colours, not chrome — see sidebar/panel.tsx.
+// Colours come from the theme's `dialog` surface when the host exposes one,
+// and follow opencode's own DialogSelect: primary title, secondary value over
+// an action-primary band. The `hue` scales are widget colours, not chrome.
 import { RGBA } from "@opentui/core";
 import type { Plugin as TuiPluginNs } from "@opencode/plugin/tui";
-import { createSignal, For } from "solid-js";
+import { createSignal, For, onMount } from "solid-js";
 import { loadPrefs, type Prefs, savePrefs } from "./prefs";
 import { type SettingRow, settingRows } from "./settings-rows";
 
@@ -24,14 +18,11 @@ interface ThemeView {
 	readonly text: {
 		readonly base: RGBA;
 		readonly muted: RGBA;
-		readonly action?: {
-			readonly primary?: { readonly focused?: RGBA };
-		};
+		readonly action?: Readonly<Record<"primary" | "secondary", { readonly focused?: RGBA }>>;
 	};
 	readonly background?: {
-		readonly action?: {
-			readonly primary?: { readonly focused?: RGBA };
-		};
+		readonly raised?: { readonly base?: RGBA };
+		readonly action?: Readonly<Record<"primary", { readonly focused?: RGBA }>>;
 	};
 }
 
@@ -40,8 +31,10 @@ interface DialogColors {
 	readonly base: RGBA;
 	/** Every value not under the cursor, and the footer hints. */
 	readonly muted: RGBA;
-	/** Title and value of the focused row. */
+	/** Selected row's title. */
 	readonly accent: RGBA;
+	/** Selected row's value: native lists use the secondary tone, not the accent. */
+	readonly secondary: RGBA;
 	/** Focused row's background band. */
 	readonly selected: RGBA;
 }
@@ -60,17 +53,13 @@ function dialogColors(ctx: TuiPluginNs.Context): DialogColors {
 		base: view.text.base,
 		muted: view.text.muted,
 		accent: view.text.action?.primary?.focused ?? view.text.base,
-		// A theme without an action background still needs a visible band, so the
-		// band falls back to the accent's own colour at low alpha (pure black
-		// transparent would make the selection invisible).
+		// Matches opencode's own DialogSelect: an active row is a primary title over
+		// a secondary value, so both in the accent read as one loud block.
+		secondary: view.text.action?.secondary?.focused ?? view.text.muted,
 		selected:
 			view.background?.action?.primary?.focused ??
-			RGBA.fromValues(
-				view.text.action?.primary?.focused?.r ?? view.text.base.r,
-				view.text.action?.primary?.focused?.g ?? view.text.base.g,
-				view.text.action?.primary?.focused?.b ?? view.text.base.b,
-				0.25,
-			),
+			view.background?.raised?.base ??
+			RGBA.fromInts(0, 0, 0, 0),
 	};
 }
 
@@ -81,19 +70,19 @@ function Row(props: {
 	active: () => boolean;
 	onClick: () => void;
 }) {
-	const fg = () => (props.active() ? props.colors.accent : props.colors.base);
 	return (
 		<box
 			flexDirection="row"
-			paddingLeft={4}
-			paddingRight={4}
+			gap={1}
+			paddingLeft={5}
+			paddingRight={6}
 			backgroundColor={props.active() ? props.colors.selected : RGBA.fromInts(0, 0, 0, 0)}
 			onMouseUp={props.onClick}
 		>
-			<text flexGrow={1} fg={fg()}>
+			<text flexGrow={1} fg={props.active() ? props.colors.accent : props.colors.base}>
 				<b>{props.row.title}</b>
 			</text>
-			<text fg={props.active() ? fg() : props.colors.muted}>
+			<text fg={props.active() ? props.colors.secondary : props.colors.muted}>
 				{props.active() ? `‹ ${props.row.value()} ›` : props.row.value()}
 			</text>
 		</box>
@@ -117,6 +106,16 @@ export function SettingsDialog(props: { ctx: TuiPluginNs.Context }) {
 	const visible = () => rows.filter((row) => !row.hidden?.());
 	const [index, setIndex] = createSignal(0);
 	const current = () => visible()[index()] ?? visible()[0];
+
+	// Native list dialogs open at the large size; the host default is smaller and
+	// left the description wrapping into a ragged block.
+	onMount(() => {
+		try {
+			ctx.ui.dialog.set({ size: "large" });
+		} catch {
+			// older host without a resizable dialog: the default size still works
+		}
+	});
 
 	const move = (direction: number) => {
 		const list = visible();
@@ -159,8 +158,8 @@ export function SettingsDialog(props: { ctx: TuiPluginNs.Context }) {
 			<box
 				flexDirection="row"
 				justifyContent="space-between"
-				paddingLeft={4}
-				paddingRight={4}
+				paddingLeft={5}
+				paddingRight={6}
 			>
 				<text fg={colors.base}>
 					<b>Command Code settings</b>
@@ -182,7 +181,7 @@ export function SettingsDialog(props: { ctx: TuiPluginNs.Context }) {
 					/>
 				)}
 			</For>
-			<box paddingLeft={4} paddingRight={4}>
+			<box paddingLeft={5} paddingRight={6}>
 				<text fg={colors.muted} wrapMode="word">
 					{(() => {
 						const row = current();
@@ -190,7 +189,7 @@ export function SettingsDialog(props: { ctx: TuiPluginNs.Context }) {
 					})()}
 				</text>
 			</box>
-			<box flexDirection="row" gap={2} paddingLeft={4} paddingRight={4}>
+			<box flexDirection="row" gap={2} paddingLeft={5} paddingRight={6}>
 				<text fg={colors.muted}>{"↑/↓ setting"}</text>
 				<text fg={colors.muted}>{"enter ←/→ change"}</text>
 			</box>
