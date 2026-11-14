@@ -12,10 +12,9 @@ import {
 	ZEN_PROVIDER_ID,
 	ZEN_PROVIDER_PREFIX,
 } from "../constants/providers";
-import { FIVE_HOUR_SECS, WEEKLY_SECS } from "../constants/sidebar";
-import { POLL_MS } from "../constants/timing";
 import { type ArkUsage, arkRows } from "./ark";
 import { loadArk, loadMeta, loadUsage, loadZen } from "./data";
+import { modelCost, modelWindows as readModelWindows, sessionCost } from "./local-cost";
 import { loadPrefs } from "./prefs";
 import {
 	actionableAccountError,
@@ -29,7 +28,6 @@ import {
 	type Usage,
 	usageRows,
 } from "./rows";
-import { loadModelUsage, loadModelWindowStart, loadSessionUsage, usageDbPath } from "./usageDb";
 import { type ZenUsage, type ZenWindowStarts, zenRows } from "./zen";
 
 /**
@@ -234,31 +232,24 @@ export function useRows(
 			.catch(() => {});
 	};
 	refreshMeta();
-	/** Scan the store for one model in this conversation, and publish it. */
-	const refreshModelUsage = (id: string | undefined) => {
-		if (!id) return;
-		const session = sessionID();
+	/**
+	 * Publish this conversation's totals and the active model's spend in it.
+	 * Both go through `local-cost`, which memoises per `prefs.costMs` and opens
+	 * no database at all while the cost rows are off.
+	 */
+	const refreshModelUsage = (id: string | undefined, session: string | undefined) => {
+		const now = Date.now();
+		setSessionUsage(sessionCost(session, now));
 		// Without a session the scan is period-wide across *every* conversation;
-		// remembering that figure would divide it by the current session's own
-		// total and could read over 100%. Wait for the host to resolve the session.
-		if (!session) return;
-		const fresh = loadModelUsage(id, 0, usageDbPath(), session);
+		// dividing that by this session's own total read over 100%.
+		if (!id || !session) return;
+		const fresh = modelCost(id, session, now);
 		if (fresh) rememberModelUsage(id, fresh, session);
 		setModelUsage(lastModelUsage);
 	};
-	/**
-	 * Re-read the active model's rolling-window starts for the Go/Zen panel. A
-	 * local indexed read — no network, no CLI spawn — the same class as `Usage
-	 * (this model)`. Account-wide like ocuse's own per-model window totals, so it
-	 * takes no session scope; two scans, one per window.
-	 */
+	/** Rolling-window starts: same module, `window` mode only, one read per tick. */
 	const refreshModelWindows = (id: string | undefined) => {
-		if (!id) return;
-		const now = Date.now();
-		setModelWindows({
-			fiveHour: loadModelWindowStart(id, now - FIVE_HOUR_SECS * 1000) ?? undefined,
-			weekly: loadModelWindowStart(id, now - WEEKLY_SECS * 1000) ?? undefined,
-		});
+		setModelWindows(readModelWindows(id));
 	};
 
 	// One poll in flight at a time. During an outage a single cmduse invocation
@@ -274,26 +265,24 @@ export function useRows(
 			const kind = sessionKind(providerID());
 			const session = sessionID();
 			refreshMeta();
-			// Session totals are provider-agnostic and cheap (one indexed read).
-			if (session) setSessionUsage(loadSessionUsage(session) ?? undefined);
 			if (kind === "ours") {
 				const snapshot = await loadUsage();
 				rememberSnapshot(snapshot);
 				setUsage(usageRows(snapshot));
-				refreshModelUsage(activeModelId());
 			} else if (kind === "go" || kind === "zen") {
 				const snapshot = keepAccount(await loadZen(loadPrefs().ocPlan), lastZen);
 				rememberZen(snapshot);
 				setZen(snapshot);
-				// The store scan is provider-agnostic and needs no network, so the
-				// Go/Zen panel gets the same `Usage (this model)` row.
-				refreshModelUsage(activeModelId());
 				refreshModelWindows(activeModelId());
 			} else if (kind === "ark") {
 				const snapshot = keepAccount(await loadArk(), lastArk);
 				rememberArk(snapshot);
 				setArk(snapshot);
 			}
+			// The store-backed rows are provider-agnostic and need no network, so
+			// every covered section gets them — and pays for them only when the
+			// cost mode is on.
+			refreshModelUsage(activeModelId(), session);
 		} catch {
 			// the CLI is missing, offline, or returned its errored defaults: keep
 			// the last snapshot rather than painting "Free" with no windows.
@@ -309,31 +298,41 @@ export function useRows(
 		if (!shows(kind)) return;
 		setWasOurs(true);
 		void refresh();
-		const timer = setInterval(() => void refresh(), POLL_MS);
-		onCleanup(() => clearInterval(timer));
+		// Re-read the cadence on every tick, so a settings change lands without a
+		// restart; `loadPrefs` is cached, not a file read per render.
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		let stopped = false;
+		const tick = () => {
+			if (stopped) return;
+			void refresh();
+			timer = setTimeout(tick, loadPrefs().pollMs);
+		};
+		timer = setTimeout(tick, loadPrefs().pollMs);
+		onCleanup(() => {
+			stopped = true;
+			if (timer) clearTimeout(timer);
+		});
 	});
 	// `refresh` above is keyed on the provider, so a switch between two of our
-	// models waited for the next minute poll — and showed the previous model's
-	// figure until it landed. Track the model *and* the session, because the
-	// figure counts this conversation's turns: a tab change keeps the provider,
-	// so the poll alone would only notice a minute later. The scan is sqlite (no
-	// process spawn) and the seed keeps the row up while it runs. Runs for the
-	// Go/Zen sections too: the figure is the same per-model, per-session read.
+	// models waited for the next poll — and showed the previous model's figure
+	// until it landed. Track the model *and* the session, because the figure
+	// counts this conversation's turns: a tab change keeps the provider. Both
+	// reads are memoised, so this effect cannot become a per-switch scan.
 	createEffect(() => {
 		const id = activeModelId();
 		const session = sessionID();
 		const kind = sessionKind(providerID());
-		if (!shows(kind) || !id) return;
+		if (!shows(kind)) return;
 		// Window starts are account-wide and need no session, so they refresh on a
 		// model switch even before the host resolves the conversation.
 		if (kind === "go" || kind === "zen") refreshModelWindows(id);
-		if (!session) return;
-		refreshModelUsage(id);
+		refreshModelUsage(id, session);
 	});
 
 	/** Only a figure measured for the current model *and* conversation counts;
-	 * else the seed (same check), else nothing. */
+	 * else the seed (same check), else nothing. Nothing at all while off. */
 	const usageFor = (id: string | undefined): ModelUsage | undefined => {
+		if (loadPrefs().cost === "off") return undefined;
 		const session = sessionID();
 		const seen = modelUsage();
 		if (
@@ -351,6 +350,10 @@ export function useRows(
 		if (!shows(kind) && (kind === "other" || !wasOurs())) return [];
 		const id = activeModelId();
 		const found = id ? (meta().get(modelKey(id)) ?? meta().get(id)) : undefined;
+		// The store-backed rows are the opt-in half; while the cost mode is off
+		// they are omitted entirely and the account meters render alone.
+		const local = loadPrefs().cost !== "off";
+		const session = local ? sessionUsage() : undefined;
 		// The session id is the only name available when the catalog is missing;
 		// its vendor prefix is noise, so keep the tail.
 		const fallbackName = id ? (id.split("/").pop() ?? id) : undefined;
@@ -359,9 +362,9 @@ export function useRows(
 				zen(),
 				found,
 				usageFor(id),
-				sessionUsage(),
+				session,
 				fallbackName,
-				modelWindows(),
+				local ? modelWindows() : undefined,
 			);
 		}
 		if (kind === "ark") {
@@ -378,10 +381,6 @@ export function useRows(
 			: undefined;
 		// Account block, a rule, then the model block: two different subjects, and
 		// without the divider the rows read as one long list.
-		return [
-			...usage(),
-			separator(),
-			...modelRows(model, usageFor(id), sessionUsage(), fallbackName),
-		];
+		return [...usage(), separator(), ...modelRows(model, usageFor(id), session, fallbackName)];
 	});
 }

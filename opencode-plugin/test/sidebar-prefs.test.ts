@@ -1,10 +1,16 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { OPENCODE_DIR, PREFS_FILE } from "../src/constants/paths";
-import { OC_PLAN_DEFAULT } from "../src/constants/sidebar";
-import { loadPrefs, parsePrefs, prefsPath } from "../src/sidebar/prefs";
+import {
+	COST_MODE_DEFAULT,
+	COST_MODES,
+	COST_REFRESH_DEFAULT_MS,
+	OC_PLAN_DEFAULT,
+	POLL_DEFAULT_MS,
+} from "../src/constants/sidebar";
+import { loadPrefs, type Prefs, parsePrefs, prefsPath, savePrefs } from "../src/sidebar/prefs";
 
 /** Distinct `now` values sidestep the loader's short re-read cache. */
 const tick = (() => {
@@ -18,15 +24,14 @@ const configDir = () => {
 	return { dir, env: { XDG_CONFIG_HOME: dir } };
 };
 
+const DEFAULTS: Prefs = { colors: false, ocPlan: "go", pollMs: 5_000, cost: "off", costMs: 60_000 };
+
 describe("sidebar prefs", () => {
 	test("colour off and plan `go` unless the file says otherwise", () => {
 		const { dir, env } = configDir();
 		expect(prefsPath(env)).toBe(join(dir, OPENCODE_DIR, PREFS_FILE));
 		// Nothing on disk.
-		expect(loadPrefs(env, tick())).toEqual({
-			colors: false,
-			ocPlan: "go",
-		});
+		expect(loadPrefs(env, tick())).toEqual(DEFAULTS);
 	});
 
 	test("the file turns colour on, and only a literal true does", () => {
@@ -79,10 +84,7 @@ describe("sidebar prefs", () => {
 	test("malformed json falls back to the default instead of throwing", () => {
 		const { env } = configDir();
 		writeFileSync(prefsPath(env), "{not json");
-		expect(loadPrefs(env, tick())).toEqual({
-			colors: false,
-			ocPlan: "go",
-		});
+		expect(loadPrefs(env, tick())).toEqual(DEFAULTS);
 	});
 
 	test("CMD_COLORS overrides the file both ways", () => {
@@ -118,5 +120,72 @@ describe("sidebar prefs", () => {
 		expect(loadPrefs(env, tick() - 9_000)).toEqual(first);
 		// Past the window it is re-read.
 		expect(loadPrefs(env, tick()).colors).toBe(false);
+	});
+
+	test("poll and cost-refresh intervals only take a value the dialog offers", () => {
+		const warn = console.warn;
+		console.warn = () => {};
+		try {
+			expect(parsePrefs({ pollMs: 5_000 }).pollMs).toBe(5_000);
+			expect(parsePrefs({ pollMs: 60_000 }).pollMs).toBe(60_000);
+			// A 1ms poll or a 0ms re-scan would hammer the disk, so it falls back.
+			expect(parsePrefs({ pollMs: 1 }).pollMs).toBe(POLL_DEFAULT_MS);
+			expect(parsePrefs({ pollMs: 7_000 }).pollMs).toBe(POLL_DEFAULT_MS);
+			expect(parsePrefs({ costMs: 300_000 }).costMs).toBe(300_000);
+			expect(parsePrefs({ costMs: 1_000 }).costMs).toBe(COST_REFRESH_DEFAULT_MS);
+		} finally {
+			console.warn = warn;
+		}
+		expect(parsePrefs({}).pollMs).toBe(POLL_DEFAULT_MS);
+		expect(parsePrefs({}).costMs).toBe(COST_REFRESH_DEFAULT_MS);
+		expect(parsePrefs(undefined).pollMs).toBe(POLL_DEFAULT_MS);
+	});
+
+	test("cost mode defaults to off and takes the three known values", () => {
+		expect(parsePrefs({}).cost).toBe(COST_MODE_DEFAULT);
+		expect(parsePrefs(undefined).cost).toBe("off");
+		for (const mode of COST_MODES) expect(parsePrefs({ cost: mode }).cost).toBe(mode);
+		const warn = console.warn;
+		console.warn = () => {};
+		try {
+			expect(parsePrefs({ cost: "always" }).cost).toBe(COST_MODE_DEFAULT);
+			expect(parsePrefs({ cost: 1 }).cost).toBe(COST_MODE_DEFAULT);
+		} finally {
+			console.warn = warn;
+		}
+	});
+
+	test("savePrefs patches the file, keeps unknown keys and clears the cache", () => {
+		const { env } = configDir();
+		writeFileSync(prefsPath(env), JSON.stringify({ colors: true, futureKey: "kept" }));
+		expect(savePrefs({ pollMs: 30_000 }, env).pollMs).toBe(30_000);
+		// No delay, no tick arithmetic: the cache is dropped by the write itself.
+		expect(loadPrefs(env, tick())).toEqual({ ...DEFAULTS, colors: true, pollMs: 30_000 });
+		expect(JSON.parse(readFileSync(prefsPath(env), "utf8"))).toEqual({
+			colors: true,
+			futureKey: "kept",
+			pollMs: 30_000,
+		});
+
+		// Round-trip of every typed field, with the unknown key still standing.
+		expect(
+			savePrefs({ colors: false, ocPlan: "go-plus", cost: "window", costMs: 300_000 }, env),
+		).toEqual({
+			colors: false,
+			ocPlan: "go-plus",
+			pollMs: 30_000,
+			cost: "window",
+			costMs: 300_000,
+		});
+		expect(loadPrefs(env, tick()).cost).toBe("window");
+		expect(JSON.parse(readFileSync(prefsPath(env), "utf8")).futureKey).toBe("kept");
+	});
+
+	test("a malformed existing file is replaced by valid json", () => {
+		const { env } = configDir();
+		writeFileSync(prefsPath(env), "{not json");
+		expect(savePrefs({ colors: true }, env)).toEqual({ ...DEFAULTS, colors: true });
+		expect(JSON.parse(readFileSync(prefsPath(env), "utf8"))).toEqual({ colors: true });
+		expect(loadPrefs(env, tick()).colors).toBe(true);
 	});
 });
