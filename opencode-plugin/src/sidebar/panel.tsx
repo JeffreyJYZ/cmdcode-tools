@@ -45,19 +45,19 @@ export interface HostTheme {
  * first and failed: terminals fold one-step-apart cyans onto the same ANSI
  * colour, so the headline rows read identical to the rest.
  */
-export function hostColors(theme: HostTheme, mode: "dark" | "light" = "dark"): PanelColors {
+export function hostColors(theme: HostTheme): PanelColors {
 	return {
 		base: theme.text.base,
 		muted: theme.text.muted,
 		// Bold is the emphasis; `strong` shares the plain text colour so the
 		// model name never borrows a chromatic token.
 		strong: theme.text.base,
-		label: theme.text.feedback.info.base,
-		headline:
-			mode === "dark"
-				? (theme.hue?.accent?.[200] ?? theme.text.feedback.info.base)
-				: theme.text.feedback.info.base,
-		ok: theme.text.feedback.success.base,
+		// Labels used to borrow `feedback.info` (cyan) and headlines a purple
+		// accent, so one 37-column panel carried cyan, purple and green/amber/red
+		// at once. With colour on, only a row that needs attention is tinted.
+		label: theme.text.muted,
+		headline: theme.text.base,
+		ok: theme.text.base,
 		warn: theme.text.feedback.warning.base,
 		crit: theme.text.feedback.error.base,
 	};
@@ -69,9 +69,9 @@ export function legacyColors(theme: { text: RGBA; textMuted: RGBA }): PanelColor
 		base: theme.text,
 		muted: theme.textMuted,
 		strong: theme.text,
-		label: RGBA.fromValues(0.34, 0.71, 0.76, 1),
-		headline: RGBA.fromValues(0.62, 0.49, 0.85, 1),
-		ok: RGBA.fromValues(0.5, 0.85, 0.56, 1),
+		label: theme.textMuted,
+		headline: theme.text,
+		ok: theme.text,
 		warn: RGBA.fromValues(0.96, 0.65, 0.26, 1),
 		crit: RGBA.fromValues(0.88, 0.42, 0.46, 1),
 	};
