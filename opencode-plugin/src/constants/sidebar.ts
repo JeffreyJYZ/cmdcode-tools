@@ -41,9 +41,33 @@ export const FIVE_HOUR_SECS = 5 * 3600;
 /** Weekly window length in seconds. Mirrors cmduse_core::WEEKLY_SECS. */
 export const WEEKLY_SECS = 7 * 86400;
 
+/** Sidebar poll cadences offered by /cmd-settings, in ms. */
+export const POLL_CHOICES = [2_000, 5_000, 10_000, 30_000, 60_000, 300_000] as const;
+
+/** One tick per 5s is the cadence every build before /cmd-settings shipped. */
+export const POLL_DEFAULT_MS = 5_000;
+
+/**
+ * Where the per-model cost row comes from. `off` is the default because that
+ * figure lives inside each message's JSON: summing it scans the whole
+ * `session_message` table (0.5-1.9s measured on a 1.3 GiB store) and that scan
+ * on the TUI thread is what stalled keystrokes. Percent windows come from the
+ * account API and cost nothing locally.
+ */
+export const COST_MODES = ["off", "session", "window"] as const;
+export type CostMode = (typeof COST_MODES)[number];
+export const COST_MODE_DEFAULT: CostMode = "off";
+
+/** Re-scan intervals for the opt-in cost row, in ms. */
+export const COST_REFRESH_CHOICES = [30_000, 60_000, 300_000] as const;
+export const COST_REFRESH_DEFAULT_MS = 60_000;
+
 /** Colour is OFF unless asked for; the OpenCode Go plan defaults to `go` (see
- * sidebar/prefs.ts). */
+ * sidebar/prefs.ts). Declared last because it reads the constants above. */
 export const PREF_DEFAULTS: Prefs = {
 	colors: false,
 	ocPlan: OC_PLAN_DEFAULT,
+	pollMs: POLL_DEFAULT_MS,
+	cost: COST_MODE_DEFAULT,
+	costMs: COST_REFRESH_DEFAULT_MS,
 };

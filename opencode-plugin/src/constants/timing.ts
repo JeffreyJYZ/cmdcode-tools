@@ -1,7 +1,5 @@
-// Poll cadences, spawn bounds and cache TTLs.
-
-/** Sidebar poll cadence: one cmduse/ocuse spawn plus the local store reads. */
-export const POLL_MS = 5_000;
+// Poll cadences, spawn bounds and cache TTLs. The sidebar's own cadence is a
+// setting (`prefs.pollMs`), so no fixed interval lives here.
 
 /** How long one sidebar CLI spawn may run before it is killed. An outage can
  * leave a fetch hanging through cmduse's retry ladder, and the poll interval

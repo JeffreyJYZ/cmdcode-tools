@@ -65,6 +65,18 @@ What the section shows:
 
 Usage comes from `cmduse` polled every 5 seconds, read from opencode's message store for the per-model and per-session rows, and cached from `mpc` for the catalog. Every block remembers its last reading, so a remount, a session switch or a network outage repaints instead of blanking; the model figure is keyed by model and session, so switching models never shows the previous model's numbers.
 
+## Settings
+
+`/cmd-settings` is a dialog over that same file, so a view option is changed without hand-editing JSON. Five settings, written as you pick them:
+
+- **Colours** — `off` (default) or `on`: tint status rows green/amber/red; `off` keeps bold and dim only.
+- **OpenCode plan** — `go` (default) or `go-plus`: which per-model monthly limits the Go section renders.
+- **Refresh** — `2s`, `5s` (default), `10s`, `30s` or `1m`: account poll cadence, one CLI spawn per tick.
+- **Local cost rows** — `off` (default), `session` or `window`: where the per-model `$` figure comes from.
+- **Cost refresh** — `30s`, `1m` (default) or `5m`: how often that figure is re-scanned; hidden while cost rows are `off`.
+
+The local cost figure lives inside each message's JSON, so summing it scans the whole store — 0.5-1.9s measured on a 1.3 GiB store, on the UI thread. That is why it defaults to `off`, and why turning it on gives it its own slow interval instead of riding the account poll.
+
 ## Commands
 
 Each command passes its arguments through to the CLI that owns it, and each has an agent-facing tool of the same name, so the model can fetch the same text without you typing a slash command.

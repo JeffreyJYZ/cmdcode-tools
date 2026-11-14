@@ -11,17 +11,38 @@
 // disk per render), so flipping the file lands on the next poll without a
 // restart. Nothing here throws: a missing, unreadable or malformed file leaves
 // the defaults standing, and an unknown plan falls back to `go` with a warning.
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { OPENCODE_DIR, PREFS_FILE } from "../constants/paths";
-import { OC_PLAN_DEFAULT, OC_PLANS, type OcPlan, PREF_DEFAULTS } from "../constants/sidebar";
+import {
+	COST_MODE_DEFAULT,
+	COST_MODES,
+	COST_REFRESH_CHOICES,
+	COST_REFRESH_DEFAULT_MS,
+	type CostMode,
+	OC_PLAN_DEFAULT,
+	OC_PLANS,
+	type OcPlan,
+	POLL_CHOICES,
+	POLL_DEFAULT_MS,
+	PREF_DEFAULTS,
+} from "../constants/sidebar";
 import { PREFS_CACHE_MS } from "../constants/timing";
 
 export interface Prefs {
 	colors: boolean;
 	/** OpenCode Go plan the sidebar renders per-model limits for. */
 	ocPlan: OcPlan;
+	/** Sidebar poll cadence in ms; one of `POLL_CHOICES`. */
+	pollMs: number;
+	/**
+	 * Where the per-model cost row reads from. `off` scans nothing: the figure
+	 * sits inside each message's JSON, so summing it stalls the TUI thread.
+	 */
+	cost: CostMode;
+	/** Opt-in cost re-scan interval in ms; one of `COST_REFRESH_CHOICES`. */
+	costMs: number;
 }
 
 let cached: { at: number; prefs: Prefs } | undefined;
@@ -47,11 +68,71 @@ function planFrom(value: unknown, source: string): OcPlan | undefined {
 
 /** Only a literal `true` enables colour; an unknown plan falls back to `go`. */
 export function parsePrefs(raw: unknown): Prefs {
-	const obj = raw as { colors?: unknown; ocPlan?: unknown } | undefined;
+	const obj = raw as
+		| { colors?: unknown; ocPlan?: unknown; pollMs?: unknown; cost?: unknown; costMs?: unknown }
+		| undefined;
 	return {
 		colors: obj?.colors === true,
 		ocPlan: planFrom(obj?.ocPlan, "file") ?? OC_PLAN_DEFAULT,
+		pollMs: numberFrom(obj?.pollMs, POLL_CHOICES, POLL_DEFAULT_MS, "pollMs"),
+		cost: costFrom(obj?.cost),
+		costMs: numberFrom(obj?.costMs, COST_REFRESH_CHOICES, COST_REFRESH_DEFAULT_MS, "costMs"),
 	};
+}
+
+/**
+ * A numeric setting only ever takes a value the settings dialog can produce,
+ * so a hand-edited file cannot pick a 1ms poll or a 0ms re-scan.
+ */
+function numberFrom(
+	value: unknown,
+	choices: readonly number[],
+	fallback: number,
+	name: string,
+): number {
+	if (value === undefined) return fallback;
+	if (typeof value === "number" && choices.includes(value)) return value;
+	console.warn(
+		`[command-code] ignoring unknown ${name} ${JSON.stringify(value)}; using ${fallback}`,
+	);
+	return fallback;
+}
+
+function costFrom(value: unknown): CostMode {
+	if (value === undefined) return COST_MODE_DEFAULT;
+	if (typeof value === "string" && (COST_MODES as readonly string[]).includes(value)) {
+		return value as CostMode;
+	}
+	console.warn(
+		`[command-code] ignoring unknown cost mode ${JSON.stringify(value)}; using "${COST_MODE_DEFAULT}"`,
+	);
+	return COST_MODE_DEFAULT;
+}
+
+/**
+ * Write one or more settings back to the prefs file, keeping keys this build
+ * does not know yet (the file is shared with the provider half). Atomic:
+ * a crash mid-write must not leave an unreadable config behind, because every
+ * read below falls back to defaults and would silently reset the user.
+ */
+export function savePrefs(patch: Partial<Prefs>, env: NodeJS.ProcessEnv = process.env): Prefs {
+	const path = prefsPath(env);
+	let raw: Record<string, unknown> = {};
+	try {
+		const parsed: unknown = JSON.parse(readFileSync(path, "utf8"));
+		if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+			raw = parsed as Record<string, unknown>;
+		}
+	} catch {
+		// absent or malformed: the patch still writes a valid file
+	}
+	const next = { ...raw, ...patch };
+	mkdirSync(dirname(path), { recursive: true });
+	const temporary = `${path}.${process.pid}.tmp`;
+	writeFileSync(temporary, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+	renameSync(temporary, path);
+	cached = undefined;
+	return parsePrefs(next);
 }
 
 /** Env override, then the file, then the default. Cached for `PREFS_CACHE_MS`. */
