@@ -103,18 +103,28 @@ pub fn snapshot(spinner: bool, colors: bool) -> Snapshot {
 
     // Per-model panel. The Account API carries no per-model dimension, so this is
     // the local stores' view — the same rows `cmduse model` prints — and it is
-    // therefore a subset of the account totals above. `ocuse` shows one from its
-    // own store; parity is a standing rule, and the header says where it comes from.
+    // therefore a subset of the account totals above. Scoped to the same billing
+    // period as the rest of the frame: an all-time table under a period header
+    // reads as a bug (it showed a previous month's GLM spend beside this month's
+    // totals).
     if s.err.is_none() {
-        let local = crate::reports::load_local(0);
+        let since_ms = s
+            .sub
+            .current_period_start
+            .as_deref()
+            .and_then(cmduse_core::dates::parse_iso_utc);
+        let local = crate::reports::load_local_since(0, since_ms);
         if !local.by_model.is_empty() {
-            s.models = Some(crate::report_render::model_table(
+            // Say where it comes from: the account API has no per-model dimension, so
+            // this table is this machine's sessions and can be smaller than the totals.
+            let block = crate::report_render::model_table(
                 &local.by_model,
                 crate::report_render::Fmt::Table,
                 colors,
-                None,
+                s.sub.current_period_start.as_deref(),
                 MODEL_ROWS,
-            ));
+            );
+            s.models = Some(block.replacen("By model", "By model (local sessions)", 1));
         }
     }
 
