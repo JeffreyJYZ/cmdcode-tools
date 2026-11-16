@@ -49,28 +49,31 @@ Run `/connect`, choose **Command Code** and paste an API key (create one at comm
 
 One caveat on the v1 half: its `/connect` entry is bound to the Anthropic lane (opencode's plugin API allows one auth hook per provider id), so the OpenAI lane shares the key through the resolved `options.apiKey` — a `/connect`-only v1 setup needs `cmd login` or `CMD_API_KEY` for that lane.
 
-While a session uses a Command Code, OpenCode Go/Zen or Volcengine ARK model, the sidebar grows one section for that family — plain text unless you ask for colour. Write `~/.config/opencode/command-code.json`:
+While a session uses a Command Code, OpenCode Go/Zen, Volcengine ARK or OpenDesign model, the sidebar grows one section for that family — plain text unless you ask for colour. Write `~/.config/opencode/command-code.json`:
 
 ```json
-{ "colors": true, "ocPlan": "go-plus" }
+{ "colors": true, "ocPlan": "go-plus", "odPlan": "pro" }
 ```
 
-`CMD_COLORS=1` (or `0`) and `CMD_OC_PLAN=go|go-plus` override it for a single run. `ocPlan` only matters on the Go side: the two Go plans share token prices but grant different per-model limits and nothing local records which one you have. The file is re-read every few seconds, so a flip lands on the next poll.
+`CMD_COLORS=1` (or `0`), `CMD_OC_PLAN=go|go-plus`, `CMD_OD=1|0` and `CMD_OD_PLAN=go|plus|pro|max` override it for a single run. `ocPlan` only matters on the Go side and `odPlan` only on the OpenDesign side: both plans grant different limits at the same token prices, and nothing local records which one you have. The file is re-read every few seconds, so a flip lands on the next poll.
 
 What the section shows:
 
 - plan, price, monthly credits used, and the 5-hour / weekly windows with used / cap, percent used, elapsed share, reset countdown and a `cap in …` pace estimate; an over-cap window is flagged `LIMIT EXCEEDED`
 - this period's requests and spend, the active model's tier, allowance and $/M rates, its `Usage (this model)` share, any running `Deal`, and this session's own totals
 - on OpenCode Go/Zen and ARK sessions, the same shape from `ocuse` and `arkuse` instead — account meters where the provider publishes them, per-model spend from opencode's own store
+- on OpenDesign sessions, a section from `oduse`: the plan's published caps per window, this machine's credits against each, per-model credits for the period, and the desktop app's wallet balance. Those figures come from the Open Design app's own store, so they are account-wide rather than this conversation's, and they are labelled as estimates — the store records no cache tokens, the 5-hour and 7-day cuts are local, and the wallet line is a balance, not a meter.
 
-Usage comes from `cmduse` polled every 5 seconds, read from opencode's message store for the per-model and per-session rows, and cached from `mpc` for the catalog. Every block remembers its last reading, so a remount, a session switch or a network outage repaints instead of blanking; the model figure is keyed by model and session, so switching models never shows the previous model's numbers.
+Usage comes from `cmduse` polled every 5 seconds, read from opencode's message store for the per-model and per-session rows, and cached from `mpc` for the catalog. Every block remembers its last reading, so a remount, a session switch or a network outage repaints instead of blanking; the model figure is keyed by model and session, so switching models never shows the previous model's numbers. The OpenDesign section is polled on the same tick from `oduse`, spawns nothing on the other three families, and keeps its last snapshot when the binary or the app's store is missing.
 
 ## Settings
 
-`/cmd-settings` is a dialog over that same file, so a view option is changed without hand-editing JSON. Five settings, written as you pick them:
+`/cmd-settings` is a dialog over that same file, so a view option is changed without hand-editing JSON. Seven settings, written as you pick them:
 
 - **Colours** — `off` (default) or `on`: tint status rows green/amber/red; `off` keeps bold and dim only.
 - **OpenCode plan** — `go` (default) or `go-plus`: which per-model monthly limits the Go section renders.
+- **OpenDesign panel** — `on` (default) or `off`: whether an OpenDesign session grows its `oduse` section. Credits there are an estimate — the app's store records no cache tokens — the 5-hour and 7-day cuts are local, and the wallet line is a balance rather than a meter.
+- **OpenDesign plan** — `go` (default), `plus`, `pro` or `max`: which published caps that section measures against; hidden while the panel is `off`.
 - **Refresh** — `2s`, `5s` (default), `10s`, `30s` or `1m`: account poll cadence, one CLI spawn per tick.
 - **Local cost rows** — `off` (default), `session` or `window`: where the per-model `$` figure comes from.
 - **Cost refresh** — `30s`, `1m` (default) or `5m`: how often that figure is re-scanned; hidden while cost rows are `off`.

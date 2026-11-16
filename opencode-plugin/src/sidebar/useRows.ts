@@ -8,13 +8,16 @@ import { liveMinPlan } from "../catalogLive";
 import {
 	ARK_PROVIDER_ID,
 	GO_PROVIDER_ID,
+	OPEN_DESIGN_PROVIDER_ID,
 	PROVIDER_ID_PREFIX,
 	ZEN_PROVIDER_ID,
 	ZEN_PROVIDER_PREFIX,
 } from "../constants/providers";
 import { type ArkUsage, arkRows } from "./ark";
-import { loadArk, loadMeta, loadUsage, loadZen } from "./data";
+import { loadArk, loadMeta, loadOd, loadUsage, loadZen } from "./data";
 import { modelCost, modelWindows as readModelWindows, sessionCost } from "./local-cost";
+import type { OdUsage } from "./od";
+import { odRows } from "./od-rows";
 import { loadPrefs } from "./prefs";
 import {
 	actionableAccountError,
@@ -36,7 +39,7 @@ import { type ZenUsage, type ZenWindowStarts, zenRows } from "./zen";
  * resolved the new session's model; it must not be read as someone else's, or
  * the panel blanks and refetches on every tab change.
  */
-export type SessionKind = "ours" | "go" | "zen" | "ark" | "other" | "unknown";
+export type SessionKind = "ours" | "go" | "zen" | "ark" | "od" | "other" | "unknown";
 
 export function sessionKind(providerID: string | undefined): SessionKind {
 	if (!providerID) return "unknown";
@@ -44,12 +47,13 @@ export function sessionKind(providerID: string | undefined): SessionKind {
 	if (providerID.startsWith(GO_PROVIDER_ID)) return "go";
 	if (providerID === ZEN_PROVIDER_ID || providerID.startsWith(ZEN_PROVIDER_PREFIX)) return "zen";
 	if (providerID.startsWith(ARK_PROVIDER_ID)) return "ark";
+	if (providerID.startsWith(OPEN_DESIGN_PROVIDER_ID)) return "od";
 	return "other";
 }
 
 /** Whether the panel has anything to say about this session at all. */
 function shows(kind: SessionKind): boolean {
-	return kind === "ours" || kind === "go" || kind === "zen" || kind === "ark";
+	return kind === "ours" || kind === "go" || kind === "zen" || kind === "ark" || kind === "od";
 }
 
 /** The section's title, per family. */
@@ -57,6 +61,7 @@ export function panelTitle(kind: SessionKind): string {
 	if (kind === "ours") return "Command Code";
 	if (kind === "zen") return "OpenCode Zen";
 	if (kind === "ark") return "Volcengine ARK";
+	if (kind === "od") return "OpenDesign";
 	return "OpenCode Go";
 }
 
@@ -175,6 +180,22 @@ export function seededArk(): ArkUsage | undefined {
 	return lastArk;
 }
 
+/** The last OpenDesign snapshot this process loaded. Same rule again: the figures
+ *  are account-wide, one copy serves every session, and only a successful load
+ *  overwrites it — `oduse` exits non-zero rather than painting errored defaults,
+ *  so a missing store keeps the last block up instead of blanking it. */
+let lastOd: OdUsage | undefined;
+
+/** Keep an OpenDesign snapshot for the next panel that needs it. */
+export function rememberOd(usage: OdUsage): void {
+	lastOd = usage;
+}
+
+/** The remembered OpenDesign snapshot, or undefined on the first panel. */
+export function seededOd(): OdUsage | undefined {
+	return lastOd;
+}
+
 /** The account half both panels share. */
 export type Accounted = { account?: unknown; accountError?: string };
 
@@ -201,6 +222,7 @@ export function useRows(
 	const [usage, setUsage] = createSignal<SidebarRow[]>(seededRows());
 	const [zen, setZen] = createSignal<ZenUsage | undefined>(seededZen());
 	const [ark, setArk] = createSignal<ArkUsage | undefined>(seededArk());
+	const [od, setOd] = createSignal<OdUsage | undefined>(seededOd());
 	const [meta, setMeta] = createSignal<Map<string, ModelMeta>>(seededMeta());
 	const [modelUsage, setModelUsage] = createSignal<
 		{ key: string; session?: string; usage: ModelUsage } | undefined
@@ -232,6 +254,23 @@ export function useRows(
 			.catch(() => {});
 	};
 	refreshMeta();
+	/**
+	 * Re-read the OpenDesign snapshot, independently of the family poll: it is a
+	 * separate local store, so its failure (no `oduse`, no store yet) must not
+	 * cost the session's own section its tick. Only an OpenDesign session spawns
+	 * it, and only while the pref is on, so the other three families pay nothing.
+	 */
+	const refreshOd = (kind: SessionKind): void => {
+		if (kind !== "od") return;
+		const prefs = loadPrefs();
+		if (!prefs.od) return;
+		void loadOd(prefs.odPlan)
+			.then((next) => {
+				rememberOd(next);
+				setOd(next);
+			})
+			.catch(() => {});
+	};
 	/**
 	 * Publish this conversation's totals and the active model's spend in it.
 	 * Both go through `local-cost`, which memoises per `prefs.costMs` and opens
@@ -265,6 +304,9 @@ export function useRows(
 			const kind = sessionKind(providerID());
 			const session = sessionID();
 			refreshMeta();
+			// The OpenDesign block is its own family (its provider, not this store),
+			// so it rides the same tick only for that session kind.
+			refreshOd(kind);
 			if (kind === "ours") {
 				const snapshot = await loadUsage();
 				rememberSnapshot(snapshot);
@@ -357,30 +399,45 @@ export function useRows(
 		// The session id is the only name available when the catalog is missing;
 		// its vendor prefix is noise, so keep the tail.
 		const fallbackName = id ? (id.split("/").pop() ?? id) : undefined;
-		if (kind === "go" || kind === "zen") {
-			return zenRows(
-				zen(),
-				found,
-				usageFor(id),
-				session,
-				fallbackName,
-				local ? modelWindows() : undefined,
-			);
-		}
-		if (kind === "ark") {
-			return arkRows(ark(), fallbackName);
-		}
-		// gating keys are model ids, not display names, so tier comes from the
-		// session's id rather than the catalog row.
-		const model = found
-			? {
-					...found,
-					tier: found.tier ?? (id ? tierFor(id) : undefined),
-					minPlan: id ? liveMinPlan(id) : undefined,
-				}
-			: undefined;
-		// Account block, a rule, then the model block: two different subjects, and
-		// without the divider the rows read as one long list.
-		return [...usage(), separator(), ...modelRows(model, usageFor(id), session, fallbackName)];
+		const rows = ((): SidebarRow[] => {
+			if (kind === "go" || kind === "zen") {
+				return zenRows(
+					zen(),
+					found,
+					usageFor(id),
+					session,
+					fallbackName,
+					local ? modelWindows() : undefined,
+				);
+			}
+			if (kind === "ark") {
+				return arkRows(ark(), fallbackName);
+			}
+			if (kind === "od") {
+				// OpenDesign's block is its whole section: oduse measures the desktop
+				// app's store, so there is no account API row to put above it and no
+				// mpc side to describe its models with. The pref gates it the way the
+				// other sections are gated by their provider — off means no spawn and
+				// no block, and the panel then stays empty for this family.
+				return loadPrefs().od ? odRows(od()) : [];
+			}
+			// gating keys are model ids, not display names, so tier comes from the
+			// session's id rather than the catalog row.
+			const model = found
+				? {
+						...found,
+						tier: found.tier ?? (id ? tierFor(id) : undefined),
+						minPlan: id ? liveMinPlan(id) : undefined,
+					}
+				: undefined;
+			// Account block, a rule, then the model block: two different subjects,
+			// and without the divider the rows read as one long list.
+			return [
+				...usage(),
+				separator(),
+				...modelRows(model, usageFor(id), session, fallbackName),
+			];
+		})();
+		return rows;
 	});
 }

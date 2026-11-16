@@ -37,9 +37,9 @@ describe("tui plugin definition", () => {
 	});
 
 	test("calling setup twice does not double-register slots", () => {
-		const claims: any[] = [];
+		const claims: Claim[] = [];
 		const ctx = {
-			ui: { slot: (claim: any) => void claims.push(claim) },
+			ui: { slot: (claim: Claim) => void claims.push(claim) },
 			keymap: { layer: () => {} },
 		};
 		tuiPlugin.setup?.(ctx as never);

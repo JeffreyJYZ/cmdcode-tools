@@ -71,6 +71,7 @@ function Row(props: {
 	onClick: () => void;
 }) {
 	return (
+		// biome-ignore lint/a11y/noStaticElementInteractions: opentui lacks role; keymap keys
 		<box
 			flexDirection="row"
 			gap={1}
@@ -164,6 +165,7 @@ export function SettingsDialog(props: { ctx: TuiPluginNs.Context }) {
 				<text fg={colors.base}>
 					<b>Command Code settings</b>
 				</text>
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: no role; esc in keymap */}
 				<text fg={colors.muted} onMouseUp={() => ctx.ui.dialog.clear()}>
 					esc
 				</text>

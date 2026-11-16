@@ -2,38 +2,49 @@
 // without it, and a coloured sidebar is a taste call, not a sensible default.
 // The OpenCode Go plan defaults to `go`; `go-plus` grants different per-model
 // limits, and nothing local records which one the user has, so it is a setting.
+// The OpenDesign section is ON, like the other three; only an OpenDesign session
+// ever spawns `oduse`, so leaving it on costs nothing elsewhere.
 //
-//   ~/.config/opencode/command-code.json   { "colors": true, "ocPlan": "go-plus" }
+//   ~/.config/opencode/command-code.json   { "colors": true, "ocPlan": "go-plus",
+//                                            "od": false, "odPlan": "pro" }
 //   CMD_COLORS=1 | 0                       one-off override, wins over the file
 //   CMD_OC_PLAN=go | go-plus               one-off override, wins over the file
+//   CMD_OD=1 | 0                           one-off override, wins over the file
+//   CMD_OD_PLAN=go | plus | pro | max      one-off override, wins over the file
 //
 // Re-read at most once every few seconds (a streaming session must not hit the
 // disk per render), so flipping the file lands on the next poll without a
 // restart. Nothing here throws: a missing, unreadable or malformed file leaves
-// the defaults standing, and an unknown plan falls back to `go` with a warning.
+// the defaults standing, and an unknown value falls back to its default with a
+// warning. The per-key coercion rules live in ./prefs-values, so "what does the
+// file accept" is answered in one place.
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { OPENCODE_DIR, PREFS_FILE } from "../constants/paths";
 import {
-	COST_MODE_DEFAULT,
-	COST_MODES,
 	COST_REFRESH_CHOICES,
 	COST_REFRESH_DEFAULT_MS,
 	type CostMode,
 	OC_PLAN_DEFAULT,
-	OC_PLANS,
 	type OcPlan,
+	OD_PLAN_DEFAULT,
+	type OdPlan,
 	POLL_CHOICES,
 	POLL_DEFAULT_MS,
 	PREF_DEFAULTS,
 } from "../constants/sidebar";
 import { PREFS_CACHE_MS } from "../constants/timing";
+import { boolFrom, costFrom, numberFrom, odPlanFrom, planFrom } from "./prefs-values";
 
 export interface Prefs {
 	colors: boolean;
 	/** OpenCode Go plan the sidebar renders per-model limits for. */
 	ocPlan: OcPlan;
+	/** Whether the OpenDesign section is rendered at all (and `oduse` spawned). */
+	od: boolean;
+	/** OpenDesign plan its caps are read from (nothing local records it). */
+	odPlan: OdPlan;
 	/** Sidebar poll cadence in ms; one of `POLL_CHOICES`. */
 	pollMs: number;
 	/**
@@ -53,60 +64,29 @@ export function prefsPath(env: NodeJS.ProcessEnv = process.env): string {
 	return join(base, OPENCODE_DIR, PREFS_FILE);
 }
 
-/** A plan id is only accepted verbatim; anything else asks for the default. */
-function planFrom(value: unknown, source: string): OcPlan | undefined {
-	if (value === undefined) return undefined;
-	if (typeof value === "string" && (OC_PLANS as readonly string[]).includes(value)) {
-		return value as OcPlan;
-	}
-	// Never crash or blank the panel over a typo: warn and use the default.
-	console.warn(
-		`[command-code] ignoring unknown OpenCode plan ${JSON.stringify(value)} (${source}); using "${OC_PLAN_DEFAULT}"`,
-	);
-	return undefined;
-}
-
-/** Only a literal `true` enables colour; an unknown plan falls back to `go`. */
+/** One key per setting: colour needs a literal `true`, `od` is on unless a real
+ * `false` says otherwise, and the rest fall back to their default. */
 export function parsePrefs(raw: unknown): Prefs {
 	const obj = raw as
-		| { colors?: unknown; ocPlan?: unknown; pollMs?: unknown; cost?: unknown; costMs?: unknown }
+		| {
+				colors?: unknown;
+				ocPlan?: unknown;
+				od?: unknown;
+				odPlan?: unknown;
+				pollMs?: unknown;
+				cost?: unknown;
+				costMs?: unknown;
+		  }
 		| undefined;
 	return {
 		colors: obj?.colors === true,
 		ocPlan: planFrom(obj?.ocPlan, "file") ?? OC_PLAN_DEFAULT,
+		od: boolFrom(obj?.od, PREF_DEFAULTS.od, "od"),
+		odPlan: odPlanFrom(obj?.odPlan, "file") ?? OD_PLAN_DEFAULT,
 		pollMs: numberFrom(obj?.pollMs, POLL_CHOICES, POLL_DEFAULT_MS, "pollMs"),
 		cost: costFrom(obj?.cost),
 		costMs: numberFrom(obj?.costMs, COST_REFRESH_CHOICES, COST_REFRESH_DEFAULT_MS, "costMs"),
 	};
-}
-
-/**
- * A numeric setting only ever takes a value the settings dialog can produce,
- * so a hand-edited file cannot pick a 1ms poll or a 0ms re-scan.
- */
-function numberFrom(
-	value: unknown,
-	choices: readonly number[],
-	fallback: number,
-	name: string,
-): number {
-	if (value === undefined) return fallback;
-	if (typeof value === "number" && choices.includes(value)) return value;
-	console.warn(
-		`[command-code] ignoring unknown ${name} ${JSON.stringify(value)}; using ${fallback}`,
-	);
-	return fallback;
-}
-
-function costFrom(value: unknown): CostMode {
-	if (value === undefined) return COST_MODE_DEFAULT;
-	if (typeof value === "string" && (COST_MODES as readonly string[]).includes(value)) {
-		return value as CostMode;
-	}
-	console.warn(
-		`[command-code] ignoring unknown cost mode ${JSON.stringify(value)}; using "${COST_MODE_DEFAULT}"`,
-	);
-	return COST_MODE_DEFAULT;
 }
 
 /**
@@ -151,6 +131,11 @@ export function loadPrefs(env: NodeJS.ProcessEnv = process.env, now = Date.now()
 	else if (flag === "0" || flag === "false") prefs = { ...prefs, colors: false };
 	const envPlan = planFrom(env.CMD_OC_PLAN, "CMD_OC_PLAN");
 	if (envPlan !== undefined) prefs = { ...prefs, ocPlan: envPlan };
+	const odFlag = env.CMD_OD;
+	if (odFlag === "1" || odFlag === "true") prefs = { ...prefs, od: true };
+	else if (odFlag === "0" || odFlag === "false") prefs = { ...prefs, od: false };
+	const envOdPlan = odPlanFrom(env.CMD_OD_PLAN, "CMD_OD_PLAN");
+	if (envOdPlan !== undefined) prefs = { ...prefs, odPlan: envOdPlan };
 	cached = { at: now, prefs };
 	return prefs;
 }
