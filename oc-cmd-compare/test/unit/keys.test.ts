@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { BOUNDARY } from "#~/constants/data.ts";
-import { displayName, normalizeKey } from "#~/keys.ts";
+import { aaKeyVariants, displayName, normalizeKey } from "#~/keys.ts";
 
 describe("normalizeKey", () => {
 	test("strips vendor prefix and punctuation", () => {
@@ -58,5 +58,20 @@ describe("displayName", () => {
 	test("drops parentheticals and boundaries", () => {
 		expect(displayName("DeepSeek V4.1 Flash (Off-Peak)")).toBe("DeepSeek V4.1 Flash");
 		expect(displayName(`Kimi K3${BOUNDARY}`)).toBe("Kimi K3");
+	});
+});
+
+describe("aaKeyVariants", () => {
+	test("strips AA bake dates and effort suffixes", () => {
+		expect(aaKeyVariants("deepseek-v4-1-flash-1017-high")).toContain("deepseekv41flash");
+		expect(aaKeyVariants("deepseek-v4-1-flash-1017-high")).toContain("deepseekv41flashhigh");
+		expect(aaKeyVariants("deepseek-v4-pro-0813")).toContain("deepseekv4pro");
+		// The exact key stays first, so a variant row still answers to its own slug.
+		expect(aaKeyVariants("deepseek-v4-1-flash-1017")[0]).toBe("deepseekv41flash1017");
+	});
+	test("leaves undated slugs untouched", () => {
+		// No bake date: stripping "max" here would map Qwen 3.8 Max onto Qwen 3.8.
+		expect(aaKeyVariants("qwen3-8-max")).toEqual(["qwen38max"]);
+		expect(aaKeyVariants("claude-sonnet-5-5-medium")).toEqual(["claudesonnet55medium"]);
 	});
 });

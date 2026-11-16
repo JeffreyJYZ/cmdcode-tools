@@ -1,5 +1,6 @@
 import { API_URL } from "#~/constants/sources.ts";
 import { parseAaApi } from "./parse.ts";
+import { writeLastGood } from "./lastGood.ts";
 
 /** Full catalog via the Artificial Analysis API. Needs a key. Paginated. */
 export async function loadAaApi(
@@ -21,7 +22,11 @@ export async function loadAaApi(
 		if (!pagination?.has_more) break;
 	}
 
-	return indexVersion ? { intelligence, tps, indexVersion } : { intelligence, tps };
+	const result = indexVersion ? { intelligence, tps, indexVersion } : { intelligence, tps };
+	// Keep the last complete answer: the free tier runs out mid-day and the
+	// fallback scrape covers far fewer models.
+	await writeLastGood(result);
+	return result;
 }
 
 async function fetchTextWithKey(url: string, key: string): Promise<string> {
