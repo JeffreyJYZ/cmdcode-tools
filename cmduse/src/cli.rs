@@ -8,6 +8,7 @@ pub enum Binary {
     Cmduse,
     Ocuse,
     Arkuse,
+    Oduse,
 }
 
 impl Binary {
@@ -17,6 +18,7 @@ impl Binary {
             Binary::Cmduse => "cmduse",
             Binary::Ocuse => "ocuse",
             Binary::Arkuse => "arkuse",
+            Binary::Oduse => "oduse",
         }
     }
 }
@@ -66,6 +68,9 @@ pub struct Args {
     pub model_id: Option<String>,
     /// Skip OpenCode Go's usage endpoint (`--no-api`): stay local-only.
     pub no_api: bool,
+    /// Skip the Open Design daemon's wallet (`--no-wallet`): stay local-only,
+    /// for the one binary whose meter is a local listener rather than a key.
+    pub no_wallet: bool,
 }
 
 impl Args {
@@ -151,7 +156,15 @@ pub(crate) fn parse_args_from(
             Long("csv") => a.csv = true,
             // Shared: `--gated` filters `models`, and both binaries have a model
             // catalogue (cmduse's live API list, ocuse's Go/plan allowance table).
-            Long("gated") => a.gated = true,
+            Long("gated") => {
+                // OpenDesign prices models differently per plan and never
+                // restricts which ones a plan may call, so a filter flag there
+                // would invent a restriction the source does not have.
+                if binary == Binary::Oduse {
+                    return Err(unknown_long("gated"));
+                }
+                a.gated = true;
+            }
             Long("dismiss-update") => a.dismiss_update = true,
             Long("tz") => {
                 let v = need_value(&mut parser, "--tz needs an offset like +05:30 or -08:00")?;
@@ -225,13 +238,13 @@ pub(crate) fn parse_args_from(
             }
             // --- ocuse/arkuse-only flags ---
             Long("db") => {
-                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse | Binary::Oduse) {
                     return Err(unknown_long("db"));
                 }
                 a.db = Some(need_value(&mut parser, "--db needs a path")?);
             }
             Long("plan") => {
-                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse | Binary::Oduse) {
                     return Err(unknown_long("plan"));
                 }
                 a.plan = Some(need_value(&mut parser, "--plan needs an id")?);
@@ -248,8 +261,16 @@ pub(crate) fn parse_args_from(
                 }
                 a.no_api = true;
             }
+            Long("no-wallet") => {
+                // The wallet is the Open Design daemon's; no other binary has a
+                // local meter to skip.
+                if binary != Binary::Oduse {
+                    return Err(unknown_long("no-wallet"));
+                }
+                a.no_wallet = true;
+            }
             Long("window") => {
-                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse | Binary::Oduse) {
                     return Err(unknown_long("window"));
                 }
                 a.window = Some(need_value(
@@ -258,13 +279,13 @@ pub(crate) fn parse_args_from(
                 )?);
             }
             Long("period-start") => {
-                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse | Binary::Oduse) {
                     return Err(unknown_long("period-start"));
                 }
                 a.period_start = Some(need_value(&mut parser, "--period-start needs YYYY-MM-DD")?);
             }
             Long("infer-anniversary") => {
-                if !matches!(binary, Binary::Ocuse | Binary::Arkuse) {
+                if !matches!(binary, Binary::Ocuse | Binary::Arkuse | Binary::Oduse) {
                     return Err(unknown_long("infer-anniversary"));
                 }
                 a.infer_anniversary = true;
@@ -608,5 +629,6 @@ pub fn usage_text(binary: Binary) -> &'static str {
         Binary::Cmduse => CMDUSE_HELP,
         Binary::Ocuse => OCUSE_HELP,
         Binary::Arkuse => ARKUSE_HELP,
+        Binary::Oduse => crate::oduse::help::ODUSE_HELP,
     }
 }

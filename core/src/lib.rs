@@ -50,6 +50,12 @@ pub const ZEN_JSON: &str = include_str!("../zen.json");
 /// published crate.
 pub const ARK_JSON: &str = include_str!("../ark.json");
 
+/// The OpenDesign plan catalogue, hand-maintained in `core/od.json` from the
+/// plan page (caps, credit multipliers, concurrency) plus the token rates this
+/// repo already carries. Exposed here for the same reason as `ZEN_JSON`: the
+/// `oduse` bin includes it from the published crate.
+pub const OD_JSON: &str = include_str!("../od.json");
+
 pub fn money(v: f64) -> String {
     // Round to cents half-away-from-zero before formatting: `{:.2}` alone is
     // round-half-to-even, JS `toFixed` is half-away, so a .x5 tie (0.125)
@@ -340,6 +346,29 @@ mod tests {
         assert!(
             ZEN_JSON.contains("\"allowanceByModel\""),
             "zen.json is missing per-plan allowances"
+        );
+    }
+
+    #[test]
+    fn od_catalogue_is_embedded() {
+        // Same guard as zen.json/ark.json: the published crate must carry it, and
+        // the four plans plus the two figures the docs define (Go's 5-hour cap,
+        // Plus's plan-model credits) are the invariants a stale snapshot loses.
+        assert!(OD_JSON.contains("\"go\""), "od.json looks wrong");
+        for plan in ["\"plus\"", "\"pro\"", "\"max\""] {
+            assert!(OD_JSON.contains(plan), "od.json is missing plan {plan}");
+        }
+        assert!(
+            OD_JSON.contains("\"fiveHourUsd\": 18"),
+            "od.json is missing Go's published 5-hour cap"
+        );
+        assert!(
+            OD_JSON.contains("\"creditUnit\""),
+            "od.json does not state what a credit is"
+        );
+        assert!(
+            OD_JSON.contains("\"rateSource\""),
+            "od.json does not mark which rates are estimates"
         );
     }
 

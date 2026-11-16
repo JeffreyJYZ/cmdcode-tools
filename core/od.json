@@ -1,0 +1,69 @@
+{
+	"extractedAt": "2026-11-16",
+	"source": "https://open-design.ai/pricing — plan caps, credit multipliers and concurrency; token rates from core/zen.json where the model is shared, otherwise estimated",
+	"creditUnit": "1 credit = $1 of the plan's allowance; a model spends list-price dollars x its multiplier",
+	"notes": [
+		"Only the Go plan publishes a 5-hour cap; every plan publishes a monthly one.",
+		"The 7-day window resets from the subscription start, not Monday — the store records no subscription, so oduse cuts it as a rolling 7 days and says so.",
+		"plan-model credits are a second, published allowance with no local meter: the store names models, not which of them are plan models.",
+		"Every rate marked estimate is not published by Open Design; it is seeded from the closest published figure so a priced turn never reads as zero."
+	],
+	"plans": [
+		{
+			"id": "go",
+			"label": "Go",
+			"priceUsd": 10,
+			"monthlyUsd": 220,
+			"weeklyUsd": 55,
+			"fiveHourUsd": 18,
+			"planModelCreditsUsd": 0,
+			"concurrency": 10
+		},
+		{
+			"id": "plus",
+			"label": "Plus",
+			"priceUsd": 20,
+			"monthlyUsd": 310,
+			"weeklyUsd": 74,
+			"fiveHourUsd": null,
+			"planModelCreditsUsd": 20,
+			"concurrency": 20
+		},
+		{
+			"id": "pro",
+			"label": "Pro",
+			"priceUsd": 100,
+			"monthlyUsd": 480,
+			"weeklyUsd": 90,
+			"fiveHourUsd": null,
+			"planModelCreditsUsd": 120,
+			"concurrency": 30
+		},
+		{
+			"id": "max",
+			"label": "Max",
+			"priceUsd": 200,
+			"monthlyUsd": 900,
+			"weeklyUsd": 150,
+			"fiveHourUsd": null,
+			"planModelCreditsUsd": 300,
+			"concurrency": 50
+		}
+	],
+	"models": [
+		{ "id": "deepseek-v4.1-flash", "label": "DeepSeek V4.1 Flash", "multiplier": 0.5, "input": 0.15, "output": 0.6, "rateSource": "repo" },
+		{ "id": "deepseek-v4.1-flash-eco", "label": "DeepSeek V4.1 Flash Eco", "multiplier": 0.27, "input": 0.05, "output": 0.2, "rateSource": "estimate" },
+		{ "id": "minimax-m3.1-flash", "label": "MiniMax M3.1 Flash", "multiplier": 1, "input": 0.3, "output": 1.2, "rateSource": "repo" },
+		{ "id": "mimo-v2.6-flash", "label": "MiMo V2.6 Flash", "multiplier": 1, "input": 0.14, "output": 0.28, "rateSource": "repo" },
+		{ "id": "mimo-v2.6-pro", "label": "MiMo V2.6 Pro", "multiplier": 1, "input": 0.435, "output": 0.87, "rateSource": "repo" },
+		{ "id": "hy4-preview", "label": "Hy4 Preview", "multiplier": 1, "input": 0.834, "output": 2.501, "rateSource": "repo" },
+		{ "id": "deepseek-v4-flash", "label": "DeepSeek V4 Flash", "multiplier": 1, "input": 0.15, "output": 0.6, "rateSource": "repo" },
+		{ "id": "deepseek-v4-flash-vision-exp", "label": "DeepSeek V4 Flash Vision Exp", "multiplier": 1, "input": 0.15, "output": 0.6, "rateSource": "repo" },
+		{ "id": "deepseek-v4-pro", "label": "DeepSeek V4 Pro", "multiplier": 1, "input": 0.66, "output": 1.98, "rateSource": "repo" },
+		{ "id": "glm-5.3-flash", "label": "GLM-5.3 Flash", "multiplier": 1, "input": 0.15, "output": 0.5, "rateSource": "repo" },
+		{ "id": "kimi-k2.7-code", "label": "Kimi K2.7 Code", "multiplier": 1, "input": 0.95, "output": 4, "rateSource": "repo" },
+		{ "id": "glm-5.3-flash-x", "label": "GLM-5.3 Flash-X", "multiplier": 2, "input": 0.3, "output": 1, "rateSource": "estimate" },
+		{ "id": "claude-haiku-5-5", "label": "Claude Haiku 5.5", "multiplier": 2, "input": 0.1, "output": 0.5, "rateSource": "repo" },
+		{ "id": "gpt-6-luna", "label": "GPT-6 Luna", "multiplier": 4, "input": 0.1, "output": 0.5, "rateSource": "repo" }
+	]
+}

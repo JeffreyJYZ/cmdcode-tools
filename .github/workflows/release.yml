@@ -60,13 +60,15 @@ jobs:
                       target/${{ matrix.target }}/release/cmdusedev
                       target/${{ matrix.target }}/release/ocusedev
                       target/${{ matrix.target }}/release/arkusedev
+                      target/${{ matrix.target }}/release/oduse
+                      target/${{ matrix.target }}/release/odusedev
 
     release:
         needs: build
         if: startsWith(github.ref, 'refs/tags/cmduse-v')
         runs-on: ubuntu-24.04
         env:
-            BINS: "cmduse ocuse arkuse cmdusedev ocusedev arkusedev"
+            BINS: "cmduse ocuse arkuse oduse cmdusedev ocusedev arkusedev odusedev"
         steps:
             - uses: actions/checkout@v7
             - uses: actions/download-artifact@v8

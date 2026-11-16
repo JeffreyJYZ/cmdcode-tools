@@ -11,6 +11,9 @@ pub mod ocuse;
 // Volcengine ARK Agent Plan half (the `arkuse` bin): the control plane's AFP
 // meters through arkcli, plus opencode's `agent-plan` rows and core/ark.json.
 pub mod arkuse;
+// OpenDesign half (the `oduse` bin): the desktop app's own store plus its local
+// wallet daemon, against the plan table in core/od.json.
+pub mod oduse;
 mod paths;
 mod render;
 mod report_render;
