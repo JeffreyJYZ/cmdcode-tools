@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-16T02:56:51.348Z",
+	"generatedAt": "2026-11-16T10:56:51.781Z",
 	"plans": [
 		{
 			"key": "go",
@@ -269,7 +269,7 @@
 					},
 					{
 						"key": "qwen4max",
-						"name": "Qwen4 Max",
+						"name": "Qwen 4 Max",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go",
@@ -292,7 +292,28 @@
 							"valueIndex": 59,
 							"free": false
 						},
-						"cc": null
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": 1.875
+							},
+							"allowance": 10,
+							"requestsPerMonth": 1709.4017094017092,
+							"requestsPerFiveHour": 512.8205128205127,
+							"requestsPerWeek": 1025.6410256410254,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.000585,
+							"multiplier": 10,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 24,
+							"valueIndex": 54,
+							"free": false
+						}
 					},
 					{
 						"key": "beam10",
@@ -897,6 +918,33 @@
 					{
 						"key": "longcat25",
 						"name": "LongCat 2.5 Free",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": 0
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "hy4flash",
+						"name": "Hy4 flash Free",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go",
@@ -1628,6 +1676,33 @@
 							"free": false
 						},
 						"cc": null
+					},
+					{
+						"key": "tencenthy4flash",
+						"name": "Tencent Hy4 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.07,
+								"output": 0.281,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 10,
+							"requestsPerMonth": 38138.82532418002,
+							"requestsPerFiveHour": 11441.647597254005,
+							"requestsPerWeek": 22883.29519450801,
+							"costPerRequest": 0.0002622,
+							"payPerRequest": 0.000026219999999999996,
+							"multiplier": 10,
+							"ability": null,
+							"tps": null,
+							"index": 71,
+							"valueIndex": null,
+							"free": false
+						}
 					},
 					{
 						"key": "ornith15122b",
@@ -2390,12 +2465,12 @@
 					}
 				],
 				"tally": {
-					"headToHead": 23,
+					"headToHead": 24,
 					"ocWins": 1,
-					"ccWins": 21,
+					"ccWins": 22,
 					"ties": 1,
 					"ocOnly": 10,
-					"ccOnly": 35
+					"ccOnly": 36
 				}
 			},
 			"go-plus": {
@@ -2609,7 +2684,7 @@
 					},
 					{
 						"key": "qwen4max",
-						"name": "Qwen4 Max",
+						"name": "Qwen 4 Max",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
@@ -2632,7 +2707,28 @@
 							"valueIndex": 69,
 							"free": false
 						},
-						"cc": null
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": 1.875
+							},
+							"allowance": 10,
+							"requestsPerMonth": 1709.4017094017092,
+							"requestsPerFiveHour": 512.8205128205127,
+							"requestsPerWeek": 1025.6410256410254,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.000585,
+							"multiplier": 10,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 22,
+							"valueIndex": 52,
+							"free": false
+						}
 					},
 					{
 						"key": "kimik31pro",
@@ -3237,6 +3333,33 @@
 					{
 						"key": "longcat25",
 						"name": "LongCat 2.5 Free",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": 0
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "hy4flash",
+						"name": "Hy4 flash Free",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
@@ -3968,6 +4091,33 @@
 							"free": false
 						},
 						"cc": null
+					},
+					{
+						"key": "tencenthy4flash",
+						"name": "Tencent Hy4 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 0.07,
+								"output": 0.281,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 10,
+							"requestsPerMonth": 38138.82532418002,
+							"requestsPerFiveHour": 11441.647597254005,
+							"requestsPerWeek": 22883.29519450801,
+							"costPerRequest": 0.0002622,
+							"payPerRequest": 0.000026219999999999996,
+							"multiplier": 10,
+							"ability": null,
+							"tps": null,
+							"index": 64,
+							"valueIndex": null,
+							"free": false
+						}
 					},
 					{
 						"key": "ornith15122b",
@@ -4730,12 +4880,12 @@
 					}
 				],
 				"tally": {
-					"headToHead": 23,
+					"headToHead": 24,
 					"ocWins": 0,
-					"ccWins": 23,
+					"ccWins": 24,
 					"ties": 0,
 					"ocOnly": 10,
-					"ccOnly": 35
+					"ccOnly": 36
 				}
 			}
 		},
@@ -5026,7 +5176,7 @@
 					},
 					{
 						"key": "qwen4max",
-						"name": "Qwen4 Max",
+						"name": "Qwen 4 Max",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go",
@@ -5049,7 +5199,28 @@
 							"valueIndex": 46,
 							"free": false
 						},
-						"cc": null
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": 1.875
+							},
+							"allowance": 15,
+							"requestsPerMonth": 2564.102564102564,
+							"requestsPerFiveHour": 512.8205128205128,
+							"requestsPerWeek": 1282.051282051282,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039000000000000003,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 22,
+							"valueIndex": 46,
+							"free": false
+						}
 					},
 					{
 						"key": "ling31flash",
@@ -5675,6 +5846,33 @@
 					{
 						"key": "longcat25",
 						"name": "LongCat 2.5 Free",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": 0
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "hy4flash",
+						"name": "Hy4 flash Free",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go",
@@ -6570,6 +6768,33 @@
 						}
 					},
 					{
+						"key": "tencenthy4flash",
+						"name": "Tencent Hy4 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 0.07,
+								"output": 0.281,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 57208.237986270025,
+							"requestsPerFiveHour": 11441.647597254007,
+							"requestsPerWeek": 28604.118993135013,
+							"costPerRequest": 0.0002622,
+							"payPerRequest": 0.0001748,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 67,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen38omniflash",
 						"name": "Qwen 3.8 Omni Flash",
 						"oc": null,
@@ -7411,12 +7636,12 @@
 					}
 				],
 				"tally": {
-					"headToHead": 25,
+					"headToHead": 26,
 					"ocWins": 8,
 					"ccWins": 14,
-					"ties": 3,
+					"ties": 4,
 					"ocOnly": 8,
-					"ccOnly": 46
+					"ccOnly": 47
 				}
 			},
 			"go-plus": {
@@ -7657,7 +7882,7 @@
 					},
 					{
 						"key": "qwen4max",
-						"name": "Qwen4 Max",
+						"name": "Qwen 4 Max",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
@@ -7680,7 +7905,28 @@
 							"valueIndex": 59,
 							"free": false
 						},
-						"cc": null
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": 1.875
+							},
+							"allowance": 15,
+							"requestsPerMonth": 2564.102564102564,
+							"requestsPerFiveHour": 512.8205128205128,
+							"requestsPerWeek": 1282.051282051282,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039000000000000003,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 22,
+							"valueIndex": 45,
+							"free": false
+						}
 					},
 					{
 						"key": "gpt6luna",
@@ -8354,6 +8600,33 @@
 					{
 						"key": "longcat25",
 						"name": "LongCat 2.5 Free",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": 0
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "hy4flash",
+						"name": "Hy4 flash Free",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
@@ -9249,6 +9522,33 @@
 						}
 					},
 					{
+						"key": "tencenthy4flash",
+						"name": "Tencent Hy4 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 0.07,
+								"output": 0.281,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 57208.237986270025,
+							"requestsPerFiveHour": 11441.647597254007,
+							"requestsPerWeek": 28604.118993135013,
+							"costPerRequest": 0.0002622,
+							"payPerRequest": 0.0001748,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 66,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen38omniflash",
 						"name": "Qwen 3.8 Omni Flash",
 						"oc": null,
@@ -10090,12 +10390,12 @@
 					}
 				],
 				"tally": {
-					"headToHead": 25,
+					"headToHead": 26,
 					"ocWins": 7,
 					"ccWins": 17,
-					"ties": 1,
+					"ties": 2,
 					"ocOnly": 8,
-					"ccOnly": 46
+					"ccOnly": 47
 				}
 			}
 		},
@@ -10412,6 +10712,54 @@
 						}
 					},
 					{
+						"key": "qwen4max",
+						"name": "Qwen 4 Max",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 2564.102564102564,
+							"requestsPerFiveHour": 512.8205128205128,
+							"requestsPerWeek": 1282.051282051282,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039000000000000003,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 21,
+							"valueIndex": 37,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": 1.875
+							},
+							"allowance": 25,
+							"requestsPerMonth": 4273.504273504273,
+							"requestsPerFiveHour": 854.7008547008547,
+							"requestsPerWeek": 2136.7521367521367,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.00468,
+							"multiplier": 1.25,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 28,
+							"valueIndex": 43,
+							"free": false
+						}
+					},
+					{
 						"key": "hy4",
 						"name": "Hy4",
 						"oc": {
@@ -10539,33 +10887,6 @@
 							"valueIndex": 39,
 							"free": false
 						}
-					},
-					{
-						"key": "qwen4max",
-						"name": "Qwen4 Max",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1.5,
-								"output": 4.5,
-								"cacheRead": 0.075,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 2564.102564102564,
-							"requestsPerFiveHour": 512.8205128205128,
-							"requestsPerWeek": 1282.051282051282,
-							"costPerRequest": 0.00585,
-							"payPerRequest": 0.0039000000000000003,
-							"multiplier": 1.5,
-							"ability": 42.8914543287565,
-							"tps": null,
-							"index": 21,
-							"valueIndex": 37,
-							"free": false
-						},
-						"cc": null
 					},
 					{
 						"key": "glm53",
@@ -11089,6 +11410,33 @@
 					{
 						"key": "longcat25",
 						"name": "LongCat 2.5 Free",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": 0
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "hy4flash",
+						"name": "Hy4 flash Free",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go",
@@ -12383,6 +12731,33 @@
 						}
 					},
 					{
+						"key": "tencenthy4flash",
+						"name": "Tencent Hy4 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 0.07,
+								"output": 0.281,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 25,
+							"requestsPerMonth": 95347.06331045004,
+							"requestsPerFiveHour": 19069.41266209001,
+							"requestsPerWeek": 47673.53165522502,
+							"costPerRequest": 0.0002622,
+							"payPerRequest": 0.00020975999999999997,
+							"multiplier": 1.25,
+							"ability": null,
+							"tps": null,
+							"index": 70,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen38omniflash",
 						"name": "Qwen 3.8 Omni Flash",
 						"oc": null,
@@ -13224,12 +13599,12 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
-					"ocWins": 15,
+					"headToHead": 27,
+					"ocWins": 16,
 					"ccWins": 3,
 					"ties": 8,
 					"ocOnly": 7,
-					"ccOnly": 62
+					"ccOnly": 63
 				}
 			},
 			"go-plus": {
@@ -13572,7 +13947,7 @@
 					},
 					{
 						"key": "qwen4max",
-						"name": "Qwen4 Max",
+						"name": "Qwen 4 Max",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
@@ -13595,7 +13970,28 @@
 							"valueIndex": 51,
 							"free": false
 						},
-						"cc": null
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": 1.875
+							},
+							"allowance": 25,
+							"requestsPerMonth": 4273.504273504273,
+							"requestsPerFiveHour": 854.7008547008547,
+							"requestsPerWeek": 2136.7521367521367,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.00468,
+							"multiplier": 1.25,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 27,
+							"valueIndex": 42,
+							"free": false
+						}
 					},
 					{
 						"key": "kimik31pro",
@@ -14221,6 +14617,33 @@
 					{
 						"key": "longcat25",
 						"name": "LongCat 2.5 Free",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": 0
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "hy4flash",
+						"name": "Hy4 flash Free",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
@@ -15515,6 +15938,33 @@
 						}
 					},
 					{
+						"key": "tencenthy4flash",
+						"name": "Tencent Hy4 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 0.07,
+								"output": 0.281,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 25,
+							"requestsPerMonth": 95347.06331045004,
+							"requestsPerFiveHour": 19069.41266209001,
+							"requestsPerWeek": 47673.53165522502,
+							"costPerRequest": 0.0002622,
+							"payPerRequest": 0.00020975999999999997,
+							"multiplier": 1.25,
+							"ability": null,
+							"tps": null,
+							"index": 70,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "qwen38omniflash",
 						"name": "Qwen 3.8 Omni Flash",
 						"oc": null,
@@ -16356,12 +16806,12 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
-					"ocWins": 13,
+					"headToHead": 27,
+					"ocWins": 14,
 					"ccWins": 5,
 					"ties": 8,
 					"ocOnly": 7,
-					"ccOnly": 62
+					"ccOnly": 63
 				}
 			}
 		},
@@ -16708,6 +17158,54 @@
 						}
 					},
 					{
+						"key": "qwen4max",
+						"name": "Qwen 4 Max",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 2564.102564102564,
+							"requestsPerFiveHour": 512.8205128205128,
+							"requestsPerWeek": 1282.051282051282,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039000000000000003,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 17,
+							"valueIndex": 34,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": 1.875
+							},
+							"allowance": 150,
+							"requestsPerMonth": 25641.02564102564,
+							"requestsPerFiveHour": 7692.3076923076915,
+							"requestsPerWeek": 15384.615384615383,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 43,
+							"valueIndex": 53,
+							"free": false
+						}
+					},
+					{
 						"key": "gpt6luna",
 						"name": "GPT-6 Luna",
 						"oc": {
@@ -16937,33 +17435,6 @@
 							"valueIndex": 36,
 							"free": false
 						}
-					},
-					{
-						"key": "qwen4max",
-						"name": "Qwen4 Max",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1.5,
-								"output": 4.5,
-								"cacheRead": 0.075,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 2564.102564102564,
-							"requestsPerFiveHour": 512.8205128205128,
-							"requestsPerWeek": 1282.051282051282,
-							"costPerRequest": 0.00585,
-							"payPerRequest": 0.0039000000000000003,
-							"multiplier": 1.5,
-							"ability": 42.8914543287565,
-							"tps": null,
-							"index": 17,
-							"valueIndex": 34,
-							"free": false
-						},
-						"cc": null
 					},
 					{
 						"key": "mimov26proultraspeed",
@@ -17487,6 +17958,33 @@
 					{
 						"key": "longcat25",
 						"name": "LongCat 2.5 Free",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": 0
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "hy4flash",
+						"name": "Hy4 flash Free",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go",
@@ -18262,6 +18760,33 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						}
+					},
+					{
+						"key": "tencenthy4flash",
+						"name": "Tencent Hy4 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 0.07,
+								"output": 0.281,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 572082.3798627002,
+							"requestsPerFiveHour": 171624.71395881005,
+							"requestsPerWeek": 343249.4279176201,
+							"costPerRequest": 0.0002622,
+							"payPerRequest": 0.00017479999999999997,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 77,
+							"valueIndex": null,
+							"free": false
 						}
 					},
 					{
@@ -19778,12 +20303,12 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
+					"headToHead": 27,
 					"ocWins": 16,
-					"ccWins": 3,
+					"ccWins": 4,
 					"ties": 7,
 					"ocOnly": 7,
-					"ccOnly": 73
+					"ccOnly": 74
 				}
 			},
 			"go-plus": {
@@ -20176,6 +20701,54 @@
 						}
 					},
 					{
+						"key": "qwen4max",
+						"name": "Qwen 4 Max",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 10256.410256410256,
+							"requestsPerFiveHour": 2051.2820512820513,
+							"requestsPerWeek": 5128.205128205128,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039000000000000003,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 24,
+							"valueIndex": 37,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": 1.875
+							},
+							"allowance": 150,
+							"requestsPerMonth": 25641.02564102564,
+							"requestsPerFiveHour": 7692.3076923076915,
+							"requestsPerWeek": 15384.615384615383,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 36,
+							"valueIndex": 46,
+							"free": false
+						}
+					},
+					{
 						"key": "hy4",
 						"name": "Hy4",
 						"oc": {
@@ -20249,33 +20822,6 @@
 							"valueIndex": 40,
 							"free": false
 						}
-					},
-					{
-						"key": "qwen4max",
-						"name": "Qwen4 Max",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 1.5,
-								"output": 4.5,
-								"cacheRead": 0.075,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 10256.410256410256,
-							"requestsPerFiveHour": 2051.2820512820513,
-							"requestsPerWeek": 5128.205128205128,
-							"costPerRequest": 0.00585,
-							"payPerRequest": 0.0039000000000000003,
-							"multiplier": 1.5,
-							"ability": 42.8914543287565,
-							"tps": null,
-							"index": 24,
-							"valueIndex": 37,
-							"free": false
-						},
-						"cc": null
 					},
 					{
 						"key": "gpt6astra",
@@ -20907,6 +21453,33 @@
 					{
 						"key": "longcat25",
 						"name": "LongCat 2.5 Free",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": 0
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "hy4flash",
+						"name": "Hy4 flash Free",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
@@ -21682,6 +22255,33 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						}
+					},
+					{
+						"key": "tencenthy4flash",
+						"name": "Tencent Hy4 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 0.07,
+								"output": 0.281,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 572082.3798627002,
+							"requestsPerFiveHour": 171624.71395881005,
+							"requestsPerWeek": 343249.4279176201,
+							"costPerRequest": 0.0002622,
+							"payPerRequest": 0.00017479999999999997,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 74,
+							"valueIndex": null,
+							"free": false
 						}
 					},
 					{
@@ -23198,12 +23798,12 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
+					"headToHead": 27,
 					"ocWins": 17,
-					"ccWins": 3,
+					"ccWins": 4,
 					"ties": 6,
 					"ocOnly": 7,
-					"ccOnly": 73
+					"ccOnly": 74
 				}
 			}
 		},
@@ -23550,6 +24150,54 @@
 						}
 					},
 					{
+						"key": "qwen4max",
+						"name": "Qwen 4 Max",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": null
+							},
+							"allowance": 15,
+							"requestsPerMonth": 2564.102564102564,
+							"requestsPerFiveHour": 512.8205128205128,
+							"requestsPerWeek": 1282.051282051282,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039000000000000003,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 16,
+							"valueIndex": 33,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": 1.875
+							},
+							"allowance": 300,
+							"requestsPerMonth": 51282.05128205128,
+							"requestsPerFiveHour": 15384.615384615383,
+							"requestsPerWeek": 30769.230769230766,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 47,
+							"valueIndex": 56,
+							"free": false
+						}
+					},
+					{
 						"key": "gpt6luna",
 						"name": "GPT-6 Luna",
 						"oc": {
@@ -23776,33 +24424,6 @@
 							"tps": null,
 							"index": 36,
 							"valueIndex": 35,
-							"free": false
-						},
-						"cc": null
-					},
-					{
-						"key": "qwen4max",
-						"name": "Qwen4 Max",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go",
-							"pricing": {
-								"input": 1.5,
-								"output": 4.5,
-								"cacheRead": 0.075,
-								"cacheWrite": null
-							},
-							"allowance": 15,
-							"requestsPerMonth": 2564.102564102564,
-							"requestsPerFiveHour": 512.8205128205128,
-							"requestsPerWeek": 1282.051282051282,
-							"costPerRequest": 0.00585,
-							"payPerRequest": 0.0039000000000000003,
-							"multiplier": 1.5,
-							"ability": 42.8914543287565,
-							"tps": null,
-							"index": 16,
-							"valueIndex": 33,
 							"free": false
 						},
 						"cc": null
@@ -24329,6 +24950,33 @@
 					{
 						"key": "longcat25",
 						"name": "LongCat 2.5 Free",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": 0
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "hy4flash",
+						"name": "Hy4 flash Free",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go",
@@ -25104,6 +25752,33 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						}
+					},
+					{
+						"key": "tencenthy4flash",
+						"name": "Tencent Hy4 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 0.07,
+								"output": 0.281,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 1144164.7597254005,
+							"requestsPerFiveHour": 343249.4279176201,
+							"requestsPerWeek": 686498.8558352402,
+							"costPerRequest": 0.0002622,
+							"payPerRequest": 0.00017479999999999997,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 79,
+							"valueIndex": null,
+							"free": false
 						}
 					},
 					{
@@ -26620,12 +27295,12 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
+					"headToHead": 27,
 					"ocWins": 16,
-					"ccWins": 3,
+					"ccWins": 4,
 					"ties": 7,
 					"ocOnly": 7,
-					"ccOnly": 73
+					"ccOnly": 74
 				}
 			},
 			"go-plus": {
@@ -27018,6 +27693,54 @@
 						}
 					},
 					{
+						"key": "qwen4max",
+						"name": "Qwen 4 Max",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": null
+							},
+							"allowance": 60,
+							"requestsPerMonth": 10256.410256410256,
+							"requestsPerFiveHour": 2051.2820512820513,
+							"requestsPerWeek": 5128.205128205128,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039000000000000003,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 19,
+							"valueIndex": 35,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 1.5,
+								"output": 4.5,
+								"cacheRead": 0.075,
+								"cacheWrite": 1.875
+							},
+							"allowance": 300,
+							"requestsPerMonth": 51282.05128205128,
+							"requestsPerFiveHour": 15384.615384615383,
+							"requestsPerWeek": 30769.230769230766,
+							"costPerRequest": 0.00585,
+							"payPerRequest": 0.0039,
+							"multiplier": 1.5,
+							"ability": 42.8914543287565,
+							"tps": null,
+							"index": 38,
+							"valueIndex": 50,
+							"free": false
+						}
+					},
+					{
 						"key": "kimik31pro",
 						"name": "Kimi K3.1 Pro",
 						"oc": {
@@ -27118,33 +27841,6 @@
 							"valueIndex": 38,
 							"free": false
 						}
-					},
-					{
-						"key": "qwen4max",
-						"name": "Qwen4 Max",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 1.5,
-								"output": 4.5,
-								"cacheRead": 0.075,
-								"cacheWrite": null
-							},
-							"allowance": 60,
-							"requestsPerMonth": 10256.410256410256,
-							"requestsPerFiveHour": 2051.2820512820513,
-							"requestsPerWeek": 5128.205128205128,
-							"costPerRequest": 0.00585,
-							"payPerRequest": 0.0039000000000000003,
-							"multiplier": 1.5,
-							"ability": 42.8914543287565,
-							"tps": null,
-							"index": 19,
-							"valueIndex": 35,
-							"free": false
-						},
-						"cc": null
 					},
 					{
 						"key": "ling31flash1019",
@@ -27749,6 +28445,33 @@
 					{
 						"key": "longcat25",
 						"name": "LongCat 2.5 Free",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": 0
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						},
+						"cc": null
+					},
+					{
+						"key": "hy4flash",
+						"name": "Hy4 flash Free",
 						"oc": {
 							"provider": "oc-go",
 							"plan": "Go Plus",
@@ -28524,6 +29247,33 @@
 							"index": 100,
 							"valueIndex": null,
 							"free": true
+						}
+					},
+					{
+						"key": "tencenthy4flash",
+						"name": "Tencent Hy4 Flash",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 0.07,
+								"output": 0.281,
+								"cacheRead": 0.003,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 1144164.7597254005,
+							"requestsPerFiveHour": 343249.4279176201,
+							"requestsPerWeek": 686498.8558352402,
+							"costPerRequest": 0.0002622,
+							"payPerRequest": 0.00017479999999999997,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 75,
+							"valueIndex": null,
+							"free": false
 						}
 					},
 					{
@@ -30040,12 +30790,12 @@
 					}
 				],
 				"tally": {
-					"headToHead": 26,
+					"headToHead": 27,
 					"ocWins": 17,
-					"ccWins": 3,
+					"ccWins": 4,
 					"ties": 6,
 					"ocOnly": 7,
-					"ccOnly": 73
+					"ccOnly": 74
 				}
 			}
 		}
