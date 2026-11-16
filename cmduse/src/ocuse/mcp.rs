@@ -143,6 +143,16 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
             .unwrap_or_else(|| crate::ocuse::window::now_ms() - number("days", days) * 86_400_000);
         db::read_all(db_path, cutoff)
     };
+    // `model` takes its own `days`/`since` (its schema says "days back"), so an
+    // explicit `days` widens the period instead of only the read: the shared
+    // period start is the CLI's calendar month, and counting against it answered
+    // "no completed turns" for history the rows had just read.
+    let model_days = args.get("days").and_then(|v| v.as_i64());
+    let model_start = match (since_ms, model_days) {
+        (Some(ms), _) => Some(ms),
+        (None, Some(_)) => Some(crate::ocuse::window::now_ms() - number("days", days) * 86_400_000),
+        (None, None) => period_start,
+    };
     let text = match name {
         "usage" => rows().map(|rows| {
             let mut report = window::build(
@@ -204,14 +214,20 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
             )
         }),
         "model" => rows().map(|rows| {
-            let report = window::build(
+            let mut report = window::build(
                 &rows,
                 &zen::catalog(),
                 &plan_id,
                 window::now_ms(),
-                period_start,
+                model_start,
                 account,
             );
+            // The header names the span it actually counted, so a `days` call
+            // does not print the dashboard's month label over a wider window.
+            report.period_label = match model_days {
+                Some(_) => format!("last {}d", number("days", days)),
+                None => report.period_label,
+            };
             match args.get("id").and_then(|v| v.as_str()) {
                 Some(wanted) => render::model_text(&report, wanted, colour),
                 None => render::render_text(

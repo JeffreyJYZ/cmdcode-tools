@@ -81,6 +81,37 @@ pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String
         report.period_end_ms = period::end(report.since_ms, "month", report.month_inferred);
         report
     };
+    // `model` takes its own `days`/`since`, like the CLI's `--days N | --since
+    // ISO`: with neither pinned the period stays the CLI's (the calendar month),
+    // but an explicit `days` must widen it too — otherwise the tool read the rows
+    // and then counted only the month, answering "no completed turns in this
+    // period" for history the store holds. The build filters by the start it is
+    // given, so the widened start has to be passed in, not patched afterwards.
+    let model_days = args.get("days").and_then(|v| v.as_i64());
+    let (model_start, model_label, model_mode) = match (since_ms, model_days) {
+        (Some(ms), _) => (Some(ms), "since (pinned)".to_string(), "month".to_string()),
+        (None, Some(_)) => {
+            let d = number("days", days);
+            (
+                Some(window::now_ms() - d * 86_400_000),
+                format!("last {d}d"),
+                format!("{d}d"),
+            )
+        }
+        (None, None) => (
+            period_start,
+            "calendar month".to_string(),
+            "month".to_string(),
+        ),
+    };
+    let model_report = |rows: &[db::Row]| {
+        let mut built = window::build(rows, &catalog, &plan_id, window::now_ms(), model_start);
+        built.wallet = wallet.cloned();
+        built.wallet_error = wallet_error.map(str::to_string);
+        built.period_label = model_label.clone();
+        built.period_end_ms = period::end(built.since_ms, &model_mode, built.month_inferred);
+        built
+    };
 
     let text = match name {
         "usage" => rows().map(|rows| {
@@ -130,7 +161,7 @@ pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String
             )
         }),
         "model" => rows().map(|rows| {
-            let report = report(&rows);
+            let report = model_report(&rows);
             match args.get("id").and_then(|v| v.as_str()) {
                 Some(wanted) => render::model_text(&report, wanted, colour),
                 None => render::render_text(

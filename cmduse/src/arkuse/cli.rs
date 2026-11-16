@@ -249,10 +249,19 @@ pub fn run() {
         .and_then(cmduse_core::dates::parse_iso_utc)
         .map(|ms| ms as i64);
 
-    // The period: explicit start > window mode > calendar month. Inference from
-    // the first `agent-plan` request is opt-in because a sparse history guesses
-    // the wrong anniversary.
-    let window_mode = args.window.clone().unwrap_or_else(|| "month".into());
+    // The period: explicit start > window mode > calendar month. An explicit
+    // `--days` on `model` is a window of its own (that command's help documents
+    // `[--days N | --since ISO]`); everywhere else it stays a read cutoff.
+    // Inference from the first `agent-plan` request is opt-in because a sparse
+    // history guesses the wrong anniversary.
+    let model_days = args
+        .last
+        .filter(|_| matches!(args.subcmd, Some(SubCmd::Model)))
+        .filter(|_| args.window.is_none() && args.period_start.is_none());
+    let window_mode = args.window.clone().unwrap_or_else(|| match model_days {
+        Some(d) => format!("{d}d"),
+        None => "month".into(),
+    });
     let period_start = if let Some(ms) = since_override {
         Some(ms)
     } else if let Some(day) = args.period_start.as_deref().and_then(parse_day) {
@@ -584,15 +593,14 @@ pub fn run() {
         };
         prev_lines = crate::redraw_frame(&mut out, &frame, prev_lines, cols_opt);
         let _ = out.flush();
-        for remaining in (1..interval).rev() {
-            std::thread::sleep(std::time::Duration::from_secs(1));
+        crate::refresh_tick(interval, |remaining| {
             let msg = format!(
                 "\r\x1b[2K{}refreshing every {interval}s · next refresh in {remaining}s · ctrl-c to quit{}",
                 ink.dim, ink.reset
             );
             let _ = write!(out, "{}", crate::clip_to_width(&msg, cols_opt));
             let _ = out.flush();
-        }
+        });
     }
 }
 

@@ -23,6 +23,10 @@ mod snapshot;
 // counts the Go traffic they ran, not only opencode's own.
 mod stores;
 mod update_check;
+// The refresh cadence the four live frames share (one interval = one frame).
+mod watch_tick;
+
+pub use watch_tick::{refresh_tick, tick_schedule};
 
 #[cfg(test)]
 mod cli_tests;
@@ -321,8 +325,7 @@ pub fn run() {
         prev_lines = redraw_frame(&mut out, &frame, prev_lines, (cols > 0).then_some(cols));
         out.flush().ok();
         // countdown: rewrite just the status line each second (cursor already on it)
-        for remaining in (1..interval).rev() {
-            std::thread::sleep(std::time::Duration::from_secs(1));
+        refresh_tick(interval, |remaining| {
             let msg = if use_color && !args.plain {
                 format!(
                     "\r\x1b[2K{DIM}refreshing every {interval}s · next refresh in {remaining}s · ctrl-c to quit{RESET}"
@@ -332,7 +335,7 @@ pub fn run() {
             };
             write!(out, "{}", clip_to_width(&msg, (cols > 0).then_some(cols))).ok();
             out.flush().ok();
-        }
+        });
     }
 }
 

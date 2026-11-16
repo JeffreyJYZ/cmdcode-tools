@@ -145,14 +145,13 @@ pub fn run(mut config: Loop<'_>) {
         };
         prev_lines = crate::redraw_frame(&mut out, &frame, prev_lines, cols_opt);
         let _ = out.flush();
-        for remaining in (1..interval).rev() {
-            std::thread::sleep(std::time::Duration::from_secs(1));
+        crate::refresh_tick(interval, |remaining| {
             let msg = format!(
                 "\r\x1b[2K{}refreshing every {interval}s · next refresh in {remaining}s · ctrl-c to quit{}",
                 ink.dim, ink.reset
             );
             let _ = write!(out, "{}", crate::clip_to_width(&msg, cols_opt));
             let _ = out.flush();
-        }
+        });
     }
 }

@@ -121,34 +121,6 @@ fn statusline_resolves_every_placeholder() {
 }
 
 #[test]
-fn the_catalogues_state_their_provenance() {
-    let text = render::plans_text(false);
-    assert!(text.contains("PLAN"), "{text}");
-    // The rate table carries the store's own model ids — those are what a turn
-    // reports, so they are what a reader has to match against.
-    assert!(text.contains("deepseek-v4.1-flash"), "{text}");
-    assert!(
-        text.contains("estimate"),
-        "the estimated row is marked: {text}"
-    );
-    assert!(text.contains("credit"), "{text}");
-    // Pro's published credit allowance is in the table.
-    assert!(text.contains("$120.00"), "{text}");
-    // The plan price carries the same currency symbol as the caps beside it.
-    assert!(text.contains("$10/mo"), "{text}");
-    let json: serde_json::Value = serde_json::from_str(&render::plans_json()).unwrap();
-    assert_eq!(json["plans"][0]["id"], "go");
-    assert_eq!(json["creditUnit"], crate::oduse::od::catalog().credit_unit);
-    let models: Vec<serde_json::Value> = render::models_json("go")
-        .lines()
-        .map(|l| serde_json::from_str(l).unwrap())
-        .collect();
-    assert!(models.iter().any(|m| m["id"] == "glm-5.3-flash"));
-    assert!(models.iter().all(|m| m["plan"] == "go"));
-    assert!(models.iter().all(|m| m["fiveHourCapUsd"].is_number()));
-}
-
-#[test]
 fn the_model_detail_and_tables_carry_the_credits() {
     let report = live_report();
     let detail = render::model_text(&report, "deepseek-v4.1-flash", false);

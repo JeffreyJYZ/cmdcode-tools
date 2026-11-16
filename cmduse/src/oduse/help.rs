@@ -7,7 +7,7 @@ Usage: oduse [options]            Live plan dashboard (watch mode)
        oduse -1                   One-shot dashboard
        oduse daily [--days N] [--json]     Credits by day
        oduse hourly [--hours N] [--json]   Credits by hour
-       oduse model [<id>] [--since ISO] [--json]  Local credits by model
+       oduse model [<id>] [--days N | --since ISO] [--json]  Local credits by model
        oduse session [--json]              Local credits by session
        oduse models               Model multipliers and rates
        oduse plans                The plan catalogue: caps, credits, rates

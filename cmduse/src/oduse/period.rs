@@ -50,6 +50,26 @@ pub fn resolve(
             mode,
         });
     }
+    // `model [--days N | --since ISO]`: an explicit `--days` is a window of its
+    // own, not only a read cutoff. Without this branch the period stayed on the
+    // calendar month, so `--days 365` read a year of rows and then counted only
+    // the current month (`n:0` where `--since` gave `n:1`). `--window`,
+    // `--period-start` and `--infer-anniversary` still outrank it.
+    if matches!(args.subcmd, Some(crate::cli::SubCmd::Model))
+        && args.window.is_none()
+        && args.period_start.is_none()
+        && !args.infer_anniversary
+    {
+        if let Some(days) = args.last {
+            let d = days as i64;
+            return Ok(Period {
+                start: Some(now_ms - d * 86_400_000),
+                label: format!("last {d}d"),
+                inferred: false,
+                mode: format!("{d}d"),
+            });
+        }
+    }
     if let Some(day) = args.period_start.as_deref() {
         let Some(ms) = parse_day(day) else {
             return Err(format!("--period-start needs YYYY-MM-DD (got '{day}')"));

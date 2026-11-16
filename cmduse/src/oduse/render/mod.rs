@@ -2,6 +2,7 @@
 // status line, the report tables and the catalogues each own their file, so a
 // change to one cannot silently reformat another.
 pub mod catalog;
+pub mod catalog_json;
 pub mod dash;
 pub mod ink;
 pub mod json;
@@ -12,7 +13,8 @@ pub mod status;
 pub mod wallet;
 pub mod windows;
 
-pub use catalog::{models_json, models_text, plans_json, plans_text};
+pub use catalog::{models_text, plans_text};
+pub use catalog_json::{models_json, plans_json};
 pub use dash::render_text;
 pub use ink::Ink;
 pub use json::render_json;

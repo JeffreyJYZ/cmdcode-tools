@@ -203,7 +203,7 @@ ocuse -1                     # one-shot dashboard
 ocuse -1 --json              # one-shot, machine-readable
 ocuse daily [--days N] [--json|--csv] [--tz ±HH:MM]
 ocuse hourly [--hours N] [--json|--csv] [--tz ±HH:MM]
-ocuse model [id] [--since ISO] [--json|--csv]
+ocuse model [id] [--days N | --since ISO] [--json|--csv]
 ocuse session [--since ISO] [--json|--csv]
 ocuse models [--gated] [--json]   # the Go catalogue for the selected plan
 ocuse plans [--json]              # both plans' limits, rates and window shares
@@ -229,7 +229,7 @@ arkuse -1                    # one-shot dashboard
 arkuse -1 --json             # one-shot, machine-readable
 arkuse daily [--days N] [--json|--csv] [--tz ±HH:MM]
 arkuse hourly [--hours N] [--json|--csv] [--tz ±HH:MM]
-arkuse model [id] [--since ISO] [--json|--csv]
+arkuse model [id] [--days N | --since ISO] [--json|--csv]
 arkuse session [--since ISO] [--json|--csv]
 arkuse models [--gated] [--json]   # the ARK catalogue, coefficient in force today
 arkuse plans [--json]              # personal tiers, AFP quotas, window shares
@@ -255,7 +255,7 @@ oduse -1                     # one-shot dashboard
 oduse -1 --json              # one-shot, machine-readable
 oduse daily [--days N] [--json|--csv] [--tz ±HH:MM]
 oduse hourly [--hours N] [--json|--csv] [--tz ±HH:MM]
-oduse model [id] [--since ISO] [--json|--csv]
+oduse model [id] [--days N | --since ISO] [--json|--csv]
 oduse session [--since ISO] [--json|--csv]
 oduse models [--json]        # multipliers and $/1M rates for the selected plan
 oduse plans [--json]         # all four plans: prices, caps, concurrency, rates
@@ -265,7 +265,7 @@ oduse mcp                    # MCP stdio server (usage/plans/models/daily/hourly
 
 Two upstream facts shape it. OpenDesign **publishes its caps but exposes no per-window usage API**, so the 5-hour / 7-day / monthly windows are computed from the local store and labelled an estimate; and the app's **local daemon** serves the one server-side number that exists, a **wallet balance** (a balance, not a window meter, so it prints beside the windows rather than replacing them). The store's usage events carry **no cache tokens**, which understates a cache-heavy turn — that is the second reason the figure is an estimate. Rates live in `core/od.json`, seeded from the repo's own published catalogue where the id appears there — `core/zen.json`, else `opencode-plugin/src/catalog.ts` — and marked `estimate` otherwise; credits are `list-price $ × the model's multiplier`, the plan's own unit.
 
-Plans are `go` ($10/mo, $220 monthly, $55 weekly, $18 per 5 hours, 10 concurrent), `plus` ($20/mo, $310, $74, no 5-hour cap, $20 plan-model credits, 20 concurrent), `pro` ($100/mo, $480, $90, $120 credits, 30) and `max` ($200/mo, $900, $150, $300 credits, 50). A cap a plan does not publish prints as **absent**, never as zero — only Go has a 5-hour window. The plan-model credits are a published allowance with **no local meter**: the store names models, not which of them are the plan's own, so the frame states the allowance and invents no figure for it. The plan itself is told (`--plan go|plus|pro|max`, default `go`), because the store records no subscription and the wallet reports a balance rather than a tier.
+Plans are `go` ($10/mo, $220 monthly, $55 weekly, $18 per 5 hours, 10 concurrent), `plus` ($20/mo, $310, $74, no 5-hour cap, $20 plan-model credits, 20 concurrent), `pro` ($100/mo, $480, $90, $120 credits, 30) and `max` ($200/mo, $900, $150, $300 credits, 50). A cap a plan does not publish prints as **absent**, never as zero — only Go has a 5-hour window. The plan-model credits are a published allowance with **no local meter**: the store names models, not which of them are the plan's own, so the frame states the allowance and invents no figure for it. The plan itself is told (`--plan go|plus|pro|max`, default `go`), because the store records no subscription and the wallet reports a balance rather than a tier. `plans --json` carries the same `windows` divisor map the other binaries publish (`fiveHour`/`weekly`/`monthly` shares of the monthly allowance, taken from Go since only it has a 5-hour cap) beside oduse's absolute `monthlyUsd`/`weeklyUsd`/`fiveHourUsd`, and `models --json` spells a model's display name `name`, like the other three — `plans[]` keeps `label`, so each surface has one key per concept. `--days N` on `model` is a window of its own, not only a read cutoff.
 
 The store path defaults to `~/Library/Application Support/Open Design/namespaces/release-stable/data/app.sqlite` — the namespace directory is version-suffixed, so `oduse` falls back to the most recently written `namespaces/*/data/app.sqlite`, and `--db` / `$OD_DB` override it. The wallet comes from `GET http://127.0.0.1:7456/api/integrations/vela/wallet` (`$OD_BIND_HOST` / `$OD_PORT`, or a whole `$OD_DAEMON_URL`), with no credential of its own — the daemon owns the control key, and `oduse` only ever talks to localhost. That route is strictly optional: the app is usually closed, so a closed daemon is one line (`wallet: daemon not running at …`), never an error and never a hang (300 ms connect timeout), and `--no-wallet` skips it entirely. A refusal the daemon reports itself (`unauthorized`, an expired control key) keeps its own words on the same line.
 
