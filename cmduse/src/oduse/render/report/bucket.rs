@@ -79,7 +79,7 @@ pub fn bucket_text(
             let mut total = Bucket::default();
             for (bucket, b) in &window {
                 out.push_str(&format!(
-                    "{},{},{},{},{:.2},{:.2}\n",
+                    "{},{},{},{},{:.6},{:.2}\n",
                     crate::report_render::csv_field(&stamp(*bucket)),
                     b.requests,
                     b.input,
@@ -90,7 +90,7 @@ pub fn bucket_text(
                 total.merge(b);
             }
             out.push_str(&format!(
-                "total,{},{},{},{:.2},{:.2}\n",
+                "total,{},{},{},{:.6},{:.2}\n",
                 total.requests, total.input, total.output, total.credits, total.cost,
             ));
             out

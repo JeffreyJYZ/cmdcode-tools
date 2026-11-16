@@ -38,6 +38,41 @@ fn a_cap_the_plan_does_not_publish_is_absent() {
     assert!(pro.contains("plan-model credits $120.00"), "{pro}");
 }
 
+/// The two short windows are this machine's own cuts, so each row says what it
+/// actually measured — the product anchors them somewhere it cannot know.
+#[test]
+fn the_rolling_windows_say_they_are_rolling() {
+    let go = render::render_text(&live_report(), &plan("go"), "/tmp/a.db", 10, false, 20);
+    assert!(go.contains("rolling 5h"), "{go}");
+    assert!(go.contains("rolling 7d"), "{go}");
+    let pro = render::render_text(&live_report(), &plan("pro"), "/tmp/a.db", 10, false, 20);
+    assert!(!pro.contains("rolling 5h"), "{pro}");
+    assert!(pro.contains("rolling 7d"), "{pro}");
+}
+
+/// A turn the catalogue cannot price counts as a request and no credits, so the
+/// frame says how many such turns it summed rather than letting $0.00 read as
+/// "this model spent nothing".
+#[test]
+fn an_unpriced_turn_is_named_not_rounded_to_zero() {
+    let rows = vec![row(NOW_MS - 60_000, "some-new-model", 5_000, 100)];
+    let report = super::fixture::report(&rows);
+    let text = render::render_text(&report, &plan("go"), "/tmp/a.db", 10, false, 20);
+    let line = text
+        .lines()
+        .find(|l| l.contains("some-new-model"))
+        .expect("the model has a row");
+    assert!(
+        !line.contains("$0.00"),
+        "no figure where the rate is unknown: {line}"
+    );
+    assert!(line.contains('—'), "every money column is absent: {line}");
+    assert!(
+        text.contains("1 of 1 turns have no catalogue rate"),
+        "{text}"
+    );
+}
+
 #[test]
 fn the_wallet_prints_when_it_answered_and_explains_itself_when_it_did_not() {
     let mut answered = live_report();
@@ -58,6 +93,19 @@ fn the_wallet_prints_when_it_answered_and_explains_itself_when_it_did_not() {
     silent.wallet_error = Some("daemon not running at http://127.0.0.1:7456".into());
     let text = render::render_text(&silent, &plan("go"), "/tmp/a.db", 10, false, 20);
     assert!(text.contains("wallet: daemon not running"), "{text}");
+    // A refusal the daemon reported itself: the renderer owns the `wallet: `
+    // label, so the composed line must carry it exactly once.
+    let mut refused = live_report();
+    refused.wallet_error = Some("unauthorized (control key expired)".into());
+    let text = render::render_text(&refused, &plan("go"), "/tmp/a.db", 10, false, 20);
+    assert!(
+        text.contains("wallet: unauthorized (control key expired)"),
+        "{text}"
+    );
+    assert!(
+        !text.contains("wallet: wallet:"),
+        "one label, not two: {text}"
+    );
     // A named reason is not a failure: the dashboard still rendered.
     assert!(text.contains("period:"), "{text}");
 }

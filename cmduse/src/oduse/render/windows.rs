@@ -19,6 +19,11 @@ pub struct RowSpec<'a> {
     /// Whether the even-burn figure belongs here. Only the month is a budget, so
     /// only it gets "what even burn would have spent by now".
     pub pro_rata: bool,
+    /// Set on a cut this machine made rather than a window the product anchors
+    /// (Go's 5-hour block, the 7-day subscription cycle): the row carries the
+    /// span it really measured, so a percentage of a published cap cannot read
+    /// as the product's own window.
+    pub rolling: Option<&'a str>,
 }
 
 pub fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
@@ -70,7 +75,14 @@ pub fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
     } else {
         String::new()
     };
-    let body = format!("{spent}{paren}{ends}{flag}{elapsed}{by_now}");
+    // A local cut says which span it measured: the product's own window is
+    // anchored somewhere this machine cannot know, so the row never claims to be
+    // that window.
+    let rolling = match spec.rolling {
+        Some(span) => format!(" · {}rolling {span}{}", ink.dim, ink.reset),
+        None => String::new(),
+    };
+    let body = format!("{spent}{paren}{rolling}{ends}{flag}{elapsed}{by_now}");
     if ink.colour {
         let bar = match share {
             Some(p) => format!("{} ", ink.bar_label(p, &given_pct(p))),

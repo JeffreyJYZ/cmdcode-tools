@@ -5,6 +5,7 @@ mod db;
 mod fixture;
 mod mcp;
 mod od;
+mod od_wire;
 mod render;
 mod render_json;
 mod wallet;

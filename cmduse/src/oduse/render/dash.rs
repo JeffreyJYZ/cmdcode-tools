@@ -6,47 +6,14 @@
 // reports, and it is a balance rather than a window, so it prints beside the
 // windows instead of replacing them.
 use crate::oduse::od::Plan;
-use crate::oduse::window::{ModelUsage, Report};
-use cmduse_core::{compact, money, pct};
+use crate::oduse::window::Report;
+use cmduse_core::{compact, money};
 
 use super::ink::Ink;
+use super::model_table::model_table;
 use super::shorten;
 use super::wallet::wallet_line;
 use super::windows::{window_line, RowSpec};
-
-/// One model row: multiplier, month credits, share of period credits, the two
-/// rolling windows' credits, and requests.
-fn model_row(ink: &Ink, model: &ModelUsage, name_w: usize, total: f64) -> String {
-    let credits = if model.priced {
-        ink.cyan_on(format!("{:>10}", money(model.month.credits)))
-    } else {
-        ink.dim_on(format!("{:>10}", "—"))
-    };
-    let share = if model.priced && total > 0.0 {
-        format!("{:>7}", pct(model.month.credits, total))
-    } else {
-        ink.dim_on(format!("{:>7}", "—"))
-    };
-    format!(
-        "{:<name_w$} {:>4} {credits} {share} {} {} {:>7}\n",
-        model.id,
-        format!("x{}", trim_multiplier(model.multiplier)),
-        ink.dim_on(format!("{:>8}", money(model.five_hour.credits))),
-        ink.dim_on(format!("{:>8}", money(model.weekly.credits))),
-        compact(model.month.requests),
-        name_w = name_w,
-    )
-}
-
-/// `x0.5`, never `x0.50`; `x1`, never `x1.0`.
-fn trim_multiplier(value: f64) -> String {
-    let rounded = (value * 100.0).round() / 100.0;
-    if (rounded - rounded.round()).abs() < f64::EPSILON {
-        format!("{}", rounded.round() as i64)
-    } else {
-        format!("{rounded}")
-    }
-}
 
 /// `limit` rows to show; `usize::MAX` for all.
 pub fn render_text(
@@ -107,6 +74,7 @@ pub fn render_text(
                 cap: plan.five_hour_usd,
                 period: None,
                 pro_rata: false,
+                rolling: Some("5h"),
             },
             report.now_ms,
         ));
@@ -119,6 +87,7 @@ pub fn render_text(
             cap: plan.weekly_usd,
             period: None,
             pro_rata: false,
+            rolling: Some("7d"),
         },
         report.now_ms,
     ));
@@ -132,6 +101,7 @@ pub fn render_text(
                 .period_end_ms
                 .map(|end| (report.since_ms.max(0), end.max(report.since_ms))),
             pro_rata: true,
+            rolling: None,
         },
         report.now_ms,
     ));
@@ -146,40 +116,20 @@ pub fn render_text(
         ));
     }
 
-    let name_w = report
-        .models
-        .iter()
-        .take(rows)
-        .map(|model| model.id.chars().count())
-        .max()
-        .unwrap_or(0)
-        .max(28);
-    out.push_str(&format!(
-        "\n{}{:<name_w$} {:>4} {:>10} {:>7} {:>8} {:>8} {:>7}{}\n",
-        ink.bold,
-        "MODEL",
-        "MULT",
-        "CREDITS",
-        "SHARE",
-        "5H",
-        "WK",
-        "REQ",
-        ink.reset,
-        name_w = name_w
-    ));
-    for model in report.models.iter().take(rows) {
-        out.push_str(&model_row(&ink, model, name_w, report.month.credits));
-    }
-    if report.models.len() > rows {
-        out.push_str(&format!(
-            "{}\n",
-            ink.dim_on(format!("… {} more", report.models.len() - rows))
-        ));
-    }
+    out.push_str(&model_table(&ink, report, rows));
     out.push_str(&format!(
         "\n{}credits = list-price $ x the model's multiplier; the store records no cache tokens, so these are estimates.{}",
         ink.dim, ink.reset
     ));
+    // An unpriced turn is counted as a request and contributes no credits, so
+    // the period total is short by its spend — say so rather than let a small
+    // figure read as the whole truth.
+    if report.month.unpriced > 0 {
+        out.push_str(&format!(
+            "\n{}{} of {} turns have no catalogue rate, so the period total is short by their spend.{}",
+            ink.dim, report.month.unpriced, report.month.requests, ink.reset
+        ));
+    }
     let nothing = report.month.requests == 0;
     if nothing {
         out.push_str(&format!(

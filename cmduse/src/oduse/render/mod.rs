@@ -6,6 +6,7 @@ pub mod dash;
 pub mod ink;
 pub mod json;
 pub mod live;
+pub mod model_table;
 pub mod report;
 pub mod status;
 pub mod wallet;

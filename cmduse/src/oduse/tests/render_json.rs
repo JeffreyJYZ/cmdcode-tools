@@ -134,6 +134,8 @@ fn the_catalogues_state_their_provenance() {
     assert!(text.contains("credit"), "{text}");
     // Pro's published credit allowance is in the table.
     assert!(text.contains("$120.00"), "{text}");
+    // The plan price carries the same currency symbol as the caps beside it.
+    assert!(text.contains("$10/mo"), "{text}");
     let json: serde_json::Value = serde_json::from_str(&render::plans_json()).unwrap();
     assert_eq!(json["plans"][0]["id"], "go");
     assert_eq!(json["creditUnit"], crate::oduse::od::catalog().credit_unit);

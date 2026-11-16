@@ -2,9 +2,16 @@
 //
 // Hand-maintained in `core/od.json` from the plan page, because Open Design
 // publishes its caps as prose — there is no machine-readable source to extract
-// from. Token rates are seeded from `core/zen.json` where the same model is sold
-// there too (`rateSource: "repo"`), and every figure the plan page does not
-// publish is marked `estimate` so `oduse models` can say which is which.
+// from. Token rates are taken from the repo's own model catalogue where the id
+// appears there (`rateSource: "repo"`): `core/zen.json` first, and for an id that
+// shop does not sell, `opencode-plugin/src/catalog.ts` (generated from the
+// published CLI bundle). Every figure the plan page does not publish is marked
+// `estimate` so `oduse models` can say which is which.
+//
+// The table is keyed by the gateway's **wire id**, because a turn records what
+// the gateway served — an id the rows do not carry is metered at zero. Where the
+// Go/Zen shelf spells the same model differently, `catalogId` names it there and
+// only the provenance lookup reads that.
 //
 // Which plan the account is on is not discoverable either: the store records no
 // subscription and the daemon's wallet reports a balance, not a tier, so `--plan`
@@ -42,17 +49,36 @@ pub struct Plan {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Model {
+    /// The gateway's wire id — what `GET /v1/models` returns and what the store
+    /// records on a turn. The catalogue is keyed by this, so a recorded turn
+    /// always finds its row.
     pub id: String,
     pub label: String,
+    /// The same model's id in the repo's token catalogue (`core/zen.json`) where
+    /// that table spells it differently — the shelf writes `claude-haiku-5-5`
+    /// where the gateway serves `claude-haiku-5.5`. Only the provenance lookup
+    /// uses it; pricing keys on [`Model::id`].
+    #[serde(default, rename = "catalogId")]
+    pub catalog_id: Option<String>,
     /// credits = list-price dollars x this multiplier.
     pub multiplier: f64,
     /// `$`/1M input tokens.
     pub input: f64,
     /// `$`/1M output tokens.
     pub output: f64,
-    /// `repo` when the rate comes from core/zen.json, `estimate` otherwise.
+    /// `repo` when the rate comes from the repo's own model catalogue
+    /// (`core/zen.json`, else `opencode-plugin/src/catalog.ts`), `estimate`
+    /// otherwise.
     #[serde(rename = "rateSource")]
     pub rate_source: String,
+}
+
+impl Model {
+    /// The id to look up in the repo's token catalogue: `catalogId` when the two
+    /// tables spell the model differently, else the wire id itself.
+    pub fn catalog_id(&self) -> &str {
+        self.catalog_id.as_deref().unwrap_or(&self.id)
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]

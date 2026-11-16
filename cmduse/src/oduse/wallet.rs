@@ -46,13 +46,15 @@ pub enum Unavailable {
 }
 
 impl Unavailable {
-    /// The one line to show, or `None` when the route was switched off on
-    /// purpose (a deliberate choice is not a fault to report).
+    /// The reason itself, or `None` when the route was switched off on purpose
+    /// (a deliberate choice is not a fault to report). The `wallet: ` label
+    /// belongs to the renderer, which owns the line — a reason carrying it would
+    /// print twice.
     pub fn reason(&self) -> Option<String> {
         match self {
             Unavailable::Disabled => None,
             Unavailable::NotRunning(base) => Some(format!("daemon not running at {base}")),
-            Unavailable::Refused(why) => Some(format!("wallet: {why}")),
+            Unavailable::Refused(why) => Some(why.clone()),
             Unavailable::Transport(why) => Some(why.clone()),
         }
     }
@@ -97,7 +99,7 @@ pub fn fetch_url(base: &str) -> Result<Wallet, Unavailable> {
     match response {
         Ok(response) => match response.into_string() {
             Ok(body) => parse(&body),
-            Err(e) => Err(Unavailable::Transport(format!("wallet: read: {e}"))),
+            Err(e) => Err(Unavailable::Transport(format!("read: {e}"))),
         },
         // The daemon answers its own error envelope with an HTTP status too, so
         // read the body before deciding: `unauthorized` is a status a person can
@@ -127,13 +129,13 @@ fn short_error(error: &ureq::Error) -> String {
 /// its own words.
 pub fn parse(body: &str) -> Result<Wallet, Unavailable> {
     let value: serde_json::Value =
-        serde_json::from_str(body).map_err(|e| Unavailable::Transport(format!("wallet: {e}")))?;
+        serde_json::from_str(body).map_err(|e| Unavailable::Transport(format!("{e}")))?;
     if let Some(error) = value.get("error").filter(|e| !e.is_null()) {
         return Err(Unavailable::Refused(refusal(error)));
     }
     let Some(balance_usd) = value.get("balanceUsd").and_then(|b| b.as_f64()) else {
         return Err(Unavailable::Transport(
-            "wallet: snapshot carries no balanceUsd".into(),
+            "snapshot carries no balanceUsd".into(),
         ));
     };
     Ok(Wallet {

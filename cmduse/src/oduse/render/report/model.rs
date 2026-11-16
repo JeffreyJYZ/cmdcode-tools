@@ -46,7 +46,7 @@ pub fn model_report(report: &Report, id: Option<&str>, fmt: Fmt) -> String {
             let mut out = String::from("model,requests,tokens_in,tokens_out,credits,cost_usd\n");
             for m in models {
                 out.push_str(&format!(
-                    "{},{},{},{},{:.2},{:.2}\n",
+                    "{},{},{},{},{:.6},{:.2}\n",
                     crate::report_render::csv_field(&m.id),
                     m.month.requests,
                     m.month.input,

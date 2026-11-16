@@ -43,7 +43,7 @@ pub fn plans_text(colour: bool) -> String {
         out.push_str(&format!(
             "{:<6} {} {} {} {} {} {:>4}\n",
             plan.label,
-            ink.cyan_on(format!("{:>8}", format!("{:.0}/mo", plan.price_usd))),
+            ink.cyan_on(format!("{:>8}", format!("${:.0}/mo", plan.price_usd))),
             ink.cyan_on(format!("{:>9}", money(plan.monthly_usd))),
             cap(plan.weekly_usd),
             cap(plan.five_hour_usd),
@@ -130,6 +130,7 @@ pub fn plans_json() -> String {
         "models": catalog.models.iter().map(|m| serde_json::json!({
             "id": m.id,
             "label": m.label,
+            "catalogId": m.catalog_id,
             "multiplier": m.multiplier,
             "input": m.input,
             "output": m.output,
@@ -161,7 +162,10 @@ pub fn models_text(plan_id: &str, colour: bool) -> String {
                 .unwrap_or_default()
         )),
     );
-    out.push_str(&models_table(&ink, &catalog)[1..]);
+    let table = models_table(&ink, &catalog);
+    // `models_table` opens with a blank line for its `plans` caller, which puts
+    // it under the plan table; here it sits under the heading instead.
+    out.push_str(table.strip_prefix('\n').unwrap_or(&table));
     out
 }
 
@@ -175,6 +179,7 @@ pub fn models_json(plan_id: &str) -> String {
             &serde_json::json!({
                 "id": model.id,
                 "label": model.label,
+                "catalogId": model.catalog_id,
                 "multiplier": model.multiplier,
                 "input": model.input,
                 "output": model.output,

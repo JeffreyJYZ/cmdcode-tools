@@ -47,6 +47,78 @@ fn credits_are_the_list_price_times_the_multiplier() {
 }
 
 #[test]
+fn a_published_rate_matches_the_id_it_is_labelled_with() {
+    // `rateSource: "repo"` claims a figure from the repo's own catalogue. Where
+    // that catalogue is `core/zen.json`, the model must be there with exactly
+    // these rates — a row copied from a sibling id is the defect this catches.
+    // The lookup uses `catalogId` (default: the wire id), because the shelf
+    // spells some ids differently from the gateway that serves them.
+    let c = od::catalog();
+    let zen = zen_rates();
+    let mut via_shelf = 0;
+    for model in c.models.iter().filter(|m| m.rate_source == "repo") {
+        let id = model.catalog_id();
+        let published: Vec<&(String, f64, f64)> =
+            zen.iter().filter(|(zen_id, ..)| zen_id == id).collect();
+        if published.is_empty() {
+            // Not sold on Go/Zen: `opencode-plugin/src/catalog.ts` is its source,
+            // which this crate cannot read — the pin below covers that one row.
+            continue;
+        }
+        via_shelf += 1;
+        assert!(
+            published
+                .iter()
+                .any(|(_, input, output)| *input == model.input && *output == model.output),
+            "{} claims {}/${} but zen.json's {id} has {published:?}",
+            model.id,
+            model.input,
+            model.output
+        );
+    }
+    // The lookup must actually have matched rows, or the loop proves nothing.
+    assert!(
+        via_shelf > 5,
+        "only {via_shelf} rows resolved against zen.json"
+    );
+    // Claude Haiku 5.5 is served as `claude-haiku-5.5` and sold as
+    // `claude-haiku-5-5`: the row is keyed by the wire id and names the shelf
+    // spelling separately, so a recorded turn prices.
+    let haiku = c
+        .model("claude-haiku-5.5")
+        .expect("row keyed by the wire id");
+    assert_eq!(haiku.catalog_id(), "claude-haiku-5-5");
+    assert_eq!((haiku.input, haiku.output), (0.1, 0.5));
+    // MiniMax M3.1 Flash is not on the Go/Zen shelf, so its rate is the plugin
+    // catalogue's own (0.15 / 0.6) — never the sibling `minimax-m3` row's.
+    let minimax = c.model("minimax-m3.1-flash").expect("row exists");
+    assert_eq!((minimax.input, minimax.output), (0.15, 0.6));
+}
+
+/// `(id, input, output)` for every variant the Go/Zen catalogue lists.
+fn zen_rates() -> Vec<(String, f64, f64)> {
+    let root: serde_json::Value =
+        serde_json::from_str(cmduse_core::ZEN_JSON).expect("zen.json parses");
+    let mut out = Vec::new();
+    for plan in root.as_object().into_iter().flatten().map(|(_, v)| v) {
+        let Some(models) = plan.get("models").and_then(|m| m.as_array()) else {
+            continue;
+        };
+        for model in models {
+            let id = model["id"].as_str().unwrap_or_default();
+            for variant in model["variants"].as_array().into_iter().flatten() {
+                if let (Some(input), Some(output)) =
+                    (variant["input"].as_f64(), variant["output"].as_f64())
+                {
+                    out.push((id.to_string(), input, output));
+                }
+            }
+        }
+    }
+    out
+}
+
+#[test]
 fn every_rate_says_whether_it_is_published() {
     let c = od::catalog();
     assert!(c.models.iter().all(|m| !m.label.is_empty()));

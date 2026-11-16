@@ -64,6 +64,21 @@ fn a_window_over_its_published_cap_says_which() {
 }
 
 #[test]
+fn a_window_exactly_on_its_cap_is_over_it() {
+    let now = NOW_MS;
+    let since = crate::oduse::window::calendar_month_start(now);
+    let mut report = build(&[], &catalog(), od::DEFAULT_PLAN, now, Some(since));
+    // The frame flags `share >= 100.0`, so the notification must agree at the
+    // exact figure rather than one cent above it.
+    report.five_hour.credits = 18.0;
+    assert_eq!(over_window(&report, &plan("go")), Some("5-hour"));
+    report.five_hour.credits = 17.99;
+    assert_eq!(over_window(&report, &plan("go")), None);
+    report.month.credits = 220.0;
+    assert_eq!(over_window(&report, &plan("go")), Some("monthly"));
+}
+
+#[test]
 fn models_sort_by_month_credits() {
     let now = NOW_MS;
     let since = crate::oduse::window::calendar_month_start(now);
@@ -86,6 +101,11 @@ fn an_unpriced_model_counts_turns_and_credits_nothing() {
     assert_eq!(model.month.requests, 1);
     assert_eq!(model.month.credits, 0.0);
     assert_eq!(model.month.tokens(), 5_100);
+    // Silence is the defect: the turn is counted, so the window must say how
+    // many of its requests carry no figure.
+    assert_eq!(report.month.unpriced, 1, "{:?}", report.month);
+    assert_eq!(report.five_hour.unpriced, 1, "{:?}", report.five_hour);
+    assert_eq!(report.weekly.unpriced, 1, "{:?}", report.weekly);
 }
 
 #[test]

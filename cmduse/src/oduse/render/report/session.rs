@@ -8,6 +8,14 @@ use cmduse_core::money;
 use super::super::ink::Ink;
 use super::{truncate, Bucket};
 
+/// Column widths, shared by the session table's header and its rows.
+/// `CREDITS_W` matches the `money` figures (`$1234.56` is 8 wide, 9 leaves room
+/// for five digits); `DATE_W` is `YYYY-MM-DD`.
+const NAME_W: usize = 32;
+const DATE_W: usize = 11;
+const CREDITS_W: usize = 9;
+const REQ_W: usize = 6;
+
 /// `--rows` caps the table only: the machine formats always carry every session.
 pub fn session_text(
     rows: &[Row],
@@ -51,7 +59,7 @@ pub fn session_text(
             let mut out = String::from("session,requests,tokens_in,tokens_out,credits,cost_usd\n");
             for (id, (_, b, _)) in &sessions {
                 out.push_str(&format!(
-                    "{},{},{},{},{:.2},{:.2}\n",
+                    "{},{},{},{},{:.6},{:.2}\n",
                     crate::report_render::csv_field(id),
                     b.requests,
                     b.input,
@@ -64,9 +72,11 @@ pub fn session_text(
         }
         Fmt::Table => {
             let ink = Ink::new(colour);
+            // One set of widths for the header and every row: a literal header
+            // drifted four columns off the data it labels.
             let mut out = format!(
-                "{}project                          last        credits   req{}\n",
-                ink.bold, ink.reset
+                "{}{:<NAME_W$} {:<DATE_W$} {:>CREDITS_W$} {:>REQ_W$}{}\n",
+                ink.bold, "project", "last", "credits", "req", ink.reset
             );
             for (id, (project, b, last)) in sessions.iter().take(limit) {
                 let name: &str = if project.is_empty() {
@@ -75,13 +85,13 @@ pub fn session_text(
                     project.as_str()
                 };
                 out.push_str(&format!(
-                    "{:<32} {:<11} {} {:>6}\n",
-                    truncate(name, 32),
+                    "{:<NAME_W$} {:<DATE_W$} {:>CREDITS_W$} {:>REQ_W$}\n",
+                    truncate(name, NAME_W),
                     ink.dim_on(format!(
-                        "{:<11}",
+                        "{:<DATE_W$}",
                         super::super::date_of(last.div_euclid(86_400_000))
                     )),
-                    ink.cyan_on(format!("{:>9}", money(b.credits))),
+                    ink.cyan_on(format!("{:>CREDITS_W$}", money(b.credits))),
                     b.requests,
                 ));
             }

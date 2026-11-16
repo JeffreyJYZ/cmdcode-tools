@@ -28,10 +28,10 @@ fn a_refusal_keeps_the_daemons_own_words() {
             .unwrap_err();
     assert_eq!(
         why.reason().as_deref(),
-        Some("wallet: unauthorized (Vela control key expired)")
+        Some("unauthorized (Vela control key expired)")
     );
     let why = wallet::parse(r#"{"error":{"kind":"upstream"}}"#).unwrap_err();
-    assert_eq!(why.reason().as_deref(), Some("wallet: upstream"));
+    assert_eq!(why.reason().as_deref(), Some("upstream"));
     // An answer with neither balance nor error is a fault, not a zero.
     assert!(matches!(
         wallet::parse(r#"{"stale":false}"#),
