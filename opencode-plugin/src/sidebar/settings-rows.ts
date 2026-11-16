@@ -8,9 +8,11 @@
 import {
 	COST_MODES,
 	COST_REFRESH_CHOICES,
+	OD_PLANS,
 	POLL_CHOICES,
 	type CostMode,
 	type OcPlan,
+	type OdPlan,
 } from "../constants/sidebar";
 import type { Prefs } from "./prefs";
 
@@ -60,6 +62,31 @@ export function settingRows(
 				label === "go-plus"
 					? "Per-model monthly limits are the Go Plus ones."
 					: "Per-model monthly limits are the standard Go ones.",
+		},
+		{
+			title: "OpenDesign panel",
+			values: () => ["off", "on"],
+			value: () => onOff(prefs().od),
+			set: (label) => save({ od: label === "on" }),
+			describe: (label) =>
+				label === "on"
+					? "The OpenDesign section, from `oduse`: plan caps, credits per window and per model, and the app's wallet balance. Credits are an estimate — the app's store records no cache tokens."
+					: "No OpenDesign section and no `oduse` spawn, so an OpenDesign session gets no panel block.",
+		},
+		{
+			title: "OpenDesign plan",
+			values: () => [...OD_PLANS],
+			value: () => prefs().odPlan,
+			set: (label) => {
+				if ((OD_PLANS as readonly string[]).includes(label)) {
+					save({ odPlan: label as OdPlan });
+				}
+			},
+			hidden: () => !prefs().od,
+			describe: (label) =>
+				label === "go"
+					? "The caps that section measures against. Only Go publishes a 5-hour one."
+					: "The caps that section measures against. This plan publishes no 5-hour cap.",
 		},
 		{
 			title: "Refresh",

@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { ROW_WIDTH } from "../src/constants/sidebar";
+import { parseOdJson } from "../src/sidebar/od";
+import { odRows } from "../src/sidebar/od-rows";
 import {
 	clip,
 	type ModelMeta,
@@ -10,6 +12,7 @@ import {
 	usageRows,
 } from "../src/sidebar/rows";
 import { parseZenJson, zenRows } from "../src/sidebar/zen";
+import { odSnapshot } from "./od-fixture";
 
 /** The panel draws `label: value`, continuation rows as two spaces + value. */
 const render = (row: Parameters<typeof parts>[0]) => parts(row).join("");
@@ -141,6 +144,23 @@ describe("sidebar rows fit the panel", () => {
 		for (const row of rows) {
 			expect(rowWidth(row)).toBeLessThanOrEqual(ROW_WIDTH);
 			expect(render(row).length).toBeLessThanOrEqual(ROW_WIDTH);
+		}
+	});
+
+	test("the OpenDesign panel's rows fit too", () => {
+		// The widest shapes: a Go row set with all three caps, and a Max one whose
+		// 5-hour cap is absent and whose plan-model allowance adds a row.
+		const bodies: unknown[] = [JSON.parse(odSnapshot())];
+		const wide = JSON.parse(odSnapshot()) as Record<string, unknown>;
+		wide.plan = "max";
+		wide.caps = { ...(wide.caps as object), fiveHourUsd: null, planModelCreditsUsd: 300 };
+		wide.summary = { ...(wide.summary as object), requests: 1_234_567, credits: 1_234.56 };
+		bodies.push(wide);
+		for (const body of bodies) {
+			for (const row of odRows(parseOdJson(JSON.stringify(body)))) {
+				expect(rowWidth(row)).toBeLessThanOrEqual(ROW_WIDTH);
+				expect(render(row).length).toBeLessThanOrEqual(ROW_WIDTH);
+			}
 		}
 	});
 
