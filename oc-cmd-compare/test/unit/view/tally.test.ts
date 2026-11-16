@@ -15,9 +15,11 @@ describe("tally", () => {
 			headToHead: 3,
 			ocWins: 1,
 			ccWins: 1,
+			odWins: 0,
 			ties: 1,
 			ocOnly: 1,
 			ccOnly: 1,
+			odOnly: 0,
 		});
 	});
 

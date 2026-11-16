@@ -41,13 +41,13 @@ export const ARG_DEFAULTS = {
 export const METRICS: Metric[] = ["val", "cost", "perreq", "req", "name"];
 export const FORMATS: Format[] = ["table", "json", "csv", "md"];
 
-// cac registers `--help`/`--version` **and** their `-h`/`-v` aliases as separate
-// keys, so all four must be tolerated here; `run` then returns before any work.
+// cac registers --help/--version plus the -h/-v aliases as separate keys; run returns on either.
 export const INTERNAL = new Set(["--", "help", "h", "version", "v"]);
 
 export const KNOWN = new Set([
 	"ccPlan",
 	"ocPlan",
+	"odPlan",
 	"in",
 	"cache",
 	"out",
@@ -99,16 +99,14 @@ export const KNOWN = new Set([
 
 /**
  * Flags cac declares with a required value (`--x <v>`). Given without one, cac
- * yields the boolean `true`, which `String(...)` would quietly turn into the
- * literal "true" and be used as the value.
- *
- * Two are deliberately absent: `config` (`--no-config` makes `true` its
- * *default*, so a bare `--config` cannot be told from "use the default path")
+ * yields the boolean `true`, which `String(...)` would turn into the literal
+ * "true". Two are absent: `config` (`--no-config` makes `true` its *default*)
  * and `shape` (a bare `--shape` means `measured`, handled in `map.ts`).
  */
 export const VALUED = new Set([
 	"ccPlan",
 	"ocPlan",
+	"odPlan",
 	"in",
 	"cache",
 	"out",

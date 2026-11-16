@@ -1,5 +1,5 @@
 import type { Metric, Options } from "#~/cli/options.ts";
-import type { CompareRow } from "#~/types.ts";
+import type { CompareRow, EntryMetrics } from "#~/types.ts";
 
 export function matches(row: CompareRow, pattern: Options["model"]): boolean {
 	if (!pattern) return true;
@@ -11,21 +11,35 @@ export function matches(row: CompareRow, pattern: Options["model"]): boolean {
 	}
 }
 
+/** Every side this invocation is comparing, present or not. */
+export function expectedSides(options: Options): ("oc" | "cc" | "od")[] {
+	return options.odPlan ? ["oc", "cc", "od"] : ["oc", "cc"];
+}
+
+function present(row: CompareRow): EntryMetrics[] {
+	return [row.oc, row.cc, row.od].filter((entry): entry is EntryMetrics => entry !== undefined);
+}
+
 const maxValue = (r: CompareRow): number | null => {
-	const values = [r.oc?.valueIndex, r.cc?.valueIndex].filter(
-		(value): value is number => typeof value === "number",
-	);
+	const values = present(r)
+		.map((entry) => entry.valueIndex)
+		.filter((value): value is number => typeof value === "number");
 	return values.length === 0 ? null : Math.max(...values);
 };
-const maxIndex = (r: CompareRow): number => Math.max(r.oc?.index ?? -1, r.cc?.index ?? -1);
+const maxIndex = (r: CompareRow): number => Math.max(...present(r).map((e) => e.index), -1);
 const maxRequests = (r: CompareRow): number =>
-	Math.max(r.oc?.requestsPerMonth ?? -1, r.cc?.requestsPerMonth ?? -1);
-const minPay = (r: CompareRow): number => {
-	const values = [r.oc?.payPerRequest, r.cc?.payPerRequest].filter(
-		(value): value is number => value !== undefined,
-	);
-	return values.length === 0 ? Number.POSITIVE_INFINITY : Math.min(...values);
-};
+	Math.max(...present(r).map((e) => e.requestsPerMonth), -1);
+const minPay = (r: CompareRow): number =>
+	Math.min(...present(r).map((e) => e.payPerRequest), Number.POSITIVE_INFINITY);
+
+/** Filter first (`--model`, `--only`), then order. */
+export function selectRows(rows: CompareRow[], options: Options): CompareRow[] {
+	const sides = expectedSides(options);
+	return rows.filter((row) => {
+		if (!matches(row, options.model)) return false;
+		return options.only === "all" || sides.every((side) => Boolean(row[side]));
+	});
+}
 
 /** `asc` means "lower is better"; it flips each metric's default direction. */
 export function sortRows(rows: CompareRow[], metric: Metric, asc: boolean): CompareRow[] {

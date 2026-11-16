@@ -6,6 +6,7 @@ function groupOf(id: string): GroupKey {
 	if (id === "model") return "model";
 	if (id.startsWith("oc-")) return "oc";
 	if (id.startsWith("cc-")) return "cc";
+	if (id.startsWith("od-")) return "od";
 	return "misc";
 }
 
@@ -54,6 +55,7 @@ export function renderSegment(
 		.join(GAP);
 }
 
+import type { EntryMetrics } from "#~/types.ts";
 import type { Row, Tally } from "#~/view/schema.ts";
 
 export function tally(rows: Row[]): Tally {
@@ -61,21 +63,31 @@ export function tally(rows: Row[]): Tally {
 		headToHead: 0,
 		ocWins: 0,
 		ccWins: 0,
+		odWins: 0,
 		ties: 0,
 		ocOnly: 0,
 		ccOnly: 0,
+		odOnly: 0,
 	};
 	for (const row of rows) {
-		if (row.oc && row.cc) {
-			result.headToHead++;
-			if (row.oc.payPerRequest === row.cc.payPerRequest) result.ties++;
-			else if (row.oc.payPerRequest < row.cc.payPerRequest) result.ocWins++;
-			else result.ccWins++;
-		} else if (row.oc) {
-			result.ocOnly++;
-		} else if (row.cc) {
-			result.ccOnly++;
+		const present = [row.oc, row.cc, row.od].filter(
+			(entry): entry is EntryMetrics => entry !== undefined,
+		);
+		if (present.length === 0) continue;
+		if (present.length === 1) {
+			if (row.oc) result.ocOnly++;
+			else if (row.cc) result.ccOnly++;
+			else result.odOnly++;
+			continue;
 		}
+		result.headToHead++;
+		const cheapest = Math.min(...present.map((entry) => entry.payPerRequest));
+		const wins = present.filter((entry) => entry.payPerRequest === cheapest);
+		const winner = wins[0];
+		if (wins.length !== 1 || !winner) result.ties++;
+		else if (winner === row.oc) result.ocWins++;
+		else if (winner === row.cc) result.ccWins++;
+		else result.odWins++;
 	}
 	return result;
 }

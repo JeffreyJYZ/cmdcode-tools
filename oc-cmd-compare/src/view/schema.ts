@@ -1,4 +1,4 @@
-import type { CompareRow, PlanInfo, ProviderId, Workload } from "#~/types.ts";
+import type { CompareRow, PlanInfo, SideId, Workload } from "#~/types.ts";
 
 export type Row = CompareRow;
 
@@ -15,7 +15,7 @@ export interface Column {
 	pad?: boolean;
 }
 
-export type GroupKey = "model" | "oc" | "cc" | "misc";
+export type GroupKey = "model" | "oc" | "cc" | "od" | "misc";
 
 export interface GroupLabel {
 	title: string;
@@ -38,20 +38,24 @@ export interface FitResult {
 }
 
 export interface Tally {
-	/** Rows present on both sides. */
+	/** Rows present on at least two sides. */
 	headToHead: number;
 	ocWins: number;
 	ccWins: number;
+	odWins: number;
 	ties: number;
 	ocOnly: number;
 	ccOnly: number;
+	odOnly: number;
 }
 
 export interface ReportMeta {
 	ocPlan: PlanInfo;
 	ccPlan: PlanInfo;
+	/** The OpenDesign side, absent unless `--od-plan` added it. */
+	odPlan?: PlanInfo;
 	/** The request shape actually priced — one per side when a shape was measured. */
-	workloads: Record<ProviderId, Workload>;
+	workloads: Partial<Record<SideId, Workload>>;
 	/** Ability source label, e.g. "CommandCode Intelligence". */
 	abilityLabel?: string;
 	abilityNote?: string;
@@ -64,12 +68,14 @@ export interface ReportMeta {
 import { CC_COLUMNS } from "./columns/cc.ts";
 import { META_COLUMNS } from "./columns/meta.ts";
 import { OC_COLUMNS } from "./columns/oc.ts";
+import { OD_COLUMNS } from "./columns/od.ts";
 
 /** Every column the table can render, keyed by the id used with --columns. */
 const COLUMNS: Record<string, Column> = {
 	...META_COLUMNS,
 	...OC_COLUMNS,
 	...CC_COLUMNS,
+	...OD_COLUMNS,
 };
 
 export function columns(ids: string[]): Column[] {
