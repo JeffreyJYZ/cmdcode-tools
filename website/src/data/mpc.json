@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-16T10:56:51.781Z",
+	"generatedAt": "2026-11-17T03:33:02.024Z",
 	"plans": [
 		{
 			"key": "go",
@@ -1678,6 +1678,36 @@
 						"cc": null
 					},
 					{
+						"key": "flint",
+						"name": "Flint",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 10,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 10,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
+					},
+					{
 						"key": "tencenthy4flash",
 						"name": "Tencent Hy4 Flash",
 						"oc": null,
@@ -2468,9 +2498,11 @@
 					"headToHead": 24,
 					"ocWins": 1,
 					"ccWins": 22,
+					"odWins": 0,
 					"ties": 1,
 					"ocOnly": 10,
-					"ccOnly": 36
+					"ccOnly": 37,
+					"odOnly": 0
 				}
 			},
 			"go-plus": {
@@ -4093,6 +4125,36 @@
 						"cc": null
 					},
 					{
+						"key": "flint",
+						"name": "Flint",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Go",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 10,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 10,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
+					},
+					{
 						"key": "tencenthy4flash",
 						"name": "Tencent Hy4 Flash",
 						"oc": null,
@@ -4883,9 +4945,11 @@
 					"headToHead": 24,
 					"ocWins": 0,
 					"ccWins": 24,
+					"odWins": 0,
 					"ties": 0,
 					"ocOnly": 10,
-					"ccOnly": 36
+					"ccOnly": 37,
+					"odOnly": 0
 				}
 			}
 		},
@@ -7389,6 +7453,36 @@
 						}
 					},
 					{
+						"key": "flint",
+						"name": "Flint",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 2,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
+					},
+					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -7639,9 +7733,11 @@
 					"headToHead": 26,
 					"ocWins": 8,
 					"ccWins": 14,
+					"odWins": 0,
 					"ties": 4,
 					"ocOnly": 8,
-					"ccOnly": 47
+					"ccOnly": 48,
+					"odOnly": 0
 				}
 			},
 			"go-plus": {
@@ -10143,6 +10239,36 @@
 						}
 					},
 					{
+						"key": "flint",
+						"name": "Flint",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "GOAT",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 2,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
+					},
+					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -10393,9 +10519,11 @@
 					"headToHead": 26,
 					"ocWins": 7,
 					"ccWins": 17,
+					"odWins": 0,
 					"ties": 2,
 					"ocOnly": 8,
-					"ccOnly": 47
+					"ccOnly": 48,
+					"odOnly": 0
 				}
 			}
 		},
@@ -13352,6 +13480,36 @@
 						}
 					},
 					{
+						"key": "flint",
+						"name": "Flint",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
+					},
+					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -13602,9 +13760,11 @@
 					"headToHead": 27,
 					"ocWins": 16,
 					"ccWins": 3,
+					"odWins": 0,
 					"ties": 8,
 					"ocOnly": 7,
-					"ccOnly": 63
+					"ccOnly": 64,
+					"odOnly": 0
 				}
 			},
 			"go-plus": {
@@ -16559,6 +16719,36 @@
 						}
 					},
 					{
+						"key": "flint",
+						"name": "Flint",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true,
+							"deal": {
+								"badge": "Free"
+							}
+						}
+					},
+					{
 						"key": "glyphcluster",
 						"name": "Glyph Cluster",
 						"oc": null,
@@ -16809,9 +16999,11 @@
 					"headToHead": 27,
 					"ocWins": 14,
 					"ccWins": 5,
+					"odWins": 0,
 					"ties": 8,
 					"ocOnly": 7,
-					"ccOnly": 63
+					"ccOnly": 64,
+					"odOnly": 0
 				}
 			}
 		},
@@ -18763,6 +18955,33 @@
 						}
 					},
 					{
+						"key": "flint",
+						"name": "Flint",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						}
+					},
+					{
 						"key": "tencenthy4flash",
 						"name": "Tencent Hy4 Flash",
 						"oc": null,
@@ -20306,9 +20525,11 @@
 					"headToHead": 27,
 					"ocWins": 16,
 					"ccWins": 4,
+					"odWins": 0,
 					"ties": 7,
 					"ocOnly": 7,
-					"ccOnly": 74
+					"ccOnly": 75,
+					"odOnly": 0
 				}
 			},
 			"go-plus": {
@@ -22258,6 +22479,33 @@
 						}
 					},
 					{
+						"key": "flint",
+						"name": "Flint",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						}
+					},
+					{
 						"key": "tencenthy4flash",
 						"name": "Tencent Hy4 Flash",
 						"oc": null,
@@ -23801,9 +24049,11 @@
 					"headToHead": 27,
 					"ocWins": 17,
 					"ccWins": 4,
+					"odWins": 0,
 					"ties": 6,
 					"ocOnly": 7,
-					"ccOnly": 74
+					"ccOnly": 75,
+					"odOnly": 0
 				}
 			}
 		},
@@ -25755,6 +26005,33 @@
 						}
 					},
 					{
+						"key": "flint",
+						"name": "Flint",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						}
+					},
+					{
 						"key": "tencenthy4flash",
 						"name": "Tencent Hy4 Flash",
 						"oc": null,
@@ -27298,9 +27575,11 @@
 					"headToHead": 27,
 					"ocWins": 16,
 					"ccWins": 4,
+					"odWins": 0,
 					"ties": 7,
 					"ocOnly": 7,
-					"ccOnly": 74
+					"ccOnly": 75,
+					"odOnly": 0
 				}
 			},
 			"go-plus": {
@@ -29250,6 +29529,33 @@
 						}
 					},
 					{
+						"key": "flint",
+						"name": "Flint",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 0,
+								"output": 0,
+								"cacheRead": 0,
+								"cacheWrite": null
+							},
+							"allowance": 0,
+							"requestsPerMonth": null,
+							"requestsPerFiveHour": null,
+							"requestsPerWeek": null,
+							"costPerRequest": 0,
+							"payPerRequest": 0,
+							"multiplier": 0,
+							"ability": null,
+							"tps": null,
+							"index": 100,
+							"valueIndex": null,
+							"free": true
+						}
+					},
+					{
 						"key": "tencenthy4flash",
 						"name": "Tencent Hy4 Flash",
 						"oc": null,
@@ -30793,9 +31099,11 @@
 					"headToHead": 27,
 					"ocWins": 17,
 					"ccWins": 4,
+					"odWins": 0,
 					"ties": 6,
 					"ocOnly": 7,
-					"ccOnly": 74
+					"ccOnly": 75,
+					"odOnly": 0
 				}
 			}
 		}
