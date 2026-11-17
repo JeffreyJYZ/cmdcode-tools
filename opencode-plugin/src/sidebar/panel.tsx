@@ -135,14 +135,25 @@ function Row(props: { row: SidebarRow; colors: PanelColors }) {
 	);
 }
 
-/** Bold title, then one line per row. Renders nothing when there are no rows. */
+/**
+ * Bold title, then one line per row. Renders nothing when there are no rows.
+ *
+ * The `fallback` is load-bearing, not decoration: opentui's reconciler throws
+ * `Orphan text error: "" must have a <text> as a parent` when a `<Show>` with
+ * no fallback is false, because the empty string it inserts has no node to sit
+ * in. Every panel is empty on its first paint — `useRows` starts from the last
+ * snapshot, and on a cold start there is none — so without this the host's
+ * `PluginBoundary` caught the throw and replaced the whole section with a
+ * "crashed in slot sidebar.content" toast. A zero-height box paints nothing,
+ * which is what "no rows" is supposed to look like.
+ */
 export function Panel(props: {
 	title: () => string;
 	rows: () => SidebarRow[];
 	colors: () => PanelColors;
 }) {
 	return (
-		<Show when={props.rows().length > 0}>
+		<Show when={props.rows().length > 0} fallback={<box height={0} />}>
 			<box>
 				<text fg={props.colors().base}>
 					<b>{props.title()}</b>

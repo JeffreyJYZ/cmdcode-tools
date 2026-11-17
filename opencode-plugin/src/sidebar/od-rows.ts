@@ -129,13 +129,12 @@ export function odRows(usage: OdUsage | undefined): SidebarRow[] {
 	if (!usage) return [];
 	const now = Date.now();
 	const period = monthPeriod(usage);
+	// The label is `Plan`, like the other three sections' headline row. Labelling
+	// it with the family name printed the section's own title twice — the panel
+	// draws the title above the rows, so the block opened with a bold
+	// "OpenDesign" over "OpenDesign: go plan · estimate".
 	const rows: SidebarRow[] = [
-		[
-			"OpenDesign",
-			clip(`${usage.plan} plan · estimate`, valueWidth("OpenDesign")),
-			"base",
-			true,
-		],
+		["Plan", clip(`${usage.plan} plan · estimate`, valueWidth("Plan")), "base", true],
 	];
 	// The caveats ride directly under the headline so no figure below is read as
 	// a meter: credits are priced from list-price dollars and the multiplier, the
