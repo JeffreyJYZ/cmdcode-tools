@@ -261,12 +261,13 @@ path and the \fB\-\-local\fR log path alike.  Accepts
 .BR hourly : number of hours back (1\(en168).
 .TP
 .B \-\-rows \fIn\fR
-Table rows to print for \fBmodels\fR, \fBmodel\fR and \fBsession\fR.
+Table rows to print for \fBmodels\fR, \fBdaily\fR, \fBhourly\fR, \fBmodel\fR and
+\fBsession\fR.
 \fI0\fR means every row.  Without the flag the reports print every row
-(\fBsession\fR prints 20) and the live frame keeps its 15 row panel.  A trimmed
-table ends with \fI\[u2026] N more\fR; \fB\-\-json\fR and \fB\-\-csv\fR always
-carry every row, because a report is data and a short one would read as the
-whole period.
+(\fBsession\fR prints 20) and the live frame keeps its 15 row panel.  The newest
+rows survive a cap.  A trimmed table ends with \fI\[u2026] N more\fR;
+\fB\-\-json\fR and \fB\-\-csv\fR always carry every row, because a report is data
+and a short one would read as the whole period.
 .TP
 .B \-\-json
 Machine\-readable output where the subcommand supports it.  Conflicts with
@@ -847,7 +848,11 @@ CSV output for \fBdaily\fR, \fBhourly\fR, \fBmodel\fR and \fBsession\fR
 Never coloured.  Supplying both \fB\-\-json\fR and \fB\-\-csv\fR exits 2.
 .TP
 .B \-\-rows \fIn\fR
-Table rows to print (default 15).
+Table rows to print for \fBdaily\fR, \fBhourly\fR, \fBmodel\fR and
+\fBsession\fR (default 15 in the live frame, every row in a report).
+\fI0\fR means every row, the newest rows survive a cap, and a trimmed table
+ends with \fI\[u2026] N more\fR; \fB\-\-json\fR and \fB\-\-csv\fR always carry
+every row.
 .TP
 .B \-\-plain
 No colour and no gauges.  Colour is also dropped automatically on a

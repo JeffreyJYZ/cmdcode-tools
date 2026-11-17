@@ -10,7 +10,8 @@ use super::{totals_json, Bucket};
 /// `lookback_ms` is the read window and `size_ms` the bucket width (which also
 /// names the first CSV/JSON column: `day` for a ≥24h bucket, else `hour`).
 /// `Json` is `{scope, source, total, days|hours}`; `Csv` the same rows flattened;
-/// neither is ever coloured.
+/// neither is ever coloured. `rows` caps the `Table` form only, newest buckets
+/// kept, and prints a `… N more` tail when it trimmed.
 #[allow(clippy::too_many_arguments)]
 pub fn bucket_text(
     rows: &[Row],
@@ -21,6 +22,7 @@ pub fn bucket_text(
     tz_secs: i64,
     colour: bool,
     fmt: Fmt,
+    cap: usize,
 ) -> String {
     // Buckets are cut in the display timezone: shift, bucket, then label.
     let shift = tz_secs * 1000;
@@ -101,7 +103,8 @@ pub fn bucket_text(
                 "{}{label:<12} credits    requests   tokens{}\n",
                 ink.bold, ink.reset
             );
-            for (bucket, b) in &window {
+            let shown = window.len().min(cap);
+            for (bucket, b) in window.iter().skip(window.len() - shown) {
                 out.push_str(&format!(
                     "{:<12} {} {} {}\n",
                     stamp(*bucket),
@@ -114,6 +117,12 @@ pub fn bucket_text(
                 out.push_str(&format!(
                     "{}\n",
                     ink.dim_on("(no OpenDesign turns in the window)".into())
+                ));
+            }
+            if window.len() > shown {
+                out.push_str(&format!(
+                    "{}\n",
+                    ink.dim_on(format!("… {} more", window.len() - shown))
                 ));
             }
             out

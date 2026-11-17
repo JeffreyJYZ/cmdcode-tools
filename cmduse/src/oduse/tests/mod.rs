@@ -10,5 +10,6 @@ mod od_wire;
 mod render;
 mod render_catalog;
 mod render_json;
+mod render_rows;
 mod wallet;
 mod window;

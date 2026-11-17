@@ -403,6 +403,7 @@ pub fn run() {
                     tz_secs,
                     colours,
                     fmt,
+                    args.rows_cap(usize::MAX),
                 )
             );
             return;
@@ -419,6 +420,7 @@ pub fn run() {
                     tz_secs,
                     colours,
                     fmt,
+                    args.rows_cap(usize::MAX),
                 )
             );
             return;

@@ -572,13 +572,14 @@ fn report_json_envelopes_are_the_shared_contract() {
             &empty_day,
             &total,
             None,
+            usize::MAX,
             Fmt::Json,
             false
         )),
         REPORT_DAILY_KEYS.to_vec()
     );
     assert_eq!(
-        keys(hourly_table(&[], Fmt::Json, "local", false)),
+        keys(hourly_table(&[], Fmt::Json, "local", false, usize::MAX)),
         REPORT_HOURLY_KEYS.to_vec()
     );
     assert_eq!(
