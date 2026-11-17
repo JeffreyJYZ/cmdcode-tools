@@ -11,21 +11,26 @@ use crate::oduse::db::Row;
 /// Start of the period: the most recent occurrence of the inferred anniversary
 /// day, else the first of the calendar month. Returns `(start_ms, inferred)`.
 ///
-/// Only the desktop store's rows are evidence. The harness store is a second
-/// source with different history — on the reference machine it starts a month
-/// later than the app's own single turn — and letting its earliest row decide
-/// would silently move the boundary. The app's store is the plan's own record, so
-/// it is the one that can speak for the subscription; with no app rows the whole
-/// set is used rather than falling back to the calendar month.
+/// The **harness** store's oldest turn is the evidence, not the app store's: the
+/// plan is actually spent through opencode, and the app's one old row sits in
+/// October, which would drag the inferred boundary from the 16th to the 19th. Only
+/// with no harness rows does the app store speak; with no rows at all it stays the
+/// calendar month.
 pub fn month_start(rows: &[Row], now_ms: i64) -> (i64, bool) {
     let now_secs = now_ms / 1000;
-    let earliest = |only_app: bool| {
+    // The harness store is where the plan is actually spent, so its oldest turn
+    // is the best anniversary evidence; the app store's single old row would move
+    // the boundary by days. Whichever set exists is used, harness first.
+    let earliest = |source: &str| {
         rows.iter()
-            .filter(|r| !only_app || r.source == crate::oduse::db::APP)
+            .filter(|r| r.source == source)
             .map(|r| r.at_ms)
             .min()
     };
-    let Some(earliest) = earliest(true).or_else(|| earliest(false)) else {
+    let Some(earliest) = earliest(crate::oduse::db::OPENCODE)
+        .or_else(|| earliest(crate::oduse::db::APP))
+        .or_else(|| rows.iter().map(|r| r.at_ms).min())
+    else {
         return (calendar_month_start(now_ms), false);
     };
     let day = day_of_month(earliest.div_euclid(86_400_000).max(0));
