@@ -1,0 +1,776 @@
+{
+	"extractedAt": "2026-11-17",
+	"fetchedAt": "2026-11-17T17:31Z",
+	"sources": {
+		"pricingMd": "https://open-design.ai/pricing.md",
+		"pricing": "https://open-design.ai/pricing/",
+		"billing": "https://open-design.ai/help/billing/",
+		"modelCredits": "https://open-design.ai/model-credits/",
+		"modelCreditsZh": "https://open-design.ai/zh/model-credits/",
+		"billingZh": "https://open-design.ai/zh/help/billing/",
+		"models": "https://amr-link.open-design.ai/v1/models"
+	},
+	"units": {
+		"currency": "USD",
+		"credit": "1 credit = $1 of the plan's allowance; a model spends list-price dollars x its credit multiplier",
+		"nullMeans": "the page publishes no such value for this plan or model; never read null as 0"
+	},
+	"planNames": {
+		"note": "Same four plans, two spellings. Every figure below names the page it came from, so the spelling a number was read under is recoverable. Long spelling: pricing.md / /pricing / /model-credits (+ zh). Short spelling: /help/billing (+ zh).",
+		"long": [
+			"Go",
+			"Go Plus",
+			"Go Pro",
+			"Go Max"
+		],
+		"short": [
+			"Go",
+			"Plus",
+			"Pro",
+			"Max"
+		],
+		"longSpellingOn": [
+			"pricingMd",
+			"pricing",
+			"modelCredits",
+			"modelCreditsZh"
+		],
+		"shortSpellingOn": [
+			"billing",
+			"billingZh"
+		],
+		"quoteLong": "## Go Plus — managed / ## Go Pro — managed (recommended) / ## Go Max — managed — pricing.md headings",
+		"quoteShort": "Choose Go, Plus, Pro, or Max for the current workspace, then choose monthly or yearly billing. — /help/billing §Choose a subscription"
+	},
+	"plans": {
+		"go": {
+			"labels": {
+				"pricing": "Go",
+				"billing": "Go"
+			},
+			"price": 10,
+			"firstMonthPrice": 8,
+			"annualPrice": 84,
+			"annualMonthlyEquivalent": 7,
+			"concurrency": 10,
+			"topModelCredits": 0,
+			"topModelLabel": "Not included",
+			"caps": {
+				"deepseek-v4.1-flash-eco": {
+					"month": 220,
+					"week": 55,
+					"fiveHour": 18
+				},
+				"deepseek-v4.1-flash": {
+					"month": 120,
+					"week": 30,
+					"fiveHour": 10
+				}
+			},
+			"defaultCaps": {
+				"month": 220,
+				"week": 55,
+				"fiveHour": 18
+			},
+			"defaultCapsModel": "deepseek-v4.1-flash-eco",
+			"cloudDeploys": null,
+			"imageGeneration": false,
+			"evidence": {
+				"price": [
+					"Price: **$10 / month** (first month $8), or **$84 / year**, 30% off — pricing.md §Go",
+					"$**8**/ mo ~~$10~~ … From month 2: $10/mo … $**7**/ mo … Billed $84/year — /pricing Go card"
+				],
+				"concurrency": [
+					"Go | 10 — /help/billing §Shared credits and concurrent tasks (table “Concurrent tasks per workspace”)",
+					"**10** shared concurrent tasks — /pricing Go card",
+					"Shared concurrency: 10 tasks per workspace — pricing.md §Go"
+				],
+				"topModelCredits": [
+					"Go | $10 | $0 | $220 | $220 — /help/billing §How much model credit does each plan include (table)",
+					"Go | $10 | $220 | $0 | $220 | $55 | $18 — /model-credits §2 Credits by plan (table)",
+					"Coding Plan: up to $220 / month with DeepSeek V4.1 Flash Eco; no separate Top Model Credits — pricing.md §Go"
+				],
+				"defaultCaps": [
+					"Go displays up to $220/month, $55/7 days and $18/5 hours — pricing.md §Go",
+					"With DeepSeek V4.1 Flash Eco, Go allows up to $55 per 7 days and $18 per 5 hours — /help/billing §When do the limits reset?",
+					"Go | $10 | $220 | $0 | $220 | $55 | $18 — /model-credits §2 (table)"
+				],
+				"caps.deepseek-v4.1-flash": [
+					"With the original DeepSeek V4.1 Flash, Go allows up to $30 per 7 days and $10 per 5 hours — /help/billing §When do the limits reset?",
+					"The original DeepSeek V4.1 Flash allowance remains unchanged: up to $120/month on Go — /help/billing §How much model credit does each plan include",
+					"DeepSeek V4.1 Flash … Monthly usage: go $120 — /pricing §Coding Plan usage (table)",
+					"DeepSeek V4.1 Flash | 0.5× / DeepSeek V4.1 Flash Eco | 0.27× — /model-credits §2 multipliers"
+				],
+				"imageGeneration": "Go includes Coding Plan models but does not include image generation. — /model-credits §2"
+			}
+		},
+		"plus": {
+			"labels": {
+				"pricing": "Go Plus",
+				"billing": "Plus"
+			},
+			"price": 20,
+			"firstMonthPrice": 16,
+			"annualPrice": 168,
+			"annualMonthlyEquivalent": 14,
+			"concurrency": 20,
+			"topModelCredits": 20,
+			"topModelLabel": "Standard · $20/month",
+			"caps": {
+				"deepseek-v4.1-flash-eco": {
+					"month": 290,
+					"week": 74,
+					"fiveHour": null
+				},
+				"deepseek-v4.1-flash": {
+					"month": 160,
+					"week": 40,
+					"fiveHour": null
+				}
+			},
+			"defaultCaps": {
+				"month": 290,
+				"week": 74,
+				"fiveHour": null
+			},
+			"defaultCapsModel": "deepseek-v4.1-flash-eco",
+			"cloudDeploys": 3,
+			"imageGeneration": true,
+			"evidence": {
+				"price": [
+					"Price: **$20 / month** (first month $16; or $168 / year, 30% off) — pricing.md §Go Plus",
+					"Go Plus … $**16**/ mo ~~$20~~ … Billed $168/year — /pricing Go Plus card"
+				],
+				"concurrency": [
+					"Plus | 20 — /help/billing §Shared credits and concurrent tasks",
+					"**20** shared concurrent tasks — /pricing Go Plus card",
+					"Shared concurrency: 20 tasks per workspace — pricing.md §Go Plus"
+				],
+				"topModelCredits": [
+					"Plus | $20 | $20 | $290 | $310 — /help/billing §How much model credit does each plan include",
+					"Go Plus | $20 | $310 | $20 | $290 Bonus | $74 | No limit window — /model-credits §2",
+					"Total monthly credits, up to **$310** / Coding Plan up to **$290** + Top Models **$20** — /pricing Go Plus card",
+					"Top Models Standard · $20/month — /pricing Go Plus model module"
+				],
+				"defaultCaps": [
+					"Go Plus Coding Plan displays up to $290/month and $74/7 days, with no 5-hour window — pricing.md §Go",
+					"Plus allows up to $74 per 7 days, with no 5-hour window — /help/billing §When do the limits reset?",
+					"Go Plus | $20 | $310 | $20 | $290 Bonus | $74 | No limit window — /model-credits §2"
+				],
+				"caps.deepseek-v4.1-flash": [
+					"Plus allows up to $40 per 7 days — /help/billing §When do the limits reset?",
+					"The original DeepSeek V4.1 Flash allowance remains unchanged: up to … $160/month on Plus — /help/billing §How much model credit does each plan include",
+					"DeepSeek V4.1 Flash … Monthly usage: plus $160 — /pricing §Coding Plan usage"
+				],
+				"cloudDeploys": "Cloud deploys: up to 3 / month — pricing.md §Go Plus",
+				"imageGeneration": "Go includes Coding Plan models but not hosted image-model calls; hosted image generation starts with Plus. — /help/billing §Why is image generation unavailable after subscribing?"
+			}
+		},
+		"pro": {
+			"labels": {
+				"pricing": "Go Pro",
+				"billing": "Pro"
+			},
+			"price": 100,
+			"firstMonthPrice": 80,
+			"annualPrice": 840,
+			"annualMonthlyEquivalent": 70,
+			"concurrency": 30,
+			"topModelCredits": 120,
+			"topModelLabel": "6× · $120/month",
+			"caps": {
+				"deepseek-v4.1-flash": {
+					"month": 660,
+					"week": 90,
+					"fiveHour": null
+				}
+			},
+			"defaultCaps": {
+				"month": 660,
+				"week": 90,
+				"fiveHour": null
+			},
+			"defaultCapsModel": "deepseek-v4.1-flash",
+			"modelOverrides": null,
+			"cloudDeploys": 20,
+			"imageGeneration": true,
+			"evidence": {
+				"price": [
+					"Price: **$100 / month** (first month $80; or $840 / year, 30% off) — pricing.md §Go Pro",
+					"Go Pro … $**80**/ mo ~~$100~~ … Billed $840/year — /pricing Go Pro card"
+				],
+				"concurrency": [
+					"Pro | 30 — /help/billing §Shared credits and concurrent tasks",
+					"**30** shared concurrent tasks — /pricing Go Pro card",
+					"Shared concurrency: 30 tasks per workspace — pricing.md §Go Pro"
+				],
+				"topModelCredits": [
+					"Pro | $100 | $120 | $360 | $480 — /help/billing §How much model credit does each plan include",
+					"Go Pro | $100 | $780 | $120 Limited-time 20% bonus | $660 Bonus | $90 | No limit window — /model-credits §2",
+					"Total monthly credits, up to **$780** / Coding Plan up to **$660** + Top Models **$120** — /pricing Go Pro card",
+					"Top Models 6× · $120/month — /pricing Go Pro model module",
+					"Pro’s $120 top Model Credits include a limited-time 20% bonus — /help/billing §How much model credit does each plan include"
+				],
+				"defaultCaps": [
+					"Coding Plan: up to $660 / month; maximum combined monthly model credits: $780 — pricing.md §Go Pro",
+					"Pro and Max retain their $90 and $150 7-day maximums, with no 5-hour window — /help/billing §When do the limits reset?",
+					"Go Pro | $100 | $780 | $120 … | $660 Bonus | $90 | No limit window — /model-credits §2"
+				],
+				"cloudDeploys": "Cloud deploys: up to 20 / month — pricing.md §Go Pro"
+			}
+		},
+		"max": {
+			"labels": {
+				"pricing": "Go Max",
+				"billing": "Max"
+			},
+			"price": 200,
+			"firstMonthPrice": 160,
+			"annualPrice": 1680,
+			"annualMonthlyEquivalent": 140,
+			"concurrency": 50,
+			"topModelCredits": 300,
+			"topModelLabel": "15× · $300/month",
+			"caps": {
+				"deepseek-v4.1-flash": {
+					"month": 1110,
+					"week": 150,
+					"fiveHour": null
+				}
+			},
+			"defaultCaps": {
+				"month": 1110,
+				"week": 150,
+				"fiveHour": null
+			},
+			"defaultCapsModel": "deepseek-v4.1-flash",
+			"modelOverrides": null,
+			"cloudDeploys": 50,
+			"imageGeneration": true,
+			"evidence": {
+				"price": [
+					"Price: **$200 / month** (first month $160; or $1,680 / year, 30% off) — pricing.md §Go Max",
+					"Go Max … $**160**/ mo ~~$200~~ … Billed $1,680/year — /pricing Go Max card"
+				],
+				"concurrency": [
+					"Max | 50 — /help/billing §Shared credits and concurrent tasks",
+					"**50** shared concurrent tasks — /pricing Go Max card",
+					"Shared concurrency: 50 tasks per workspace — pricing.md §Go Max"
+				],
+				"topModelCredits": [
+					"Max | $200 | $300 | $600 | $900 — /help/billing §How much model credit does each plan include",
+					"Go Max | $200 | $1,410 | $300 Limited-time 50% bonus | $1,110 Bonus | $150 | No limit window — /model-credits §2",
+					"Total monthly credits, up to **$1,410** / Coding Plan up to **$1,110** + Top Models **$300** — /pricing Go Max card",
+					"Top Models 15× · $300/month — /pricing Go Max model module",
+					"Max’s $300 include a limited-time 50% bonus — /help/billing §How much model credit does each plan include"
+				],
+				"defaultCaps": [
+					"Coding Plan: up to $1,110 / month; maximum combined monthly model credits: $1,410 — pricing.md §Go Max",
+					"Pro and Max retain their $90 and $150 7-day maximums, with no 5-hour window — /help/billing §When do the limits reset?",
+					"Go Max | $200 | $1,410 | $300 … | $1,110 Bonus | $150 | No limit window — /model-credits §2"
+				],
+				"cloudDeploys": "Cloud deploys: up to 50 / month — pricing.md §Go Max"
+			}
+		}
+	},
+	"models": [
+		{
+			"id": "deepseek-v4.1-flash",
+			"label": "DeepSeek V4.1 Flash",
+			"wireId": "deepseek-v4.1-flash",
+			"multiplier": 0.5,
+			"campaignMultiplier": 0.25,
+			"rateSource": "published",
+			"matches": [
+				"deepseek-v4.1-flash"
+			],
+			"quote": "DeepSeek V4.1 Flash | 0.5× — /model-credits §2 (Coding Plan models and credit multipliers); DeepSeek V4.1 Flash | 0.5× — /help/billing §Why do different models use credits at different rates?"
+		},
+		{
+			"id": "deepseek-v4.1-flash-eco",
+			"label": "DeepSeek V4.1 Flash Eco",
+			"wireId": "deepseek-v4.1-flash-eco",
+			"multiplier": 0.27,
+			"rateSource": "published",
+			"matches": [
+				"deepseek-v4.1-flash-eco"
+			],
+			"quote": "DeepSeek V4.1 Flash Eco | 0.27× — /model-credits §2 (Coding Plan models and credit multipliers); DeepSeek V4.1 Flash Eco (Go / Plus) | 0.27× — /help/billing §Why do different models use credits at different rates?"
+		},
+		{
+			"id": "minimax-m3.1-flash",
+			"label": "MiniMax M3.1 Flash",
+			"wireId": "minimax-m3.1-flash",
+			"multiplier": 1,
+			"rateSource": "published",
+			"matches": [
+				"minimax-m3.1-flash"
+			],
+			"quote": "MiniMax M3.1 Flash | 1× — /model-credits §2 (Coding Plan models and credit multipliers)"
+		},
+		{
+			"id": "hy4-preview",
+			"label": "Hy4 Preview",
+			"wireId": "hy4-preview",
+			"multiplier": 1,
+			"rateSource": "published",
+			"matches": [
+				"hy4-preview"
+			],
+			"quote": "Hy4 Preview | 1× — /model-credits §2 (Coding Plan models and credit multipliers)"
+		},
+		{
+			"id": "deepseek-v4-flash",
+			"label": "DeepSeek V4 Flash",
+			"wireId": "deepseek-v4-flash",
+			"multiplier": 1,
+			"rateSource": "published",
+			"matches": [
+				"deepseek-v4-flash"
+			],
+			"quote": "DeepSeek V4 Flash | 1× — /model-credits §2 (Coding Plan models and credit multipliers)"
+		},
+		{
+			"id": "deepseek-v4-flash-vision-exp",
+			"label": "DeepSeek V4 Flash Vision Exp",
+			"wireId": "deepseek-v4-flash-vision-exp",
+			"multiplier": 1,
+			"rateSource": "published",
+			"matches": [
+				"deepseek-v4-flash-vision-exp"
+			],
+			"quote": "DeepSeek V4 Flash Vision Exp | 1× — /model-credits §2 (Coding Plan models and credit multipliers)"
+		},
+		{
+			"id": "deepseek-v4-pro",
+			"label": "DeepSeek V4 Pro",
+			"wireId": "deepseek-v4-pro",
+			"multiplier": 1,
+			"rateSource": "published",
+			"matches": [
+				"deepseek-v4-pro"
+			],
+			"quote": "DeepSeek V4 Pro | 1× — /model-credits §2 (Coding Plan models and credit multipliers)"
+		},
+		{
+			"id": "glm-5.3-flash",
+			"label": "GLM-5.3 Flash",
+			"wireId": "glm-5.3-flash",
+			"multiplier": 1,
+			"rateSource": "published",
+			"matches": [
+				"glm-5.3-flash"
+			],
+			"quote": "GLM-5.3 Flash | 1× — /model-credits §2 (Coding Plan models and credit multipliers)"
+		},
+		{
+			"id": "kimi-k2.7-code",
+			"label": "Kimi K2.7 Code",
+			"wireId": "kimi-k2.7-code",
+			"multiplier": 1,
+			"rateSource": "published",
+			"matches": [
+				"kimi-k2.7-code"
+			],
+			"quote": "Kimi K2.7 Code | 1× — /model-credits §2 (Coding Plan models and credit multipliers)"
+		},
+		{
+			"id": "mimo-v2.6-flash",
+			"label": "MiMo V2.6 Flash",
+			"wireId": "mimo-v2.6-flash",
+			"multiplier": 4,
+			"rateSource": "published",
+			"matches": [
+				"mimo-v2.6-flash"
+			],
+			"quote": "MiMo V2.6 Flash | 4× — /model-credits §2 (Coding Plan models and credit multipliers); pricing corroborates 4×: its Coding Plan usage row reads $15/$20/$45/$75 a month against $60/$80/$180/$300 for the 1× rows — /pricing §Coding Plan usage"
+		},
+		{
+			"id": "mimo-v2.6-pro",
+			"label": "MiMo V2.6 Pro",
+			"wireId": "mimo-v2.6-pro",
+			"multiplier": 4,
+			"rateSource": "published",
+			"matches": [
+				"mimo-v2.6-pro"
+			],
+			"quote": "MiMo V2.6 Pro | 4× — /model-credits §2 (Coding Plan models and credit multipliers); corroborated by $15/$20/$45/$75 in /pricing §Coding Plan usage"
+		},
+		{
+			"id": "glm-5.3-flashx",
+			"label": "GLM-5.3 Flash-X",
+			"wireId": "glm-5.3-flashx",
+			"multiplier": 2,
+			"rateSource": "published",
+			"matches": [
+				"glm-5.3-flashx",
+				"glm-5.3-flash-x"
+			],
+			"quote": "GLM-5.3 Flash-X | 2× — /help/billing, section Why do different models use credits at different rates? Absent from the /model-credits section 2 multiplier table entirely."
+		},
+		{
+			"id": "claude-haiku-5.5",
+			"label": "Claude Haiku 5.5",
+			"wireId": "claude-haiku-5.5",
+			"multiplier": 4,
+			"multiplierConflict": true,
+			"rateSource": "published",
+			"matches": [
+				"claude-haiku-5.5",
+				"claude-haiku-5-5"
+			],
+			"quote": "Claude Haiku 5.5 / GPT-6 Luna | 4× — /help/billing, section Why do different models use credits at different rates? No row for Claude Haiku 5.5 exists in /model-credits, section 2 (Coding Plan models and credit multipliers)."
+		},
+		{
+			"id": "gpt-6-luna",
+			"label": "GPT-6 Luna",
+			"wireId": "gpt-6-luna",
+			"multiplier": 4,
+			"rateSource": "published",
+			"matches": [
+				"gpt-6-luna"
+			],
+			"quote": "Claude Haiku 5.5 / GPT-6 Luna | 4× — /help/billing, section Why do different models use credits at different rates? No row for GPT-6 Luna exists in /model-credits, section 2."
+		}
+	],
+	"modelsNotInCodingPlan": [
+		"GPT-6 Astra",
+		"Claude Fable 5.2",
+		"Claude Fable 5.1",
+		"Claude Opus 5.5",
+		"GPT-6 Sol",
+		"GPT-6.1 Terra",
+		"Kimi K3.1 Pro",
+		"Muse Ember",
+		"Muse Spark 1.3",
+		"Gemini 4 Argon",
+		"Kimi K3",
+		"Grok 4.7",
+		"Gemini 3.8 Flash",
+		"Claude Sonnet 5.5",
+		"Muse Wonder"
+	],
+	"conflicts": [
+		{
+			"field": "plans.go.caps (default set)",
+			"status": "resolved",
+			"values": {
+				"eco": {
+					"month": 220,
+					"week": 55,
+					"fiveHour": 18
+				},
+				"originalFlash": {
+					"month": 120,
+					"week": 30,
+					"fiveHour": 10
+				}
+			},
+			"quotes": [
+				"Go displays up to $220/month, $55/7 days and $18/5 hours … Original Flash peak-rate billing and all other plans remain unchanged. — pricing.md §Go",
+				"With DeepSeek V4.1 Flash Eco, Go allows up to $55 per 7 days and $18 per 5 hours; Plus allows up to $74 per 7 days, with no 5-hour window. With the original DeepSeek V4.1 Flash, Go allows up to $30 per 7 days and $10 per 5 hours; Plus allows up to $40 per 7 days. — /help/billing §When do the limits reset?",
+				"The original DeepSeek V4.1 Flash allowance remains unchanged: up to $120/month on Go and $160/month on Plus. — /help/billing §How much model credit does each plan include",
+				"DeepSeek V4.1 Flash … Monthly usage go $120 ; DeepSeek V4.1 Flash Eco … go $220 — /pricing §Coding Plan usage (two separate rows)"
+			],
+			"confirmedBy": {
+				"eco": [
+					"pricingMd",
+					"billing",
+					"modelCredits",
+					"pricing"
+				],
+				"originalFlashMonth": [
+					"billing",
+					"pricing"
+				],
+				"originalFlashWeek": [
+					"billing"
+				],
+				"originalFlashFiveHour": [
+					"billing"
+				]
+			},
+			"note": "Both sets are real and are NOT additive — Eco is a separately selectable model on Go and Go Plus only. Eco's month/week/5h are each confirmed by four pages. Original Flash's month is on two pages (/help/billing text and the /pricing table's $120). Its 7-day ($30) and 5-hour ($10) figures appear on ONE page only: /help/billing. pricing.md declines to restate them ('Original Flash peak-rate billing and all other plans remain unchanged'), and /model-credits' per-plan table lists only the Eco numbers, so it cannot confirm the original's windows. Recorded as published, with the single-source part named."
+		},
+		{
+			"field": "models.claude-haiku-5.5.multiplier",
+			"status": "unresolved",
+			"values": {
+				"modelCredits": null,
+				"billing": 4,
+				"pricing": null
+			},
+			"quotes": [
+				"/model-credits has NO row for Claude Haiku 5.5 at all: its 'Coding Plan models and credit multipliers' table ends at 'MiMo V2.6 Pro | 4×'. Recorded as absence, not as 2× — this page cannot be quoted for any Haiku figure.",
+				"Claude Haiku 5.5 / GPT-6 Luna | 4× — /help/billing §Why do different models use credits at different rates?",
+				"/zh/help/billing §额度倍率 carries the same row: 'Claude Haiku 5.5 / GPT-6 Luna | 4×'",
+				"/model-credits also omits GLM-5.3 Flash-X (2×) and GPT-6 Luna (4×) — the two rows /help/billing adds beyond it."
+			],
+			"note": "The brief expected /model-credits to say 2×. Fetched 2026-11-17 it does not mention Haiku anywhere (0 occurrences of 'Haiku' in the served HTML), nor Luna, nor Flash-X. Only /help/billing publishes a Haiku multiplier, and it says 4×, confirmed by the Chinese edition of the same page. So the live conflict is not 2× vs 4×; it is one page publishing 4× and the other publishing nothing. core/od.json carries 2 with this conflict already noted — that 2 has no source on any page fetched today."
+		},
+		{
+			"field": "plans.pro / plans.max coding-plan caps",
+			"status": "unresolved",
+			"values": {
+				"billing": {
+					"pro": {
+						"month": 360,
+						"week": 90
+					},
+					"max": {
+						"month": 600,
+						"week": 150
+					},
+					"combined": {
+						"pro": 480,
+						"max": 900
+					},
+					"ratioCheck": {
+						"pro": "90/360 = 25.0%",
+						"max": "150/600 = 25.0%"
+					}
+				},
+				"modelCredits": {
+					"pro": {
+						"month": 660,
+						"week": 90
+					},
+					"max": {
+						"month": 1110,
+						"week": 150
+					},
+					"combined": {
+						"pro": 780,
+						"max": 1410
+					},
+					"ratioCheck": {
+						"pro": "90/660 = 13.6%",
+						"max": "150/1110 = 13.5%"
+					}
+				},
+				"pricingMd": {
+					"pro": {
+						"month": 660
+					},
+					"max": {
+						"month": 1110
+					},
+					"combined": {
+						"pro": 780,
+						"max": 1410
+					}
+				}
+			},
+			"quotes": [
+				"Pro | $100 | $120 | $360 | $480 ; Max | $200 | $300 | $600 | $900 — /help/billing §How much model credit does each plan include",
+				"Go Pro | $100 | $780 | $120 Limited-time 20% bonus | $660 Bonus | $90 | No limit window — /model-credits §2",
+				"Coding Plan: up to $660 / month; maximum combined monthly model credits: $780 — pricing.md §Go Pro",
+				"Pro and Max retain their $90 and $150 7-day maximums, with no 5-hour window. — /help/billing §When do the limits reset?"
+			],
+			"note": "TWO coherent generations, not one typo. /help/billing's credit table gives Pro $360 / Max $600 Coding Plan maxima (combined $480 / $900 = +$120 / +$300 Top Model Credits); /model-credits §2 and pricing.md give $660 / $1,110 (combined $780 / $1,410). Both add up. The 7-day figures ($90 / $150) are identical on both pages, so the tie-break is the week-to-month ratio: Go 55/220 = 25.0%, Plus 74/290 = 25.5%, and 90/360 = 25.0% / 150/600 = 25.0% — but 90/660 = 13.6% / 150/1110 = 13.5%, half every other plan's share. Majority (pricing.md, /pricing card, /model-credits) records 660/1,110; the $360/$600 table is coherent only with its own 7-day pair and would reset a user at half the expected week share. Left open."
+		},
+		{
+			"field": "plan names",
+			"status": "unresolved (cosmetic, both spellings kept)",
+			"values": {
+				"long": [
+					"Go",
+					"Go Plus",
+					"Go Pro",
+					"Go Max"
+				],
+				"short": [
+					"Go",
+					"Plus",
+					"Pro",
+					"Max"
+				]
+			},
+			"quotes": [
+				"## Go Plus — managed / ## Go Pro — managed (recommended) / ## Go Max — managed — pricing.md headings",
+				"Go Plus … Go Pro … Go Max — the four plan cards on /pricing (§tablist aria-label \"Choose a plan\")",
+				"Go | Go Plus | Go Pro | Go Max — the tab labels on /model-credits §2 multiplier table (data-multiplier-tier go/plus/pro/max)",
+				"Choose Go, Plus, Pro, or Max for the current workspace, then choose monthly or yearly billing. — /help/billing §Choose a subscription",
+				"Go | Plus | Pro | Max — the plan tables on /help/billing (both the credit table and the concurrency table)"
+			],
+			"note": "Same four plans. pricing.md, /pricing and /model-credits use the long form; /help/billing (and its zh edition) use the short one. Every plan figure in this file records which page it came from, so the spelling under which a number was read is always recoverable. No rename has happened — do not collapse the two into one list."
+		},
+		{
+			"field": "plans.plus.caps.fiveHour / plans.pro.caps.fiveHour / plans.max.caps.fiveHour",
+			"status": "resolved (null, not 0)",
+			"values": {
+				"go": 18,
+				"plus": null,
+				"pro": null,
+				"max": null
+			},
+			"quotes": [
+				"Go Plus | $20 | $310 | $20 | $290 Bonus | $74 | No limit window — /model-credits §2",
+				"Go Pro | … | $90 | No limit window ; Go Max | … | $150 | No limit window — /model-credits §2",
+				"Plus allows up to $74 per 7 days, with no 5-hour window … Pro and Max retain their $90 and $150 7-day maximums, with no 5-hour window. — /help/billing §When do the limits reset?",
+				"Go has both 5-hour and 7-day windows; Plus, Pro, and Max have only a 7-day window. — /model-credits §3"
+			],
+			"note": "Three pages agree that only Go publishes a 5-hour window. 'No limit window' on /model-credits is that same absence, not an unlimited cap — encoded as null so a consumer never renders ∞."
+		},
+		{
+			"field": "plans.*.caps terminology",
+			"status": "resolved (softer label on /help/billing only)",
+			"values": {
+				"combinedMonthlyMaximum": "same figure, two column names",
+				"designPlan": "no longer published anywhere; anchor id only"
+			},
+			"quotes": [
+				"Coding Plan calls use Coding Plan credits first, then remaining Top Model Credits. Top Model calls use Top Model Credits directly. Go has no separate Top Model Credits. — pricing.md §OpenDesign API",
+				"Coding Plan bonus credits are used first. Once exhausted, further usage automatically draws from Top Model Credits. — /model-credits §1",
+				"Models outside the Coding Plan group spend Top Model Credits directly. — /help/billing §When do the limits reset?",
+				"| Plan | Regular monthly price | Top Model Credits | Coding Plan monthly maximum | Combined monthly maximum | — /help/billing §How much model credit does each plan include (its own table header)",
+				"| Plan | Regular monthly price | Monthly maximum | Top Model Credits | Coding Plan Monthly maximum | Maximum credits per 7-day window | Maximum credits per 5-hour window | — /model-credits §2 (its header)",
+				"Coding Plan: up to $660 / month; maximum combined monthly model credits: $780 — pricing.md §Go Pro (uses 'combined')"
+			],
+			"note": "'Combined monthly maximum' is /help/billing's own column name and agrees with pricing.md's 'maximum combined monthly model credits'. /model-credits calls the same thing 'Monthly maximum' and breaks it as Coding Plan + Top Model Credits, but the arithmetic is identical on every plan (220+0, 290+20, 660+120, 1110+300). The string 'Design Plan' appears on NO page fetched today — only /model-credits' stale anchor id=\"design-plan-models\" on its Coding Plan multipliers heading, a leftover from when the allowance was named Design Plan. Recorded so a later reader does not treat the anchor as evidence of a separate allowance."
+		},
+		{
+			"field": "plans.go.topModelCredits",
+			"status": "resolved",
+			"values": {
+				"billing": 0,
+				"modelCredits": 0,
+				"pricingMd": "none"
+			},
+			"quotes": [
+				"Go | $10 | $0 | $220 | $220 — /help/billing §How much model credit does each plan include",
+				"Go | $10 | $220 | $0 | $220 | $55 | $18 — /model-credits §2",
+				"no separate Top Model Credits … Go has no separate Top Model Credits — pricing.md §Go, §OpenDesign API",
+				"Top Models Not included — /pricing Go card"
+			],
+			"note": "Go publishes no Top Model Credits. Recorded as 0 with label 'Not included', which is the pricing card's own word — not null, because every page states the absence explicitly."
+		}
+	],
+	"promotions": [
+		{
+			"id": "first-month",
+			"status": "live",
+			"values": {
+				"go": 8,
+				"plus": 16,
+				"pro": 80,
+				"max": 160
+			},
+			"quotes": [
+				"Price: **$10 / month** (first month $8), or **$84 / year**, 30% off — pricing.md §Go",
+				"Price: **$20 / month** (first month $16; or $168 / year, 30% off) — pricing.md §Go Plus",
+				"Price: **$100 / month** (first month $80; or $840 / year, 30% off) — pricing.md §Go Pro",
+				"Price: **$200 / month** (first month $160; or $1,680 / year, 30% off) — pricing.md §Go Max",
+				"A first-month offer applies to a new monthly subscription once per account. After that month, renewal uses the price shown on the plan card and at checkout. — /help/billing §First-month offers, renewal, and annual billing"
+			],
+			"note": "20% off the first month on every tier, identical percent at all four prices ($8/$16/$80/$160). Applied once per account, monthly billing only, and does not stack with yearly."
+		},
+		{
+			"id": "annual",
+			"status": "live",
+			"values": {
+				"go": 84,
+				"plus": 168,
+				"pro": 840,
+				"max": 1680,
+				"discountPct": 30
+			},
+			"quotes": [
+				"or **$84 / year**, 30% off — pricing.md §Go",
+				"$84 / year / $168 / year / $840 / year / $1,680 / year, 30% off — pricing.md §Go, §Go Plus, §Go Pro, §Go Max",
+				"Yearly plans charge the full year upfront and renew annually; the displayed monthly equivalent is not a monthly payment. — /help/billing §First-month offers, renewal, and annual billing"
+			],
+			"note": "30% off at every tier. The monthly equivalent on the card ($7/$14/$70/$140) is a display figure, not a charge."
+		},
+		{
+			"id": "top-model-bonus",
+			"status": "live (described as limited-time)",
+			"values": {
+				"pro": {
+					"base": 100,
+					"granted": 120,
+					"pct": 20
+				},
+				"max": {
+					"base": 200,
+					"granted": 300,
+					"pct": 50
+				}
+			},
+			"quotes": [
+				"Pro’s $120 top Model Credits include a limited-time 20% bonus; Max’s $300 include a limited-time 50% bonus. — /help/billing §How much model credit does each plan include",
+				"Go Pro | $100 | $780 | $120 Limited-time 20% bonus — /model-credits §2",
+				"Go Max | $200 | $1,410 | $300 Limited-time 50% bonus — /model-credits §2"
+			],
+			"note": "The published Top Model Credits already contain the bonus, so 120 and 300 are the numbers that bill. The pre-bonus base (100/200) is inferred from the stated percentages and appears nowhere as an amount."
+		},
+		{
+			"id": "deepseek-off-peak",
+			"status": "expired",
+			"values": {
+				"from": "2026-10-20T18:00+08:00",
+				"to": "2026-10-27T18:00+08:00",
+				"fromMultiplier": 0.5,
+				"toMultiplier": 0.25
+			},
+			"quotes": [
+				"The limited-time off-peak offer lasts one week: October 20 at 18:00 to October 27 at 18:00 (UTC+8). The multiplier drops from 0.5× to 0.25×, then returns to 0.5×. Plan allowances and reset times stay unchanged. — /model-credits §2 tooltip",
+				"Dated promotion: DeepSeek V4.1 Flash’s October 20, 2026 18:00–October 27, 2026 18:00 (UTC+8) off-peak offer changes its multiplier from 0.5× to 0.25×, then returns it to 0.5×. — /help/billing §Why do different models use credits at different rates?",
+				"During the campaign week, Go Coding Plan credits at off-peak rates provide up to $60 in DeepSeek V4.1 Flash usage equivalent. This is not extra credit — /pricing §Coding Plan usage, tooltip on the hidden campaign row"
+			],
+			"note": "Expired on 2026-10-27, three weeks before this extraction. The row still ships hidden in the DOM with a live countdown, so a scraper that ignores the hidden attribute reads 0.25× and a campaign $60/week. Both are recorded here only so a consumer can tell them apart from the standing values."
+		}
+	],
+	"wireIds": {
+		"source": "GET https://amr-link.open-design.ai/v1/models (Bearer key from ~/.config/open-design/env), fetched 2026-11-17",
+		"count": 14,
+		"allPresent": true,
+		"note": "All 14 ids the store records are present. A page slug is never the key — the wire id is.",
+		"spellingDifferences": [
+			{
+				"label": "GLM-5.3 Flash-X",
+				"wireId": "glm-5.3-flashx",
+				"pageSpelling": "glm-5.3-flash-x",
+				"page": "/help/billing §Why do different models use credits at different rates?"
+			},
+			{
+				"label": "Claude Haiku 5.5",
+				"wireId": "claude-haiku-5.5",
+				"pageSpelling": "claude-haiku-5-5",
+				"page": "opencode core/zen + repo catalog id (not on the pricing pages)"
+			}
+		],
+		"topModelsAbsentFromGateway": {
+			"note": "Every Top Model the pricing page lists is absent from /v1/models, so none has a wire id to key a stored turn by.",
+			"labels": [
+				"GPT-6 Astra",
+				"Claude Fable 5.2",
+				"Claude Fable 5.1",
+				"Claude Opus 5.5",
+				"GPT-6 Sol",
+				"GPT-6.1 Terra",
+				"Kimi K3.1 Pro",
+				"Muse Ember",
+				"Muse Spark 1.3",
+				"Gemini 4 Argon",
+				"Kimi K3",
+				"Grok 4.7",
+				"Gemini 3.8 Flash",
+				"Claude Sonnet 5.5",
+				"Muse Wonder"
+			]
+		}
+	},
+	"meta": {
+		"verification": "Each page fetched over HTTPS 2026-11-17 and re-read in the served HTML, not a rendered screenshot. Tables were parsed from the raw markup, so a hidden row stays distinguishable from a visible one.",
+		"notes": [
+			"Sources disagree in three ways: per-plan caps on Pro/Max, a missing Haiku row, and two plan-name spellings. All three are in `conflicts`; none was smoothed.",
+			"Two figures rest on a single page and are named as such: original DeepSeek V4.1 Flash 7-day/5-hour on Go ($30/$10), and the GLM-5.3 Flash-X (2x) / GPT-6 Luna (4x) multipliers.",
+			"A `null` cap means the page publishes no such window. `0` means it publishes an explicit zero (only Go Top Model Credits).",
+			"Both zh editions of /help/billing and /model-credits were fetched and agree with their English twins on every figure, including the absent Haiku row — so the omissions are real, not a failed fetch.",
+			"The expired October off-peak promo still ships as a hidden DOM row with a live countdown; its 0.25x and $60/week are recorded in `promotions` only so they are not mistaken for standing values.",
+			"No page fetched today publishes the string Design Plan; it survives only as the anchor id on /model-credits multipliers heading.",
+			"core/od.json previously carried Claude Haiku 5.5 at 2x. No page publishes 2 for it; the value here is 4 with multiplierConflict set."
+		]
+	}
+}
