@@ -168,6 +168,7 @@ fn every_renderer_respects_the_colour_flag() {
                 0,
                 colour,
                 fmt,
+                usize::MAX,
             );
             assert!(!out.contains('\x1b'), "{fmt:?} must never be coloured");
         }

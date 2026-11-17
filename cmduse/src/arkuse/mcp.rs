@@ -195,6 +195,7 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
                 tz,
                 colour,
                 crate::report_render::Fmt::Table,
+                rows_cap(usize::MAX),
             )
         }),
         "hourly" => rows().map(|rows| {
@@ -207,6 +208,7 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
                 tz,
                 colour,
                 crate::report_render::Fmt::Table,
+                rows_cap(usize::MAX),
             )
         }),
         "session" => rows().map(|rows| {

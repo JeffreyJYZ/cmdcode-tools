@@ -124,11 +124,14 @@ fn tool_call(msg: &Value) -> Result<Value, (i64, String)> {
         "models" => crate::models_output(opt_bool_default("gated", true)),
         "daily" => {
             let tz = opt_tz("tz")?;
+            // This tool takes no `rows` argument (its schema is pinned across the
+            // family), and an MCP client is not a terminal: nothing is trimmed.
             crate::daily_output(
                 opt_usize("days"),
                 tz,
                 opt_bool("local"),
                 crate::report_render::Fmt::Table,
+                usize::MAX,
             )
         }
         "hourly" => {
@@ -138,6 +141,7 @@ fn tool_call(msg: &Value) -> Result<Value, (i64, String)> {
                 tz,
                 opt_bool("local"),
                 crate::report_render::Fmt::Table,
+                usize::MAX,
             )
         }
         "session" => Ok(crate::session_output(

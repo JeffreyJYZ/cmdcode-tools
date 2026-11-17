@@ -1261,7 +1261,9 @@ pub fn model_report(report: &Report, id: Option<&str>, fmt: Fmt) -> String {
 /// `Csv` columns are that key plus the store's numeric fields
 /// (`…,requests,tokens_in,tokens_out,cache_read,cost_usd`; no cache-write), the
 /// `Json` form `{scope,source,total,days|hours}`, and `Table` is the original
-/// framing but for `Ink`'s colour. `Json`/`Csv` are never coloured.
+/// framing but for `Ink`'s colour. `rows` caps the `Table` form only (the newest
+/// buckets survive); `Json`/`Csv` carry every bucket and are never coloured.
+#[allow(clippy::too_many_arguments)]
 pub fn bucket_text(
     rows: &[crate::ocuse::db::Row],
     now_ms: i64,
@@ -1270,6 +1272,7 @@ pub fn bucket_text(
     tz_secs: i64,
     colour: bool,
     fmt: Fmt,
+    cap: usize,
 ) -> String {
     // Buckets are cut in the display timezone: shift, bucket, then label.
     let shift = tz_secs * 1000;
@@ -1342,7 +1345,8 @@ pub fn bucket_text(
                 "{}{label:<12} spend     requests   tokens{}\n",
                 ink.bold, ink.reset
             );
-            for (bucket, b) in &window {
+            let shown = window.len().min(cap);
+            for (bucket, b) in window.iter().skip(window.len() - shown) {
                 out.push_str(&format!(
                     "{:<12} {} {} {}\n",
                     stamp(*bucket),
@@ -1358,6 +1362,12 @@ pub fn bucket_text(
                 out.push_str(&format!(
                     "{}\n",
                     ink.dim_on("(no OpenCode usage in the window)".into())
+                ));
+            }
+            if window.len() > shown {
+                out.push_str(&format!(
+                    "{}\n",
+                    ink.dim_on(format!("… {} more", window.len() - shown))
                 ));
             }
             out
@@ -1904,13 +1914,49 @@ mod tests {
             ),
             (
                 "bucket_text/day",
-                bucket_text(&rows, now, 7 * 86_400_000, 86_400_000, 0, false, Fmt::Table),
-                bucket_text(&rows, now, 7 * 86_400_000, 86_400_000, 0, true, Fmt::Table),
+                bucket_text(
+                    &rows,
+                    now,
+                    7 * 86_400_000,
+                    86_400_000,
+                    0,
+                    false,
+                    Fmt::Table,
+                    usize::MAX,
+                ),
+                bucket_text(
+                    &rows,
+                    now,
+                    7 * 86_400_000,
+                    86_400_000,
+                    0,
+                    true,
+                    Fmt::Table,
+                    usize::MAX,
+                ),
             ),
             (
                 "bucket_text/hour",
-                bucket_text(&rows, now, 3_600_000, 3_600_000, 0, false, Fmt::Table),
-                bucket_text(&rows, now, 3_600_000, 3_600_000, 0, true, Fmt::Table),
+                bucket_text(
+                    &rows,
+                    now,
+                    3_600_000,
+                    3_600_000,
+                    0,
+                    false,
+                    Fmt::Table,
+                    usize::MAX,
+                ),
+                bucket_text(
+                    &rows,
+                    now,
+                    3_600_000,
+                    3_600_000,
+                    0,
+                    true,
+                    Fmt::Table,
+                    usize::MAX,
+                ),
             ),
             (
                 "session_text",
@@ -1939,13 +1985,49 @@ mod tests {
         let flagged: Vec<(&str, String, String)> = vec![
             (
                 "bucket_text/day csv",
-                bucket_text(&rows, now, 7 * 86_400_000, 86_400_000, 0, false, Fmt::Csv),
-                bucket_text(&rows, now, 7 * 86_400_000, 86_400_000, 0, true, Fmt::Csv),
+                bucket_text(
+                    &rows,
+                    now,
+                    7 * 86_400_000,
+                    86_400_000,
+                    0,
+                    false,
+                    Fmt::Csv,
+                    usize::MAX,
+                ),
+                bucket_text(
+                    &rows,
+                    now,
+                    7 * 86_400_000,
+                    86_400_000,
+                    0,
+                    true,
+                    Fmt::Csv,
+                    usize::MAX,
+                ),
             ),
             (
                 "bucket_text/hour json",
-                bucket_text(&rows, now, 3_600_000, 3_600_000, 0, false, Fmt::Json),
-                bucket_text(&rows, now, 3_600_000, 3_600_000, 0, true, Fmt::Json),
+                bucket_text(
+                    &rows,
+                    now,
+                    3_600_000,
+                    3_600_000,
+                    0,
+                    false,
+                    Fmt::Json,
+                    usize::MAX,
+                ),
+                bucket_text(
+                    &rows,
+                    now,
+                    3_600_000,
+                    3_600_000,
+                    0,
+                    true,
+                    Fmt::Json,
+                    usize::MAX,
+                ),
             ),
             (
                 "session_text csv",
@@ -2013,6 +2095,69 @@ mod tests {
     }
 
     #[test]
+    fn bucket_rows_cap_the_table_and_never_the_machine_formats() {
+        // `daily`/`hourly` share this renderer: the newest buckets survive a cap,
+        // the tail counts what was withheld, and JSON/CSV keep every bucket.
+        let now = 1_800_000_000_000;
+        let rows: Vec<Row> = (0..4)
+            .map(|i| Row {
+                at_ms: now - i as i64 * 86_400_000,
+                provider: "opencode-go".into(),
+                model: "glm-5.3-flash".into(),
+                session: format!("ses_{i}"),
+                cost_usd: 0.1,
+                ..Default::default()
+            })
+            .collect();
+        let table = bucket_text(
+            &rows,
+            now,
+            7 * 86_400_000,
+            86_400_000,
+            0,
+            false,
+            Fmt::Table,
+            2,
+        );
+        assert!(table.contains("… 2 more"), "{table}");
+        assert_eq!(table.lines().count(), 4, "header + 2 + tail: {table}");
+        let full = bucket_text(
+            &rows,
+            now,
+            7 * 86_400_000,
+            86_400_000,
+            0,
+            false,
+            Fmt::Table,
+            usize::MAX,
+        );
+        assert!(!full.contains("more"), "nothing trimmed: {full}");
+        let json: serde_json::Value = serde_json::from_str(&bucket_text(
+            &rows,
+            now,
+            7 * 86_400_000,
+            86_400_000,
+            0,
+            false,
+            Fmt::Json,
+            2,
+        ))
+        .unwrap();
+        assert_eq!(json["days"].as_object().unwrap().len(), 4);
+        let csv = bucket_text(
+            &rows,
+            now,
+            7 * 86_400_000,
+            86_400_000,
+            0,
+            false,
+            Fmt::Csv,
+            2,
+        );
+        assert_eq!(csv.lines().count(), 6, "header + 4 rows + total: {csv}");
+    }
+
+    #[test]
     fn bucket_reports_carry_the_documented_columns() {
         let now = 1_800_000_000_000;
         let rows = vec![Row {
@@ -2026,7 +2171,16 @@ mod tests {
             cache_write: 40,
             ..Default::default()
         }];
-        let csv = bucket_text(&rows, now, 7 * 86_400_000, 86_400_000, 0, false, Fmt::Csv);
+        let csv = bucket_text(
+            &rows,
+            now,
+            7 * 86_400_000,
+            86_400_000,
+            0,
+            false,
+            Fmt::Csv,
+            usize::MAX,
+        );
         assert!(
             csv.starts_with("day,requests,tokens_in,tokens_out,cache_read,cost_usd\n"),
             "{csv}"
@@ -2044,6 +2198,7 @@ mod tests {
             0,
             false,
             Fmt::Json,
+            usize::MAX,
         ))
         .unwrap();
         assert_eq!(json["total"]["requests"], 1);
@@ -2518,7 +2673,16 @@ mod tests {
         let now = 1_800_000_000_000;
         let day = 86_400_000;
         assert_eq!(
-            keys(bucket_text(&[], now, 2 * day, day, 0, false, Fmt::Json)),
+            keys(bucket_text(
+                &[],
+                now,
+                2 * day,
+                day,
+                0,
+                false,
+                Fmt::Json,
+                usize::MAX
+            )),
             REPORT_DAILY_KEYS.to_vec()
         );
         assert_eq!(
@@ -2529,7 +2693,8 @@ mod tests {
                 3_600_000,
                 0,
                 false,
-                Fmt::Json
+                Fmt::Json,
+                usize::MAX
             )),
             REPORT_HOURLY_KEYS.to_vec()
         );

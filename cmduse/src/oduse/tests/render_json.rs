@@ -25,7 +25,8 @@ fn report_json_envelopes_are_the_shared_contract() {
             day,
             0,
             false,
-            Fmt::Json
+            Fmt::Json,
+            usize::MAX
         )),
         REPORT_DAILY_KEYS.to_vec()
     );
@@ -38,7 +39,8 @@ fn report_json_envelopes_are_the_shared_contract() {
             3_600_000,
             0,
             false,
-            Fmt::Json
+            Fmt::Json,
+            usize::MAX
         )),
         REPORT_HOURLY_KEYS.to_vec()
     );

@@ -92,7 +92,7 @@ pub fn run() {
     // offline local reports — no API, no key needed
     match args.subcmd {
         Some(cli::SubCmd::Daily) => {
-            match daily_output(args.last, tz, args.local, fmt) {
+            match daily_output(args.last, tz, args.local, fmt, rows_cap(&args, usize::MAX)) {
                 Ok(text) => print!("{text}"),
                 Err(e) => {
                     eprintln!("error: {e}");
@@ -102,7 +102,7 @@ pub fn run() {
             return;
         }
         Some(cli::SubCmd::Hours) => {
-            match hourly_output(args.hours, tz, args.local, fmt) {
+            match hourly_output(args.hours, tz, args.local, fmt, rows_cap(&args, usize::MAX)) {
                 Ok(text) => print!("{text}"),
                 Err(e) => {
                     eprintln!("error: {e}");
@@ -684,11 +684,14 @@ pub(crate) fn models_output(gated: bool) -> Result<String, String> {
 }
 
 /// Account-wide daily report; local CLI-log fallback when no key/--local.
+/// `rows` caps the table (`--rows N`, `0`/`usize::MAX` = every row); the
+/// machine formats always carry the whole period.
 pub(crate) fn daily_output(
     days: Option<usize>,
     tz: i64,
     local: bool,
     fmt: report_render::Fmt,
+    rows: usize,
 ) -> Result<String, String> {
     let tz_suffix = |t: i64| cmduse_core::dates::tz_offset_suffix(t);
     // account-wide (all harnesses) via API when key available; local fallback
@@ -708,6 +711,7 @@ pub(crate) fn daily_output(
                 &by_day,
                 &total,
                 None,
+                rows,
                 fmt,
                 false,
             ))
@@ -726,7 +730,7 @@ pub(crate) fn daily_output(
                 "offline, ~/.commandcode/projects + pi, dsh".to_string()
             };
             Ok(report_render::table(
-                "local", &subtitle, &d.by_day, &d.total, days, fmt, false,
+                "local", &subtitle, &d.by_day, &d.total, days, rows, fmt, false,
             ))
         }
     }
@@ -738,6 +742,7 @@ pub(crate) fn hourly_output(
     tz: i64,
     local: bool,
     fmt: report_render::Fmt,
+    cap: usize,
 ) -> Result<String, String> {
     let tz_suffix = |t: i64| cmduse_core::dates::tz_offset_suffix(t);
     let rows = if local {
@@ -757,7 +762,9 @@ pub(crate) fn hourly_output(
     } else {
         "all harnesses, UTC".to_string()
     };
-    Ok(report_render::hourly_table(&rows, fmt, &subtitle, false))
+    Ok(report_render::hourly_table(
+        &rows, fmt, &subtitle, false, cap,
+    ))
 }
 
 /// The local-report window bound, in epoch MILLISECONDS — the unit both

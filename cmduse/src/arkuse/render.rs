@@ -1450,6 +1450,8 @@ impl Bucket {
 }
 
 /// AFP per bucket (day or hour), oldest first — `arkuse daily` / `arkuse hourly`.
+/// `rows` caps the `Table` form only (the newest buckets survive); `Json`/`Csv`
+/// carry every bucket.
 #[allow(clippy::too_many_arguments)]
 pub fn bucket_text(
     rows: &[crate::arkuse::db::Row],
@@ -1460,6 +1462,7 @@ pub fn bucket_text(
     tz_secs: i64,
     colour: bool,
     fmt: Fmt,
+    cap: usize,
 ) -> String {
     // Buckets are cut in the display timezone: shift, bucket, then label.
     let shift = tz_secs * 1000;
@@ -1531,7 +1534,8 @@ pub fn bucket_text(
                 "{}{label:<12} AFP      requests   tokens{}\n",
                 ink.bold, ink.reset
             );
-            for (bucket, b) in &window {
+            let shown = window.len().min(cap);
+            for (bucket, b) in window.iter().skip(window.len() - shown) {
                 out.push_str(&format!(
                     "{:<12} {} {} {}\n",
                     stamp(*bucket),
@@ -1544,6 +1548,12 @@ pub fn bucket_text(
                 out.push_str(&format!(
                     "{}\n",
                     ink.dim_on("(no agent-plan usage in the window)".into())
+                ));
+            }
+            if window.len() > shown {
+                out.push_str(&format!(
+                    "{}\n",
+                    ink.dim_on(format!("… {} more", window.len() - shown))
                 ));
             }
             out
@@ -1713,6 +1723,74 @@ mod tests {
             cell_ends(row)[1..header_ends.len()],
             "header columns must end where their cells do:\n{header}\n{row}"
         );
+    }
+
+    #[test]
+    fn bucket_rows_cap_the_table_and_never_the_machine_formats() {
+        // `daily`/`hourly` share this renderer: newest buckets survive a cap, the
+        // tail counts what was withheld, and JSON/CSV keep every bucket.
+        let now = 1_800_000_000_000;
+        let rows: Vec<Row> = (0..4)
+            .map(|i| Row {
+                at_ms: now - i as i64 * 86_400_000,
+                session: format!("ses_{i}"),
+                provider: "agent-plan".into(),
+                model: "deepseek-v4.1-flash".into(),
+                input: 1_000,
+                ..Default::default()
+            })
+            .collect();
+        let catalog = ark::catalog();
+        let table = bucket_text(
+            &rows,
+            &catalog,
+            now,
+            7 * 86_400_000,
+            86_400_000,
+            0,
+            false,
+            Fmt::Table,
+            2,
+        );
+        assert!(table.contains("… 2 more"), "{table}");
+        assert_eq!(table.lines().count(), 4, "header + 2 + tail: {table}");
+        let full = bucket_text(
+            &rows,
+            &catalog,
+            now,
+            7 * 86_400_000,
+            86_400_000,
+            0,
+            false,
+            Fmt::Table,
+            usize::MAX,
+        );
+        assert!(!full.contains("more"), "nothing trimmed: {full}");
+        let json: serde_json::Value = serde_json::from_str(&bucket_text(
+            &rows,
+            &catalog,
+            now,
+            7 * 86_400_000,
+            86_400_000,
+            0,
+            false,
+            Fmt::Json,
+            2,
+        ))
+        .unwrap();
+        assert_eq!(json["days"].as_object().unwrap().len(), 4);
+        let csv = bucket_text(
+            &rows,
+            &catalog,
+            now,
+            7 * 86_400_000,
+            86_400_000,
+            0,
+            false,
+            Fmt::Csv,
+            2,
+        );
+        assert_eq!(csv.lines().count(), 6, "header + 4 rows + total: {csv}");
     }
 
     #[test]
@@ -1938,6 +2016,7 @@ mod tests {
                 0,
                 true,
                 fmt,
+                usize::MAX,
             );
             assert!(!daily.contains('\u{1b}'), "{fmt:?} leaked colour: {daily}");
         }
@@ -1993,7 +2072,8 @@ mod tests {
                 day,
                 0,
                 false,
-                Fmt::Json
+                Fmt::Json,
+                usize::MAX
             )),
             REPORT_DAILY_KEYS.to_vec()
         );
@@ -2006,7 +2086,8 @@ mod tests {
                 3_600_000,
                 0,
                 false,
-                Fmt::Json
+                Fmt::Json,
+                usize::MAX
             )),
             REPORT_HOURLY_KEYS.to_vec()
         );

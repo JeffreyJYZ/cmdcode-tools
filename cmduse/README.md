@@ -66,7 +66,7 @@ cmduse model                 # local usage by model (all time)
 cmduse model 'zai-org/GLM-5.2'   # one model's row: requests, tokens, cost, share
 cmduse model --days 30       # ...only the last 30 days
 cmduse model --since 2026-08-27T00:00:00Z   # ...or since a billing-period start
-cmduse model --rows 10       # trim the table (0 = every row, which is the default)
+cmduse model --rows 10       # trim any report table's rows (0 = every row, the default)
 cmduse session --days 30     # local usage by project, same window flags
 cmduse models                # live model list from the Command Code API
 cmduse models --gated        # ...only models the current plan allows
@@ -93,7 +93,6 @@ Color: SGR escapes are suppressed when stdout is not a terminal or when `NO_COLO
 | `hourly`  | account hourly report; args `hours`, `tz`, `local`                                                                        |
 | `session` | local usage by project/session; args `since` (ISO-8601), `days`, `tz`, `rows`                                             |
 | `model`   | local usage by model; args `since` (ISO-8601), `days`, `tz`, `rows`, and `id` for one model's detail instead of the table |
-
 The tool _names_ are the same in all four servers, and an argument means the same thing wherever it exists. Where a source forces a difference it is stated rather than papered over: `ocuse` and `arkuse` add `plan` (the plan their source cannot report), as does `oduse`, and their `session`/`model` carry no `tz` — their store is already bucketed in the offset the server reports — while `cmduse`'s `session`/`model` do take `tz` and their `daily`/`hourly` additionally take `local`. `oduse` has no `gated`: OpenDesign prices models differently rather than restricting them. Tests pin each server's own list.
 
 Auth is the same as the CLI (`CMD_API_KEY`, then the key opencode's own credential store holds for the `commandcode` provider, then the legacy `~/.commandcode/auth.json`). A key the API refuses is skipped for the next one, so a superseded login costs one 401 rather than a dead dashboard. Tool errors come back as `isError: true` results; stdout carries protocol traffic only. Zed config:
@@ -185,7 +184,7 @@ cmduse config set dismissed_update=<ver>
 ## Data sources
 
 - **Dashboard / daily / hourly / statusline**: Command Code API with your account key. Daily and hourly cover **every harness** that used the key (CLI, Provider API, other agents). With no key to resolve, `daily` falls back to the local CLI logs — the same data `--local` gives — rather than failing.
-- **model / session / daily --local**: local session logs at `~/.commandcode/projects` — offline, but only what the CLI recorded. The `pi` and `dsh` session logs are read too, counting only their calls on a `command-code*` provider, so a harness other than the CLI still shows up (their roots are `~/.pi/agent/sessions` and `~/.dsh/sessions`, override with `PI_SESSIONS_DIR` / `DSH_SESSIONS_DIR`). `model`/`session` are all-time unless given `--days N` or `--since <ISO>`; the usage API has no per-model split, so local logs are the only per-model source. `--rows N` trims a table (`0` = every row); it never touches `--json`/`--csv`, which always carry every row.
+- **model / session / daily --local**: local session logs at `~/.commandcode/projects` — offline, but only what the CLI recorded. The `pi` and `dsh` session logs are read too, counting only their calls on a `command-code*` provider, so a harness other than the CLI still shows up (their roots are `~/.pi/agent/sessions` and `~/.dsh/sessions`, override with `PI_SESSIONS_DIR` / `DSH_SESSIONS_DIR`). `model`/`session` are all-time unless given `--days N` or `--since <ISO>`; the usage API has no per-model split, so local logs are the only per-model source. `--rows N` trims any report table — `daily`, `hourly`, `model` and `session` — to its newest `N` rows and ends it with `… N more` when it withheld any (`0` = every row, the default for a report); it never touches `--json`/`--csv`, which always carry every row.
 
 ## Requirements
 

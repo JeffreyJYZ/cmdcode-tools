@@ -41,6 +41,7 @@ pub fn subcommand(ctx: &Ctx) -> bool {
                 ctx.tz_secs,
                 ctx.colours,
                 ctx.fmt,
+                ctx.rows_cap(usize::MAX),
             )
         ),
         Some(SubCmd::Hours) => print!(
@@ -54,6 +55,7 @@ pub fn subcommand(ctx: &Ctx) -> bool {
                 ctx.tz_secs,
                 ctx.colours,
                 ctx.fmt,
+                ctx.rows_cap(usize::MAX),
             )
         ),
         Some(SubCmd::Session) => print!(

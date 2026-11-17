@@ -210,13 +210,29 @@ fn table_row(day: &str, t: &crate::reports::Totals, dim: bool) -> String {
     )
 }
 
+/// The one-line tail a capped table ends with: `total` is how many rows the table
+/// would have carried, `shown` how many it did. Nothing trimmed means no line,
+/// and the machine formats never reach here (they never trim).
+fn more_tail(total: usize, shown: usize, colors: bool) -> String {
+    if total <= shown {
+        return String::new();
+    }
+    let (d, dr) = if colors { (DIM, RESET) } else { ("", "") };
+    format!(" {d}… {} more{dr}\n", total - shown)
+}
+
 /// Daily usage table (local or account scope). JSON key and heading differ.
+/// `days` keeps the newest N buckets and `rows` caps what is printed; the
+/// newest `rows` survive, because a daily table trimmed from the bottom would
+/// hide the days a reader looks at first.
+#[allow(clippy::too_many_arguments)]
 pub fn table(
     scope: &str,
     subtitle: &str,
     by_day: &crate::reports::ByDay,
     total: &crate::reports::Totals,
     days: Option<usize>,
+    rows: usize,
     fmt: Fmt,
     colors: bool,
 ) -> String {
@@ -270,21 +286,29 @@ pub fn table(
             o.push_str(&table_header(colors));
             let day_count = by_day.len();
             let last_n = days.unwrap_or(usize::MAX);
-            for (day, t) in by_day.iter().skip(day_count.saturating_sub(last_n)) {
+            let window: Vec<_> = by_day
+                .iter()
+                .skip(day_count.saturating_sub(last_n))
+                .collect();
+            let shown = window.len().min(rows);
+            for (day, t) in window.iter().skip(window.len() - shown) {
                 o.push_str(&table_row(day, t, false));
             }
             o.push_str(&table_row("total", total, colors));
+            o.push_str(&more_tail(window.len(), shown, colors));
             o
         }
     }
 }
 
-/// Hourly account usage table
+/// Hourly account usage table. `rows` caps the table (newest hours survive);
+/// the machine formats carry every bucket.
 pub fn hourly_table(
     rows: &[(String, crate::reports::Totals)],
     fmt: Fmt,
     source: &str,
     colors: bool,
+    cap: usize,
 ) -> String {
     match fmt {
         Fmt::Json => {
@@ -324,7 +348,8 @@ pub fn hourly_table(
                 " {b}{:<14}{r} {:>6} {:>10} {:>10} {:>10}\n",
                 "Hour", "Reqs", "In", "Out", "Cost"
             ));
-            for (h, t) in rows {
+            let shown = rows.len().min(cap);
+            for (h, t) in rows.iter().skip(rows.len() - shown) {
                 o.push_str(&format!(
                     " {:<14} {:>6} {:>10} {:>10} {:>10}\n",
                     h,
@@ -334,6 +359,7 @@ pub fn hourly_table(
                     money(t.usage.cost_usd),
                 ));
             }
+            o.push_str(&more_tail(rows.len(), shown, colors));
             o
         }
     }
@@ -393,7 +419,6 @@ pub fn project_table(
         }
         Fmt::Table => {
             let (b, r) = if colors { (BOLD, RESET) } else { ("", "") };
-            let (d, dr) = if colors { (DIM, RESET) } else { ("", "") };
             let mut o = format!("\n{b}By project{r}\n");
             o.push_str(&format!(
                 " {b}{:<32}{r} {:>6} {:>10} {:>10}\n",
@@ -409,7 +434,7 @@ pub fn project_table(
                 ));
             }
             if by_project.len() > rows {
-                o.push_str(&format!(" {d}… {} more{dr}\n", by_project.len() - rows));
+                o.push_str(&more_tail(by_project.len(), rows, colors));
             }
             o
         }
@@ -471,7 +496,7 @@ pub fn model_table(
                 ));
             }
             if by_model.len() > rows {
-                o.push_str(&format!(" {d}… {} more{dr}\n", by_model.len() - rows));
+                o.push_str(&more_tail(by_model.len(), rows, colors));
             }
             o
         }
@@ -747,6 +772,69 @@ mod tests {
         assert_eq!(csv.lines().count(), 4, "header + every row: {csv}");
     }
 
+    /// `daily` and `hourly` share this renderer, so one test covers both: the
+    /// newest buckets survive a cap, the tail says how many were withheld, and
+    /// the machine formats keep every bucket.
+    #[test]
+    fn bucket_tables_trim_and_the_machine_formats_stay_complete() {
+        let mut by: crate::reports::ByDay = crate::reports::ByDay::new();
+        for day in ["2026-11-01", "2026-11-02", "2026-11-03", "2026-11-04"] {
+            by.insert(
+                day.into(),
+                Totals {
+                    requests: 1,
+                    ..Default::default()
+                },
+            );
+        }
+        let total = crate::reports::sum_days(&by);
+        let capped = table("local", "t", &by, &total, None, 2, Fmt::Table, false);
+        assert!(
+            capped.contains("2026-11-03") && capped.contains("2026-11-04"),
+            "{capped}"
+        );
+        assert!(
+            !capped.contains("2026-11-01"),
+            "newest rows survive: {capped}"
+        );
+        assert!(capped.contains("… 2 more"), "{capped}");
+        let json: serde_json::Value = serde_json::from_str(&table_json(&by, &total, 2)).unwrap();
+        assert_eq!(json["days"].as_object().unwrap().len(), 4, "json keeps all");
+        // Nothing trimmed, no tail.
+        let full = table(
+            "local",
+            "t",
+            &by,
+            &total,
+            None,
+            usize::MAX,
+            Fmt::Table,
+            false,
+        );
+        assert!(!full.contains("more"), "{full}");
+
+        let hours: Vec<(String, Totals)> = (0..4)
+            .map(|i| (format!("2026-11-04 0{i}:00"), Totals::default()))
+            .collect();
+        let hourly = hourly_table(&hours, Fmt::Table, "local", false, 1);
+        assert!(
+            hourly.contains("03:00") && !hourly.contains("00:00"),
+            "{hourly}"
+        );
+        assert!(hourly.contains("… 3 more"), "{hourly}");
+        let json: serde_json::Value =
+            serde_json::from_str(&hourly_table(&hours, Fmt::Json, "local", false, 1)).unwrap();
+        assert_eq!(json["hours"].as_object().unwrap().len(), 4);
+        let csv = hourly_table(&hours, Fmt::Csv, "local", false, 1);
+        assert_eq!(csv.lines().count(), 5, "header + every hour: {csv}");
+    }
+
+    /// The daily JSON envelope on its own, so the completeness assertion above
+    /// cannot pass by reading a table it never asked for.
+    fn table_json(by: &crate::reports::ByDay, total: &Totals, rows: usize) -> String {
+        table("local", "t", by, total, None, rows, Fmt::Json, false)
+    }
+
     #[test]
     fn table_rows_include_cache_write_column() {
         let by: crate::reports::ByDay = [(
@@ -765,7 +853,16 @@ mod tests {
         .into_iter()
         .collect();
         let total = crate::reports::sum_days(&by);
-        let out = table("local", "test", &by, &total, None, Fmt::Table, false);
+        let out = table(
+            "local",
+            "test",
+            &by,
+            &total,
+            None,
+            usize::MAX,
+            Fmt::Table,
+            false,
+        );
         assert!(out.contains("Cache wr"));
         assert!(out.contains(" 4 "));
     }
