@@ -49,7 +49,9 @@ describe("the section a session on each provider gets", () => {
 			// Not merely "not empty": the headline plus the meters are what the
 			// reader sees, and a section that renders no rows looks broken.
 			expect(rows.length).toBeGreaterThan(5);
-			expect(rows[0]?.[0]).toBe("OpenDesign");
+			// The block's first row is its own headline (`Plan`), not the section
+			// title, which the panel already prints above it.
+			expect(rows[0]?.[0]).toBe("Plan");
 			expect(rows.map((row) => row[0])).toContain("Monthly");
 		}
 	});
