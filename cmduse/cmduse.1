@@ -1,4 +1,4 @@
-.TH CMDUSE 1 "2026-10" "cmd-usage 0.8.0" "User Commands"
+.TH CMDUSE 1 "2026-10" "cmd-usage 0.8.2" "User Commands"
 .SH NAME
 cmduse \- live Command Code (commandcode.ai) usage dashboard and reporter
 .br
@@ -1125,6 +1125,8 @@ block with each model's multiplier, credits and share.
 The same reports as \fBcmduse\fR \'s with \fIcredits\fR in place of the cache
 columns; CSV columns are
 \fIday|hour|session,requests,tokens_in,tokens_out,credits,cost_usd\fR.
+Cache reads are priced (from \fIcore/zen.json\fR\'s rate for the same model,
+else the model\'s input rate) and are most of a cache-heavy turn\'s bill.
 .TP
 .B models, plans
 The catalogue from
@@ -1150,6 +1152,10 @@ The shared options apply, plus:
 The app's store.  Default \fB$OD_DB\fR, else
 \fI~/Library/Application Support/Open Design/namespaces/release\-stable/data/app.sqlite\fR,
 else the most recently written \fInamespaces/*/data/app.sqlite\fR.
+The second source, \fIopencode.db\fR, is set by \fB$OD_OPENCODE_DB\fR then
+\fB$OPENCODE_DB\fR (default \fI~/.local/share/opencode/opencode.db\fR) and is
+filtered to providers whose id starts with \fIopen\-design\fR; its absence is one
+line on the report, never an error.
 .TP
 .B \-\-plan \fIid\fR
 The plan: \fIgo\fR (default), \fIplus\fR, \fIpro\fR or \fImax\fR.  Told,
@@ -1192,6 +1198,10 @@ The same keys as cmduse's config, set with \fBoduse config set\fR.
 .TP
 .I $OD_DB, \-\-db
 The app's store; opened read\-only.
+.TP
+.I $OD_OPENCODE_DB, $OPENCODE_DB
+The harness store, read as the second source and filtered to the
+\fIopen\-design\fR providers; opened read\-only.
 .SH SEE ALSO
 .BR cmd (1),
 the Command Code CLI for login and authentication.

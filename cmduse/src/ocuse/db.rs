@@ -184,12 +184,25 @@ struct Credential {
 /// rows are filtered by provider in Rust because the JSON payload is not
 /// indexed.
 pub fn read_rows(path: &str, since_ms: i64) -> Result<Vec<Row>, String> {
+    read_with(path, since_ms, |provider| PROVIDERS.contains(&provider))
+}
+
+/// The same read with the provider filter supplied by the caller.
+///
+/// One store, several dashboards: `oduse` meters a different provider on the same
+/// `opencode.db` (its own `open-design` family), so it passes its own predicate
+/// instead of growing a second reader that would drift from this one.
+pub fn read_with(
+    path: &str,
+    since_ms: i64,
+    keep: impl Fn(&str) -> bool,
+) -> Result<Vec<Row>, String> {
     let connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("open {path}: {e}"))?;
     if has_v2(&connection) {
-        read_v2(&connection, since_ms)
+        read_v2(&connection, since_ms, &keep)
     } else {
-        read_legacy(&connection, since_ms)
+        read_legacy(&connection, since_ms, &keep)
     }
 }
 
@@ -258,7 +271,11 @@ fn has_v2(connection: &Connection) -> bool {
 /// v2 rows: the row's `type` names it (no `$.role`), the model ref is nested,
 /// and only a completed turn carries `tokens` — an in-flight one is skipped
 /// rather than counted as a zero-token request.
-fn read_v2(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, String> {
+fn read_v2(
+    connection: &Connection,
+    since_ms: i64,
+    keep: &impl Fn(&str) -> bool,
+) -> Result<Vec<Row>, String> {
     let mut statement = connection
         .prepare(
             "SELECT data, time_created, session_id FROM session_message
@@ -282,7 +299,7 @@ fn read_v2(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, String> {
         };
         let model = parsed.model.unwrap_or_default();
         let provider = model.provider.unwrap_or_default();
-        if !PROVIDERS.contains(&provider.as_str()) {
+        if !keep(&provider) {
             continue;
         }
         out.push(Row {
@@ -303,7 +320,11 @@ fn read_v2(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, String> {
 }
 
 /// Pre-v2 rows: `role` in the payload, flat `modelID` / `providerID`.
-fn read_legacy(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, String> {
+fn read_legacy(
+    connection: &Connection,
+    since_ms: i64,
+    keep: &impl Fn(&str) -> bool,
+) -> Result<Vec<Row>, String> {
     let mut statement = connection
         .prepare(
             "SELECT data, time_created, session_id FROM message
@@ -326,7 +347,7 @@ fn read_legacy(connection: &Connection, since_ms: i64) -> Result<Vec<Row>, Strin
             continue;
         }
         let provider = parsed.provider.unwrap_or_default();
-        if !PROVIDERS.contains(&provider.as_str()) {
+        if !keep(&provider) {
             continue;
         }
         let tokens = parsed.tokens.unwrap_or(Tokens {

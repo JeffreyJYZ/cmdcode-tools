@@ -23,6 +23,8 @@ const PROTOCOL_VERSION: &str = "2025-06-18";
 #[derive(Clone, Copy)]
 pub struct Settings<'a> {
     pub db_path: &'a str,
+    /// The harness store (`opencode.db`), read as the second source.
+    pub opencode_path: &'a str,
     pub days: i64,
     pub tz_secs: i64,
     pub colour: bool,

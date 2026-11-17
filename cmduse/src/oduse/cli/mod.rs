@@ -19,6 +19,7 @@ mod frame;
 use crate::cli::{self, Binary, SubCmd};
 use crate::oduse::args;
 use crate::oduse::od;
+use crate::oduse::opencode;
 use crate::oduse::wallet::{self, Wallet};
 use crate::oduse::window;
 use crate::oduse::{db, period, render};
@@ -77,6 +78,10 @@ pub fn run() {
     let cfg = crate::config::load(Binary::Oduse);
     let colours = !args.plain && crate::render::color_enabled();
     let db_path = args.db.clone().unwrap_or_else(db::default_path);
+    // The harness store is the second source and has no shared flag: `--db` is
+    // the app's store, so this one is configured by env alone (`OD_OPENCODE_DB`,
+    // then opencode's own `$OPENCODE_DB`).
+    let opencode_path = opencode::default_path();
     let now = window::now_ms();
 
     // `plans` needs neither the store nor a plan id: the catalogue is static.
@@ -137,6 +142,7 @@ pub fn run() {
         plan,
         plan_id: &plan_id,
         db_path: &db_path,
+        opencode_path: &opencode_path,
         model_id: model_id.as_deref(),
         days,
         hours: args.hours.unwrap_or(24) as i64,

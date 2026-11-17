@@ -10,9 +10,22 @@ use crate::oduse::db::Row;
 
 /// Start of the period: the most recent occurrence of the inferred anniversary
 /// day, else the first of the calendar month. Returns `(start_ms, inferred)`.
+///
+/// Only the desktop store's rows are evidence. The harness store is a second
+/// source with different history — on the reference machine it starts a month
+/// later than the app's own single turn — and letting its earliest row decide
+/// would silently move the boundary. The app's store is the plan's own record, so
+/// it is the one that can speak for the subscription; with no app rows the whole
+/// set is used rather than falling back to the calendar month.
 pub fn month_start(rows: &[Row], now_ms: i64) -> (i64, bool) {
     let now_secs = now_ms / 1000;
-    let Some(earliest) = rows.iter().map(|r| r.at_ms).min() else {
+    let earliest = |only_app: bool| {
+        rows.iter()
+            .filter(|r| !only_app || r.source == crate::oduse::db::APP)
+            .map(|r| r.at_ms)
+            .min()
+    };
+    let Some(earliest) = earliest(true).or_else(|| earliest(false)) else {
         return (calendar_month_start(now_ms), false);
     };
     let day = day_of_month(earliest.div_euclid(86_400_000).max(0));

@@ -26,13 +26,21 @@ pub fn render_text(
 ) -> String {
     let ink = Ink::new(colour).width(bar_width);
     let c = |text: String| ink.cyan_on(text);
+    // Both stores are named, the way the other binaries name their clients: a
+    // total that grew because a second store was read must not look like drift.
+    let sources = if report.sources.is_empty() {
+        String::new()
+    } else {
+        format!("{} ({}){}", ink.dim, report.sources.join(" + "), ink.reset)
+    };
     let mut out = format!(
-        "{}OpenDesign usage{} — credits, from {}{}{}\n",
+        "{}OpenDesign usage{} — credits, from {}{}{}{}\n",
         ink.bold,
         ink.reset,
         ink.dim,
         shorten(db_path),
         ink.reset,
+        sources,
     );
     let end = report
         .period_end_ms
@@ -118,9 +126,21 @@ pub fn render_text(
 
     out.push_str(&model_table(&ink, report, rows));
     out.push_str(&format!(
-        "\n{}credits = list-price $ x the model's multiplier; the store records no cache tokens, so these are estimates.{}",
+        "\n{}credits = list-price $ x the model's multiplier, cache reads included (priced from core/zen.json where that shelf carries the model); these are estimates.{}",
         ink.dim, ink.reset
     ));
+    // A cache read priced at the input rate is still priced — say which, so the
+    // figure is not mistaken for a published rate.
+    if report.month.cache_estimated > 0 {
+        out.push_str(&format!(
+            "\n{}{} of {} turns price cache reads at the model's input rate; no published cache rate for that model.{}",
+            ink.dim, report.month.cache_estimated, report.month.requests, ink.reset
+        ));
+    }
+    // A store that could not be read is one dim line, never an error.
+    for note in &report.notes {
+        out.push_str(&format!("\n{}{note}{}", ink.dim, ink.reset));
+    }
     // An unpriced turn is counted as a request and contributes no credits, so
     // the period total is short by its spend — say so rather than let a small
     // figure read as the whole truth.

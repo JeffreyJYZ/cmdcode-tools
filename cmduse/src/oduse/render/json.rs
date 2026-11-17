@@ -43,6 +43,10 @@ pub fn render_json(report: &Report, plan: &Plan) -> String {
             .period_end_ms
             .map(|ms| super::date_of(ms.div_euclid(86_400_000))),
         "periodInferred": report.month_inferred,
+        // Which stores the rows came from (`app`, `opencode`) — the same idea as
+        // ocuse's `clients`, so a consumer never has to guess which store grew.
+        "sources": report.sources,
+        "notes": report.notes,
         "summary": totals(&report.month),
         "totals": {
             "month": totals(&report.month),

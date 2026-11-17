@@ -40,11 +40,9 @@ pub struct Bucket {
 
 impl Bucket {
     pub fn add(&mut self, row: &crate::oduse::db::Row, catalog: &crate::oduse::od::Catalog) {
-        let cost = catalog
-            .price(&row.model, row.input, row.output)
-            .unwrap_or(0.0);
-        self.cost += cost;
-        self.credits += cost * catalog.multiplier(&row.model);
+        let priced = crate::oduse::price::row_cost(row, catalog);
+        self.cost += priced.cost;
+        self.credits += priced.credits;
         self.requests += 1;
         self.input += row.input;
         self.output += row.output;

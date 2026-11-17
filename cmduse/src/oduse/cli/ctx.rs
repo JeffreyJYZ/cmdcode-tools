@@ -5,9 +5,9 @@
 // store, build, stamp the period and the wallet) exists once.
 use crate::cli;
 use crate::config::Config;
-use crate::oduse::db::{self, Row};
 use crate::oduse::od::{Catalog, Plan};
 use crate::oduse::period::Period;
+use crate::oduse::sources;
 use crate::oduse::wallet::Wallet;
 use crate::oduse::window::{self, Report};
 use crate::report_render::Fmt;
@@ -19,6 +19,8 @@ pub struct Ctx<'a> {
     pub plan: &'a Plan,
     pub plan_id: &'a str,
     pub db_path: &'a str,
+    /// The harness store (`opencode.db`), a second source for the same plan.
+    pub opencode_path: &'a str,
     /// `model <id>`'s positional, already pulled out of argv.
     pub model_id: Option<&'a str>,
     pub days: i64,
@@ -35,11 +37,14 @@ pub struct Ctx<'a> {
 }
 
 impl Ctx<'_> {
-    /// Read the store, or exit with the two things a first run needs: the error
+    /// Read both stores, or exit with the two things a first run needs: the error
     /// and the flag that points elsewhere.
-    pub fn read(&self, since_ms: i64) -> Vec<Row> {
-        match db::read_rows(self.db_path, since_ms) {
-            Ok(rows) => rows,
+    ///
+    /// The desktop store is required — it is the one the app creates — while the
+    /// harness store is optional and degrades to one note on the report.
+    pub fn read(&self, since_ms: i64) -> sources::Sources {
+        match sources::read(self.db_path, self.opencode_path, since_ms) {
+            Ok(found) => found,
             Err(error) => {
                 eprintln!("oduse: {error}");
                 eprintln!(
@@ -53,8 +58,9 @@ impl Ctx<'_> {
     /// One report at `t`: the period's rows, the period's label and bounds, and
     /// the wallet snapshot the caller resolved.
     pub fn report(&self, t: i64) -> Report {
+        let found = self.read(self.report_window);
         let mut report = window::build(
-            &self.read(self.report_window),
+            &found.rows,
             self.catalog,
             self.plan_id,
             t,
@@ -65,6 +71,8 @@ impl Ctx<'_> {
             crate::oduse::period::end(report.since_ms, &self.period.mode, self.period.inferred);
         report.wallet = self.wallet.clone();
         report.wallet_error = self.wallet_error.clone();
+        report.sources = found.names;
+        report.notes = found.notes;
         report
     }
 

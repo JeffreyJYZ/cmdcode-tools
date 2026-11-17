@@ -25,7 +25,7 @@ pub fn row(at_ms: i64, model: &str, input: u64, output: u64) -> Row {
         model: model.into(),
         input,
         output,
-        duration_ms: Some(1_000),
+        ..Row::default()
     }
 }
 

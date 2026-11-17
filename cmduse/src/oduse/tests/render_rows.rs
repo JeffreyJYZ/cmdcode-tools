@@ -28,6 +28,7 @@ fn rows() -> Vec<Row> {
             input: 100_000,
             output: 500,
             duration_ms: Some(1_000),
+            ..Row::default()
         })
         .collect()
 }

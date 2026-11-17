@@ -2,7 +2,7 @@
 // and one model's totals across every window.
 //
 // Split from `window::mod` so the file that owns the arithmetic stays under the
-// repo's line cap; nothing here knows about plans, periods or the store.
+// repo's line cap; nothing here knows about plans, periods or stores.
 use crate::oduse::db::Row;
 
 #[derive(Debug, Clone, Default)]
@@ -14,21 +14,33 @@ pub struct Totals {
     pub requests: u64,
     pub input: u64,
     pub output: u64,
-    /// Turns in this window the catalogue had no rate for. They count as
-    /// requests and their credits are absent, so a total that looks short is
-    /// short by exactly this many turns — the dashboard says how many.
+    /// Cache-read tokens in this window. Priced — they dominate an agent run, and
+    /// a zero here would read as a free model rather than an omission.
+    pub cache_read: u64,
+    /// Turns whose cache reads were priced at the model's input rate because the
+    /// catalogue publishes no cache rate for it. Priced all the same; a footnote.
+    pub cache_estimated: u64,
+    /// Turns in this window the catalogue had no rate for and that recorded no
+    /// cost of their own. They count as requests and their credits are absent, so
+    /// a total that looks short is short by exactly this many turns.
     pub unpriced: u64,
 }
 
 impl Totals {
-    pub(super) fn add(&mut self, row: &Row, cost: f64, credits: f64, priced: bool) {
-        self.credits += credits;
-        self.cost += cost;
+    /// The same accumulation for a caller that already priced the row (the report
+    /// builder prices once and adds the answer to three windows).
+    pub(super) fn add_price(&mut self, row: &Row, priced: crate::oduse::price::Priced) {
+        self.credits += priced.credits;
+        self.cost += priced.cost;
         self.requests += 1;
         self.input += row.input;
         self.output += row.output;
-        if !priced {
+        self.cache_read += row.cache_read;
+        if !priced.priced {
             self.unpriced += 1;
+        }
+        if priced.cache_estimated && row.cache_read > 0 {
+            self.cache_estimated += 1;
         }
     }
 
