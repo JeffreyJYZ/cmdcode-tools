@@ -1,4 +1,4 @@
-import { normalizeKey } from "#~/keys.ts";
+import { aaKeyVariants } from "#~/keys.ts";
 
 /** Pure parser over one AA API page, for tests and the loader. */
 export function parseAaApi(body: unknown): {
@@ -26,7 +26,11 @@ export function parseAaApi(body: unknown): {
 		const record = row as Record<string, unknown>;
 		const name = String(record.name ?? record.slug ?? record.id ?? "");
 		const slug = typeof record.slug === "string" ? record.slug : undefined;
-		const keys = [slug ? normalizeKey(slug) : "", normalizeKey(name)].filter(Boolean);
+		// AA writes the bake date and the effort variant into its own slugs, so a row
+		// answers to several keys; every one is registered and the best score wins.
+		const keys = [
+			...new Set([...(slug ? aaKeyVariants(slug) : []), ...aaKeyVariants(name)]),
+		].filter(Boolean);
 		if (keys.length === 0) continue;
 
 		const iq = findNumber(record, /intelligence_index/i);

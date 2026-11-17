@@ -24,6 +24,33 @@ export function normalizeKey(name: string): string {
 	return ALIASES[s] ?? s;
 }
 
+/**
+ * Keys an Artificial Analysis row may answer to. AA writes the bake date and the
+ * effort variant into the slug itself (`deepseek-v4-1-flash-1017-high`) while the
+ * catalogs name the model bare (`DeepSeek V4.1 Flash`), so the exact key never
+ * matches and a scored model reads as unscored.
+ *
+ * The strippings only run when a 3-4 digit bake date is present: without that
+ * anchor they would eat a real name token (`Qwen3.8-Max` -> `qwen38`).
+ */
+export function aaKeyVariants(name: string): string[] {
+	const out = [normalizeKey(name)];
+	const dated = /[\s_-]+\d{3,4}(?:$|[\s_-])/i.test(name);
+	if (!dated) return out;
+	const noDate = name.replace(/[\s_-]+\d{3,4}(?=$|[\s_-])/i, "");
+	for (const candidate of [
+		noDate,
+		noDate.replace(
+			/[\s_-]+(?:non[\s_-]*reasoning|reasoning|minimal|medium|xhigh|high|low|max)$/i,
+			"",
+		),
+	]) {
+		const key = normalizeKey(candidate);
+		if (!out.includes(key)) out.push(key);
+	}
+	return out;
+}
+
 /** Display name: strip parentheticals and collapse whitespace. */
 export function displayName(name: string): string {
 	return name

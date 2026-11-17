@@ -1,5 +1,6 @@
 import { fetchText } from "#~/data/scrape/index.ts";
 import { loadAaApi } from "#~/data/sources/aa/api.ts";
+import { hydrate, readLastGood } from "#~/data/sources/aa/lastGood.ts";
 import { loadAaWeb } from "#~/data/sources/aa/web.ts";
 import { normalizeKey } from "#~/keys.ts";
 import { loadCc } from "./cc.ts";
@@ -75,9 +76,22 @@ export async function resolvePrimary(opts: AbilityOptions): Promise<Resolved> {
 					})`,
 				};
 			} catch (error) {
-				// A spent daily quota, a rotated key or a retired path must not break every
-				// run: the keyless page carries the same index, just for fewer models.
+				// A spent daily quota, a rotated key or a retired path must not blank a third
+				// of the table: replay the last complete answer, and say how old it is. Only
+				// when there is no stored answer does the keyless page scrape take over.
 				const reason = error instanceof Error ? error.message : String(error);
+				const cached = await readLastGood();
+				if (cached && cached.intelligence.length > 0) {
+					const ageHours = Math.max(
+						0,
+						Math.round((Date.now() - cached.fetchedAt) / 3_600_000),
+					);
+					return {
+						scheme: "aa",
+						data: hydrate(cached),
+						label: `Artificial Analysis (last good, ${ageHours}h old — API: ${reason})`,
+					};
+				}
 				const data = await loadAaWeb();
 				if (data.intelligence.size === 0) throw error;
 				return {
