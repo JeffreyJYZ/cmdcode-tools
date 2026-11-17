@@ -8,6 +8,8 @@ import {
 	COST_MODES,
 	COST_REFRESH_DEFAULT_MS,
 	OC_PLAN_DEFAULT,
+	OD_PLAN_DEFAULT,
+	OD_PLANS,
 	POLL_DEFAULT_MS,
 } from "../src/constants/sidebar";
 import { loadPrefs, type Prefs, parsePrefs, prefsPath, savePrefs } from "../src/sidebar/prefs";
@@ -24,7 +26,15 @@ const configDir = () => {
 	return { dir, env: { XDG_CONFIG_HOME: dir } };
 };
 
-const DEFAULTS: Prefs = { colors: false, ocPlan: "go", pollMs: 5_000, cost: "off", costMs: 60_000 };
+const DEFAULTS: Prefs = {
+	colors: false,
+	ocPlan: "go",
+	od: true,
+	odPlan: "go",
+	pollMs: 5_000,
+	cost: "off",
+	costMs: 60_000,
+};
 
 describe("sidebar prefs", () => {
 	test("colour off and plan `go` unless the file says otherwise", () => {
@@ -111,6 +121,48 @@ describe("sidebar prefs", () => {
 		}
 	});
 
+	test("the OpenDesign section is on by default and only a real boolean flips it", () => {
+		// Same default as the other three sections: an OpenDesign session gets its
+		// block without a setting, and only that provider ever spawns `oduse`.
+		expect(parsePrefs({}).od).toBe(true);
+		expect(parsePrefs(undefined).od).toBe(true);
+		expect(parsePrefs({ od: false }).od).toBe(false);
+		expect(parsePrefs({ od: true }).od).toBe(true);
+		// A hand-written string is not a boolean: warn and keep the default, rather
+		// than reading `"no"` as on without saying so.
+		const warn = console.warn;
+		console.warn = () => {};
+		try {
+			expect(parsePrefs({ od: "no" }).od).toBe(true);
+			expect(parsePrefs({ odPlan: "ultra" }).odPlan).toBe(OD_PLAN_DEFAULT);
+		} finally {
+			console.warn = warn;
+		}
+		expect(parsePrefs({}).odPlan).toBe("go");
+		for (const plan of OD_PLANS) expect(parsePrefs({ odPlan: plan }).odPlan).toBe(plan);
+
+		const { env } = configDir();
+		writeFileSync(prefsPath(env), '{"od": false, "odPlan": "pro"}');
+		expect(loadPrefs(env, tick()).od).toBe(false);
+		expect(loadPrefs(env, tick()).odPlan).toBe("pro");
+	});
+
+	test("CMD_OD and CMD_OD_PLAN override the file both ways", () => {
+		const { env } = configDir();
+		writeFileSync(prefsPath(env), '{"od": false, "odPlan": "pro"}');
+		expect(loadPrefs({ ...env, CMD_OD: "1" }, tick()).od).toBe(true);
+		expect(loadPrefs({ ...env, CMD_OD: "0" }, tick()).od).toBe(false);
+		expect(loadPrefs({ ...env, CMD_OD_PLAN: "max" }, tick()).odPlan).toBe("max");
+		// A warn is expected for the bogus id; the file's value stands.
+		const warn = console.warn;
+		console.warn = () => {};
+		try {
+			expect(loadPrefs({ ...env, CMD_OD_PLAN: "bogus" }, tick()).odPlan).toBe("pro");
+		} finally {
+			console.warn = warn;
+		}
+	});
+
 	test("repeat reads inside the window do not hit the disk", () => {
 		const { env } = configDir();
 		writeFileSync(prefsPath(env), '{"colors": true}');
@@ -169,10 +221,22 @@ describe("sidebar prefs", () => {
 
 		// Round-trip of every typed field, with the unknown key still standing.
 		expect(
-			savePrefs({ colors: false, ocPlan: "go-plus", cost: "window", costMs: 300_000 }, env),
+			savePrefs(
+				{
+					colors: false,
+					ocPlan: "go-plus",
+					od: true,
+					odPlan: "max",
+					cost: "window",
+					costMs: 300_000,
+				},
+				env,
+			),
 		).toEqual({
 			colors: false,
 			ocPlan: "go-plus",
+			od: true,
+			odPlan: "max",
 			pollMs: 30_000,
 			cost: "window",
 			costMs: 300_000,

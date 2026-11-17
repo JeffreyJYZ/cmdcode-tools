@@ -24,6 +24,7 @@ import {
 	primeLiveCatalog,
 	refreshLiveCatalog,
 } from "./catalogLive";
+import { fetchModelList as fetchOpenDesignModels, OPEN_DESIGN_SEED } from "./catalogOpenDesign";
 import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runMpc, runOcuse } from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import { KNOWN_MODELS } from "./constants/gating";
@@ -40,6 +41,9 @@ import {
 	MPC_TOOL_DESCRIPTION,
 	OCUSE_TOOL_ARG_DESCRIPTION,
 	OCUSE_TOOL_DESCRIPTION,
+	OPEN_DESIGN_ENV,
+	OPEN_DESIGN_INTEGRATION_ID,
+	OPEN_DESIGN_NAME,
 	PLUGIN_ID,
 	TOOL_DESCRIPTION,
 } from "./constants/providers";
@@ -47,6 +51,11 @@ import { candidateKeys, resolveKey } from "./key";
 import { type CmdModel, isClaude, loadModels } from "./models";
 import { idsDiffer, readModelsCache, writeModelsCache } from "./modelsCache";
 import { createCommandCode } from "./provider";
+import {
+	applyModels as applyOpenDesignModels,
+	enableProvider as enableOpenDesignProvider,
+	registerProvider as registerOpenDesignProvider,
+} from "./providerOpenDesign";
 import { setupTimingLine, writeStartupLine } from "./startupLog";
 
 // The host's `ProviderDomain.transform` / `ToolDomain.transform` callbacks do
@@ -177,6 +186,28 @@ export async function credentialKey(ctx: CredentialContext): Promise<string | un
 	}
 }
 
+/** A resolved connection credential → the key it carries. */
+function credentialOf(credential: unknown): string | undefined {
+	const c = credential as { type?: string; key?: string; access?: string } | undefined;
+	if (c?.type === "key") return c.key;
+	if (c?.type === "oauth") return c.access;
+	return undefined;
+}
+
+/** OpenDesign's key: its own /connect connection first, then its env var. It has
+ * no CLI auth file, so the Command Code disk fallbacks do not apply. Resolved
+ * per call, so a /connect mid-session is picked up like the other lanes'. */
+async function openDesignKey(ctx: CredentialContext): Promise<string | undefined> {
+	try {
+		const connection = await ctx.integration.connection.active(OPEN_DESIGN_INTEGRATION_ID);
+		if (connection) {
+			const key = credentialOf(await ctx.integration.connection.resolve(connection));
+			if (key) return key;
+		}
+	} catch {}
+	return process.env[OPEN_DESIGN_ENV] || undefined;
+}
+
 /**
  * opencode validates the plugin *by decoding* the default export against its
  * own `Plugin` interface (identity `define` on both sides), so the package is
@@ -223,6 +254,21 @@ export const commandCodeV2: PluginNs.Plugin = {
 				integrationID: INTEGRATION_ID,
 				method: { type: "key", label: "Command Code API key" },
 			});
+			// OpenDesign's own integration: it is a different host with a
+			// different key, so a Command Code /connect must never answer for it.
+			editor.update(OPEN_DESIGN_INTEGRATION_ID, (integration) => {
+				if (integration.name === (integration.id as unknown as string)) {
+					integration.name = OPEN_DESIGN_NAME;
+				}
+			});
+			editor.method.update({
+				integrationID: OPEN_DESIGN_INTEGRATION_ID,
+				method: { type: "env", names: [OPEN_DESIGN_ENV] },
+			});
+			editor.method.update({
+				integrationID: OPEN_DESIGN_INTEGRATION_ID,
+				method: { type: "key", label: "OpenDesign API key" },
+			});
 		});
 
 		// Hand the host our own AI SDK provider for both lanes: streaming, image
@@ -256,6 +302,10 @@ export const commandCodeV2: PluginNs.Plugin = {
 		}
 
 		const seed = staticSeedModels();
+		// OpenDesign's key at registration is a plain env read; its /connect
+		// lookup below upgrades the lane the same way the Command Code pair is
+		// upgraded, so nothing here waits on the credential store.
+		let odKey = process.env[OPEN_DESIGN_ENV];
 		// Warm start: if the last live list is on disk, merge it now — during
 		// registration — so the picker shows fresh models at 1ms and the background
 		// refresh usually finds nothing to change (no second provider update while
@@ -300,6 +350,9 @@ export const commandCodeV2: PluginNs.Plugin = {
 				});
 				editor.models.set(lane.id, seed[lane.id] as never);
 			}
+			// The OpenDesign lane registers beside the Command Code pair: same
+			// host editor, its own endpoint, package and key.
+			registerOpenDesignProvider(editor as never, odKey);
 		});
 		const registerMs = Date.now() - t0;
 
@@ -438,9 +491,32 @@ export const commandCodeV2: PluginNs.Plugin = {
 				}
 			});
 		}
+		// OpenDesign's credential lives under its own integration id, so it is
+		// looked up only when the env var did not already supply one. A lane with
+		// no key costs nothing here.
+		if (!odKey) {
+			const odStart = Date.now();
+			try {
+				const connection = await ctx.integration.connection.active(
+					OPEN_DESIGN_INTEGRATION_ID,
+				);
+				if (connection) {
+					odKey = credentialOf(await ctx.integration.connection.resolve(connection));
+					await ctx.provider.transform((editor: ProviderEditor) => {
+						enableOpenDesignProvider(editor as never, odKey);
+					});
+				}
+			} catch {}
+			connectionMs += Date.now() - odStart;
+		}
 		if (!localKey && !hasConnection) {
 			console.warn(
 				`[command-code] no API key found. Run /connect and choose "${INTEGRATION_NAME}", or \`cmd login\` (~/.commandcode/auth.json), or set CMD_API_KEY.`,
+			);
+		}
+		if (!odKey) {
+			console.warn(
+				`[open-design] no API key found. Run /connect and choose "${OPEN_DESIGN_NAME}", or set ${OPEN_DESIGN_ENV}.`,
 			);
 		}
 
@@ -461,6 +537,7 @@ export const commandCodeV2: PluginNs.Plugin = {
 		// from a repeat of the same list (ids only — that is what a picker shows).
 		let appliedClaude = cached?.claude ?? [];
 		let appliedOpen = cached?.open ?? [];
+		let appliedOd = new Set(OPEN_DESIGN_SEED.map((m) => m.id));
 		// Flipped after the first deferred pass: startup must not transform.
 		let canTransform = false;
 		const logTimings = (refreshMs: number, modelCount: number) =>
@@ -473,6 +550,22 @@ export const commandCodeV2: PluginNs.Plugin = {
 					models: modelCount,
 				}),
 			);
+		// OpenDesign fetches on the same tick but from its own host. Only a changed
+		// id set is worth a transform (a picker shows ids), and `applyModels` unions
+		// over the seed, so a short or failed listing cannot empty the lane.
+		const refreshOpenDesign = async () => {
+			// Re-resolved per attempt, so a /connect mid-session reaches the fetch
+			// the same way it reaches the Command Code list below.
+			odKey ??= await openDesignKey(ctx);
+			if (!odKey || controller.signal.aborted) return;
+			const live = await fetchOpenDesignModels(odKey);
+			if (!live || controller.signal.aborted) return;
+			if (!live.some((m) => !appliedOd.has(m.id))) return;
+			await ctx.provider.transform((editor: ProviderEditor) => {
+				applyOpenDesignModels(editor as never, live);
+			});
+			appliedOd = new Set(live.map((m) => m.id));
+		};
 		const refresh = async () => {
 			if (refreshing || controller.signal.aborted) return;
 			refreshing = true;
@@ -482,6 +575,11 @@ export const commandCodeV2: PluginNs.Plugin = {
 				// listing API; refresh it first so this pass builds models off the live table.
 				// Cached for a day, and a failure just leaves the baked snapshot in place.
 				await refreshLiveCatalog();
+				// OpenDesign is a different host on a different key, and refreshes
+				// before the Command Code key gate below: a user whose only
+				// configured lane is OpenDesign has no CMD key, and returning there
+				// would leave that list on its seed for the life of the process.
+				await refreshOpenDesign();
 				const key = await credentialKey(ctx);
 				if (!key) return;
 				const split = await loadModels(key);

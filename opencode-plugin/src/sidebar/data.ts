@@ -6,12 +6,18 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { type RunOptions, runArkuse, runCmduse, runMpc, runOcuse } from "../cli";
+import { type RunOptions, runArkuse, runCmduse, runMpc, runOcuse, runOduse } from "../cli";
 import { SPAWN_OPTIONS } from "../constants/cli";
 import { CACHE_DIR, ccCatalogFile } from "../constants/paths";
-import { OC_PLAN_DEFAULT, type OcPlan } from "../constants/sidebar";
-import { ARK_SNAPSHOT_TTL_MS, CATALOG_CACHE_TTL_MS, CHILD_TIMEOUT_MS } from "../constants/timing";
+import { OC_PLAN_DEFAULT, type OcPlan, OD_PLAN_DEFAULT, type OdPlan } from "../constants/sidebar";
+import {
+	ARK_SNAPSHOT_TTL_MS,
+	CATALOG_CACHE_TTL_MS,
+	CHILD_TIMEOUT_MS,
+	OD_CHILD_TIMEOUT_MS,
+} from "../constants/timing";
 import { type ArkUsage, parseArkJson } from "./ark";
+import { type OdUsage, parseOdJson } from "./od";
 import { type ModelMeta, modelKey, type Usage } from "./rows";
 import { parseZenJson, type ZenUsage } from "./zen";
 
@@ -25,6 +31,12 @@ import { parseZenJson, type ZenUsage } from "./zen";
 const SIDEBAR_OPTS: RunOptions = {
 	spawnOptions: SPAWN_OPTIONS,
 	timeoutMs: CHILD_TIMEOUT_MS,
+};
+
+/** oduse's own bound, in its own options: see `OD_CHILD_TIMEOUT_MS`. */
+const OD_OPTS: RunOptions = {
+	spawnOptions: SPAWN_OPTIONS,
+	timeoutMs: OD_CHILD_TIMEOUT_MS,
 };
 
 /** Parse `cmduse -1 --json` into the usage snapshot. */
@@ -170,6 +182,12 @@ export function zenArgs(plan: OcPlan): string[] {
 	return ["-1", "--json", "--plan", plan];
 }
 
+/** oduse's args: `--plan` selects the OpenDesign caps, which nothing local
+ *  records (the store has no subscription, the daemon's wallet no tier). */
+export function odArgs(plan: OdPlan): string[] {
+	return ["-1", "--json", "--plan", plan];
+}
+
 /** mpc's catalog, cached on disk: it scrapes live docs over the network. The
  * cache is per plan, since mpc bakes that plan's per-model allowance into it. */
 export async function loadMeta(plan: OcPlan = OC_PLAN_DEFAULT): Promise<Map<string, ModelMeta>> {
@@ -238,4 +256,18 @@ export async function loadArk(): Promise<ArkUsage> {
 	const usage = parseArkJson(await runArkuse("-1 --json", SIDEBAR_OPTS));
 	arkCache = { key, at: now, usage };
 	return usage;
+}
+
+/**
+ * One OpenDesign snapshot from `oduse -1 --json`: the plan's published caps,
+ * this machine's credits per window and per model, and the desktop app's wallet.
+ * No TTL cache: it reads a local store and a local daemon, the same cost class as
+ * `ocuse`, and the wallet's 300 ms probe is bounded inside the CLI itself.
+ *
+ * Throws when oduse is missing, or when the store does not exist yet — oduse
+ * exits non-zero with a reason on stderr rather than publishing errored defaults,
+ * so the caller's catch keeps the last snapshot and the block never blanks.
+ */
+export async function loadOd(plan: OdPlan = OD_PLAN_DEFAULT): Promise<OdUsage> {
+	return parseOdJson(await runOduse(odArgs(plan), OD_OPTS));
 }

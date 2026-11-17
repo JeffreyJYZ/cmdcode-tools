@@ -22,6 +22,25 @@ export const ZEN_PROVIDER_PREFIX = "opencode-zen";
 /** Volcengine ARK Agent Plan provider id (what opencode records for its rows). */
 export const ARK_PROVIDER_ID = "agent-plan";
 
+/** OpenDesign provider id. Deliberately not `open-design-tmp`: a hand-edited
+ * block under that id may still be in `opencode.json` while a user migrates, and
+ * the two must be able to coexist rather than overwrite each other. */
+export const OPEN_DESIGN_PROVIDER_ID = "open-design";
+
+/** Integration id backing the OpenDesign key (/connect + env). Its own id, so a
+ * Command Code /connect can never hand this lane the wrong credential. */
+export const OPEN_DESIGN_INTEGRATION_ID = "open-design";
+
+/** Display name for the provider, the integration and the no-key warning. */
+export const OPEN_DESIGN_NAME = "OpenDesign";
+
+/** v2 runtime package: the host's own openai-compatible transport. The endpoint
+ * speaks Chat Completions, so this lane needs no hook of its own. */
+export const OPEN_DESIGN_PACKAGE = "@opencode/ai/providers/openai-compatible";
+
+/** Env var the integration's `env` method and the registration-time key read. */
+export const OPEN_DESIGN_ENV = "OPEN_DESIGN_API_KEY";
+
 /** TUI plugin id (stable contract; test/tui.test.ts pins it). */
 export const TUI_ID = "command-code.tui";
 

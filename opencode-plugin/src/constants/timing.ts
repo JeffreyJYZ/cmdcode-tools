@@ -21,8 +21,19 @@ export const CATALOG_LIVE_TIMEOUT_MS = 10_000;
  * six: a running panel then picks up new models and promotions. */
 export const CATALOG_CACHE_TTL_MS = 60 * 60 * 1000;
 
+/** Hard stop for OpenDesign's `/v1/models` listing. Matches the Command Code
+ * listing's 15s: both are one small JSON document, and the caller keeps its seed
+ * on a timeout rather than waiting longer for a picker row. */
+export const OPEN_DESIGN_TIMEOUT_MS = 15_000;
+
 /** Re-read window for the sidebar colour prefs file (src/sidebar/prefs.ts). */
 export const PREFS_CACHE_MS = 5_000;
+
+/** How long one `oduse` sidebar spawn may run. Shorter than the account bound
+ *  above: it reads a local SQLite store and asks the desktop app's daemon for a
+ *  wallet with a 300 ms timeout, so there is no remote retry ladder to wait out —
+ *  and a store the app has not created yet exits at once with its own reason. */
+export const OD_CHILD_TIMEOUT_MS = 12_000;
 
 /** Process-lifetime cache for the ARK sidebar snapshot: every `arkuse` run
  * shells out to `arkcli` for the plan meters, so polling it at the 5s cadence

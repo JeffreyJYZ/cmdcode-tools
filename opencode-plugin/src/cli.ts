@@ -10,6 +10,7 @@ import {
 	CMDUSE_BIN_CANDIDATES,
 	MPC_BIN_CANDIDATES,
 	OCUSE_BIN_CANDIDATES,
+	ODUSE_BIN_CANDIDATES,
 } from "./constants/binaries";
 import { DEFAULT_ARGS, MPC_DEFAULT_ARGS, SUBCOMMANDS } from "./constants/cli";
 
@@ -50,6 +51,15 @@ export function arkuseCandidates(env: Record<string, string | undefined> = proce
 }
 
 const ARKUSE_CANDIDATES = arkuseCandidates();
+
+/** Same lookup for oduse, the OpenDesign reader in the same crate: `ODUSE_BIN`
+ * wins when set, then the homebrew fallbacks. */
+export function oduseCandidates(env: Record<string, string | undefined> = process.env): string[] {
+	const candidates = [env.ODUSE_BIN, ...ODUSE_BIN_CANDIDATES];
+	return candidates.filter((bin): bin is string => Boolean(bin));
+}
+
+const ODUSE_CANDIDATES = oduseCandidates();
 
 /** Shell-words split: whitespace-separated, with single/double quoting and
  * backslash escapes ("--tz +05:30", arg='a b'). Unterminated quotes close at
@@ -314,6 +324,30 @@ export async function runArkuse(
 	}
 	throw new Error(
 		`arkuse binary not found (install: brew install JeffreyJYZ/tap/cmduse)${last instanceof Error && last.message !== last.name ? ` — ${last.message}` : ""}`,
+		{ cause: last },
+	);
+}
+
+/** Run oduse and return its plain-text stdout (OpenDesign usage). Same contract
+ *  as runCmduse; oduse ships in the cmd-usage crate, so its install hint is the
+ *  same brew formula. */
+export async function runOduse(
+	arg: string | readonly string[],
+	opts: RunOptions = {},
+): Promise<string> {
+	const args = resolveArgs(arg, splitCliArgs);
+	const candidates = opts.candidates ?? ODUSE_CANDIDATES;
+	let last: unknown;
+	for (const bin of candidates) {
+		try {
+			return await runOnce(bin, args, opts, "oduse");
+		} catch (e) {
+			last = e;
+			if ((e as NodeJS.ErrnoException)?.code !== "ENOENT") throw e;
+		}
+	}
+	throw new Error(
+		`oduse binary not found (install: brew install JeffreyJYZ/tap/cmduse)${last instanceof Error && last.message !== last.name ? ` — ${last.message}` : ""}`,
 		{ cause: last },
 	);
 }

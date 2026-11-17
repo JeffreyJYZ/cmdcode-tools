@@ -6,6 +6,8 @@ import { durationLabel, type SettingRow, settingRows } from "../src/sidebar/sett
 const DEFAULTS: Prefs = {
 	colors: false,
 	ocPlan: "go",
+	od: true,
+	odPlan: "go",
 	pollMs: 5_000,
 	cost: "off",
 	costMs: 60_000,
@@ -34,12 +36,16 @@ describe("sidebar settings rows", () => {
 		expect(rows.map((row) => row.title)).toEqual([
 			"Colours",
 			"OpenCode plan",
+			"OpenDesign panel",
+			"OpenDesign plan",
 			"Refresh",
 			"Local cost rows",
 			"Cost refresh",
 		]);
 		expect(at(rows, "Colours").values()).toEqual(["off", "on"]);
 		expect(at(rows, "OpenCode plan").values()).toEqual(["go", "go-plus"]);
+		expect(at(rows, "OpenDesign panel").values()).toEqual(["off", "on"]);
+		expect(at(rows, "OpenDesign plan").values()).toEqual(["go", "plus", "pro", "max"]);
 		expect(at(rows, "Refresh").values()).toEqual(POLL_CHOICES.map(durationLabel));
 		expect(at(rows, "Local cost rows").values()).toEqual(["off", "session", "window"]);
 		expect(at(rows, "Cost refresh").values()).toEqual(COST_REFRESH_CHOICES.map(durationLabel));
@@ -49,18 +55,25 @@ describe("sidebar settings rows", () => {
 		const { rows } = build({
 			colors: true,
 			ocPlan: "go-plus",
+			od: true,
+			odPlan: "pro",
 			pollMs: 30_000,
 			cost: "session",
 			costMs: 300_000,
 		});
 		expect(at(rows, "Colours").value()).toBe("on");
 		expect(at(rows, "OpenCode plan").value()).toBe("go-plus");
+		expect(at(rows, "OpenDesign panel").value()).toBe("on");
+		expect(at(rows, "OpenDesign plan").value()).toBe("pro");
 		expect(at(rows, "Refresh").value()).toBe("30s");
 		expect(at(rows, "Local cost rows").value()).toBe("session");
 		expect(at(rows, "Cost refresh").value()).toBe("5m");
 
 		const off = build().rows;
 		expect(at(off, "Colours").value()).toBe("off");
+		// The OpenDesign section is on unless it is switched off, like the others.
+		expect(at(off, "OpenDesign panel").value()).toBe("on");
+		expect(at(off, "OpenDesign plan").value()).toBe("go");
 		expect(at(off, "Local cost rows").value()).toBe("off");
 	});
 
@@ -69,6 +82,8 @@ describe("sidebar settings rows", () => {
 		at(rows, "Colours").set("on");
 		at(rows, "Colours").set("off");
 		at(rows, "OpenCode plan").set("go-plus");
+		at(rows, "OpenDesign panel").set("off");
+		at(rows, "OpenDesign plan").set("max");
 		at(rows, "Refresh").set("1m");
 		at(rows, "Local cost rows").set("window");
 		at(rows, "Cost refresh").set("5m");
@@ -77,6 +92,8 @@ describe("sidebar settings rows", () => {
 			{ colors: true },
 			{ colors: false },
 			{ ocPlan: "go-plus" },
+			{ od: false },
+			{ odPlan: "max" },
 			{ pollMs: 60_000 },
 			{ cost: "window" },
 			{ costMs: 300_000 },
@@ -84,16 +101,22 @@ describe("sidebar settings rows", () => {
 		]);
 	});
 
-	test("Cost refresh hides while cost rows are off", () => {
-		const { state, rows } = build({ cost: "off" });
+	test("Cost refresh hides while cost rows are off, OpenDesign plan while the panel is off", () => {
+		const { state, rows } = build({ cost: "off", od: false });
 		const costRefresh = at(rows, "Cost refresh");
 		expect(costRefresh.hidden?.()).toBe(true);
 		state.cost = "session";
 		expect(costRefresh.hidden?.()).toBe(false);
 		state.cost = "window";
 		expect(costRefresh.hidden?.()).toBe(false);
+
+		const odPlan = at(rows, "OpenDesign plan");
+		expect(odPlan.hidden?.()).toBe(true);
+		state.od = true;
+		expect(odPlan.hidden?.()).toBe(false);
 		// Every other row is always visible.
 		expect(at(rows, "Colours").hidden).toBeUndefined();
+		expect(at(rows, "OpenDesign panel").hidden).toBeUndefined();
 		expect(at(rows, "Local cost rows").hidden).toBeUndefined();
 	});
 
@@ -102,6 +125,7 @@ describe("sidebar settings rows", () => {
 		at(rows, "Refresh").set("nope");
 		at(rows, "Local cost rows").set("bogus");
 		at(rows, "Cost refresh").set("99s");
+		at(rows, "OpenDesign plan").set("ultra");
 		expect(calls).toEqual([]);
 	});
 

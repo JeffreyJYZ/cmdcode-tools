@@ -2,12 +2,15 @@ import { describe, expect, test } from "bun:test";
 import {
 	type Accounted,
 	keepAccount,
+	panelTitle,
 	rememberMeta,
 	rememberModelUsage,
+	rememberOd,
 	rememberSnapshot,
 	rememberZen,
 	seededMeta,
 	seededModelUsage,
+	seededOd,
 	seededRows,
 	seededZen,
 	sessionKind,
@@ -27,7 +30,16 @@ describe("session kind", () => {
 		expect(sessionKind("opencode-go")).toBe("go");
 		expect(sessionKind("opencode")).toBe("zen");
 		expect(sessionKind("opencode-zen")).toBe("zen");
+		expect(sessionKind("open-design")).toBe("od");
 		expect(sessionKind("anthropic")).toBe("other");
+	});
+
+	test("each family names its section, OpenDesign included", () => {
+		expect(panelTitle("ours")).toBe("Command Code");
+		expect(panelTitle("go")).toBe("OpenCode Go");
+		expect(panelTitle("zen")).toBe("OpenCode Zen");
+		expect(panelTitle("ark")).toBe("Volcengine ARK");
+		expect(panelTitle("od")).toBe("OpenDesign");
 	});
 });
 
@@ -48,6 +60,26 @@ describe("account snapshot cache", () => {
 		expect(seededZen()).not.toBe(usage);
 		rememberZen(usage);
 		expect(seededZen()).toBe(usage);
+	});
+
+	test("the OpenDesign snapshot survives a remount too", () => {
+		// Same rule as `lastZen`: account-wide, one copy serves every session, and
+		// only a successful load replaces it, so a missing `oduse` or a store the
+		// desktop app has not created leaves the last block up.
+		const usage = {
+			plan: "go",
+			caps: {},
+			summary: { requests: 0, tokensIn: 0, tokensOut: 0, costUsd: 0, credits: 0 },
+			totals: {
+				month: { requests: 0, tokensIn: 0, tokensOut: 0, costUsd: 0, credits: 0 },
+				fiveHour: { requests: 0, tokensIn: 0, tokensOut: 0, costUsd: 0, credits: 0 },
+				weekly: { requests: 0, tokensIn: 0, tokensOut: 0, costUsd: 0, credits: 0 },
+			},
+			models: new Map(),
+		} as Parameters<typeof rememberOd>[0];
+		expect(seededOd()).not.toBe(usage);
+		rememberOd(usage);
+		expect(seededOd()).toBe(usage);
 	});
 
 	test("a dropped request keeps the last account meters", () => {

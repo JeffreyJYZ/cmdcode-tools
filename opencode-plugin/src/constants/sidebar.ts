@@ -28,6 +28,17 @@ export type OcPlan = (typeof OC_PLANS)[number];
 /** Plan used when the user has not set one: behaviour is unchanged for them. */
 export const OC_PLAN_DEFAULT: OcPlan = "go";
 
+/**
+ * OpenDesign plans the panel can render, mirroring `core/od.json` — the
+ * catalogue `oduse` ships and validates `--plan` against. Which plan an account
+ * is on is not discoverable (the desktop app's store records no subscription and
+ * its daemon reports a balance, not a tier), so it is a setting like the Go one.
+ * Only Go publishes a 5-hour cap; the panel shows no such row for the rest.
+ */
+export const OD_PLANS = ["go", "plus", "pro", "max"] as const;
+export type OdPlan = (typeof OD_PLANS)[number];
+export const OD_PLAN_DEFAULT: OdPlan = "go";
+
 /** Go's documented per-model window shares of the monthly allowance. */
 export const GO_WINDOW_SHARE = {
 	fiveHour: 0.2,
@@ -67,6 +78,10 @@ export const COST_REFRESH_DEFAULT_MS = 60_000;
 export const PREF_DEFAULTS: Prefs = {
 	colors: false,
 	ocPlan: OC_PLAN_DEFAULT,
+	// On, like the other three sections: an OpenDesign session gets its block
+	// without a setting, and only an OpenDesign session ever spawns `oduse`.
+	od: true,
+	odPlan: OD_PLAN_DEFAULT,
 	pollMs: POLL_DEFAULT_MS,
 	cost: COST_MODE_DEFAULT,
 	costMs: COST_REFRESH_DEFAULT_MS,
