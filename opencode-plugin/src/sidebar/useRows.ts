@@ -8,7 +8,7 @@ import { liveMinPlan } from "../catalogLive";
 import {
 	ARK_PROVIDER_ID,
 	GO_PROVIDER_ID,
-	OPEN_DESIGN_PROVIDER_ID,
+	isOpenDesignProvider,
 	PROVIDER_ID_PREFIX,
 	ZEN_PROVIDER_ID,
 	ZEN_PROVIDER_PREFIX,
@@ -47,7 +47,7 @@ export function sessionKind(providerID: string | undefined): SessionKind {
 	if (providerID.startsWith(GO_PROVIDER_ID)) return "go";
 	if (providerID === ZEN_PROVIDER_ID || providerID.startsWith(ZEN_PROVIDER_PREFIX)) return "zen";
 	if (providerID.startsWith(ARK_PROVIDER_ID)) return "ark";
-	if (providerID.startsWith(OPEN_DESIGN_PROVIDER_ID)) return "od";
+	if (isOpenDesignProvider(providerID)) return "od";
 	return "other";
 }
 
