@@ -27,6 +27,21 @@ export const ARK_PROVIDER_ID = "agent-plan";
  * the two must be able to coexist rather than overwrite each other. */
 export const OPEN_DESIGN_PROVIDER_ID = "open-design";
 
+/**
+ * Is this session's provider one of ours (OpenDesign)?
+ *
+ * The prefix, not equality: a session records whichever provider id it ran
+ * under, and a hand-written block such as `open-design-tmp` is the same lane as
+ * the plugin's own `open-design`. Matching the id alone left every turn on the
+ * hand-written spelling invisible — the session never reached the `od` kind, so
+ * its section had no rows while `oduse` was fine. A future third spelling
+ * (`open-design-2`, a renamed block) is covered for the same reason, and this is
+ * the single predicate every "is this OpenDesign" decision uses.
+ */
+export function isOpenDesignProvider(providerID: string | undefined): boolean {
+	return typeof providerID === "string" && providerID.startsWith(OPEN_DESIGN_PROVIDER_ID);
+}
+
 /** Integration id backing the OpenDesign key (/connect + env). Its own id, so a
  * Command Code /connect can never hand this lane the wrong credential. */
 export const OPEN_DESIGN_INTEGRATION_ID = "open-design";
