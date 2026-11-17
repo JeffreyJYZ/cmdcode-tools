@@ -7,11 +7,13 @@
 // shows up on the next refresh without a restart.
 use crate::oduse::od::{Catalog, Plan};
 use crate::oduse::wallet::{self, Wallet};
-use crate::oduse::{db, period, render, window};
+use crate::oduse::{period, render, sources, window};
 use std::io::Write;
 
 pub struct Loop<'a> {
     pub db_path: &'a str,
+    /// The harness store (`opencode.db`), read as the second source.
+    pub opencode_path: &'a str,
     pub catalog: &'a Catalog,
     pub plan: &'a Plan,
     pub plan_id: &'a str,
@@ -66,10 +68,11 @@ pub fn run(mut config: Loop<'_>) {
             }
         }
         let now = window::now_ms();
-        let (rows, read_error) = match db::read_rows(config.db_path, config.read_since) {
-            Ok(rows) => (rows, None),
-            Err(error) => (Vec::new(), Some(error)),
-        };
+        let (rows, sources, notes, read_error) =
+            match sources::read(config.db_path, config.opencode_path, config.read_since) {
+                Ok(found) => (found.rows, found.names, found.notes, None),
+                Err(error) => (Vec::new(), Vec::new(), Vec::new(), Some(error)),
+            };
         let mut report = window::build(
             &rows,
             config.catalog,
@@ -82,6 +85,8 @@ pub fn run(mut config: Loop<'_>) {
             period::end(report.since_ms, &config.period_mode, config.period_inferred);
         report.wallet = config.wallet.clone();
         report.wallet_error = config.wallet_error.clone();
+        report.sources = sources;
+        report.notes = notes;
 
         let (term_rows, cols) = crate::term_size().unwrap_or((0, 0));
         let cols_opt = (cols > 0).then_some(cols);

@@ -48,6 +48,7 @@ pub fn dashboard(ctx: &Ctx) {
 
     watch::run(watch::Loop {
         db_path: ctx.db_path,
+        opencode_path: ctx.opencode_path,
         catalog: ctx.catalog,
         plan: ctx.plan,
         plan_id: ctx.plan_id,

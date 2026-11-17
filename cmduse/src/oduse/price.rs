@@ -66,18 +66,33 @@ pub fn cache_read_rate(input: f64, catalog_id: &str) -> (f64, bool) {
 /// pair), the cheapest is used: OpenDesign's own price list is flat, so no
 /// time-of-day cut applies here and the low sheet is the published floor — the
 /// same figure the catalogue's own input/output pair comes from.
+///
+/// Built once: pricing runs per turn, and re-parsing the catalogue each time cost
+/// 19 s on a 2 000-turn store.
 pub fn zen_cache_read(model_id: &str) -> Option<f64> {
-    let catalog = crate::ocuse::zen::catalog();
-    let model = catalog
-        .go
-        .models
-        .iter()
-        .chain(catalog.zen.models.iter())
-        .find(|m| m.id == model_id)?;
-    model
-        .variants
-        .iter()
-        .map(|v| v.cache_read)
-        .filter(|rate| *rate > 0.0)
-        .min_by(f64::total_cmp)
+    static RATES: std::sync::OnceLock<std::collections::HashMap<String, f64>> =
+        std::sync::OnceLock::new();
+    let rates = RATES.get_or_init(|| {
+        let catalog = crate::ocuse::zen::catalog();
+        let mut map = std::collections::HashMap::new();
+        for model in catalog.go.models.iter().chain(catalog.zen.models.iter()) {
+            let cheapest = model
+                .variants
+                .iter()
+                .map(|v| v.cache_read)
+                .filter(|rate| *rate > 0.0)
+                .min_by(f64::total_cmp);
+            if let Some(rate) = cheapest {
+                // The same model appears on both shelves with different sheets
+                // (deepseek is 0.003 on Go, 0.006 on Zen). The cheapest is the
+                // published floor, so a later occurrence must never raise it.
+                let entry = map.entry(model.id.clone()).or_insert(rate);
+                if rate < *entry {
+                    *entry = rate;
+                }
+            }
+        }
+        map
+    });
+    rates.get(model_id).copied()
 }
