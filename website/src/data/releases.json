@@ -1,6 +1,13 @@
 {
-	"generatedAt": "2026-11-14T15:06:51.298Z",
+	"generatedAt": "2026-11-15T17:41:50.938Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.7.35",
+			"name": "cmduse-v0.7.35",
+			"publishedAt": "2026-11-15T09:10:23Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.7.35",
+			"notes": "## What's Changed\n* feat(sidebar): percent-only usage, opt-in local cost, /cmd-settings by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/19\n* docs(agents): opencode-command-code is 0.5.27 by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/20\n* fix(sidebar): style /cmd-settings like the host's list dialogs by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/21\n* fix(sidebar): one palette, colour only for trouble by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/22\n* fix(sidebar): headings bold, not purple by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/23\n* fix(cmduse): scope the dashboard model panel to the billing period by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/24\n* fix(release): commit the lockfile with the version bump (0.7.35) by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/25\n\n\n**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.33...cmduse-v0.7.35"
+		},
 		{
 			"tag": "cmduse-v0.7.33",
 			"name": "cmduse-v0.7.33",
@@ -782,6 +789,18 @@
 		}
 	],
 	"crates": [
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.35",
+			"date": "2026-11-15T09:04:47.113052Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.35"
+		},
+		{
+			"crate": "cmd-usage",
+			"version": "0.7.34",
+			"date": "2026-11-15T09:01:08.190401Z",
+			"url": "https://crates.io/crates/cmd-usage/0.7.34"
+		},
 		{
 			"crate": "cmd-usage",
 			"version": "0.7.33",
