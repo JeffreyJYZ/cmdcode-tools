@@ -1,6 +1,20 @@
 {
-	"generatedAt": "2026-11-17T02:41:47.699Z",
+	"generatedAt": "2026-11-17T11:13:45.925Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.8.3",
+			"name": "cmduse-v0.8.3",
+			"publishedAt": "2026-11-17T10:20:09Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.8.3",
+			"notes": "**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.8.2...cmduse-v0.8.3"
+		},
+		{
+			"tag": "cmduse-v0.8.2",
+			"name": "cmduse-v0.8.2",
+			"publishedAt": "2026-11-17T04:47:24Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.8.2",
+			"notes": "## What's Changed\n* fix(report): --rows trims daily and hourly, and the tail says so by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/31\n* release(cmduse): 0.8.1 — --rows trims every table by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/32\n* fix(plugin): match any open-design provider id, not just the plugin's own by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/33\n* fix(plugin): an empty sidebar row list crashed the whole slot by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/35\n* fix(oduse): count the turns that actually spend the allowance by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/34\n* test(oduse): pin the cross-shelf cache floor and the zero-report regression by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/36\n\n\n**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.8.0...cmduse-v0.8.2"
+		},
 		{
 			"tag": "cmduse-v0.8.0",
 			"name": "cmduse-v0.8.0",
@@ -271,6 +285,12 @@
 			"version": "0.1.12",
 			"date": "2026-11-17T02:08:20.636Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.12"
+		},
+		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.13",
+			"date": "2026-11-17T10:18:36.553Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.13"
 		},
 		{
 			"package": "@jeffreyjyz/reqshape",
@@ -717,6 +737,18 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.31"
 		},
 		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.33",
+			"date": "2026-11-17T06:32:35.040Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.33"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.35",
+			"date": "2026-11-17T10:19:08.185Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.35"
+		},
+		{
 			"package": "@jeffreyjyz/opencode-context",
 			"version": "0.1.0",
 			"date": "2026-10-04T06:05:56.479Z",
@@ -808,6 +840,18 @@
 		}
 	],
 	"crates": [
+		{
+			"crate": "cmd-usage",
+			"version": "0.8.3",
+			"date": "2026-11-17T10:21:02.806716Z",
+			"url": "https://crates.io/crates/cmd-usage/0.8.3"
+		},
+		{
+			"crate": "cmd-usage",
+			"version": "0.8.2",
+			"date": "2026-11-17T04:48:09.866693Z",
+			"url": "https://crates.io/crates/cmd-usage/0.8.2"
+		},
 		{
 			"crate": "cmd-usage",
 			"version": "0.8.0",
