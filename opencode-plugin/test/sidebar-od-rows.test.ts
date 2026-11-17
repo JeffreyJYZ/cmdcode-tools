@@ -9,7 +9,7 @@ describe("odRows", () => {
 	test("the plan, both estimate caveats and the three published windows", () => {
 		const rows = odRows(parseOdJson(odSnapshot()));
 		const find = (label: string) => rows.find((row) => row[0] === label);
-		expect(rows[0]).toEqual(["OpenDesign", "go plan · estimate", "base", true]);
+		expect(rows[0]).toEqual(["Plan", "go plan · estimate", "base", true]);
 		// The caveats sit directly under the headline: without them a reader takes
 		// the credits for a meter and the 5-hour cut for the plan's own window.
 		expect(rows[1]?.[1]).toBe("credits = list-price $ x multiplier");
