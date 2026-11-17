@@ -34,6 +34,25 @@ fn cache_reads_are_priced_from_the_published_rate() {
     );
 }
 
+/// The floor is the cheapest published sheet across **both** shelves, never
+/// whichever shelf happened to be read last. `deepseek-v4.1-flash` is $0.003
+/// off-peak on Go and $0.006 on Zen: taking the Zen row would double the cache
+/// term, and cache is 98.6% of the token mass on the real account, so that
+/// inflates every credit figure.
+#[test]
+fn the_cache_rate_is_the_floor_across_shelves() {
+    assert_eq!(zen_cache_read("deepseek-v4.1-flash"), Some(0.003));
+}
+
+/// A model sold on one shelf only still resolves, from whichever shelf carries
+/// it — the cross-shelf minimum must not require the model to be on both.
+#[test]
+fn a_single_shelf_model_still_resolves() {
+    // `hy3` is Go-only, `claude-opus-4-5` is Zen-only.
+    assert_eq!(zen_cache_read("hy3"), Some(0.035));
+    assert_eq!(zen_cache_read("claude-opus-4-5"), Some(0.5));
+}
+
 /// A model the Go/Zen shelf does not sell still prices its cache reads, at its
 /// own input rate — never at zero, which would read as a free model.
 #[test]

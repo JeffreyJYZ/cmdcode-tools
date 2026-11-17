@@ -61,11 +61,15 @@ pub fn cache_read_rate(input: f64, catalog_id: &str) -> (f64, bool) {
 
 /// Cache-read rate for a model, from `core/zen.json`'s row for it.
 ///
-/// `zen.json` is the only table in the repo with a cache-read rate. Where that
-/// shelf carries several rate sheets for one model (deepseek's peak/off-peak
-/// pair), the cheapest is used: OpenDesign's own price list is flat, so no
-/// time-of-day cut applies here and the low sheet is the published floor — the
-/// same figure the catalogue's own input/output pair comes from.
+/// `zen.json` is the only table in the repo with a cache-read rate. The floor is
+/// the cheapest published rate for that id across **both** shelves and **every**
+/// rate sheet they carry (deepseek's peak/off-peak pair): OpenDesign's own price
+/// list is flat, so no time-of-day cut applies here and the low sheet is the
+/// published floor — the same figure the catalogue's own input/output pair comes
+/// from. The minimum must be taken across shelves, never per shelf, because one
+/// id can be sold on both at different rates (deepseek-v4.1-flash is 0.003 on Go
+/// and 0.006 on Zen) and a per-shelf insert would let the later shelf overwrite
+/// the floor.
 ///
 /// Built once: pricing runs per turn, and re-parsing the catalogue each time cost
 /// 19 s on a 2 000-turn store.

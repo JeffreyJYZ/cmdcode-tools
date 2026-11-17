@@ -105,6 +105,16 @@ fn both_provider_spellings_are_counted() {
             .sum::<u64>(),
         10_000
     );
+    // The whole point of the bug: a store full of turns must not report zero.
+    let report = crate::oduse::window::build(
+        &found.rows,
+        &crate::oduse::od::catalog(),
+        crate::oduse::od::DEFAULT_PLAN,
+        2_000,
+        Some(0),
+    );
+    assert_eq!(report.month.requests, 3);
+    assert!(report.month.credits > 0.0, "{:#?}", report.month);
 }
 
 /// A proxied turn visible from both sides counts once, and opencode's copy wins:
