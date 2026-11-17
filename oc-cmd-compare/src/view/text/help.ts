@@ -15,7 +15,7 @@ export const LEGEND: [string, string][] = [
 	],
 	[
 		"OD",
-		"OpenDesign allowance = plan credits ÷ the model's multiplier · OD 5h is dash on Plus and up, which have no 5-hour window",
+		"OpenDesign Go/Plus use each model's published cap (Eco $220 vs Flash $120 on Go) · Pro/Max use plan credits ÷ multiplier · 5h is dash where the plan publishes none",
 	],
 ];
 

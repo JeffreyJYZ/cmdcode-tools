@@ -1,5 +1,5 @@
-import { DOC_URL, OC_MODELS_URL, OC_PLANS } from "#~/constants/sources.ts";
-import { extractCatalog, fetchText, parseTabTables } from "#~/data/scrape/index.ts";
+import { OC_MODELS_URL, OC_PLANS } from "#~/constants/sources.ts";
+import { parseOcGoModels } from "#~/data/scrape/index.ts";
 import type { CatalogEntry, PlanInfo } from "#~/types.ts";
 
 function planDef(planId: string) {
@@ -13,27 +13,23 @@ function planDef(planId: string) {
 }
 
 /**
- * Per-model token rates + monthly usage limit for an OpenCode Go plan. Both
- * plans share one price list, so the tab label is what selects the right
- * allowance table: identical headers and rates, different monthly limits.
+ * Per-model token rates + monthly usage limit for an OpenCode Go plan.
+ *
+ * The docs article no longer carries the priced tables (it now just links to
+ * the console), and the console table has limits but no token prices. The
+ * `/zen/go/v1/models` endpoint is the only live source with both; the plan's
+ * `usageKey` selects its monthly-limit column. The API publishes one price
+ * set, so `peak` is accepted for interface parity but has no effect.
  */
-export async function loadOcGoCatalog(planId: string, peak = false): Promise<CatalogEntry[]> {
+export async function loadOcGoCatalog(planId: string, _peak = false): Promise<CatalogEntry[]> {
 	const def = planDef(planId);
-	const html = await fetchText(DOC_URL);
-	const tabs = await parseTabTables(html);
-	const entries = extractCatalog(
-		tabs.filter((tab) => tab.label === def.label).map((tab) => tab.table),
-		{
-			provider: "oc-go",
-			plan: def.label,
-			creditHeader: /monthly limit/i,
-			peak,
-		},
-	);
+	const res = await fetch(OC_MODELS_URL, {
+		headers: { "user-agent": "mpc/0.1 (+model price compare)" },
+	});
+	if (!res.ok) throw new Error(`GET ${OC_MODELS_URL} -> ${res.status} ${res.statusText}`);
+	const entries = parseOcGoModels(await res.json(), def);
 	if (entries.length === 0) {
-		throw new Error(
-			`no model table parsed for the "${def.label}" plan from ${DOC_URL} — docs layout may have changed`,
-		);
+		throw new Error(`no model rows parsed from ${OC_MODELS_URL} — API shape may have changed`);
 	}
 	return entries;
 }

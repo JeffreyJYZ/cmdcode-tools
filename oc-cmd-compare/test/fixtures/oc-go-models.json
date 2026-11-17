@@ -1,0 +1,172 @@
+{
+	"data": [
+		{
+			"id": "deepseek-v4.1-flash",
+			"name": "DeepSeek V4.1 Flash 1017",
+			"cost": {
+				"text": {
+					"input": {
+						"price": 0.15,
+						"cache": {
+							"read": 0.003
+						}
+					},
+					"output": {
+						"price": 0.6
+					}
+				}
+			},
+			"go": {
+				"monthly_usage": {
+					"go": 100,
+					"go-plus": 200,
+					"go-teams": 105
+				}
+			}
+		},
+		{
+			"id": "gpt-6-luna",
+			"name": "GPT-6 Luna",
+			"cost": {
+				"text": {
+					"input": {
+						"price": 0.1,
+						"cache": {
+							"read": 0.01,
+							"write": {
+								"30m": 0.125,
+								"12h": 0.25
+							}
+						},
+						"overrides": [
+							{
+								"when": {
+									"context": {
+										"gt": 272000
+									}
+								},
+								"price": 0.2,
+								"cache": {
+									"read": 0.02,
+									"write": {
+										"30m": 0.25,
+										"12h": 0.5
+									}
+								}
+							}
+						]
+					},
+					"output": {
+						"price": 0.5,
+						"overrides": [
+							{
+								"when": {
+									"context": {
+										"gt": 272000
+									}
+								},
+								"price": 0.75
+							}
+						]
+					}
+				}
+			},
+			"go": {
+				"monthly_usage": {
+					"go": 15,
+					"go-plus": 60,
+					"go-teams": 20
+				}
+			}
+		},
+		{
+			"id": "glm-5.3-flash",
+			"name": "GLM-5.3-Flash",
+			"cost": {
+				"text": {
+					"input": {
+						"price": 0.15,
+						"cache": {
+							"read": 0.03
+						}
+					},
+					"output": {
+						"price": 0.5
+					}
+				}
+			},
+			"go": {
+				"monthly_usage": {
+					"go": 60,
+					"go-plus": 180,
+					"go-teams": 65
+				}
+			}
+		},
+		{
+			"id": "kimi-k3",
+			"name": "Kimi K3",
+			"cost": {
+				"text": {
+					"input": {
+						"price": 3,
+						"cache": {
+							"read": 0.3,
+							"write": 3
+						}
+					},
+					"output": {
+						"price": 15
+					}
+				}
+			},
+			"go": {
+				"monthly_usage": {
+					"go": 15,
+					"go-plus": 60,
+					"go-teams": 20
+				}
+			}
+		},
+		{
+			"id": "beam-free",
+			"name": "Beam Free",
+			"cost": {
+				"text": {
+					"input": {
+						"price": 0,
+						"cache": {
+							"read": 0
+						}
+					},
+					"output": {
+						"price": 0
+					}
+				}
+			},
+			"go": {
+				"monthly_usage": null
+			}
+		},
+		{
+			"id": "hy4-flash-free",
+			"name": "Hy4 flash Free",
+			"cost": {
+				"text": {
+					"input": {
+						"price": 0,
+						"cache": {
+							"read": 0
+						}
+					},
+					"output": {
+						"price": 0
+					}
+				}
+			},
+			"go": {
+				"monthly_usage": null
+			}
+		}
+	]
+}

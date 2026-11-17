@@ -7,6 +7,16 @@ export type ProviderId = "oc-go" | "cc";
  */
 export type SideId = ProviderId | "od";
 
+/**
+ * One published dollar cap set. `null` on a window means the source publishes
+ * no such window — never 0 and never an invented figure.
+ */
+export interface CapSet {
+	month: number;
+	week: number | null;
+	fiveHour: number | null;
+}
+
 /** Per-1M-token rates in USD. */
 export interface ModelPricing {
 	input: number;
@@ -26,6 +36,8 @@ export interface CatalogEntry {
 	pricing: ModelPricing;
 	/** Monthly credits ($) this plan devotes to this model. */
 	allowance: number;
+	/** Published per-model caps; absent means the plan's own windows apply. */
+	cap?: CapSet;
 	/** Promotion CommandCode attaches to the row, when one is running. */
 	deal?: Deal;
 }

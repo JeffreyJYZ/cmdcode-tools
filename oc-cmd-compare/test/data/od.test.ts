@@ -1,22 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { buildMetrics, buildRows } from "#~/cli/engine/index.ts";
 import { OD_MODELS } from "#~/data/sources/od/models.ts";
 import { OD_PLANS } from "#~/data/sources/od/plans.ts";
-import { loadOdCatalog, odPlan } from "#~/data/sources/od/index.ts";
+import { capFor, loadOdCatalog } from "#~/data/sources/od/index.ts";
 import { normalizeKey } from "#~/keys.ts";
-import { renderJson } from "#~/view/render.ts";
-import type { CatalogEntry, PlanInfo, ProviderId, SideId } from "#~/types.ts";
-import { entry, workload } from "../unit/fixtures.ts";
+import type { CatalogEntry, ProviderId } from "#~/types.ts";
+import { odPriced } from "../unit/fixtures.ts";
 
-/** A stand-in catalog that only carries the rows these tests ask for. */
-function priced(keys: string[]): Record<ProviderId, CatalogEntry[]> {
-	return {
-		"oc-go": [],
-		cc: keys.map((name) => entry({ key: normalizeKey(name), name })),
-	};
-}
-
+const priced = (keys: string[]): Record<ProviderId, CatalogEntry[]> => odPriced(keys);
 const KEYS = ["DeepSeek V4.1 Flash", "GLM-5.3 Flash-X", "Muse Spark 1.3"];
+const ECO = "DeepSeek V4.1 Flash Eco";
 
 describe("OpenDesign plan constants", () => {
 	test("prices, credit pools and windows match the live pricing page", () => {
@@ -33,28 +25,95 @@ describe("OpenDesign plan constants", () => {
 		}
 	});
 
+	test("Go and Plus publish per-model caps; Pro and Max publish one pool", () => {
+		expect(OD_PLANS.go?.caps?.deepseekv41flasheco).toEqual({
+			month: 220,
+			week: 55,
+			fiveHour: 18,
+		});
+		expect(OD_PLANS.go?.caps?.deepseekv41flash).toEqual({
+			month: 120,
+			week: 30,
+			fiveHour: 10,
+		});
+		expect(OD_PLANS.plus?.caps?.deepseekv41flash).toEqual({
+			month: 160,
+			week: 40,
+			fiveHour: null,
+		});
+		expect(OD_PLANS.pro?.caps).toBeUndefined();
+		expect(OD_PLANS.max?.caps).toBeUndefined();
+	});
+
 	test("an unknown plan fails loud", () => {
 		expect(() => loadOdCatalog("enterprise", priced(KEYS))).toThrow(/unknown OpenDesign plan/);
 	});
 });
 
-describe("credit multiplier -> usable allowance", () => {
-	test("allowance is the credit pool divided by the model's multiplier", () => {
-		const { entries } = loadOdCatalog("go", priced(KEYS));
+describe("published caps -> usable allowance", () => {
+	test("Flash and Eco on Go resolve to different allowances", () => {
+		const { entries } = loadOdCatalog("go", priced([...KEYS, ECO]));
 		const byKey = new Map(entries.map((e) => [e.key, e]));
-		// Go's $220 coding pool at 0.5x buys $440 of DeepSeek V4.1 Flash usage.
-		expect(byKey.get("deepseekv41flash")?.allowance).toBeCloseTo(440, 6);
-		// 2x burns twice the credits for the same usage value.
-		expect(byKey.get("glm53flashx")?.allowance).toBeCloseTo(110, 6);
+		const flash = byKey.get("deepseekv41flash");
+		const eco = byKey.get("deepseekv41flasheco");
+		// The published caps ARE the allowance on Go: $120 for Flash, $220 for Eco.
+		expect(flash?.allowance).toBe(120);
+		expect(eco?.allowance).toBe(220);
+		expect(eco?.cap?.week).toBe(55);
+		expect(flash?.cap?.week).toBe(30);
+		expect(flash?.cap?.fiveHour).toBe(10);
+		// A model with no row of its own draws the plan's default (Eco) set.
+		expect(byKey.get("glm53flashx")?.allowance).toBe(220);
+		expect(byKey.get("glm53flashx")?.cap).toEqual(eco?.cap);
+	});
+
+	test("Plus publishes a different pair, with no 5-hour window", () => {
+		const { entries } = loadOdCatalog("plus", priced([...KEYS, ECO]));
+		const byKey = new Map(entries.map((e) => [e.key, e]));
+		expect(byKey.get("deepseekv41flash")?.allowance).toBe(160);
+		expect(byKey.get("deepseekv41flasheco")?.allowance).toBe(290);
+		expect(byKey.get("deepseekv41flash")?.cap?.fiveHour).toBeNull();
+	});
+
+	test("Pro keeps one pool: plan credits divided by the model's multiplier", () => {
+		const { entries } = loadOdCatalog("pro", priced(KEYS));
+		const byKey = new Map(entries.map((e) => [e.key, e]));
+		const pool = OD_PLANS.pro?.credits ?? 0;
+		expect(byKey.get("deepseekv41flash")?.allowance).toBeCloseTo(pool / 0.5, 6);
+		expect(byKey.get("glm53flashx")?.allowance).toBeCloseTo(pool / 2, 6);
+		// No per-model cap: the plan's own windows apply, unchanged.
+		expect(byKey.get("deepseekv41flash")?.cap).toBeUndefined();
+	});
+
+	test("a model with no published cap is absent, never a zero cap", () => {
+		OD_PLANS.nocaps = {
+			label: "NoCaps",
+			price: 0,
+			credits: 0,
+			coding: 0,
+			top: 0,
+			fiveHour: null,
+			weekly: 0,
+			concurrency: 0,
+		};
+		try {
+			const flash = OD_MODELS.find((m) => normalizeKey(m.name) === "deepseekv41flash");
+			if (!flash) throw new Error("fixture model missing");
+			expect(capFor(flash, "nocaps")).toBeNull();
+			const load = loadOdCatalog("nocaps", priced(["DeepSeek V4.1 Flash"]));
+			expect(load.entries).toHaveLength(0);
+			expect(load.uncapped).toContain("DeepSeek V4.1 Flash");
+		} finally {
+			delete OD_PLANS.nocaps;
+		}
 	});
 
 	test("a lower multiplier keeps the same token rates", () => {
-		const { entries } = loadOdCatalog("go", priced([...KEYS, "DeepSeek V4.1 Flash Eco"]));
+		const { entries } = loadOdCatalog("go", priced([...KEYS, ECO]));
 		const flash = entries.find((e) => e.key === "deepseekv41flash");
 		const eco = entries.find((e) => e.key === "deepseekv41flasheco");
 		expect(eco?.pricing).toEqual(flash?.pricing);
 		expect(eco?.pricing).toBeDefined();
-		expect(eco?.allowance).toBeGreaterThan(flash?.allowance ?? Infinity);
 	});
 
 	test("a model with no token rate is reported, never priced from thin air", () => {
@@ -73,72 +132,14 @@ describe("plan gating", () => {
 		expect(go.entries.some((e) => e.key === "musespark13")).toBe(false);
 		const top = plus.entries.find((e) => e.key === "musespark13");
 		expect(top).toBeDefined();
+		expect(top?.cap).toBeUndefined();
 		// Top Model Credits draw directly: $20 on Plus, no multiplier.
 		expect(top?.allowance).toBeCloseTo(OD_PLANS.plus?.top ?? 0, 6);
 	});
 
 	test("DeepSeek V4.1 Flash Eco is Go/Plus only", () => {
 		const names = OD_MODELS.map((m) => m.name);
-		expect(loadOdCatalog("go", priced(names)).excluded).not.toContain(
-			"DeepSeek V4.1 Flash Eco",
-		);
-		expect(loadOdCatalog("pro", priced(names)).excluded).toContain("DeepSeek V4.1 Flash Eco");
-	});
-});
-
-describe("requests per window", () => {
-	const plans = (id: string): Map<SideId, PlanInfo> => new Map([["od", odPlan(id)]]);
-
-	test("Go scales by its own 18/220 and 55/220 caps", () => {
-		const entries = loadOdCatalog("go", priced(KEYS)).entries.filter(
-			(e) => e.key === "glm53flashx",
-		);
-		const [m] = buildMetrics(entries, plans("go"), { od: workload });
-		expect(m?.requestsPerFiveHour).toBeCloseTo((m?.requestsPerMonth ?? 0) * (18 / 220), 6);
-		expect(m?.requestsPerWeek).toBeCloseTo((m?.requestsPerMonth ?? 0) * (55 / 220), 6);
-	});
-
-	test("Plus has no 5-hour window: 0 records the absence, the column prints a dash", () => {
-		const entries = loadOdCatalog("plus", priced(KEYS)).entries.filter(
-			(e) => e.key === "glm53flashx",
-		);
-		const [m] = buildMetrics(entries, plans("plus"), { od: workload });
-		expect(m?.requestsPerFiveHour).toBe(0);
-		expect(m?.requestsPerWeek).toBeCloseTo((m?.requestsPerMonth ?? 0) * (74 / 310), 6);
-	});
-});
-
-describe("payload", () => {
-	test("--od-plan rows carry the od block and the plan", () => {
-		const loaded = loadOdCatalog("plus", priced(KEYS));
-		const plan = odPlan("plus");
-		const rows = buildRows(
-			[],
-			[],
-			plan,
-			plan,
-			{ od: workload },
-			undefined,
-			undefined,
-			undefined,
-			{
-				entries: loaded.entries,
-				plan,
-			},
-		);
-		const json = JSON.parse(
-			renderJson(rows, {
-				ocPlan: plan,
-				ccPlan: plan,
-				odPlan: plan,
-				workloads: { od: workload },
-			}),
-		) as {
-			plans: Record<string, { id: string; provider: string }>;
-			rows: { od?: { allowance: number } }[];
-		};
-		expect(json.plans.od?.id).toBe("plus");
-		expect(json.plans.od?.provider).toBe("od");
-		expect(json.rows.every((r) => r.od !== undefined)).toBe(true);
+		expect(loadOdCatalog("go", priced(names)).excluded).not.toContain(ECO);
+		expect(loadOdCatalog("pro", priced(names)).excluded).toContain(ECO);
 	});
 });

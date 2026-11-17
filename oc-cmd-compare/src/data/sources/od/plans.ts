@@ -1,3 +1,5 @@
+import type { CapSet } from "#~/types.ts";
+
 export const OD_URL = "https://open-design.ai/pricing";
 
 /**
@@ -6,6 +8,13 @@ export const OD_URL = "https://open-design.ai/pricing";
  * 5-hour windows apply to, `top` the Top Model Credits (no window at all).
  * Numbers from open-design.ai/pricing and /model-credits, regular monthly price
  * — the intro and annual discounts are excluded on purpose.
+ *
+ * Go and Plus publish a DIFFERENT cap set per model class (Eco versus the
+ * original Flash), so those sets live in `caps` keyed by canonical model key and
+ * `defaultCaps` covers a coding model with no row of its own. Pro and Max
+ * publish one set covering every Coding Plan model: they carry no `caps`, and
+ * their allowance stays the plan's single credit pool ÷ the model's multiplier.
+ * Every figure comes from docs/plan/opendesign/reference/od-caps.json.
  */
 interface OdPlanDef {
 	label: string;
@@ -17,6 +26,10 @@ interface OdPlanDef {
 	fiveHour: number | null;
 	weekly: number;
 	concurrency: number;
+	/** Published per-model cap sets, keyed by normalizeKey(model.name). */
+	caps?: Record<string, CapSet>;
+	/** Cap set for a coding model with no row in `caps`; absent means uncapped. */
+	defaultCaps?: CapSet;
 }
 
 export const OD_PLANS: Record<string, OdPlanDef> = {
@@ -29,6 +42,11 @@ export const OD_PLANS: Record<string, OdPlanDef> = {
 		fiveHour: 18,
 		weekly: 55,
 		concurrency: 10,
+		caps: {
+			deepseekv41flasheco: { month: 220, week: 55, fiveHour: 18 },
+			deepseekv41flash: { month: 120, week: 30, fiveHour: 10 },
+		},
+		defaultCaps: { month: 220, week: 55, fiveHour: 18 },
 	},
 	plus: {
 		label: "Plus",
@@ -39,6 +57,11 @@ export const OD_PLANS: Record<string, OdPlanDef> = {
 		fiveHour: null,
 		weekly: 74,
 		concurrency: 20,
+		caps: {
+			deepseekv41flasheco: { month: 290, week: 74, fiveHour: null },
+			deepseekv41flash: { month: 160, week: 40, fiveHour: null },
+		},
+		defaultCaps: { month: 290, week: 74, fiveHour: null },
 	},
 	pro: {
 		label: "Pro",

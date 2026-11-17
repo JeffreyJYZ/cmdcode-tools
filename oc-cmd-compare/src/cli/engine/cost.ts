@@ -1,5 +1,5 @@
 import { PER_MILLION } from "#~/constants/scoring.ts";
-import type { ModelPricing, PlanInfo, Workload } from "#~/types.ts";
+import type { CapSet, ModelPricing, PlanInfo, Workload } from "#~/types.ts";
 
 /**
  * USD of list-rate spend for a single request under the fixed workload.
@@ -30,8 +30,16 @@ export function costPerRequest(pricing: ModelPricing, workload: Workload): numbe
 export function windowRatios(
 	plan: PlanInfo,
 	override?: [number, number],
+	cap?: CapSet,
 ): { five: number | null; week: number } {
 	if (override) return { five: override[0], week: override[1] };
+	// Go/Plus publish a cap set per model class, so Flash's $30/$10 windows
+	// must not be scaled by Eco's $220 month. Top-model rows carry no cap.
+	if (cap) {
+		const five = cap.fiveHour !== null && cap.month > 0 ? cap.fiveHour / cap.month : null;
+		const week = cap.week !== null && cap.month > 0 ? cap.week / cap.month : 1;
+		return { five, week };
+	}
 	if (plan.provider === "oc-go") return { five: 0.2, week: 0.5 };
 	if (plan.provider === "od") {
 		const five =

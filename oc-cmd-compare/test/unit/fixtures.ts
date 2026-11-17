@@ -1,3 +1,4 @@
+import { normalizeKey } from "#~/keys.ts";
 import type { CatalogEntry, PlanInfo, ProviderId, Workload } from "#~/types.ts";
 
 export const workload: Workload = {
@@ -33,6 +34,14 @@ export const ocPlan: PlanInfo = {
 	fiveHour: null,
 	weekly: null,
 };
+
+/** A stand-in two-provider catalog carrying only the named rows, for OD tests. */
+export function odPriced(keys: string[]): Record<ProviderId, CatalogEntry[]> {
+	return {
+		"oc-go": [],
+		cc: keys.map((name) => entry({ key: normalizeKey(name), name })),
+	};
+}
 
 export function entry(overrides: Partial<CatalogEntry>): CatalogEntry {
 	return {

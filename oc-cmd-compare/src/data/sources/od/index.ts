@@ -1,7 +1,7 @@
 import { OD_MODELS, type OdModel } from "./models.ts";
 import { OD_PLANS } from "./plans.ts";
 import { normalizeKey } from "#~/keys.ts";
-import type { CatalogEntry, ModelPricing, PlanInfo, ProviderId } from "#~/types.ts";
+import type { CapSet, CatalogEntry, ModelPricing, PlanInfo, ProviderId } from "#~/types.ts";
 
 function planDef(planId: string) {
 	const def = OD_PLANS[planId];
@@ -28,17 +28,55 @@ export interface OdLoad {
 	entries: CatalogEntry[];
 	/** Included in the plan but with no token rate to price it — never invented. */
 	missing: string[];
+	/** Priced, but the plan publishes no cap for it — absent, never a zero cap. */
+	uncapped: string[];
 	/** In the plan's model list but not this tier (Go carries no top models). */
 	excluded: string[];
+	/** Plan id the load was made for, so --check can name its cap table. */
+	planId: string;
 }
 
-function allowanceOf(model: OdModel, planId: string): number {
+/**
+ * The cap set a coding model draws. Plans that publish per-model caps (Go,
+ * Plus) resolve their own row, else `defaultCaps`; a plan with neither leaves
+ * the model uncapped. Null for a top model — it draws Top Model Credits, which
+ * have no windows, and is handled by the caller.
+ */
+export function capFor(model: OdModel, planId: string): CapSet | null {
+	if (model.tier === "top") return null;
 	const def = planDef(planId);
-	// Coding Plan rows can draw the whole combined maximum — Coding Plan credits
-	// first, then any Top Model Credits — so that maximum is what one model can
-	// spend. A top-model row draws its own top credits directly.
-	const pool = model.tier === "coding" ? def.credits : def.top;
-	return pool / model.multiplier;
+	return def.caps?.[normalizeKey(model.name)] ?? def.defaultCaps ?? null;
+}
+
+function allowanceAndCap(
+	model: OdModel,
+	planId: string,
+): { allowance: number | null; cap: CapSet | null } {
+	const def = planDef(planId);
+	if (model.tier === "top") {
+		// Top Model Credits are charged at model value, with no multiplier.
+		return { allowance: def.top > 0 ? def.top : null, cap: null };
+	}
+	const cap = capFor(model, planId);
+	if (cap) return { allowance: cap.month, cap };
+	// Pro/Max publish one pool: keep the plan-credit ÷ multiplier projection.
+	// A plan with neither per-model caps nor a pool publishes no allowance, so
+	// the model stays absent rather than reading a fabricated zero.
+	if (def.credits > 0) return { allowance: def.credits / model.multiplier, cap: null };
+	return { allowance: null, cap: null };
+}
+
+/** One line per published cap set, plus the default, for `--check` to print. */
+export function odCapLines(planId: string): string[] {
+	const def = planDef(planId);
+	const lines: string[] = [];
+	const fmt = (name: string, c: CapSet): string =>
+		`${name}: $${c.month}/mo · $${c.week}/wk · ${c.fiveHour === null ? "no 5h" : `$${c.fiveHour}/5h`}`;
+	for (const [key, cap] of Object.entries(def.caps ?? {})) {
+		lines.push(fmt(OD_MODELS.find((m) => normalizeKey(m.name) === key)?.name ?? key, cap));
+	}
+	if (def.defaultCaps) lines.push(fmt("default", def.defaultCaps));
+	return lines;
 }
 
 /**
@@ -52,6 +90,7 @@ export function loadOdCatalog(planId: string, priced: Record<ProviderId, Catalog
 	const rates = pricedKeys(priced);
 	const entries: CatalogEntry[] = [];
 	const missing: string[] = [];
+	const uncapped: string[] = [];
 	const excluded: string[] = [];
 	for (const model of OD_MODELS) {
 		if (model.plans && !model.plans.includes(planId)) {
@@ -63,16 +102,22 @@ export function loadOdCatalog(planId: string, priced: Record<ProviderId, Catalog
 			missing.push(model.name);
 			continue;
 		}
+		const { allowance, cap } = allowanceAndCap(model, planId);
+		if (allowance === null) {
+			uncapped.push(model.name);
+			continue;
+		}
 		entries.push({
 			provider: "od",
 			plan: def.label,
 			key: normalizeKey(model.name),
 			name: model.name,
 			pricing,
-			allowance: allowanceOf(model, planId),
+			allowance,
+			...(cap ? { cap } : {}),
 		});
 	}
-	return { entries, missing, excluded };
+	return { entries, missing, uncapped, excluded, planId };
 }
 
 /** Plan price + its own credit windows; windows apply to Coding Plan credits only. */

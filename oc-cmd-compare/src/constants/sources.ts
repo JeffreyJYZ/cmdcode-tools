@@ -51,12 +51,14 @@ export const CC_PLANS: Record<string, CcPlanDef> = {
 	},
 };
 
-/** One OpenCode Go plan: a docs tab label and its monthly subscription price. */
+/** One OpenCode Go plan: a display label, its monthly price and its JSON key. */
 interface OcPlanDef {
-	/** Docs tab label; the discriminator between the two plans' tables. */
+	/** Display label in the comparison table. */
 	label: string;
 	/** Subscription USD per month. */
 	price: number;
+	/** Key in `/zen/go/v1/models` → `go.monthly_usage`, the per-model allowance. */
+	usageKey: "go" | "go-plus";
 }
 
 const GO_PRICE_PER_MONTH = 10;
@@ -64,19 +66,25 @@ const GO_PLUS_PRICE_PER_MONTH = 40;
 
 /**
  * OpenCode Go has two plans sharing one token price list but granting each
- * model a different monthly limit. The docs put each plan's allowance table in
- * a `<TabItem label="…">`; the tab label is what tells the otherwise identical
- * tables apart, so it doubles as the plan's identity here.
+ * model a different monthly limit. Both come from `/zen/go/v1/models`
+ * (`cost.text` for rates, `go.monthly_usage[usageKey]` for the allowance);
+ * `usageKey` is what tells the otherwise identical price lists apart.
  */
 export const OC_PLANS: Record<string, OcPlanDef> = {
-	go: { label: "Go", price: GO_PRICE_PER_MONTH },
-	"go-plus": { label: "Go Plus", price: GO_PLUS_PRICE_PER_MONTH },
+	go: { label: "Go", price: GO_PRICE_PER_MONTH, usageKey: "go" },
+	"go-plus": {
+		label: "Go Plus",
+		price: GO_PLUS_PRICE_PER_MONTH,
+		usageKey: "go-plus",
+	},
 };
 
 /** The Go plan used when `--oc-plan` is not given. */
 export const DEFAULT_OC_PLAN = "go";
 
-export const DOC_URL = "https://opencode.ai/v2/docs/console/go/";
+/** The docs article. It no longer carries the catalog; see `OC_MODELS_URL`. */
+export const DOC_URL = "https://opencode.ai/docs/console/go/";
+/** Authoritative Go model list: per-1M token rates + per-plan monthly usage. */
 export const OC_MODELS_URL = "https://opencode.ai/zen/go/v1/models";
 
 /** Artificial Analysis retired `/api/v2/data/*` on 2026-11-04 (410 Gone). The free

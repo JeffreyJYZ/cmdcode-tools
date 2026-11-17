@@ -103,7 +103,7 @@ export function footer(rows: CompareRow[], meta: ReportMeta): void {
 	if (meta.odPlan) {
 		line(
 			"od source",
-			"open-design.ai/pricing · allowance = credits ÷ model multiplier · 7-day window starts at the subscription, not Monday",
+			"open-design.ai/pricing · Go/Plus allowance = published per-model cap (Pro/Max = credits ÷ multiplier) · 7-day window starts at the subscription, not Monday",
 		);
 	}
 	if (meta.abilityLabel) {

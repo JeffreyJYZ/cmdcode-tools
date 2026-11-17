@@ -20,7 +20,7 @@ export function buildMetrics(
 		const cost = costPerRequest(entry.pricing, workload);
 		const free = cost === 0;
 		const requestsPerMonth = free ? Number.POSITIVE_INFINITY : entry.allowance / cost;
-		const ratios = windowRatios(plan, config.window);
+		const ratios = windowRatios(plan, config.window, entry.cap);
 		return {
 			provider: entry.provider,
 			plan: entry.plan,

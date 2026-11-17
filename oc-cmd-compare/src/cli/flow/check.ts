@@ -1,6 +1,6 @@
 import type { Options } from "#~/cli/options.ts";
 import { loadOcGoModelIds } from "#~/data/sources/opencode.ts";
-import type { OdLoad } from "#~/data/sources/od/index.ts";
+import { odCapLines, type OdLoad } from "#~/data/sources/od/index.ts";
 import { normalizeKey } from "#~/keys.ts";
 import type { CatalogEntry, CompareRow } from "#~/types.ts";
 
@@ -12,7 +12,7 @@ export interface AbilityInfo {
 }
 
 export async function runCheck(
-	_options: Options,
+	options: Options,
 	ocEntries: CatalogEntry[],
 	ccEntries: CatalogEntry[],
 	rows: CompareRow[],
@@ -34,6 +34,12 @@ export async function runCheck(
 		console.log(
 			`OpenDesign unpriced:     ${od.missing.length} (no token rate on either catalog): ${od.missing.join(", ") || "—"}`,
 		);
+		console.log(
+			`OpenDesign uncapped:     ${od.uncapped.length} (no published cap, never zero): ${od.uncapped.join(", ") || "—"}`,
+		);
+		for (const line of odCapLines(options.odPlan ?? od.planId)) {
+			console.log(`  cap                    ${line}`);
+		}
 		const onlyOd = od.entries.map((e) => e.key).filter((k) => !ocKeys.has(k) && !ccKeys.has(k));
 		console.log(`only in OpenDesign:      ${onlyOd.join(", ") || "—"}`);
 	}
@@ -59,7 +65,7 @@ export async function runCheck(
 	console.log(`OpenCode /zen/go/v1/models ids: ${modelIds.length}`);
 	const unpriced = modelIds.filter((id) => !ocKeys.has(normalizeKey(id)));
 	console.log(
-		`OpenCode ids missing from docs table (${unpriced.length}): ${unpriced.join(", ") || "—"}`,
+		`OpenCode ids missing from Go catalog (${unpriced.length}): ${unpriced.join(", ") || "—"}`,
 	);
 
 	console.log(`\nonly in OpenCode (${onlyOc.length}): ${onlyOc.join(", ") || "—"}`);
