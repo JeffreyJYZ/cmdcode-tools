@@ -94,7 +94,7 @@ Color: SGR escapes are suppressed when stdout is not a terminal or when `NO_COLO
 | `session` | local usage by project/session; args `since` (ISO-8601), `days`, `tz`, `rows`                                             |
 | `model`   | local usage by model; args `since` (ISO-8601), `days`, `tz`, `rows`, and `id` for one model's detail instead of the table |
 
-The tool _names_ are the same in all three servers, and an argument means the same thing wherever it exists. Where a source forces a difference it is stated rather than papered over: `ocuse` and `arkuse` add `plan` (the plan their source cannot report), and their `session`/`model` carry no `tz` — their store is already bucketed in the offset the server reports — while `cmduse`'s `session`/`model` do take `tz` and their `daily`/`hourly` additionally take `local`. Tests pin each server's own list.
+The tool _names_ are the same in all four servers, and an argument means the same thing wherever it exists. Where a source forces a difference it is stated rather than papered over: `ocuse` and `arkuse` add `plan` (the plan their source cannot report), as does `oduse`, and their `session`/`model` carry no `tz` — their store is already bucketed in the offset the server reports — while `cmduse`'s `session`/`model` do take `tz` and their `daily`/`hourly` additionally take `local`. `oduse` has no `gated`: OpenDesign prices models differently rather than restricting them. Tests pin each server's own list.
 
 Auth is the same as the CLI (`CMD_API_KEY`, then the key opencode's own credential store holds for the `commandcode` provider, then the legacy `~/.commandcode/auth.json`). A key the API refuses is skipped for the next one, so a superseded login costs one 401 rather than a dead dashboard. Tool errors come back as `isError: true` results; stdout carries protocol traffic only. Zed config:
 
@@ -203,7 +203,7 @@ ocuse -1                     # one-shot dashboard
 ocuse -1 --json              # one-shot, machine-readable
 ocuse daily [--days N] [--json|--csv] [--tz ±HH:MM]
 ocuse hourly [--hours N] [--json|--csv] [--tz ±HH:MM]
-ocuse model [id] [--since ISO] [--json|--csv]
+ocuse model [id] [--days N | --since ISO] [--json|--csv]
 ocuse session [--since ISO] [--json|--csv]
 ocuse models [--gated] [--json]   # the Go catalogue for the selected plan
 ocuse plans [--json]              # both plans' limits, rates and window shares
@@ -229,7 +229,7 @@ arkuse -1                    # one-shot dashboard
 arkuse -1 --json             # one-shot, machine-readable
 arkuse daily [--days N] [--json|--csv] [--tz ±HH:MM]
 arkuse hourly [--hours N] [--json|--csv] [--tz ±HH:MM]
-arkuse model [id] [--since ISO] [--json|--csv]
+arkuse model [id] [--days N | --since ISO] [--json|--csv]
 arkuse session [--since ISO] [--json|--csv]
 arkuse models [--gated] [--json]   # the ARK catalogue, coefficient in force today
 arkuse plans [--json]              # personal tiers, AFP quotas, window shares
@@ -244,6 +244,32 @@ Two sources, and the split matters. The **control plane** (`arkcli usage plan --
 ARK limits the **plan**, not any one model, so `notify_on_cap` fires per window meter (5-hour / weekly / monthly), and the model block shows a `TOP 3 MODELS` split — each model's month AFP and its share of period AFP, then its tokens and their share of all tokens — instead of a per-model allowance ARK does not have; the table below carries no share of its own. The plan's own semantics are surfaced where they matter: no downgrade, the monthly quota is pro-rated on upgrade while the 5-hour and weekly windows reset to the new tier immediately, and plain API calls against the plan base URL are forbidden (ban risk) — the catalogue's `notes` carry these in `arkuse plans`. `arkuse plans` also lists the enterprise seat prices; their AFP is metered per seat and the personal usage API does not expose it, so only prices are shown.
 
 Config lives at `~/.config/arkuse/config.json` with cmduse's keys (`interval_secs`, `bar_width`, `burst_enabled`, `burst_samples`, `notify_on_cap`, `statusline_template`, `statusline_colors`, `statusline_ascii`, `check_updates`, `dismissed_update`). The live frame refreshes every **5s** like the other two — each refresh is an `arkcli` control-plane round trip, so raise `interval_secs` (or pass `-i`) if that feels heavy on your machine. `arkuse daily|hourly|session|model --csv` use the repo's shared columns with `afp` in place of `cost_usd` (`afp` counts every token the coefficient prices, cache reads included).
+
+### oduse — OpenDesign (same crate, fourth binary)
+
+The same crate ships `oduse`, which tracks an **OpenDesign** subscription at the same command/flag parity as `cmduse`, `ocuse` and `arkuse` — every subcommand, `--json`/`--csv`, the same watch frame, config keys, update check, cap notification and MCP server. Its source is the **Open Design desktop app's own SQLite store**, read-only: each completed assistant message carries an `events_json` array whose `status`/`model` and `usage` events give the model and the turn's input/output tokens.
+
+```sh
+oduse                        # watch: live frame (windows, wallet, model block)
+oduse -1                     # one-shot dashboard
+oduse -1 --json              # one-shot, machine-readable
+oduse daily [--days N] [--json|--csv] [--tz ±HH:MM]
+oduse hourly [--hours N] [--json|--csv] [--tz ±HH:MM]
+oduse model [id] [--days N | --since ISO] [--json|--csv]
+oduse session [--since ISO] [--json|--csv]
+oduse models [--json]        # multipliers and $/1M rates for the selected plan
+oduse plans [--json]         # all four plans: prices, caps, concurrency, rates
+oduse statusline [--json]
+oduse mcp                    # MCP stdio server (usage/plans/models/daily/hourly/session/model)
+```
+
+Two upstream facts shape it. OpenDesign **publishes its caps but exposes no per-window usage API**, so the 5-hour / 7-day / monthly windows are computed from the local store and labelled an estimate; and the app's **local daemon** serves the one server-side number that exists, a **wallet balance** (a balance, not a window meter, so it prints beside the windows rather than replacing them). The store's usage events carry **no cache tokens**, which understates a cache-heavy turn — that is the second reason the figure is an estimate. Rates live in `core/od.json`, seeded from the repo's own published catalogue where the id appears there — `core/zen.json`, else `opencode-plugin/src/catalog.ts` — and marked `estimate` otherwise; credits are `list-price $ × the model's multiplier`, the plan's own unit.
+
+Plans are `go` ($10/mo, $220 monthly, $55 weekly, $18 per 5 hours, 10 concurrent), `plus` ($20/mo, $310, $74, no 5-hour cap, $20 plan-model credits, 20 concurrent), `pro` ($100/mo, $480, $90, $120 credits, 30) and `max` ($200/mo, $900, $150, $300 credits, 50). A cap a plan does not publish prints as **absent**, never as zero — only Go has a 5-hour window. The plan-model credits are a published allowance with **no local meter**: the store names models, not which of them are the plan's own, so the frame states the allowance and invents no figure for it. The plan itself is told (`--plan go|plus|pro|max`, default `go`), because the store records no subscription and the wallet reports a balance rather than a tier. `plans --json` carries the same `windows` divisor map the other binaries publish (`fiveHour`/`weekly`/`monthly` shares of the monthly allowance, taken from Go since only it has a 5-hour cap) beside oduse's absolute `monthlyUsd`/`weeklyUsd`/`fiveHourUsd`, and `models --json` spells a model's display name `name`, like the other three — `plans[]` keeps `label`, so each surface has one key per concept. `--days N` on `model` is a window of its own, not only a read cutoff.
+
+The store path defaults to `~/Library/Application Support/Open Design/namespaces/release-stable/data/app.sqlite` — the namespace directory is version-suffixed, so `oduse` falls back to the most recently written `namespaces/*/data/app.sqlite`, and `--db` / `$OD_DB` override it. The wallet comes from `GET http://127.0.0.1:7456/api/integrations/vela/wallet` (`$OD_BIND_HOST` / `$OD_PORT`, or a whole `$OD_DAEMON_URL`), with no credential of its own — the daemon owns the control key, and `oduse` only ever talks to localhost. That route is strictly optional: the app is usually closed, so a closed daemon is one line (`wallet: daemon not running at …`), never an error and never a hang (300 ms connect timeout), and `--no-wallet` skips it entirely. A refusal the daemon reports itself (`unauthorized`, an expired control key) keeps its own words on the same line.
+
+Config lives at `~/.config/oduse/config.json` with cmduse's keys (`interval_secs`, `bar_width`, `burst_enabled`, `burst_samples`, `notify_on_cap`, `statusline_template`, `statusline_colors`, `statusline_ascii`, `check_updates`, `dismissed_update`). The live frame refreshes every **5s** like the other three. Statusline placeholders: `{plan}` `{period}` `{month}` `{month_pct}` `{month_bar}` `{five_hour}` `{five_hour_pct}` `{five_hour_bar}` (aliases `{5h}` `{5h_pct}` `{5h_bar}`), `{weekly}` `{weekly_pct}` `{weekly_bar}` (aliases `{wk}` `{wk_pct}` `{wk_bar}`), `{wallet}` and `{models}`. `--gated` is refused here: OpenDesign prices models differently per plan and never restricts which ones a plan may call, so a filter would invent a restriction the source does not have.
 
 ## Notes
 

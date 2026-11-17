@@ -144,6 +144,14 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
             since_ms.unwrap_or_else(|| window::now_ms() - number("days", days) * 86_400_000);
         db::read_all(db_path, cutoff)
     };
+    // `model` takes its own `days`/`since` (its schema says "days back"), so an
+    // explicit `days` widens the period instead of only the read.
+    let model_days = args.get("days").and_then(|v| v.as_i64());
+    let model_start = match (since_ms, model_days) {
+        (Some(ms), _) => Some(ms),
+        (None, Some(_)) => Some(window::now_ms() - number("days", days) * 86_400_000),
+        (None, None) => account_month.map(|(start, _)| start).or(period_start),
+    };
     let text = match name {
         "usage" => rows().map(|rows| {
             // The same period the dashboard uses: the meter names the billing
@@ -216,7 +224,7 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
                 &catalog,
                 &plan_id,
                 window::now_ms(),
-                period_start,
+                model_start,
                 account,
             );
             match args.get("id").and_then(|v| v.as_str()) {

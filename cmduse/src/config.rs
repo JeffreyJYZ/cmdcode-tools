@@ -59,6 +59,13 @@ pub fn default_for(binary: Binary) -> Config {
             statusline_template: OCUSE_STATUSLINE.into(),
             ..Config::default()
         },
+        // oduse's statusline names the wallet too: it is the one figure that
+        // comes from the app rather than from a local price table.
+        Binary::Oduse => Config {
+            statusline_template:
+                "{period} {month} · 5h {five_hour} · wk {weekly} · wallet {wallet}".into(),
+            ..Config::default()
+        },
     }
 }
 
@@ -70,6 +77,7 @@ pub fn config_path(binary: Binary) -> PathBuf {
         Binary::Cmduse => "cmd-usage/config.json",
         Binary::Ocuse => "ocuse/config.json",
         Binary::Arkuse => "arkuse/config.json",
+        Binary::Oduse => "oduse/config.json",
     };
     std::env::var("XDG_CONFIG_HOME")
         .map(|d| PathBuf::from(d).join(rel))

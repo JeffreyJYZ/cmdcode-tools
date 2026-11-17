@@ -1,10 +1,12 @@
-.TH CMDUSE 1 "2026-10" "cmd-usage 0.7.30" "User Commands"
+.TH CMDUSE 1 "2026-10" "cmd-usage 0.8.0" "User Commands"
 .SH NAME
 cmduse \- live Command Code (commandcode.ai) usage dashboard and reporter
 .br
 ocuse \- OpenCode Go/Zen usage (Go's usage endpoint plus local opencode data)
 .br
 arkuse \- Volcengine ARK Agent Plan usage in AFP (control\-plane meters plus local opencode data)
+.br
+oduse \- OpenDesign usage (the desktop app's store plus its local wallet daemon)
 .SH SYNOPSIS
 .B cmduse
 [\fIOPTIONS\fR]
@@ -669,7 +671,7 @@ endpoint names the plan the account is on, so the plan is explicit
 [\fB\-\-json\fR] [\fIOPTIONS\fR]
 .br
 .B ocuse model
-[\fIid\fR] [\fB\-\-since\fR \fIISO\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
+[\fIid\fR] [\fB\-\-days\fR \fIn\fR | \fB\-\-since\fR \fIISO\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
 .br
 .B ocuse daily
 [\fB\-\-days\fR \fIn\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
@@ -938,7 +940,7 @@ because the publisher documents them as prose.
 [\fB\-\-json\fR] [\fIOPTIONS\fR]
 .br
 .B arkuse model
-[\fIid\fR] [\fB\-\-since\fR \fIISO\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
+[\fIid\fR] [\fB\-\-days\fR \fIn\fR | \fB\-\-since\fR \fIISO\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
 .br
 .B arkuse daily
 [\fB\-\-days\fR \fIn\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
@@ -1064,6 +1066,127 @@ The same keys as cmduse's config, set with \fBarkuse config set\fR.
 .TP
 .I $OPENCODE_DB, \-\-db
 The store path; opened read\-only.
+.SH ODUSE
+.B oduse
+tracks an OpenDesign subscription from the Open Design desktop app's own
+SQLite store, read\-only, and from that app's local daemon.
+.SS oduse synopsis
+.B oduse
+[\fIOPTIONS\fR]
+.br
+.B oduse \-1
+[\fB\-\-json\fR] [\fIOPTIONS\fR]
+.br
+.B oduse model
+[\fIid\fR] [\fB\-\-days\fR \fIn\fR | \fB\-\-since\fR \fIISO\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
+.br
+.B oduse daily
+[\fB\-\-days\fR \fIn\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
+.br
+.B oduse hourly
+[\fB\-\-hours\fR \fIn\fR] [\fB\-\-json\fR | \fB\-\-csv\fR] [\fIOPTIONS\fR]
+.br
+.B oduse session
+[\fB\-\-since\fR \fIISO\fR] [\fB\-\-json\fR | \fB\-\-csv\fR]
+.br
+.B oduse models
+[\fB\-\-json\fR]
+.br
+.B oduse plans
+[\fB\-\-json\fR]
+.br
+.B oduse statusline
+[\fB\-\-json\fR] [\fIOPTIONS\fR]
+.br
+.B oduse mcp
+.br
+.B oduse \-V
+.br
+.B oduse \-h
+.SS oduse commands
+Every subcommand, machine format, watch frame, config key, update check, cap
+notification and MCP tool mirrors
+.BR cmduse \'s.
+There is no \fB\-\-gated\fR: OpenDesign prices models differently per plan and
+never restricts which ones a plan may call, so a filter flag would invent a
+restriction the source does not have.
+.TP
+.B (no command), \fB\-1\fR
+Live watch, or one frame with \fB\-1\fR.  The frame carries the period's
+credits, the wallet balance, the plan's published window rows, and a model
+block with each model's multiplier, credits and share.
+.TP
+.B daily, hourly, session, model
+The same reports as \fBcmduse\fR \'s with \fIcredits\fR in place of the cache
+columns; CSV columns are
+\fIday|hour|session,requests,tokens_in,tokens_out,credits,cost_usd\fR.
+.TP
+.B models, plans
+The catalogue from
+.IR core/od.json :
+four plans with their prices, monthly / weekly / 5\-hour caps, plan\-model
+credits and concurrency, then every model's multiplier and \fB$\fR/1M rates,
+each marked \fIpublished\fR or \fIestimate\fR.
+.TP
+.B statusline
+The family template engine.  Placeholders are \fB{plan}\fR \fB{period}\fR
+\fB{month}\fR \fB{month_pct}\fR \fB{month_bar}\fR \fB{five_hour}\fR
+\fB{five_hour_pct}\fR \fB{five_hour_bar}\fR (aliases \fB{5h}*\fR)
+\fB{weekly}\fR \fB{weekly_pct}\fR \fB{weekly_bar}\fR (aliases
+\fB{wk}*\fR) \fB{wallet}\fR and \fB{models}\fR.
+.TP
+.B mcp
+An MCP stdio server with the family's seven tools.  \fBmodels\fR takes no
+\fIgated\fR argument.
+.SS oduse options
+The shared options apply, plus:
+.TP
+.B \-\-db \fIpath\fR
+The app's store.  Default \fB$OD_DB\fR, else
+\fI~/Library/Application Support/Open Design/namespaces/release\-stable/data/app.sqlite\fR,
+else the most recently written \fInamespaces/*/data/app.sqlite\fR.
+.TP
+.B \-\-plan \fIid\fR
+The plan: \fIgo\fR (default), \fIplus\fR, \fIpro\fR or \fImax\fR.  Told,
+because the store records no subscription and the wallet reports a balance.
+.TP
+.B \-\-no\-wallet
+Skip the desktop app's local daemon.  Without it a closed app is one line
+(\fIwallet: daemon not running at http://127.0.0.1:7456\fR), never an error.
+.TP
+.B \-\-window \fIw\fR, \-\-period\-start \fIdate\fR, \-\-infer\-anniversary, \-\-rows \fIn\fR
+As in \fBocuse\fR.
+.SS oduse data and windows
+Two facts shape the figures.  OpenDesign publishes its caps but exposes no
+per\-window usage API, so the 5\-hour, 7\-day and monthly windows are this
+machine's own cut of the store (em a rolling cut for the two throttles, and the
+pinned period or calendar month for the monthly one (em and the frame labels
+them estimates.  The store's usage events also carry no cache tokens, which
+understates a cache\-heavy turn: that is the same estimate, and the dashboard
+says so on its footer.
+.PP
+Credits are the plan's unit: a model's list\-price dollars multiplied by its
+credit multiplier.  A cap a plan does not publish prints as absent, never as
+zero (em only Go has a 5\-hour window (em and the plan\-model credits are a
+published allowance with no local meter, because the store names models but not
+which of them are the plan's own.
+.PP
+The wallet is the only server\-side number that exists.  It is a balance rather
+than a window meter, so it prints beside the windows: the desktop app's daemon
+serves \fIGET /api/integrations/vela/wallet\fR on 127.0.0.1 (7456 by default;
+\fB$OD_BIND_HOST\fR, \fB$OD_PORT\fR and \fB$OD_DAEMON_URL\fR override) with the
+control key it stored at sign\-in.  \fBoduse\fR never reads, copies or prints
+that key; it only talks to localhost, with a 300\:ms connect timeout so a closed
+port costs milliseconds.  A refusal the daemon reports itself
+(\fIunauthorized\fR, an expired key) keeps the daemon's own words on the same
+line.
+.SS oduse files
+.TP
+.I ~/.config/oduse/config.json
+The same keys as cmduse's config, set with \fBoduse config set\fR.
+.TP
+.I $OD_DB, \-\-db
+The app's store; opened read\-only.
 .SH SEE ALSO
 .BR cmd (1),
 the Command Code CLI for login and authentication.
@@ -1075,3 +1198,7 @@ this crate's OpenCode Go/Zen twin, documented above under
 .BR arkuse ,
 this crate's ARK Agent Plan twin, documented above under
 .BR ARKUSE .
+.br
+.BR oduse ,
+this crate's OpenDesign twin, documented above under
+.BR ODUSE .
