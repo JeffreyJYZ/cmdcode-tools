@@ -45,6 +45,13 @@ pub struct Plan {
     #[serde(rename = "planModelCreditsUsd")]
     pub plan_model_credits_usd: f64,
     pub concurrency: u32,
+    /// Name of the plan's own cap set when it also publishes overrides (`Eco` on
+    /// Go). Absent on a plan with one set, where the plan's caps are the answer.
+    #[serde(default, rename = "defaultCapLabel")]
+    pub default_cap_label: Option<String>,
+    /// Models whose allowance differs from the plan's own caps.
+    #[serde(default, rename = "capOverrides")]
+    pub cap_overrides: Vec<CapSet>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -80,6 +87,8 @@ impl Model {
         self.catalog_id.as_deref().unwrap_or(&self.id)
     }
 }
+
+pub use crate::oduse::caps::{CapPick, CapSet};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Catalog {

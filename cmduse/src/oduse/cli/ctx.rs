@@ -69,6 +69,7 @@ impl Ctx<'_> {
         report.period_label = self.period.label.clone();
         report.period_end_ms =
             crate::oduse::period::end(report.since_ms, &self.period.mode, self.period.inferred);
+        report.period_anchored = self.period.anchored;
         report.wallet = self.wallet.clone();
         report.wallet_error = self.wallet_error.clone();
         report.sources = found.names;

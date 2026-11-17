@@ -71,8 +71,28 @@ fn the_json_surface_is_the_family_shape() {
     assert_eq!(parsed["plan"], "go");
     assert_eq!(parsed["summary"], parsed["totals"]["month"]);
     assert_eq!(parsed["wallet"]["balanceUsd"], 3.25);
+    // `caps` is the plan's own published set; the per-window picks follow it.
     assert_eq!(parsed["caps"]["monthlyUsd"], 220.0);
     assert_eq!(parsed["caps"]["fiveHourUsd"], 18.0);
+    assert_eq!(parsed["caps"]["defaultCapLabel"], "Eco");
+    assert_eq!(parsed["caps"]["capOverrides"][0]["id"], "flash");
+    // The fixture spends on DeepSeek V4.1 Flash, so every window is capped by the
+    // Flash set and says what the Eco set would have allowed.
+    assert_eq!(parsed["capPicks"]["monthly"]["id"], "flash");
+    assert_eq!(parsed["capPicks"]["fiveHour"]["id"], "flash");
+    // The sidebar reads `planDefaultMonthlyUsd` as the looser figure for *each*
+    // window, so it must carry that window's cap: $220 month, $55 week, $18 5h.
+    // Emitting the monthly figure on all three made the panel name `Eco $220`
+    // as the 5-hour and weekly alternatives when the real ones are $18 and $55.
+    assert_eq!(
+        parsed["capPicks"]["monthly"]["planDefaultMonthlyUsd"],
+        220.0
+    );
+    assert_eq!(parsed["capPicks"]["weekly"]["planDefaultMonthlyUsd"], 55.0);
+    assert_eq!(
+        parsed["capPicks"]["fiveHour"]["planDefaultMonthlyUsd"],
+        18.0
+    );
     assert_eq!(parsed["models"][0]["id"], "deepseek-v4.1-flash");
     assert_eq!(
         parsed["periodEnd"],
@@ -117,8 +137,11 @@ fn statusline_resolves_every_placeholder() {
     );
     let json: serde_json::Value =
         serde_json::from_str(&render::statusline_json(&report, &go)).unwrap();
-    assert_eq!(json["fiveHourCap"], 18.0);
-    assert_eq!(json["monthCap"], 220.0);
+    // The fixture's one turn is DeepSeek V4.1 Flash, whose Go caps are the Flash
+    // set ($120/mo, $10/5h) — not the plan's headline Eco set.
+    assert_eq!(json["fiveHourCap"], 10.0);
+    assert_eq!(json["monthCap"], 120.0);
+    assert_eq!(json["capLabel"], "Flash");
     assert_eq!(json["walletUsd"], serde_json::Value::Null);
 }
 

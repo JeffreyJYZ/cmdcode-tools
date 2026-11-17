@@ -47,18 +47,30 @@ pub fn statusline_template(
         Some(wallet) => money(wallet.balance_usd),
         None => "—".to_string(),
     };
+    // Each placeholder divides by the set its own window's models draw on: a
+    // DeepSeek V4.1 Flash month is capped at $120 on Go, not the $220 the Eco
+    // variant gets.
+    let month =
+        crate::oduse::window::window_caps(&report.models, plan, crate::oduse::window::Span::Month);
+    let week =
+        crate::oduse::window::window_caps(&report.models, plan, crate::oduse::window::Span::Weekly);
+    let five = crate::oduse::window::window_caps(
+        &report.models,
+        plan,
+        crate::oduse::window::Span::FiveHour,
+    );
     crate::report_render::render_template(tpl, |key| match key {
         "plan" => plan.id.clone(),
         "period" => report.period_label.clone(),
         "month" => cash(report.month.credits),
-        "month_pct" => share(report.month.credits, Some(plan.monthly_usd)),
-        "month_bar" => gauge(report.month.credits, Some(plan.monthly_usd)),
+        "month_pct" => share(report.month.credits, Some(month.chosen.monthly_usd)),
+        "month_bar" => gauge(report.month.credits, Some(month.chosen.monthly_usd)),
         "five_hour" | "5h" => cash(report.five_hour.credits),
-        "five_hour_pct" | "5h_pct" => share(report.five_hour.credits, plan.five_hour_usd),
-        "five_hour_bar" | "5h_bar" => gauge(report.five_hour.credits, plan.five_hour_usd),
+        "five_hour_pct" | "5h_pct" => share(report.five_hour.credits, five.chosen.five_hour_usd),
+        "five_hour_bar" | "5h_bar" => gauge(report.five_hour.credits, five.chosen.five_hour_usd),
         "weekly" | "wk" => cash(report.weekly.credits),
-        "weekly_pct" | "wk_pct" => share(report.weekly.credits, plan.weekly_usd),
-        "weekly_bar" | "wk_bar" => gauge(report.weekly.credits, plan.weekly_usd),
+        "weekly_pct" | "wk_pct" => share(report.weekly.credits, week.chosen.weekly_usd),
+        "weekly_bar" | "wk_bar" => gauge(report.weekly.credits, week.chosen.weekly_usd),
         "wallet" => wallet(),
         "models" => top_model(),
         _ => String::new(),
@@ -70,15 +82,28 @@ pub fn statusline_template(
 /// unlike Go's per-model allowances — and a cap the plan does not publish is
 /// null, which is why the 5-hour one is null on Plus/Pro/Max.
 pub fn statusline_json(report: &Report, plan: &Plan) -> String {
+    // The caps a consumer divides by are the ones the window's own models draw
+    // on, not the plan's headline set: a report on DeepSeek V4.1 Flash is capped
+    // at $120/mo on Go, not the $220 the Eco variant gets.
+    let five = crate::oduse::window::window_caps(
+        &report.models,
+        plan,
+        crate::oduse::window::Span::FiveHour,
+    );
+    let week =
+        crate::oduse::window::window_caps(&report.models, plan, crate::oduse::window::Span::Weekly);
+    let month =
+        crate::oduse::window::window_caps(&report.models, plan, crate::oduse::window::Span::Month);
     serde_json::json!({
         "plan": plan.id,
         "period": report.period_label,
         "monthSpent": report.month.credits,
-        "monthCap": plan.monthly_usd,
+        "monthCap": month.chosen.monthly_usd,
         "fiveHourSpent": report.five_hour.credits,
-        "fiveHourCap": plan.five_hour_usd,
+        "fiveHourCap": five.chosen.five_hour_usd,
         "weeklySpent": report.weekly.credits,
-        "weeklyCap": plan.weekly_usd,
+        "weeklyCap": week.chosen.weekly_usd,
+        "capLabel": month.chosen.label,
         "walletUsd": report.wallet.as_ref().map(|w| w.balance_usd),
         "model": report.models.first().map(|m| m.id.clone()),
     })

@@ -29,11 +29,48 @@ fn window_share() -> serde_json::Value {
     })
 }
 
+/// One catalogued model's cap set for a plan: the plan's own caps, or the
+/// override that model draws on (Go's DeepSeek V4.1 Flash has its own, lower
+/// set). Every row carries it, so the sidebar and mpc can read the allowance a
+/// single model actually gets rather than the plan's headline one.
+fn model_caps(plan: Option<&Plan>, model_id: &str) -> serde_json::Value {
+    match plan {
+        None => serde_json::Value::Null,
+        Some(plan) => {
+            let set = plan.cap_set_for(model_id);
+            serde_json::json!({
+                // Absent on a plan with one published set.
+                "capSet": (!set.id.is_empty()).then(|| set.id.clone()),
+                "capLabel": set.label,
+                "monthlyUsd": set.monthly_usd,
+                "weeklyUsd": set.weekly_usd,
+                "fiveHourUsd": set.five_hour_usd,
+            })
+        }
+    }
+}
+
 /// The catalogue as one JSON object — the machine twin of `plans_text`: plans
 /// with their caps, the credit unit, and the rate table with its provenance.
 pub fn plans_json() -> String {
     let catalog = crate::oduse::od::catalog();
     let plan_json = |plan: &Plan| {
+        // A plan's caps are its default set; `capOverrides` names the models that
+        // draw a different one, so a consumer never assumes one pool per plan.
+        let overrides: Vec<serde_json::Value> = plan
+            .cap_overrides
+            .iter()
+            .map(|set| {
+                serde_json::json!({
+                    "id": set.id,
+                    "label": set.label,
+                    "models": set.models,
+                    "monthlyUsd": set.monthly_usd,
+                    "weeklyUsd": set.weekly_usd,
+                    "fiveHourUsd": set.five_hour_usd,
+                })
+            })
+            .collect();
         serde_json::json!({
             "id": plan.id,
             "label": plan.label,
@@ -41,6 +78,8 @@ pub fn plans_json() -> String {
             "monthlyUsd": plan.monthly_usd,
             "weeklyUsd": plan.weekly_usd,
             "fiveHourUsd": plan.five_hour_usd,
+            "defaultCapLabel": plan.default_cap_label,
+            "capOverrides": overrides,
             "planModelCreditsUsd": plan.plan_model_credits_usd,
             "concurrency": plan.concurrency,
         })
@@ -66,11 +105,16 @@ pub fn plans_json() -> String {
 }
 
 /// `oduse models --json`: one object per line, like `cmduse models --json`.
+///
+/// `monthCapUsd`/`weeklyCapUsd`/`fiveHourCapUsd` are the caps **this model**
+/// draws on, so a DeepSeek V4.1 Flash row on Go reports $120 while the Eco row
+/// reports $220 — the plan's headline cap is never stamped onto both.
 pub fn models_json(plan_id: &str) -> String {
     let catalog = crate::oduse::od::catalog();
     let plan = catalog.plan(plan_id);
     let mut out = String::new();
     for model in &catalog.models {
+        let caps = model_caps(plan, &model.id);
         out.push_str(
             &serde_json::json!({
                 "id": model.id,
@@ -81,9 +125,11 @@ pub fn models_json(plan_id: &str) -> String {
                 "output": model.output,
                 "rateSource": model.rate_source,
                 "plan": plan.map(|p| p.id.clone()),
-                "monthCapUsd": plan.map(|p| p.monthly_usd),
-                "fiveHourCapUsd": plan.and_then(|p| p.five_hour_usd),
-                "weeklyCapUsd": plan.and_then(|p| p.weekly_usd),
+                "monthCapUsd": caps["monthlyUsd"],
+                "fiveHourCapUsd": caps["fiveHourUsd"],
+                "weeklyCapUsd": caps["weeklyUsd"],
+                "capSet": caps["capSet"],
+                "capLabel": caps["capLabel"],
             })
             .to_string(),
         );

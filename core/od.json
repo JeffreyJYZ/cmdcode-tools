@@ -6,6 +6,7 @@
 		"Only the Go plan publishes a 5-hour cap; every plan publishes a monthly one.",
 		"The 7-day window resets from the subscription start, not Monday — the store records no subscription, so oduse cuts it as a rolling 7 days and says so.",
 		"plan-model credits are a second, published allowance with no local meter: the store names models, not which of them are plan models.",
+		"Design Plan caps are per model class, not per plan: Go publishes $220/mo, $55/7d and $18/5h for DeepSeek V4.1 Flash Eco, and $120/mo, $30/7d and $10/5h for the original DeepSeek V4.1 Flash. A plan's own caps are its default set (the Eco one on Go, named by defaultCapLabel); capOverrides names the models that get a different set. Pro/Max publish one set, so they carry no override.",
 		"Every rate marked estimate is not published by Open Design; it is seeded from the closest published figure so a priced turn never reads as zero.",
 		"A model's id is the gateway's wire id — what `GET /v1/models` returns and what the store records on a turn — so a recorded id always keys a row. `catalogId` names the same model in core/zen.json where that catalogue spells it differently (a dot versus a dash); absent, the id is the same on both sides.",
 		"The multiplier for Claude Haiku 5.5 is 2x here while the billing page reads 4x; that conflict is open, so the value is left as published."
@@ -19,7 +20,18 @@
 			"weeklyUsd": 55,
 			"fiveHourUsd": 18,
 			"planModelCreditsUsd": 0,
-			"concurrency": 10
+			"concurrency": 10,
+			"defaultCapLabel": "Eco",
+			"capOverrides": [
+				{
+					"id": "flash",
+					"label": "Flash",
+					"models": ["deepseek-v4.1-flash"],
+					"monthlyUsd": 120,
+					"weeklyUsd": 30,
+					"fiveHourUsd": 10
+				}
+			]
 		},
 		{
 			"id": "plus",

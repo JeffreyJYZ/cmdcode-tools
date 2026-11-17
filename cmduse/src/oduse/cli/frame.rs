@@ -65,6 +65,7 @@ pub fn dashboard(ctx: &Ctx) {
         period_label: ctx.period.label.clone(),
         period_mode: ctx.period.mode.clone(),
         period_inferred: ctx.period.inferred,
+        period_anchored: ctx.period.anchored,
         wallet: ctx.wallet.clone(),
         wallet_error: ctx.wallet_error.clone(),
         no_wallet: ctx.args.no_wallet,

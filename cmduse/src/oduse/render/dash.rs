@@ -5,8 +5,11 @@
 // and cut by `window::build`; the wallet is the one number the app itself
 // reports, and it is a balance rather than a window, so it prints beside the
 // windows instead of replacing them.
+//
+// The caps are per model class, so each row asks `window_caps` which set its own
+// models draw on and says so when that is not the plan's headline set.
 use crate::oduse::od::Plan;
-use crate::oduse::window::Report;
+use crate::oduse::window::{self, Report, Span};
 use cmduse_core::{compact, money};
 
 use super::ink::Ink;
@@ -56,31 +59,27 @@ pub fn render_text(
     ));
     out.push_str(&wallet_line(&ink, report));
 
-    // The plan's published caps, then the windows they cap. A cap the plan does
-    // not publish is absent from both, never zero.
-    let mut caps = vec![format!("{}/month", money(plan.monthly_usd))];
-    if let Some(week) = plan.weekly_usd {
-        caps.push(format!("{}/week", money(week)));
-    }
-    if let Some(five) = plan.five_hour_usd {
-        caps.push(format!("{}/5h", money(five)));
-    }
-    caps.push(format!("{} concurrent", plan.concurrency));
+    let caps = super::caps::caps_heading(&ink, plan);
     out.push_str(&format!(
         "\n{}DESIGN {}{} {}\n",
-        ink.bold,
-        plan.label,
-        ink.reset,
-        ink.dim_on(caps.join(" · ")),
+        ink.bold, plan.label, ink.reset, caps,
     ));
-    if plan.five_hour_usd.is_some() {
+    let five = window::window_caps(&report.models, plan, Span::FiveHour);
+    let week = window::window_caps(&report.models, plan, Span::Weekly);
+    let month = window::window_caps(&report.models, plan, Span::Month);
+    if five.chosen.five_hour_usd.is_some() {
         out.push_str(&window_line(
             &ink,
             &RowSpec {
                 label: "5-hour",
                 used: &report.five_hour,
-                cap: plan.five_hour_usd,
+                cap: five.chosen.five_hour_usd,
+                cap_note: super::caps::cap_note(
+                    &five,
+                    five.looser.as_ref().and_then(|l| l.five_hour_usd),
+                ),
                 period: None,
+                anchored: false,
                 pro_rata: false,
                 rolling: Some("5h"),
             },
@@ -92,8 +91,10 @@ pub fn render_text(
         &RowSpec {
             label: "Weekly",
             used: &report.weekly,
-            cap: plan.weekly_usd,
+            cap: week.chosen.weekly_usd,
+            cap_note: super::caps::cap_note(&week, week.looser.as_ref().and_then(|l| l.weekly_usd)),
             period: None,
+            anchored: false,
             pro_rata: false,
             rolling: Some("7d"),
         },
@@ -104,10 +105,12 @@ pub fn render_text(
         &RowSpec {
             label: "Monthly",
             used: &report.month,
-            cap: Some(plan.monthly_usd),
+            cap: Some(month.chosen.monthly_usd),
+            cap_note: super::caps::cap_note(&month, month.looser.as_ref().map(|l| l.monthly_usd)),
             period: report
                 .period_end_ms
                 .map(|end| (report.since_ms.max(0), end.max(report.since_ms))),
+            anchored: report.period_anchored,
             pro_rata: true,
             rolling: None,
         },

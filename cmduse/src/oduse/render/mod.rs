@@ -1,6 +1,7 @@
 // oduse's presentation. Split by surface rather than by size: the frame, the
 // status line, the report tables and the catalogues each own their file, so a
 // change to one cannot silently reformat another.
+pub mod caps;
 pub mod catalog;
 pub mod catalog_json;
 pub mod dash;

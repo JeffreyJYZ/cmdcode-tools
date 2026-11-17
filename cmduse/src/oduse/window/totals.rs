@@ -4,6 +4,8 @@
 // Split from `window::mod` so the file that owns the arithmetic stays under the
 // repo's line cap; nothing here knows about plans, periods or stores.
 use crate::oduse::db::Row;
+use crate::oduse::od::{CapPick, Plan};
+use crate::oduse::window::Span;
 
 #[derive(Debug, Clone, Default)]
 pub struct Totals {
@@ -59,4 +61,29 @@ pub struct ModelUsage {
     pub month: Totals,
     pub five_hour: Totals,
     pub weekly: Totals,
+}
+
+impl ModelUsage {
+    /// Requests this model made inside one window; zero means it cannot make that
+    /// window's cap stricter.
+    pub fn requests_in(&self, span: Span) -> u64 {
+        match span {
+            Span::FiveHour => self.five_hour.requests,
+            Span::Weekly => self.weekly.requests,
+            Span::Month => self.month.requests,
+        }
+    }
+}
+
+/// The cap set one window is measured against, resolved from the models that
+/// actually spent in it: a window holding both DeepSeek variants is capped by the
+/// stricter (Flash) set while keeping the Eco figure beside it, so the frame never
+/// silently charges every turn against the looser pool.
+pub fn window_caps(models: &[ModelUsage], plan: &Plan, span: Span) -> CapPick {
+    let ids: Vec<&str> = models
+        .iter()
+        .filter(|m| m.requests_in(span) > 0)
+        .map(|m| m.id.as_str())
+        .collect();
+    plan.cap_pick(&ids)
 }

@@ -31,6 +31,9 @@ pub struct Loop<'a> {
     pub period_label: String,
     pub period_mode: String,
     pub period_inferred: bool,
+    /// Whether the period is one the plan anchors, so the frame may print an
+    /// elapsed share from it.
+    pub period_anchored: bool,
     pub wallet: Option<Wallet>,
     pub wallet_error: Option<String>,
     /// `--no-wallet`: the daemon route is off, so no poll is attempted.
@@ -83,6 +86,7 @@ pub fn run(mut config: Loop<'_>) {
         report.period_label = config.period_label.clone();
         report.period_end_ms =
             period::end(report.since_ms, &config.period_mode, config.period_inferred);
+        report.period_anchored = config.period_anchored;
         report.wallet = config.wallet.clone();
         report.wallet_error = config.wallet_error.clone();
         report.sources = sources;

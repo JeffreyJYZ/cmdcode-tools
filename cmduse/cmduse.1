@@ -1,4 +1,4 @@
-.TH CMDUSE 1 "2026-10" "cmd-usage 0.8.2" "User Commands"
+.TH CMDUSE 1 "2026-10" "cmd-usage 0.8.3" "User Commands"
 .SH NAME
 cmduse \- live Command Code (commandcode.ai) usage dashboard and reporter
 .br
@@ -1181,6 +1181,15 @@ credit multiplier.  A cap a plan does not publish prints as absent, never as
 zero (em only Go has a 5\-hour window (em and the plan\-model credits are a
 published allowance with no local meter, because the store names models but not
 which of them are the plan's own.
+.PP
+Design Plan caps are per model class: Go publishes $220/month, $55/7 days and
+$18/5 hours for DeepSeek V4.1 Flash Eco, and $120/month, $30/7 days and $10/5
+hours for the original DeepSeek V4.1 Flash.  Each window is capped by the
+stricter set its own models draw on, and the row names the other set when both
+apply.  The monthly row prints an elapsed share only when the period is one the
+plan anchors \(em a pinned \fB\-\-period\-start\fR, an explicit \fB\-\-since\fR, or
+the inferred subscription anniversary \(em and says \(lqno period anchor\(rq
+otherwise; the default calendar month is not the plan's cycle.
 .PP
 The wallet is the only server\-side number that exists.  It is a balance rather
 than a window meter, so it prints beside the windows: the desktop app's daemon

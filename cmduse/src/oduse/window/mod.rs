@@ -20,7 +20,7 @@ mod anniversary;
 mod totals;
 
 pub use anniversary::month_start;
-pub use totals::{ModelUsage, Totals};
+pub use totals::{window_caps, ModelUsage, Totals};
 
 use crate::oduse::db::Row;
 use crate::oduse::od::{Catalog, Plan};
@@ -30,6 +30,25 @@ pub const FIVE_HOUR_SECS: i64 = 5 * 3600;
 pub const WEEKLY_SECS: i64 = 7 * 86_400;
 /// How far back to read when inferring the subscription anniversary.
 pub const LOOKBACK_SECS: i64 = 120 * 86_400;
+
+/// The three windows a plan publishes, so a caller can ask for one cap set
+/// without repeating the frame's field names.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Span {
+    FiveHour,
+    Weekly,
+    Month,
+}
+
+impl Span {
+    pub fn label(self) -> &'static str {
+        match self {
+            Span::FiveHour => "5-hour",
+            Span::Weekly => "weekly",
+            Span::Month => "monthly",
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Report {
@@ -41,6 +60,11 @@ pub struct Report {
     /// End of the period (epoch ms), resolved by the caller from its own start.
     /// `None` when the period has no boundary (`--window all`).
     pub period_end_ms: Option<i64>,
+    /// Whether that span is an anchor the **plan** itself uses: a pinned
+    /// `--period-start`, an explicit `--since`, or the inferred subscription
+    /// anniversary. The default calendar month is not — the plan's cycle is the
+    /// anniversary — so the frame refuses to print an elapsed share from it.
+    pub period_anchored: bool,
     pub month_inferred: bool,
     /// The daemon's wallet snapshot, when it answered (`oduse::wallet`). It is a
     /// balance, not a window meter, so it prints beside the windows rather than
@@ -63,22 +87,26 @@ pub struct Report {
 
 /// Which window is over its published cap, if any — the verdict the watch loop's
 /// cap notification reads. OpenDesign caps the plan rather than a model, so this
-/// is one account-wide answer; the shortest window wins, being the most
-/// actionable. `>=`, so a window sitting exactly on its cap is the same verdict
-/// the frame's `LIMIT EXCEEDED` flag prints.
+/// is one answer per window; the shortest window wins, being the most actionable.
+/// `>=`, so a window sitting exactly on its cap is the same verdict the frame's
+/// `LIMIT EXCEEDED` flag prints.
+///
+/// The cap is the one [`window_caps`] picks for that window — the stricter set
+/// the models in it actually draw on, never the plan's loosest.
 pub fn over_window(report: &Report, plan: &Plan) -> Option<&'static str> {
-    if let Some(cap) = plan.five_hour_usd {
+    let caps = |span: Span| window_caps(&report.models, plan, span);
+    if let Some(cap) = caps(Span::FiveHour).chosen.five_hour_usd {
         if report.five_hour.credits >= cap {
-            return Some("5-hour");
+            return Some(Span::FiveHour.label());
         }
     }
-    if let Some(cap) = plan.weekly_usd {
+    if let Some(cap) = caps(Span::Weekly).chosen.weekly_usd {
         if report.weekly.credits >= cap {
-            return Some("weekly");
+            return Some(Span::Weekly.label());
         }
     }
-    if report.month.credits >= plan.monthly_usd {
-        return Some("monthly");
+    if report.month.credits >= caps(Span::Month).chosen.monthly_usd {
+        return Some(Span::Month.label());
     }
     None
 }
@@ -102,6 +130,7 @@ pub fn build(
         now_ms,
         since_ms,
         period_end_ms: None,
+        period_anchored: false,
         month_inferred: since_override.is_none() && month_inferred,
         sources: Vec::new(),
         notes: Vec::new(),

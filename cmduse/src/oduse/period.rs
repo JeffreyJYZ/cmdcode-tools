@@ -26,6 +26,11 @@ pub struct Period {
     pub start: Option<i64>,
     pub label: String,
     pub inferred: bool,
+    /// Whether this span is a boundary the **plan** actually uses (a pinned
+    /// start, an explicit `--since`, the subscription anniversary) rather than
+    /// one this machine assumed. Only an anchored span has an elapsed share
+    /// worth printing: a calendar month is not the plan's cycle.
+    pub anchored: bool,
     /// The `--window` mode that produced it ("month", "all", "<n>d"), so `end`
     /// can resolve from the report's own start.
     pub mode: String,
@@ -47,6 +52,7 @@ pub fn resolve(
             start: Some(ms),
             label: format!("since {}", args.since.clone().unwrap_or_default()),
             inferred: false,
+            anchored: true,
             mode,
         });
     }
@@ -66,6 +72,7 @@ pub fn resolve(
                 start: Some(now_ms - d * 86_400_000),
                 label: format!("last {d}d"),
                 inferred: false,
+                anchored: false,
                 mode: format!("{d}d"),
             });
         }
@@ -78,6 +85,7 @@ pub fn resolve(
             start: Some(ms),
             label: "period start (pinned)".into(),
             inferred: false,
+            anchored: true,
             mode,
         });
     }
@@ -87,6 +95,7 @@ pub fn resolve(
             start: None,
             label: "subscription anniversary (inferred)".into(),
             inferred: true,
+            anchored: true,
             mode,
         });
     }
@@ -95,6 +104,7 @@ pub fn resolve(
             start: Some(0),
             label: label("all"),
             inferred: false,
+            anchored: false,
             mode,
         });
     }
@@ -103,6 +113,7 @@ pub fn resolve(
             start: Some(window::calendar_month_start(now_ms)),
             label: label("month"),
             inferred: false,
+            anchored: false,
             mode,
         });
     }
@@ -111,6 +122,7 @@ pub fn resolve(
             start: Some(now_ms - d * 86_400_000),
             label: label(&mode),
             inferred: false,
+            anchored: false,
             mode,
         });
     }

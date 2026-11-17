@@ -4,7 +4,7 @@
 // and `redraw_frame` parks the cursor on that last row, which is what lets the
 // countdown rewrite a single line per second instead of repainting.
 use crate::oduse::od::Plan;
-use crate::oduse::window::Report;
+use crate::oduse::window::{self, Report, Span};
 
 use super::dash::render_text;
 use super::ink::Ink;
@@ -54,12 +54,17 @@ pub fn compact_line(report: &Report, plan: &Plan, history: &[f64], colour: bool)
         .as_ref()
         .map(|w| format!(" · wallet {}", cmduse_core::money(w.balance_usd)))
         .unwrap_or_default();
+    // The month is bounded by the cap set its own models draw on: a report
+    // holding the original Flash is capped at $120 on Go, not the $220 headline.
+    // A bare $220 here was the same overstatement the full frame no longer makes.
+    let month = window::window_caps(&report.models, plan, Span::Month);
     format!(
-        "{}od{} {}/{} month · 5h {}{wallet}{spark}",
+        "{}od{} {}/{} ({}) month · 5h {}{wallet}{spark}",
         ink.bold,
         ink.reset,
         ink.cyan_on(cmduse_core::money(report.month.credits)),
-        cmduse_core::money(plan.monthly_usd),
+        cmduse_core::money(month.chosen.monthly_usd),
+        month.chosen.label,
         ink.cyan_on(cmduse_core::money(report.five_hour.credits)),
     )
 }

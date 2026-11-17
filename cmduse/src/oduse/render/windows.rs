@@ -4,6 +4,12 @@
 // on a 5-hour basis, so inventing a zero there would read as "0% of a $0 cap",
 // which is a different claim from "no such cap". The same rule applies to the
 // percentage and the gauge: absent, not zero.
+//
+// The cap itself is per model class, not per plan: Go publishes $220/mo for
+// DeepSeek V4.1 Flash Eco and $120/mo for the original Flash, so the row is
+// handed the set its own models picked and prints which one that was. A window
+// mixing both is capped by the stricter set and says what the looser one would
+// have allowed, rather than charging every turn against the wrong pool.
 use crate::oduse::window::Totals;
 use cmduse_core::{money, pct};
 
@@ -13,9 +19,17 @@ pub struct RowSpec<'a> {
     pub label: &'a str,
     pub used: &'a Totals,
     pub cap: Option<f64>,
+    /// Which cap set `cap` came from, and the figure the plan's own set would
+    /// have given — `Eco would be $220.00` on a Flash-capped row.
+    pub cap_note: Option<String>,
     /// The period's real bounds (start, end) in epoch ms, for the monthly row
     /// only: the rolling cuts have no reset instant this machine can know.
     pub period: Option<(i64, i64)>,
+    /// Whether that period is an anchor the plan itself uses (a pinned
+    /// `--period-start`, or the inferred subscription anniversary). The default
+    /// calendar month is **not** one — the plan's cycle is the anniversary — so
+    /// no elapsed share is invented from it.
+    pub anchored: bool,
     /// Whether the even-burn figure belongs here. Only the month is a budget, so
     /// only it gets "what even burn would have spent by now".
     pub pro_rata: bool,
@@ -43,32 +57,64 @@ pub fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
         ),
         (None, _) => String::new(),
     };
+    let cap_note = spec
+        .cap_note
+        .as_deref()
+        .map(|note| format!(" ({note})"))
+        .unwrap_or_default();
     let (elapsed, by_now, ends) = match spec.period {
         Some((start, end)) if end > start => {
-            let dur = ((end - start) / 1000).max(0) as u64;
-            let elapsed = cmduse_core::elapsed_pct(
-                Some(end as f64),
-                dur,
-                Some((now_ms / 1000).max(0) as u64),
-            );
+            // The end date is a fact either way; only the *share* needs the span
+            // to be one the plan itself uses.
             let ends = format!(" · ends {}", super::date_of(end / 86_400_000));
-            let thru = elapsed
-                .map(|p| format!(" · {}window {p:.1}% elapsed{}", ink.dim, ink.reset))
-                .unwrap_or_default();
-            let by_now = match (spec.pro_rata, elapsed, spec.cap) {
-                (true, Some(p), Some(cap)) => {
-                    format!(
-                        " · {}{} by now{}",
-                        ink.dim,
-                        money(cap * p / 100.0),
-                        ink.reset
-                    )
-                }
-                _ => String::new(),
-            };
-            (thru, by_now, ends)
+            if !spec.anchored {
+                // A calendar month is not the plan's cycle (the 7-day window
+                // resets at the subscription anniversary), so a share of it
+                // answers a question the plan never asked. Say there is no
+                // anchor instead of printing a figure that is true of another
+                // question.
+                let note = if spec.pro_rata {
+                    format!(" · {}no period anchor{}", ink.dim, ink.reset)
+                } else {
+                    String::new()
+                };
+                (note, String::new(), ends)
+            } else {
+                let dur = ((end - start) / 1000).max(0) as u64;
+                let elapsed = cmduse_core::elapsed_pct(
+                    Some(end as f64),
+                    dur,
+                    Some((now_ms / 1000).max(0) as u64),
+                );
+                let thru = elapsed
+                    .map(|p| format!(" · {}window {p:.1}% elapsed{}", ink.dim, ink.reset))
+                    .unwrap_or_else(|| {
+                        format!(" · {}window — elapsed unknown{}", ink.dim, ink.reset)
+                    });
+                let by_now = match (spec.pro_rata, elapsed, spec.cap) {
+                    (true, Some(p), Some(cap)) => {
+                        format!(
+                            " · {}{} by now{}",
+                            ink.dim,
+                            money(cap * p / 100.0),
+                            ink.reset
+                        )
+                    }
+                    _ => String::new(),
+                };
+                (thru, by_now, ends)
+            }
         }
-        _ => (String::new(), String::new(), String::new()),
+        _ => {
+            // No boundary at all (`--window all`): there is nothing to be a
+            // share of, and the budget row says so rather than staying silent.
+            let note = if spec.pro_rata {
+                format!(" · {}no period anchor{}", ink.dim, ink.reset)
+            } else {
+                String::new()
+            };
+            (note, String::new(), String::new())
+        }
     };
     let flag = if share.is_some_and(|p| p >= 100.0) {
         format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
@@ -82,7 +128,7 @@ pub fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
         Some(span) => format!(" · {}rolling {span}{}", ink.dim, ink.reset),
         None => String::new(),
     };
-    let body = format!("{spent}{paren}{rolling}{ends}{flag}{elapsed}{by_now}");
+    let body = format!("{spent}{paren}{cap_note}{rolling}{ends}{flag}{elapsed}{by_now}");
     if ink.colour {
         let bar = match share {
             Some(p) => format!("{} ", ink.bar_label(p, &given_pct(p))),

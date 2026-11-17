@@ -11,6 +11,7 @@
 // Usage events carry no cache tokens, which understates a cache-heavy turn; the
 // docs say so once and the dashboard says `estimate`.
 pub mod args;
+pub mod caps;
 pub mod cli;
 pub mod db;
 pub mod events;
