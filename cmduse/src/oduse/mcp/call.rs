@@ -12,6 +12,7 @@ use super::Settings;
 pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
     let Settings {
         db_path,
+        opencode_path,
         days,
         tz_secs,
         colour,
@@ -72,7 +73,7 @@ pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String
     let rows = || {
         let cutoff =
             since_ms.unwrap_or_else(|| window::now_ms() - number("days", days) * 86_400_000);
-        db::read_rows(db_path, cutoff)
+        crate::oduse::sources::read(db_path, opencode_path, cutoff)
     };
     let report = |rows: &[db::Row]| {
         let mut report = window::build(rows, &catalog, &plan_id, window::now_ms(), period_start);
@@ -114,8 +115,10 @@ pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String
     };
 
     let text = match name {
-        "usage" => rows().map(|rows| {
-            let report = report(&rows);
+        "usage" => rows().map(|found| {
+            let mut report = report(&found.rows);
+            report.sources = found.names;
+            report.notes = found.notes;
             render::render_text(
                 &report,
                 plan_cfg,
@@ -127,9 +130,9 @@ pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String
         }),
         "plans" => Ok(render::plans_text(colour)),
         "models" => Ok(render::models_text(&plan_id, colour)),
-        "daily" => rows().map(|rows| {
+        "daily" => rows().map(|found| {
             render::bucket_text(
-                &rows,
+                &found.rows,
                 &catalog,
                 window::now_ms(),
                 number("days", days) * 86_400_000,
@@ -140,9 +143,9 @@ pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String
                 rows_cap(usize::MAX),
             )
         }),
-        "hourly" => rows().map(|rows| {
+        "hourly" => rows().map(|found| {
             render::bucket_text(
-                &rows,
+                &found.rows,
                 &catalog,
                 window::now_ms(),
                 number("hours", 24) * 3_600_000,
@@ -153,17 +156,19 @@ pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String
                 rows_cap(usize::MAX),
             )
         }),
-        "session" => rows().map(|rows| {
+        "session" => rows().map(|found| {
             render::session_text(
-                &rows,
+                &found.rows,
                 &catalog,
                 rows_cap(usize::MAX),
                 colour,
                 crate::report_render::Fmt::Table,
             )
         }),
-        "model" => rows().map(|rows| {
-            let report = model_report(&rows);
+        "model" => rows().map(|found| {
+            let mut report = model_report(&found.rows);
+            report.sources = found.names;
+            report.notes = found.notes;
             match args.get("id").and_then(|v| v.as_str()) {
                 Some(wanted) => render::model_text(&report, wanted, colour),
                 None => render::render_text(

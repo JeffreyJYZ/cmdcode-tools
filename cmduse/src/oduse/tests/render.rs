@@ -21,7 +21,7 @@ fn the_dashboard_carries_the_turn_it_was_given() {
     // so the fixture's own turn rounds to $0.00.
     assert!(text.contains("$0.00"), "cents round the tiny turn: {text}");
     assert!(
-        text.contains("no cache tokens"),
+        text.contains("cache reads included"),
         "the estimate's reason: {text}"
     );
     assert!(text.contains("/tmp/app.sqlite"), "{text}");

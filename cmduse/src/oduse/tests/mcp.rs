@@ -8,6 +8,7 @@ fn call(method: &str, params: Value, id: i64) -> Value {
         &json!({ "jsonrpc": "2.0", "id": id, "method": method, "params": params }),
         &Settings {
             db_path: "/nonexistent/app.sqlite",
+            opencode_path: "/nonexistent/opencode.db",
             days: 120,
             tz_secs: 0,
             colour: false,

@@ -13,11 +13,15 @@
 pub mod args;
 pub mod cli;
 pub mod db;
+pub mod events;
 pub mod help;
 pub mod mcp;
 pub mod od;
+pub mod opencode;
 pub mod period;
+pub mod price;
 pub mod render;
+pub mod sources;
 pub mod wallet;
 pub mod watch;
 pub mod window;

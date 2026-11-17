@@ -116,12 +116,46 @@ impl Catalog {
     /// List-price cost of one turn, or `None` for a model the catalogue does not
     /// carry — the caller then reports it as unpriced rather than free.
     ///
-    /// No cache-read/write terms: the store's usage events carry no cache
-    /// counters, so there is nothing to price there. That is also why the
-    /// dashboard calls the figure an estimate.
+    /// Cache tokens are not counted here; [`Self::turn_cost`] is the turn's real
+    /// price (it also takes `cache_read`), and this stays the bare input/output
+    /// form the catalogue's own rows are stated in.
     pub fn price(&self, model_id: &str, input: u64, output: u64) -> Option<f64> {
         let model = self.model(model_id)?;
         Some((input as f64 * model.input + output as f64 * model.output) / 1e6)
+    }
+
+    /// What one turn costs, with the three things the two stores disagree about
+    /// folded in — see [`crate::oduse::price`], which is the one place the rule
+    /// lives:
+    ///
+    /// * **cache reads are priced.** `core/od.json` carries no cache rate, so the
+    ///   rate comes from `core/zen.json`'s row for the same model (`catalogId`,
+    ///   else the wire id), and a model that shelf does not sell prices cache
+    ///   reads at its own input rate.
+    /// * **reasoning is not added to output** — opencode bills it inside `output`
+    ///   already, and this catalogue has no reasoning rate.
+    /// * the result is `None` for a model the catalogue has never seen, which the
+    ///   caller reports as unpriced rather than free.
+    pub fn turn_cost(
+        &self,
+        model_id: &str,
+        input: u64,
+        output: u64,
+        cache_read: u64,
+    ) -> Option<crate::oduse::price::Priced> {
+        let model = self.model(model_id)?;
+        let (cache_rate, cache_estimated) =
+            crate::oduse::price::cache_read_rate(model.input, model.catalog_id());
+        let cost = (input as f64 * model.input
+            + output as f64 * model.output
+            + cache_read as f64 * cache_rate)
+            / 1e6;
+        Some(crate::oduse::price::Priced {
+            cost,
+            credits: cost * model.multiplier,
+            priced: true,
+            cache_estimated,
+        })
     }
 
     /// The plan's own unit: `price x multiplier`.

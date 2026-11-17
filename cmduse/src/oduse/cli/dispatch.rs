@@ -33,7 +33,7 @@ pub fn subcommand(ctx: &Ctx) -> bool {
         Some(SubCmd::Daily) => print!(
             "{}",
             render::bucket_text(
-                &ctx.read(ctx.now - ctx.days * 86_400_000),
+                &ctx.read(ctx.now - ctx.days * 86_400_000).rows,
                 ctx.catalog,
                 ctx.now,
                 ctx.days * 86_400_000,
@@ -47,7 +47,7 @@ pub fn subcommand(ctx: &Ctx) -> bool {
         Some(SubCmd::Hours) => print!(
             "{}",
             render::bucket_text(
-                &ctx.read(ctx.now - ctx.hours * 3_600_000),
+                &ctx.read(ctx.now - ctx.hours * 3_600_000).rows,
                 ctx.catalog,
                 ctx.now,
                 ctx.hours * 3_600_000,
@@ -61,7 +61,7 @@ pub fn subcommand(ctx: &Ctx) -> bool {
         Some(SubCmd::Session) => print!(
             "{}",
             render::session_text(
-                &ctx.read(ctx.report_window),
+                &ctx.read(ctx.report_window).rows,
                 ctx.catalog,
                 ctx.rows_cap(20),
                 ctx.colours,
@@ -73,6 +73,7 @@ pub fn subcommand(ctx: &Ctx) -> bool {
             // print. The wallet is handed in, resolved once for the whole run.
             mcp::run(mcp::Settings {
                 db_path: ctx.db_path,
+                opencode_path: ctx.opencode_path,
                 days: ctx.days,
                 tz_secs: ctx.tz_secs,
                 colour: false,

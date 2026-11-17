@@ -49,6 +49,11 @@ pub struct Report {
     /// Why the wallet is absent, when that is worth saying — a closed app, an
     /// expired control key. `None` when it answered, and for `--no-wallet`.
     pub wallet_error: Option<String>,
+    /// The stores whose rows are in this report (`app`, `opencode`), in read
+    /// order. The header names them, so a total that grew cannot look like drift.
+    pub sources: Vec<&'static str>,
+    /// One line per store that could not be read, or a note the figures need.
+    pub notes: Vec<String>,
     pub five_hour: Totals,
     pub weekly: Totals,
     pub month: Totals,
@@ -98,6 +103,8 @@ pub fn build(
         since_ms,
         period_end_ms: None,
         month_inferred: since_override.is_none() && month_inferred,
+        sources: Vec::new(),
+        notes: Vec::new(),
         wallet: None,
         wallet_error: None,
         five_hour: Totals::default(),
@@ -114,40 +121,37 @@ pub fn build(
         if !in_month && !in_week && !in_five {
             continue;
         }
-        // Priced from the catalogue, not from the store: the app records tokens
-        // and no money, so the rate table is the only basis there is.
-        let priced = catalog.model(&row.model).is_some();
-        let cost = catalog
-            .price(&row.model, row.input, row.output)
-            .unwrap_or(0.0);
-        let credits = cost * catalog.multiplier(&row.model);
+        // Priced from the catalogue, with cache reads and the recorded cost as
+        // the fallback — one rule, shared by every report (`oduse::price`).
+        let priced = crate::oduse::price::row_cost(row, catalog);
         if in_month {
-            report.month.add(row, cost, credits, priced);
+            report.month.add_price(row, priced);
         }
         if in_week {
-            report.weekly.add(row, cost, credits, priced);
+            report.weekly.add_price(row, priced);
         }
         if in_five {
-            report.five_hour.add(row, cost, credits, priced);
+            report.five_hour.add_price(row, priced);
         }
         let entry = by_model
             .entry(row.model.clone())
             .or_insert_with(|| ModelUsage {
                 id: row.model.clone(),
                 multiplier: catalog.multiplier(&row.model),
-                priced,
+                priced: priced.priced,
                 month: Totals::default(),
                 five_hour: Totals::default(),
                 weekly: Totals::default(),
             });
+        entry.priced |= priced.priced;
         if in_month {
-            entry.month.add(row, cost, credits, priced);
+            entry.month.add_price(row, priced);
         }
         if in_week {
-            entry.weekly.add(row, cost, credits, priced);
+            entry.weekly.add_price(row, priced);
         }
         if in_five {
-            entry.five_hour.add(row, cost, credits, priced);
+            entry.five_hour.add_price(row, priced);
         }
     }
 
