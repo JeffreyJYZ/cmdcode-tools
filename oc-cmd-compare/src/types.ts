@@ -1,5 +1,12 @@
 export type ProviderId = "oc-go" | "cc";
 
+/**
+ * A plan's column set. OpenDesign is a third side that only joins the table
+ * when `--od-plan` names one, so it is kept out of `ProviderId`: that type keys
+ * everything both standing providers always have.
+ */
+export type SideId = ProviderId | "od";
+
 /** Per-1M-token rates in USD. */
 export interface ModelPricing {
 	input: number;
@@ -10,7 +17,7 @@ export interface ModelPricing {
 
 /** One model's pricing + monthly credit allowance on one provider's plan. */
 export interface CatalogEntry {
-	provider: ProviderId;
+	provider: SideId;
 	plan: string;
 	/** Canonical cross-provider key (see normalize.ts). */
 	key: string;
@@ -31,7 +38,7 @@ export interface Deal {
 }
 
 export interface PlanInfo {
-	provider: ProviderId;
+	provider: SideId;
 	/** CLI id, e.g. "goat". */
 	id: string;
 	label: string;
@@ -55,7 +62,7 @@ export interface Workload {
 }
 
 export interface EntryMetrics {
-	provider: ProviderId;
+	provider: SideId;
 	plan: string;
 	pricing: ModelPricing;
 	allowance: number;
@@ -89,4 +96,6 @@ export interface CompareRow {
 	name: string;
 	oc?: EntryMetrics;
 	cc?: EntryMetrics;
+	/** Present only when `--od-plan` added the OpenDesign side. */
+	od?: EntryMetrics;
 }

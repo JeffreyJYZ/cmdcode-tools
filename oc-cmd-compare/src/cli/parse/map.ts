@@ -32,6 +32,7 @@ export function toOptions(bag: Bag): Options {
 	return {
 		ccPlan: String(pick(bag, "ccPlan")),
 		ocPlan: String(pick(bag, "ocPlan")),
+		odPlan: bag.odPlan === undefined ? undefined : String(bag.odPlan),
 		workload: {
 			input: int("in", pick(bag, "in")),
 			cacheRead: int("cache", pick(bag, "cache")),

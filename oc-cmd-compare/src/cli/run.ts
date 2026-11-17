@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
-import { COLUMN_HELP, COLUMN_IDS } from "#~/constants/view.ts";
+import { COLUMN_HELP } from "#~/view/text/help.ts";
+import { COLUMN_IDS } from "#~/constants/view.ts";
 import { loadUsage } from "#~/data/usage/index.ts";
 import { renderUsage } from "#~/view/layout/usage.ts";
 import {
@@ -18,7 +19,7 @@ import { project } from "./engine/project.ts";
 import { runCheck } from "./flow/check.ts";
 import { collect } from "./flow/collect.ts";
 import { resolveColumns, trimsToWidth } from "./flow/columns.ts";
-import { matches, sortRows } from "./flow/sort.ts";
+import { selectRows, sortRows } from "./flow/sort.ts";
 import { toOptions } from "./parse/map.ts";
 import { assertKnown, assertValues } from "./parse/validate.ts";
 
@@ -58,10 +59,20 @@ export async function run(argv: string[]): Promise<number> {
 		);
 	}
 
-	const { ocEntries, ccEntries, ocPlanInfo, ccPlanInfo, rows, ability, workloads, shapeNote } =
-		await collect(options);
+	const {
+		ocEntries,
+		ccEntries,
+		odLoad,
+		ocPlanInfo,
+		ccPlanInfo,
+		odPlanInfo,
+		rows,
+		ability,
+		workloads,
+		shapeNote,
+	} = await collect(options);
 	if (options.check) {
-		return runCheck(options, ocEntries, ccEntries, rows, ability);
+		return runCheck(options, ocEntries, ccEntries, rows, ability, odLoad);
 	}
 
 	if (options.usage) {
@@ -91,14 +102,12 @@ export async function run(argv: string[]): Promise<number> {
 		return 0;
 	}
 
-	const result = sortRows(
-		rows.filter((r) => matches(r, options.model) && (options.only === "all" || (r.oc && r.cc))),
-		options.metric,
-		options.asc,
-	);
+	const result = sortRows(selectRows(rows, options), options.metric, options.asc);
+	const plans = [ocPlanInfo, ccPlanInfo, ...(odPlanInfo ? [odPlanInfo] : [])];
 	const meta = {
 		ocPlan: ocPlanInfo,
 		ccPlan: ccPlanInfo,
+		odPlan: odPlanInfo,
 		workloads,
 		abilityLabel: options.noAbility ? undefined : (options.benchName ?? ability.label),
 		abilityNote: options.noAbility ? undefined : ability.note,
@@ -115,7 +124,7 @@ export async function run(argv: string[]): Promise<number> {
 		return 0;
 	}
 	if (options.format === "md") {
-		process.stdout.write(renderMarkdown(result, [ocPlanInfo, ccPlanInfo]));
+		process.stdout.write(renderMarkdown(result, plans));
 		return 0;
 	}
 
@@ -124,8 +133,10 @@ export async function run(argv: string[]): Promise<number> {
 		? fitColumns(result, requested, limit)
 		: { ids: requested, dropped: [] as string[] };
 	renderText(result, meta, fitted.ids, fitted.dropped);
+	const entryCounts = [`${ocEntries.length} OpenCode`, `${ccEntries.length} CommandCode`];
+	if (odLoad) entryCounts.push(`${odLoad.entries.length} OpenDesign`);
 	console.log(
-		`\n${result.length} models · ${planTitle(ocPlanInfo)} vs CommandCode ${ccPlanInfo.label} · ${ocEntries.length} OpenCode / ${ccEntries.length} CommandCode entries`,
+		`\n${result.length} models · ${plans.map(planTitle).join(" vs ")} · ${entryCounts.join(" / ")} entries`,
 	);
 	return 0;
 }

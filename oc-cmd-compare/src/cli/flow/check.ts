@@ -1,5 +1,6 @@
 import type { Options } from "#~/cli/options.ts";
 import { loadOcGoModelIds } from "#~/data/sources/opencode.ts";
+import type { OdLoad } from "#~/data/sources/od/index.ts";
 import { normalizeKey } from "#~/keys.ts";
 import type { CatalogEntry, CompareRow } from "#~/types.ts";
 
@@ -16,6 +17,7 @@ export async function runCheck(
 	ccEntries: CatalogEntry[],
 	rows: CompareRow[],
 	ability: AbilityInfo,
+	od?: OdLoad,
 ): Promise<number> {
 	const ocKeys = new Set(ocEntries.map((e) => e.key));
 	const ccKeys = new Set(ccEntries.map((e) => e.key));
@@ -26,15 +28,26 @@ export async function runCheck(
 	console.log(`CommandCode entries:     ${ccEntries.length}`);
 	console.log(`matched models:          ${rows.filter((r) => r.oc && r.cc).length}`);
 	console.log(`free OpenCode models:    ${ocEntries.filter((e) => e.allowance === 0).length}`);
+	if (od) {
+		console.log(`OpenDesign entries:      ${od.entries.length}`);
+		console.log(`OpenDesign not in plan:  ${od.excluded.join(", ") || "—"}`);
+		console.log(
+			`OpenDesign unpriced:     ${od.missing.length} (no token rate on either catalog): ${od.missing.join(", ") || "—"}`,
+		);
+		const onlyOd = od.entries.map((e) => e.key).filter((k) => !ocKeys.has(k) && !ccKeys.has(k));
+		console.log(`only in OpenDesign:      ${onlyOd.join(", ") || "—"}`);
+	}
 
-	const scored = rows.filter((r) => r.oc?.ability != null || r.cc?.ability != null).length;
+	const scored = rows.filter(
+		(r) => r.oc?.ability != null || r.cc?.ability != null || r.od?.ability != null,
+	).length;
 	console.log(
 		`ability source:          ${ability.label || "disabled"} (${ability.intelligence.size} scores, ${ability.tps.size} speed, ${scored}/${rows.length} rows scored)`,
 	);
 	if (ability.note) console.log(`ability note:            ${ability.note}`);
 
 	const unscored = rows
-		.filter((r) => (r.oc?.ability ?? r.cc?.ability ?? null) === null)
+		.filter((r) => (r.oc?.ability ?? r.cc?.ability ?? r.od?.ability ?? null) === null)
 		.map((r) => r.key);
 	if (unscored.length > 0) {
 		const head = unscored.slice(0, 20).join(", ");

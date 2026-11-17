@@ -34,21 +34,28 @@ export {
 export {
 	abilityStyle,
 	bestCost,
-	bestIndex,
 	bestValue,
 	ccRates,
-	cheaperSide,
 	costStyle,
 	enabledStyle,
 	freeCc,
 	freeOc,
+	freeOd,
 	ocRates,
+	odRates,
 	pricingTriple,
 	setAbilityRange,
+	valueStyle,
+} from "./styles.ts";
+export {
+	bestAbility,
+	bestTps,
+	cheaperSide,
+	entryOf,
+	presentSides,
 	sideStyle,
 	tint,
 	tintOrFree,
-	valueStyle,
 	winner,
 	winnerStyle,
-} from "./styles.ts";
+} from "./side.ts";

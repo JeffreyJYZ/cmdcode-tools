@@ -1,5 +1,6 @@
-import type { EntryMetrics } from "#~/types.ts";
+import type { EntryMetrics, SideId } from "#~/types.ts";
 import type { Row } from "#~/view/schema.ts";
+import { bestAbility, bestTps } from "./side.ts";
 
 export function fmtCount(n: number): string {
 	if (!Number.isFinite(n)) return "∞";
@@ -47,27 +48,33 @@ export function fmtRequests(value: number | undefined, hasEntry: boolean): strin
 }
 
 export function fmtAbility(row: Row): string {
-	const ability = row.oc?.ability ?? row.cc?.ability ?? null;
+	const ability = bestAbility(row);
 	return ability === null ? "—" : ability.toFixed(1);
 }
 
 export function fmtTps(row: Row): string {
-	const tps = row.oc?.tps ?? row.cc?.tps ?? null;
+	const tps = bestTps(row);
 	return tps === null ? "—" : Math.round(tps).toString();
 }
 
-import type { ProviderId } from "#~/types.ts";
+const PROVIDER_NAMES: Record<SideId, string> = {
+	"oc-go": "OpenCode",
+	cc: "CommandCode",
+	od: "OpenDesign",
+};
 
-export function providerName(provider: ProviderId): string {
-	return provider === "oc-go" ? "OpenCode" : "CommandCode";
+const SHORT_NAMES: Record<SideId, string> = { "oc-go": "OC", cc: "CC", od: "OD" };
+
+export function providerName(provider: SideId): string {
+	return PROVIDER_NAMES[provider];
 }
 
 /** Short provider tag, for the WIN column. */
-export function shortProviderName(provider: ProviderId): string {
-	return provider === "oc-go" ? "OC" : "CC";
+export function shortProviderName(provider: SideId): string {
+	return SHORT_NAMES[provider];
 }
 
-/** e.g. "OpenCode Go", "CommandCode GOAT". */
-export function planTitle(plan: { provider: ProviderId; label: string }): string {
+/** e.g. "OpenCode Go", "CommandCode GOAT", "OpenDesign Go". */
+export function planTitle(plan: { provider: SideId; label: string }): string {
 	return `${providerName(plan.provider)} ${plan.label}`;
 }

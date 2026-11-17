@@ -8,6 +8,7 @@ export function parseFlags(argv: string[]): Bag {
 	const cli = cac("mpc");
 	cli.option("--cc-plan <id>", "CommandCode plan: go, goat, pro, max10, max20")
 		.option("--oc-plan <id>", "OpenCode Go plan: go, go-plus")
+		.option("--od-plan <id>", "OpenDesign plan to compare too: go, plus, pro, max")
 		.option("--in <n>", "input tokens per request")
 		.option("--cache <n>", "cache-read tokens per request")
 		.option("--out <n>", "output tokens per request")

@@ -24,14 +24,21 @@ export function costPerRequest(pricing: ModelPricing, workload: Workload): numbe
 /**
  * Fraction of the monthly allowance each rolling window allows, per provider.
  * OpenCode Go fixes this at 20%/50%; CommandCode derives it from the plan's own
- * 5-hour / weekly dollar caps.
+ * 5-hour / weekly dollar caps; OpenDesign does the same from its own caps, and
+ * reports `null` for the 5-hour window its Plus/Pro/Max plans do not have.
  */
 export function windowRatios(
 	plan: PlanInfo,
 	override?: [number, number],
-): { five: number; week: number } {
+): { five: number | null; week: number } {
 	if (override) return { five: override[0], week: override[1] };
 	if (plan.provider === "oc-go") return { five: 0.2, week: 0.5 };
+	if (plan.provider === "od") {
+		const five =
+			plan.fiveHour !== null && plan.credits > 0 ? plan.fiveHour / plan.credits : null;
+		const week = plan.weekly !== null && plan.credits > 0 ? plan.weekly / plan.credits : 1;
+		return { five, week };
+	}
 	if (plan.fiveHour !== null && plan.weekly !== null && plan.credits > 0) {
 		return {
 			five: plan.fiveHour / plan.credits,

@@ -8,6 +8,8 @@ Compare what the same model actually costs you on OpenCode Go vs CommandCode, us
 
 Both providers sell the same shape of thing: a monthly subscription that grants a pool of usage credits, with a per-model allowance priced at API token rates. `mpc` normalises both onto one table so you can see, per model, how many requests a month each plan buys and what each request really costs you.
 
+Add `--od-plan go|plus|pro|max` to bring **OpenDesign** in as a third column set — the same table then prices one model on OpenCode Go, CommandCode and an OpenDesign plan at once.
+
 ## Install
 
 Install the published CLI globally:
@@ -41,6 +43,7 @@ mpc                                   # oc-go Go vs CommandCode GOAT, default wo
 mpc --cc-plan pro                     # compare against CommandCode Pro
 mpc --cc-plan go                      # ...or the $1 Go plan
 mpc --oc-plan go-plus                 # OpenCode Go Plus ($40) instead of Go ($10)
+mpc --od-plan go                      # add an OpenDesign column set (go | plus | pro | max)
 mpc --minimal                         # model + req/mo both sides + win + val
 mpc --medium                          # allowances + the rate views per side
 mpc --detail                          # every column, untrimmed (for copy/paste or agents)
@@ -127,6 +130,7 @@ Relative paths resolve against the config file's directory. A plugin is a `.json
 | --------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--cc-plan <id>`            | `goat`                     | CommandCode plan: `go`, `goat`, `pro`, `max10`, `max20`                                                                                                                                                                    |
 | `--oc-plan <id>`            | `go`                       | OpenCode Go plan: `go`, `go-plus` (same token rates, higher per-model limits)                                                                                                                                              |
+| `--od-plan <id>`            | off                        | adds an OpenDesign column set: `go`, `plus`, `pro`, `max` (credit-multiplier allowance, own 5h/wk windows; Go has no top models)                                                                                           |
 | `--in <n>`                  | `800`                      | fixed input tokens per request                                                                                                                                                                                             |
 | `--cache <n>`               | `50000`                    | fixed cache-read tokens per request                                                                                                                                                                                        |
 | `--out <n>`                 | `200`                      | fixed output tokens per request                                                                                                                                                                                            |
@@ -136,7 +140,7 @@ Relative paths resolve against the config file's directory. A plugin is a `.json
 | `--since <date>`            | —                          | measured shape: only requests on or after this date                                                                                                                                                                        |
 | `--metric <name>`           | `val`                      | sort by `val`, `cost`, `perreq`, `req` or `name`; `cost` and `perreq` ascend (lower better), `val`/`req` descend, `--asc` flips; rows with no `VAL` always sort last                                                       |
 | `--model <re>`              | —                          | filter rows by name (regex, substring fallback)                                                                                                                                                                            |
-| `--only <scope>`            | `all`                      | `all` = union of both catalogs, `both` = only shared models                                                                                                                                                                |
+| `--only <scope>`            | `all`                      | `all` = union of every catalog, `both` = only models every compared plan has (all three with `--od-plan`)                                                                                                                  |
 | `--width <n>`               | terminal                   | force table width; by default the table trims to the terminal and drops optional columns (`rates`, `req/$`, `5h`/`wk`) until it fits                                                                                       |
 | `--minimal`                 | off                        | fewest columns: model + req/mo both sides + win + val                                                                                                                                                                      |
 | `--medium`                  | off                        | preset: allowance and the rate views per side + win + cost + val                                                                                                                                                           |
@@ -263,6 +267,8 @@ Names from the two catalogs are collapsed onto one canonical key (lowercase, ven
 - Models CommandCode lists with rates but no explicit credits row (the "older models also available" set) use the documented standard allowance ($20 on GOAT, $30 on Pro).
 - OpenCode sells two Go plans — **Go** ($10/mo) and **Go Plus** ($40/mo) — with identical token rates but different per-model monthly limits; `--oc-plan` picks which. Go has no shared credit pool, so the plan's "credits" figure is the sum of the per-model limits (an upper bound, not a pool).
 - OpenCode Go's free models (`LongCat 2.5 Preview Free`, `Step 5 Preview Free`) publish an `Unlimited` monthly limit instead of a $ figure. They are included as free entries — `$0` rates, unbounded `req/mo` — and, since their allowance is meaningless at zero cost, they add nothing to the plan's summed credits. Their docs-only `… Free` suffix is stripped by that generic rule (the marker is systematic, never a per-model alias), so a variant merges onto the model's one row instead of appearing twice.
+- **OpenDesign** (`--od-plan`) is a third plan read from `open-design.ai/pricing` and `/model-credits`: Go $10, Plus $20, Pro $100, Max $200. A model's allowance is the plan's combined monthly maximum divided by its credit multiplier (DeepSeek V4.1 Flash 0.5×, Flash Eco 0.27×, GLM-5.3 Flash-X 2×, Claude Haiku 5.5 and GPT-6 Luna 4×, the rest 1×), so the same $220 of Go credits buys $440 of DeepSeek V4.1 Flash usage. Only **Go** has a 5-hour window ($18 of a $55 seven-day cap); every plan has the 7-day cap ($55 / $74 / $90 / $150), and for a new subscription that week starts when the subscription starts, not on Monday. Top Model Credits (Plus $20, Pro $120, Max $300) have neither window, so Go carries no top models at all (Opus, Kimi K3, Gemini 4 Argon, image generation) and those rows print `—`.
+- OpenDesign publishes credit multipliers and estimated request counts, not token rates: each row is priced from the same model's CommandCode row (OpenCode's is the fallback, since its Go page can list an off-peak or tiered variant), and a model with no such row is listed by `--check` rather than given an invented rate.
 - `$/1K` and `req/$` are plan-relative: they divide by the plan's own price, so a cheaper subscription can post a lower per-request cost while buying fewer requests. Compare `req/mo` for volume and `$/1K` for the effective rate.
 - Values reflect the docs at fetch time; active deals are picked up automatically.
 

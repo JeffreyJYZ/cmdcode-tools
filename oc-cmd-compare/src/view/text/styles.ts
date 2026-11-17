@@ -1,33 +1,8 @@
-import { PROVIDER_COLOR, PROVIDER_TINT, SGR } from "#~/constants/view.ts";
-import type { EntryMetrics, ProviderId } from "#~/types.ts";
+import { SGR } from "#~/constants/view.ts";
+import type { EntryMetrics } from "#~/types.ts";
 import type { Row } from "#~/view/schema.ts";
-import { fmtRate, shortProviderName } from "./format.ts";
-
-/** Which side is cheaper per request on this row. */
-export function cheaperSide(row: Row): "oc" | "cc" | "tie" | "none" {
-	if (!row.oc || !row.cc) return "none";
-	if (row.oc.payPerRequest === row.cc.payPerRequest) return "tie";
-	return row.oc.payPerRequest < row.cc.payPerRequest ? "oc" : "cc";
-}
-
-export function winner(row: Row): string {
-	// One-sided rows are not wins; name the side that carries the model.
-	if (!row.oc) return `${shortProviderName("cc")} only`;
-	if (!row.cc) return `${shortProviderName("oc-go")} only`;
-	const side = cheaperSide(row);
-	if (side === "tie") return "tie";
-	return shortProviderName(side === "oc" ? "oc-go" : "cc");
-}
-
-export function bestIndex(row: Row): number {
-	return Math.max(row.oc?.index ?? -1, row.cc?.index ?? -1, 0);
-}
-
-function valueScores(row: Row): number[] {
-	return [row.oc?.valueIndex, row.cc?.valueIndex].filter(
-		(value): value is number => typeof value === "number",
-	);
-}
+import { fmtRate } from "./format.ts";
+import { bestAbility, bestIndex, valueScores } from "./side.ts";
 
 export const bestValue = (r: Row): string => {
 	const scores = valueScores(r);
@@ -44,50 +19,10 @@ export const pricingTriple = (m: EntryMetrics | undefined): string => {
 
 export const ocRates = (r: Row): string => pricingTriple(r.oc);
 export const ccRates = (r: Row): string => pricingTriple(r.cc);
+export const odRates = (r: Row): string => pricingTriple(r.od);
 export const freeOc = (r: Row): boolean => Boolean(r.oc?.free);
 export const freeCc = (r: Row): boolean => Boolean(r.cc?.free);
-
-function entryOf(row: Row, provider: ProviderId): EntryMetrics | undefined {
-	return provider === "oc-go" ? row.oc : row.cc;
-}
-
-/**
- * A provider's whole column set is tinted with its identity colour, so the two
- * halves of the table read apart. An absent cell stays `dim` (dim = missing).
- */
-export const tint =
-	(provider: ProviderId) =>
-	(row: Row): string | undefined =>
-		entryOf(row, provider) ? PROVIDER_TINT[provider] : SGR.dim;
-
-/** The tint, except a free model goes green (favourable). */
-export const tintOrFree =
-	(provider: ProviderId) =>
-	(row: Row): string | undefined => {
-		const entry = entryOf(row, provider);
-		if (!entry) return SGR.dim;
-		return entry.free ? SGR.green : PROVIDER_TINT[provider];
-	};
-
-/**
- * The cheaper side's cell in its provider's **bold** colour, the other side in
- * the quiet tint — so the win reads from brightness, and an OC win (cyan) never
- * looks like a CC win (magenta).
- */
-export function sideStyle(side: "oc" | "cc") {
-	const provider: ProviderId = side === "oc" ? "oc-go" : "cc";
-	return (row: Row): string | undefined => {
-		if (!entryOf(row, provider)) return SGR.dim;
-		return cheaperSide(row) === side ? PROVIDER_COLOR[provider] : PROVIDER_TINT[provider];
-	};
-}
-
-/** WIN column: the winning side's own colour; a tie or a one-sided row plain. */
-export const winnerStyle = (row: Row): string | undefined => {
-	const side = cheaperSide(row);
-	if (side === "tie" || side === "none") return undefined;
-	return PROVIDER_COLOR[side === "oc" ? "oc-go" : "cc"];
-};
+export const freeOd = (r: Row): boolean => Boolean(r.od?.free);
 
 let costCuts: [number, number] = [30, 60];
 let valCuts: [number, number] = [40, 70];
@@ -134,7 +69,7 @@ export function setAbilityRange(min: number, max: number): void {
  * cut-offs, exactly as COST/VAL are coloured.
  */
 export const abilityStyle = (row: Row): string | undefined => {
-	const ability = row.oc?.ability ?? row.cc?.ability ?? null;
+	const ability = bestAbility(row);
 	if (ability === null) return SGR.dim;
 	if (!abilityRange || abilityRange[1] <= abilityRange[0]) return undefined;
 	const score = (100 * (ability - abilityRange[0])) / (abilityRange[1] - abilityRange[0]);
@@ -142,3 +77,6 @@ export const abilityStyle = (row: Row): string | undefined => {
 	if (score >= valCuts[0]) return SGR.yellow;
 	return SGR.red;
 };
+
+/** Best ability score the row carries, whichever side supplies it. */
+export { bestAbility, bestTps } from "./side.ts";

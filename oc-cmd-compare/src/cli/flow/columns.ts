@@ -1,5 +1,6 @@
 import type { Options } from "#~/cli/options.ts";
 import { SETS, TIERS, type Tier } from "#~/constants/cli.ts";
+import { OD_BY_TIER, withOd } from "#~/constants/view.ts";
 
 /**
  * The tier the flags asked for. The default is the full set — `--fit` used to
@@ -13,15 +14,21 @@ function tierOf(options: Options): Tier {
 	return picked[0] ?? "detail";
 }
 
-/** The columns to render: an exact `--columns` list, a config preset, or a tier. */
+function namedPreset(options: Options): string[] {
+	const named = options.presets[options.preset ?? ""];
+	if (!named) throw new Error(`unknown preset "${options.preset}"`);
+	return named;
+}
+
+/**
+ * The columns to render: an exact `--columns` list, a config preset, or a tier.
+ * `--od-plan` appends its block to a tier or preset — an exact list stays exact.
+ */
 export function resolveColumns(options: Options): string[] {
 	if (options.columns) return options.columns;
-	if (options.preset) {
-		const named = options.presets[options.preset];
-		if (!named) throw new Error(`unknown preset "${options.preset}"`);
-		return named;
-	}
-	return SETS[tierOf(options)];
+	const tier = tierOf(options);
+	const base = options.preset ? namedPreset(options) : SETS[tier];
+	return options.odPlan ? withOd(base, OD_BY_TIER[tier]) : base;
 }
 
 /** Every tier trims to the terminal width except `--detail` and an exact list. */

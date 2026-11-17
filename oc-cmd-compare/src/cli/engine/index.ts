@@ -1,13 +1,13 @@
 import { DEFAULT_SCORE } from "#~/constants/scoring.ts";
-import type { CatalogEntry, EntryMetrics, PlanInfo, ProviderId, Workload } from "#~/types.ts";
+import type { CatalogEntry, EntryMetrics, PlanInfo, SideId, Workload } from "#~/types.ts";
 import { lookupAbility, lookupTps } from "./ability.ts";
 import { costPerRequest, windowRatios } from "./cost.ts";
 import { assignIndex, assignValueIndex, type ScoreConfig } from "./score.ts";
 
 export function buildMetrics(
 	entries: CatalogEntry[],
-	plans: Map<ProviderId, PlanInfo>,
-	workloads: Record<ProviderId, Workload>,
+	plans: Map<SideId, PlanInfo>,
+	workloads: Partial<Record<SideId, Workload>>,
 	ability: Map<string, number> = new Map(),
 	tps: Map<string, number> = new Map(),
 	config: ScoreConfig = DEFAULT_SCORE,
@@ -16,6 +16,7 @@ export function buildMetrics(
 		const plan = plans.get(entry.provider);
 		if (!plan) throw new Error(`no plan loaded for provider ${entry.provider}`);
 		const workload = workloads[entry.provider];
+		if (!workload) throw new Error(`no workload for provider ${entry.provider}`);
 		const cost = costPerRequest(entry.pricing, workload);
 		const free = cost === 0;
 		const requestsPerMonth = free ? Number.POSITIVE_INFINITY : entry.allowance / cost;
@@ -27,7 +28,9 @@ export function buildMetrics(
 			allowance: entry.allowance,
 			costPerRequest: cost,
 			requestsPerMonth,
-			requestsPerFiveHour: ratios.five * requestsPerMonth,
+			// 0 records "the plan has no such window" (OpenDesign Plus and up);
+			// its column prints a dash rather than a figure.
+			requestsPerFiveHour: ratios.five === null ? 0 : ratios.five * requestsPerMonth,
 			requestsPerWeek: ratios.week * requestsPerMonth,
 			payPerRequest: free ? 0 : (plan.price * cost) / entry.allowance,
 			multiplier: plan.price > 0 ? entry.allowance / plan.price : 0,
@@ -46,5 +49,5 @@ export function buildMetrics(
 
 export { lookupAbility, lookupTps } from "./ability.ts";
 export { costPerRequest, windowRatios } from "./cost.ts";
-export { buildRows } from "./rows.ts";
+export { buildRows, type OdSide } from "./rows.ts";
 export { assignIndex, assignValueIndex } from "./score.ts";

@@ -1,6 +1,7 @@
-import type { ProviderId } from "#~/types.ts";
+import type { SideId } from "#~/types.ts";
 import { CC_COLUMNS } from "#~/view/columns/cc.ts";
 import { OC_COLUMNS } from "#~/view/columns/oc.ts";
+import { OD_COLUMNS } from "#~/view/columns/od.ts";
 
 /**
  * SGR codes with **one meaning each**. `green` = favourable (cheaper side, free,
@@ -17,15 +18,17 @@ export const SGR = {
 } as const;
 
 /** Provider identity colour (bold), for banners, headers and a winning cell. */
-export const PROVIDER_COLOR: Record<ProviderId, string> = {
+export const PROVIDER_COLOR: Record<SideId, string> = {
 	"oc-go": "1;36",
 	cc: "1;35",
+	od: "1;34",
 };
 
 /** The same identity as a quiet tint, for a provider's whole column set. */
-export const PROVIDER_TINT: Record<ProviderId, string> = {
+export const PROVIDER_TINT: Record<SideId, string> = {
 	"oc-go": "36",
 	cc: "35",
+	od: "34",
 };
 
 export const GAP = "  ";
@@ -76,34 +79,48 @@ export const DETAIL_COLUMNS = [
 	"val",
 ];
 
+/** The OpenDesign block, appended to a preset when `--od-plan` is given. */
+export const OD_COLUMN_IDS = [
+	"od-rates",
+	"od-allow",
+	"od-req5h",
+	"od-reqwk",
+	"od-reqmo",
+	"od-per1k",
+	"od-reqdollar",
+];
+
+/** Per tier, only the OpenDesign columns that tier's shape has room for. */
+export const OD_BY_TIER: Record<"minimal" | "medium" | "detail", string[]> = {
+	minimal: ["od-reqmo"],
+	medium: ["od-allow", "od-reqmo", "od-per1k", "od-reqdollar"],
+	detail: OD_COLUMN_IDS,
+};
+
+/** Insert the OpenDesign block after the last standing plan's columns. */
+export function withOd(ids: string[], od: string[]): string[] {
+	const out = [...ids];
+	const anchor = out.reduce(
+		(last, id, i) => (id.startsWith("cc-") || id.startsWith("oc-") ? i : last),
+		-1,
+	);
+	if (anchor < 0) return out;
+	out.splice(anchor + 1, 0, ...od);
+	return out;
+}
+
 /** Every column the table can render, keyed by the id used with --columns. */
 export const COLUMN_IDS = [
 	"model",
 	...Object.keys(OC_COLUMNS),
 	...Object.keys(CC_COLUMNS),
+	...Object.keys(OD_COLUMNS),
 	"win",
 	"cost",
 	"ability",
 	"tps",
 	"deal",
 	"val",
-];
-
-export const LEGEND: [string, string][] = [
-	["rates", "token price per 1M tokens, in/out/cache"],
-	["allow", "monthly credits this plan gives the model"],
-	["5h wk mo", "requests the rolling 5-hour / weekly / monthly window buys"],
-	["$/1K", "your cost per 1,000 requests, at the plan's price"],
-	["req/$", "requests one dollar of subscription buys"],
-	["DEAL", "active CommandCode promotion: -98%, Free, 2x usage (expiry line is in --json)"],
-	["WIN", "cheaper side: OC / CC / tie · 'x only' = only that provider has it"],
-	["ability", "benchmark score for the model (source above)"],
-	["tps", "output tokens per second (source above)"],
-	["COST", "0-100 volume index: requests/mo, lower is better (no ability)"],
-	[
-		"VAL",
-		"0-100 ability-aware value: ability + speed + volume + cache + output · a free row wins volume only, so it can post COST 0 and a mid VAL",
-	],
 ];
 
 export const CSV_HEADER = [
@@ -130,26 +147,3 @@ export const HEADERS = [
 	"cheaper",
 	"flag",
 ];
-
-export const COLUMN_HELP = `Available columns (--columns a,b,c):
-  model            model name
-  oc-rates         OpenCode in/out/cache token rates ($/M)
-  oc-allow         OpenCode monthly allowance for the model
-  oc-req5h         requests the OpenCode 5-hour window allows
-  oc-reqwk         requests the OpenCode weekly window allows
-  oc-reqmo         requests the OpenCode monthly allowance buys
-  oc-per1k         OpenCode cost per 1,000 requests
-  oc-reqdollar     OpenCode requests per $1 of subscription
-  cc-*             the same set for the CommandCode plan
-  ability          benchmark score for the model
-  tps              output tokens per second
-  deal             active CommandCode promotion (-98%, Free, 2x usage)
-  win              side with the lower per-request cost
-  cost             0-100 cost index, lower is better
-  val              0-100 ability-aware value score
-
-Presets: default   = every column, trimmed to the terminal width (--no-fit keeps them all)
-         --minimal = model + req/mo both sides + win + val
-         --medium  = allowance and the rate views per side + win + cost + val
-         --detail  = every column, untrimmed (for copy/paste or agents)
-         --columns = an exact list; bypasses presets and trimming`;

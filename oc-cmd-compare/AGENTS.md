@@ -26,15 +26,17 @@ src/types.ts                 shared types
 src/keys.ts                  canonical model key + branding aliases
 src/constants/               module-level data constants: sources.ts (URLs, CC_PLANS, OC_PLANS),
                              scoring.ts (PER_MILLION, SPEED_*), view.ts (frame, columns,
-                             LEGEND, CSV_HEADER, HEADERS, COLUMN_HELP), cli.ts (DEFAULTS
-                             pairs, flag sets, METRICS/FORMATS/TIERS/SETS), data.ts (BOUNDARY,
-                             ALIASES, deal regexes)
+                             tiers, CSV_HEADER, HEADERS), cli.ts (DEFAULTS pairs, flag sets,
+                             METRICS/FORMATS/TIERS/SETS), data.ts (BOUNDARY, ALIASES, deal
+                             regexes). OD plan + model-credit tables live with their loader
+                             (`data/sources/od/`) since nothing else reads them.
 src/cli/run.ts               run(): orchestration
 src/cli/options.ts           Options, validators
 src/cli/parse/               cac.ts (declarations), map.ts (bag -> Options), fields.ts, validate.ts
 src/cli/flow/                collect.ts, sort.ts, check.ts, columns.ts
 src/cli/engine/              cost.ts, rows.ts, score.ts, ability.ts, project.ts, index.ts
 src/data/sources/            opencode.ts + cc/ (plans, cmduse, catalog) + aa/ (web, api, parse)
+                             + od/ (plans, models, index: the `--od-plan` side)
 src/data/bench/              index.ts (loadAbility), resolve.ts, cc.ts, types.ts
 src/data/scrape/             index.ts, tables.ts, tabs.ts, roleRows.ts; catalog/ (catalog, numeric, variant)
 src/data/usage/              index.ts (loadUsage), parse.ts (UsageEntry), log.ts (JSONL + merge),
@@ -45,7 +47,8 @@ src/view/render.ts           renderText / renderJson
 src/view/schema.ts           view types + the column registry
 src/view/columns/            oc.ts, cc.ts, meta.ts
 src/view/layout/             segments.ts, fit.ts, table.ts
-src/view/text/               index.ts (colour + re-exports), format.ts, styles.ts
+src/view/text/               index.ts (colour + re-exports), format.ts, styles.ts, side.ts
+                             (cheaper side / tints / win colour), help.ts (LEGEND, COLUMN_HELP)
 src/view/footer.ts           tally + legend + footer
 test/cli, test/data, test/unit/{core,view}
 ```
@@ -197,3 +200,15 @@ Everything below was a real bug. Keep them in mind when touching `src/data/scrap
 Live, per run — **no cache, in any layer** (the benchmark sources included; see "Ability scores"). `mpc --check` reports parse counts, unmatched model keys, OpenCode Go live model id count. Docs page changes shape → parsers throw with URL; fix the parser, don't silently fall back. **The Go page now lives at `https://opencode.ai/v2/docs/console/go/`** — `/docs/go/` 404s since the v2 docs move (2026-10-12), and the new page renders its plan tabs as `button[role="tab"][aria-controls]`, not Starlight anchor tabs, so `parseTabTables` reads the panel id from `href` **or** `aria-controls`.
 
 - **OpenCode Go has two plans; `--oc-plan go|go-plus` picks which** (default `go`, `OC_PLANS` in `constants/sources.ts`). They share one token price list and differ only in per-model monthly limits, so on the docs page the two priced tables have **identical headers** — `creditHeader: /monthly limit/i` matches both, and first-table-wins would silently pin every run to Go. The **tab label** is the discriminator: `parseTabTables` tags each `<table>` with the label of the `role="tabpanel"` it sits in (the tab control names its panel by `href` — Starlight's `a[role="tab"]` — or `aria-controls` — the v2 console page's `button[role="tab"]`), and `loadOcGoCatalog` keeps only tables whose label equals the plan's. A **second, equally-synced tab block lists request-count estimates** with no rates; its tables carry no Input/Output columns, so `extractCatalog` rejects them — never re-add a "first table wins" shortcut. `ocGoPlan(entries, planId)` sets `id`/`label`/`price` from the plan. Default (`go`) output must stay byte-identical; `planTitle` replaces the old hardcoded summary string. Fixture tests: `test/unit/scrape.test.ts`.
+
+## OpenDesign (`--od-plan`)
+
+- **OD is a third side that only exists when the flag is given.** `ProviderId` stays `"oc-go" | "cc"`; `SideId` adds `"od"`, and `CompareRow.od` is absent otherwise, so default output and the plugin's `rows[]` contract keep their shape (only `tally` gains zero-valued `odWins`/`odOnly`).
+- **Allowance = plan credits ÷ the model's multiplier** (`OD_MODELS` in `constants/od.ts`) — same `allowance` field every other plan uses, so the request-shape maths is unchanged. A top-model row draws Top Model Credits instead, which is why Go (top $0) has none.
+- **Only Go has a 5-hour window** (18 of its 55 seven-day cap). `windowRatios` returns `five: null` there, `requestsPerFiveHour` stores `0` as "no such window", and `od-req5h` prints a dash — never a `0`.
+- **The 7-day window starts at the subscription, not on Monday** — footer prints that beside `open-design.ai/pricing`, the source every OD number comes from.
+- **OD publishes multipliers, not token rates**: a row is priced from the same model's CommandCode row, OpenCode only as fallback (its page can list an off-peak or `> 256K` variant). A model with no such row is reported by `--check` as unpriced, never given an invented rate.
+- **`DeepSeek V4.1 Flash Eco` prices from `DeepSeek V4.1 Flash`** (`priceKey`): same model on a 0.27× multiplier, and its published usage value per request matches the base to the cent.
+- **The two OpenDesign pages disagree on exactly one multiplier: Claude Haiku 5.5** — `/model-credits` says 2×, `/help/billing` says 4× (GPT-6 Luna 4× and GLM-5.3 Flash-X 2× on both). `OD_MODELS` holds **4×**, matching `/help/billing`; never write that the pages agree, and do not flip the value until the owner names the winning source.
+- **A row excluded from the plan is absent, not zeroed** — the od columns print `—` and it stays a one-sided row, the same mechanism that already marked CC-only models.
+- OD identity colour is blue (`PROVIDER_COLOR`/`PROVIDER_TINT`), so an OD win never reads as an OC or CC one.
