@@ -12,25 +12,32 @@
 // Fields that are OpenDesign-only: `Wallet` (the app's daemon balance is not a
 // window, so it can never be a meter row) and the `estimate` caveats, which have
 // no counterpart because no other family prices from a store without cache
-// tokens.
-import { FIVE_HOUR_SECS, ROW_WIDTH, WEEKLY_SECS } from "../constants/sidebar";
+// tokens. The caps themselves are model-dependent, which `od-caps.ts` owns.
+import { FIVE_HOUR_SECS, WEEKLY_SECS } from "../constants/sidebar";
+import type { OdCapPick, OdCapView } from "./od-caps";
+import { applyPick, capOf, type OdWindowKey, windowCaps } from "./od-window-caps";
 import type { OdTotals, OdUsage } from "./od";
+import {
+	capNote,
+	hasCaps,
+	monthPeriod,
+	modelRows,
+	publishes,
+	spendOf,
+	walletRow,
+} from "./od-rows-parts";
 import { clip, count, money, type SidebarRow, separator, valueWidth, windowRows } from "./rows";
 
-/** The billing period's end and length, from the bounds `oduse` publishes. The
- *  month resets on the subscription anniversary, so its length is that span. */
-function monthPeriod(usage: OdUsage): { resetAt: number; durSecs: number } | undefined {
-	const { periodStart, periodEndAt } = usage;
-	if (typeof periodStart !== "number" || typeof periodEndAt !== "number") return undefined;
-	const durSecs = Math.round((periodEndAt - periodStart) / 1000);
-	if (durSecs <= 0) return undefined;
-	return { resetAt: periodEndAt, durSecs };
-}
-
 /**
- * One window: this machine's credits against the cap the plan publishes, through
- * the shared `windowRows`. Unlike Go's, these caps are independent published
- * figures rather than shares of one monthly allowance, so nothing is multiplied.
+ * One window: this machine's credits against the cap the plan publishes for the
+ * models that spent it, through the shared `windowRows`. Unlike Go's, these caps
+ * are independent published figures rather than shares of one monthly allowance,
+ * so nothing is multiplied.
+ *
+ * The cap is **model-dependent** — Go allows `$220/month` on Eco and `$120` on
+ * the original Flash — so `windowCaps` picks the stricter set for the models
+ * actually in the window, and a continuation row names it. A bare cap there
+ * would read as headroom the model used does not grant.
  *
  * A window the plan does not publish produces **no row at all**, the rule
  * `oduse`'s own dashboard follows: plus/pro/max never throttle on a 5-hour
@@ -39,83 +46,32 @@ function monthPeriod(usage: OdUsage): { resetAt: number; durSecs: number } | und
 function odWindow(
 	label: string,
 	used: OdTotals,
-	cap: number | undefined,
+	caps: OdCapView,
+	window: OdWindowKey,
+	spend: Array<{ id: string; credits: number }>,
+	pick: OdCapPick | undefined,
 	now: number,
 	durSecs: number,
 	resetAt?: number,
 ): SidebarRow[] {
+	const picked = windowCaps(caps, window, spend);
+	if (!picked) return [];
+	// `oduse` already decided which set bounds this window across every model in
+	// it; when the payload carries that decision the panel formats it rather than
+	// re-deriving one that could disagree with the CLI's own frame.
+	const chosen = applyPick(picked, pick, caps.legacy, window);
+	const cap = capOf(chosen.set, window);
 	if (typeof cap !== "number" || cap <= 0) return [];
 	// No server verdict exists for these windows, so the over-cap flag is
 	// derived, the same rule the Go panel applies to its local cuts.
-	return windowRows(
+	const rows = windowRows(
 		label,
 		{ cap, used: used.credits, resetAt, exceeded: used.credits >= cap },
 		now,
 		durSecs,
 		`${count(used.requests)} req`,
 	);
-}
-
-/**
- * The daemon's wallet. A balance answers nothing about a window, so it is its
- * own row and never a meter. A closed app is one dim line with the reason
- * `oduse` gave — never an error colour and never `$0`, which would read as an
- * empty wallet.
- *
- * The reason rides along only when it fits the value column: the CLI's is a
- * sentence with the endpoint appended ("daemon not running at http://…"), and a
- * reason cut mid-word reads as a defect. Too long, the row keeps the plain
- * verdict and `oduse` owns the why.
- *
- * `profile`/`user`/`source` are dropped: they identify the account rather than
- * measure it, and three more values do not fit a 37-column row.
- */
-function walletRow(usage: OdUsage): SidebarRow {
-	const wallet = usage.wallet;
-	if (!wallet) {
-		const width = valueWidth("Wallet");
-		const withWhy = usage.walletError ? `no meter · ${usage.walletError}` : "no meter";
-		return ["Wallet", withWhy.length <= width ? withWhy : "no meter", "muted"];
-	}
-	if (typeof wallet.balanceUsd !== "number") {
-		// The daemon answered but the balance did not parse: still a no-meter line,
-		// never "$0 balance".
-		return ["Wallet", "no meter · unreadable balance", "muted"];
-	}
-	const bits = [`${money(wallet.balanceUsd)} balance`];
-	if (wallet.stale) bits.push("cached");
-	return ["Wallet", clip(bits.join(" · "), valueWidth("Wallet")), "base"];
-}
-
-/**
- * Per-model credits for the period, biggest first — the CLI's own table, cut to
- * the panel's three rows. The multiplier is left out on purpose (the CLI has a
- * MULT column; 37 columns do not), and an unpriced model says so instead of
- * printing a `$0` its turn did not actually cost this machine.
- *
- * Empty below two models: a single row under a heading is noise, the same call
- * the Go panel makes.
- */
-function modelRows(usage: OdUsage): SidebarRow[] {
-	const ranked = [...usage.models.values()]
-		.sort((a, b) => b.month.credits - a.month.credits)
-		.slice(0, 3);
-	if (ranked.length < 2) return [];
-	const cap = usage.caps.monthlyUsd;
-	const rows: SidebarRow[] = [["", "by model · this period", "muted"]];
-	for (const entry of ranked) {
-		let value = `${count(entry.month.requests)} req · unpriced`;
-		if (entry.priced) {
-			value =
-				typeof cap === "number" && cap > 0
-					? `${money(entry.month.credits)}/${money(cap)} (${((entry.month.credits / cap) * 100).toFixed(1)}%)`
-					: money(entry.month.credits);
-		}
-		// Label + 2 + value must fit; a floor keeps a freak value from turning the
-		// clip width negative, which would return the whole id plus an ellipsis.
-		const idWidth = Math.max(4, ROW_WIDTH - value.length - 2);
-		rows.push([clip(entry.id, idWidth), value, "base"]);
-	}
+	rows.push(["", clip(capNote(chosen, cap), valueWidth("")), "muted"]);
 	return rows;
 }
 
@@ -129,6 +85,7 @@ export function odRows(usage: OdUsage | undefined): SidebarRow[] {
 	if (!usage) return [];
 	const now = Date.now();
 	const period = monthPeriod(usage);
+	const caps = usage.caps;
 	// The label is `Plan`, like the other three sections' headline row. Labelling
 	// it with the family name printed the section's own title twice — the panel
 	// draws the title above the rows, so the block opened with a bold
@@ -140,9 +97,12 @@ export function odRows(usage: OdUsage | undefined): SidebarRow[] {
 	// a meter: credits are priced from list-price dollars and the multiplier, the
 	// store carries no cache tokens, and the rolling cuts are local. Only the cuts
 	// the plan actually publishes are named.
-	const cuts = typeof usage.caps.fiveHourUsd === "number" ? "5h/7d" : "7d";
+	const cuts = publishes(caps, "fiveHour") ? "5h/7d" : "7d";
 	rows.push(["", clip("credits = list-price $ x multiplier", valueWidth("")), "muted"]);
 	rows.push(["", clip(`estimate · ${cuts} cut locally`, valueWidth("")), "muted"]);
+	// A payload publishing no cap set at all leaves no window to draw; say why,
+	// rather than letting the block read as a plan with unlimited headroom.
+	if (!hasCaps(caps)) rows.push(["", clip("no cap set published", valueWidth("")), "muted"]);
 	if (usage.periodInferred) {
 		// `oduse` infers the month's start from the subscription anniversary when
 		// nothing pins it; the Monthly reset below then rests on a guess, and that
@@ -150,14 +110,37 @@ export function odRows(usage: OdUsage | undefined): SidebarRow[] {
 		rows.push(["", "month start inferred", "muted"]);
 	}
 	rows.push(
-		...odWindow("5-hour", usage.totals.fiveHour, usage.caps.fiveHourUsd, now, FIVE_HOUR_SECS),
+		...odWindow(
+			"5-hour",
+			usage.totals.fiveHour,
+			caps,
+			"fiveHour",
+			spendOf(usage, "fiveHour"),
+			usage.capPicks.get("fiveHour"),
+			now,
+			FIVE_HOUR_SECS,
+		),
 	);
-	rows.push(...odWindow("Weekly", usage.totals.weekly, usage.caps.weeklyUsd, now, WEEKLY_SECS));
+	rows.push(
+		...odWindow(
+			"Weekly",
+			usage.totals.weekly,
+			caps,
+			"week",
+			spendOf(usage, "week"),
+			usage.capPicks.get("week"),
+			now,
+			WEEKLY_SECS,
+		),
+	);
 	rows.push(
 		...odWindow(
 			"Monthly",
 			usage.totals.month,
-			usage.caps.monthlyUsd,
+			caps,
+			"month",
+			spendOf(usage, "month"),
+			usage.capPicks.get("month"),
 			now,
 			period?.durSecs ?? 0,
 			period?.resetAt,
@@ -176,7 +159,7 @@ export function odRows(usage: OdUsage | undefined): SidebarRow[] {
 		// leaving zeroed windows and a reader wondering which figure broke.
 		rows.push(["", "no completed turns in this period", "muted"]);
 	}
-	const planModel = usage.caps.planModelCreditsUsd;
+	const planModel = caps.planModelCreditsUsd;
 	if (typeof planModel === "number" && planModel > 0) {
 		rows.push([
 			"",
@@ -188,7 +171,15 @@ export function odRows(usage: OdUsage | undefined): SidebarRow[] {
 	// The per-model table is a second subject, so it gets a rule — but only when
 	// there is a table: a lone model or none would otherwise leave a dangling
 	// divider at the end of the block.
-	const byModel = usage.summary.requests > 0 ? modelRows(usage) : [];
+	const byModel =
+		usage.summary.requests > 0
+			? modelRows(usage, (model) =>
+					capOf(
+						caps.byModel.get(model.id) ?? caps.defaultCaps ?? caps.legacy ?? {},
+						"month",
+					),
+				)
+			: [];
 	if (byModel.length > 0) {
 		rows.push(separator());
 		rows.push(...byModel);

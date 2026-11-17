@@ -14,6 +14,8 @@
 // only; the 5-hour and 7-day cuts are this machine's own (there is no per-window
 // usage API); and the only server number is a wallet *balance*, never a meter.
 
+import { type OdCapPick, type OdCapView, type OdWindowKey, parseCaps, parsePicks } from "./od-caps";
+
 /** One window (or the whole period) as `oduse` reports it: list-price dollars
  *  beside the plan's own unit. `credits = costUsd x the model's multiplier`, so
  *  the two are always the same turn counted twice. */
@@ -49,21 +51,15 @@ export interface OdWallet {
 	stale?: boolean;
 }
 
-/** The caps the plan publishes. `fiveHourUsd` is absent for every plan but Go:
- *  those plans do not throttle on a 5-hour basis at all, so the row must be
- *  absent rather than `$0` (a zero would read as an exhausted cap). */
-export interface OdCaps {
-	monthlyUsd?: number;
-	weeklyUsd?: number;
-	fiveHourUsd?: number;
-	/** A second published allowance with no local meter (the store names models,
-	 *  not which of them are the plan's own). */
-	planModelCreditsUsd?: number;
-}
-
+/** The caps the plan publishes, exactly as `oduse` shapes them: one flat block
+ *  on a build that predates per-model allowances, or per-model sets plus a
+ *  `defaultCaps` fallback. `parseCaps` owns both; `fiveHourUsd` stays absent
+ *  (never `0`) for a plan that publishes no 5-hour cap. */
 export interface OdUsage {
 	plan: string;
-	caps: OdCaps;
+	caps: OdCapView;
+	/** Which set `oduse` itself chose per window, when the build publishes it. */
+	capPicks: Map<OdWindowKey, OdCapPick>;
 	periodStart?: number;
 	periodEndAt?: number;
 	/** The month's start came from an inferred subscription anniversary. */
@@ -127,14 +123,8 @@ export function parseOdJson(text: string): OdUsage {
 	const wallet = body.wallet as Record<string, unknown> | null | undefined;
 	return {
 		plan: typeof body.plan === "string" ? body.plan : "go",
-		caps: {
-			monthlyUsd: optNum(caps.monthlyUsd),
-			weeklyUsd: optNum(caps.weeklyUsd),
-			// `null` from the CLI for a plan with no 5-hour cap; `optNum` keeps it
-			// absent instead of turning it into a zero.
-			fiveHourUsd: optNum(caps.fiveHourUsd),
-			planModelCreditsUsd: optNum(caps.planModelCreditsUsd),
-		},
+		caps: parseCaps(caps),
+		capPicks: parsePicks(body.capPicks),
 		periodStart: optNum(body.periodStartAt) ?? optNum(body.periodStart),
 		periodEndAt: optNum(body.periodEndAt),
 		// Absent on a build that does not publish it; only `true` means inferred.

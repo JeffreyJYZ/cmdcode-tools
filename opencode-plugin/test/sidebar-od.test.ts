@@ -2,18 +2,23 @@ import { describe, expect, test } from "bun:test";
 import { oduseCandidates } from "../src/cli";
 import { odArgs } from "../src/sidebar/data";
 import { parseOdJson } from "../src/sidebar/od";
+import { capsAreHeadline } from "../src/sidebar/od-caps";
 import { odSnapshot } from "./od-fixture";
 
 describe("parseOdJson", () => {
 	test("reads the caps, the period, the wallet and the per-model rows", () => {
 		const usage = parseOdJson(odSnapshot());
 		expect(usage.plan).toBe("go");
-		expect(usage.caps).toEqual({
+		expect(usage.caps.legacy).toEqual({
 			monthlyUsd: 220,
 			weeklyUsd: 55,
 			fiveHourUsd: 18,
 			planModelCreditsUsd: 0,
 		});
+		// The legacy block is the plan's headline (Eco) allowance, and no per-model
+		// set accompanies it — the flag the panel marks the row with.
+		expect(usage.caps.byModel.size).toBe(0);
+		expect(capsAreHeadline(usage.caps)).toBe(true);
 		expect(usage.periodEndAt).toBeGreaterThan(usage.periodStart ?? 0);
 		expect(usage.summary.credits).toBe(98.4);
 		expect(usage.totals.fiveHour.requests).toBe(12);
@@ -27,7 +32,7 @@ describe("parseOdJson", () => {
 		const body = JSON.parse(odSnapshot()) as Record<string, unknown>;
 		body.plan = "pro";
 		body.caps = { ...(body.caps as object), fiveHourUsd: null };
-		expect(parseOdJson(JSON.stringify(body)).caps.fiveHourUsd).toBeUndefined();
+		expect(parseOdJson(JSON.stringify(body)).caps.legacy?.fiveHourUsd).toBeUndefined();
 	});
 
 	test("a closed wallet is null, with its reason, not a zero balance", () => {
@@ -54,7 +59,7 @@ describe("parseOdJson", () => {
 	test("malformed input reads as an empty `go` snapshot, never a fabricated one", () => {
 		const usage = parseOdJson("{not json");
 		expect(usage.plan).toBe("go");
-		expect(usage.caps.monthlyUsd).toBeUndefined();
+		expect(usage.caps.legacy).toBeUndefined();
 		expect(usage.summary.requests).toBe(0);
 		expect(usage.wallet).toBeUndefined();
 		expect(usage.models.size).toBe(0);
