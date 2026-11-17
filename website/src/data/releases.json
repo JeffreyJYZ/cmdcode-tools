@@ -1,6 +1,13 @@
 {
-	"generatedAt": "2026-11-15T17:41:50.938Z",
+	"generatedAt": "2026-11-17T02:41:47.699Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.8.0",
+			"name": "cmduse-v0.8.0",
+			"publishedAt": "2026-11-17T02:12:09Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.8.0",
+			"notes": "## What's Changed\n* fix(mpc): match AA's dated slugs, keep a last-good answer for quota days by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/26\n* feat(mpc): compare OpenDesign plans as a third side by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/27\n* feat(oduse): measure an OpenDesign subscription from the app's store by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/28\n* feat(plugin): ship OpenDesign as a provider and a sidebar family (standalone) by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/30\n\n\n**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.7.35...cmduse-v0.8.0"
+		},
 		{
 			"tag": "cmduse-v0.7.35",
 			"name": "cmduse-v0.7.35",
@@ -258,6 +265,12 @@
 			"version": "0.1.10",
 			"date": "2026-11-09T14:42:24.248Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.10"
+		},
+		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.12",
+			"date": "2026-11-17T02:08:20.636Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.12"
 		},
 		{
 			"package": "@jeffreyjyz/reqshape",
@@ -698,6 +711,12 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.30"
 		},
 		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.31",
+			"date": "2026-11-17T02:08:40.144Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.31"
+		},
+		{
 			"package": "@jeffreyjyz/opencode-context",
 			"version": "0.1.0",
 			"date": "2026-10-04T06:05:56.479Z",
@@ -789,6 +808,12 @@
 		}
 	],
 	"crates": [
+		{
+			"crate": "cmd-usage",
+			"version": "0.8.0",
+			"date": "2026-11-17T02:06:53.896148Z",
+			"url": "https://crates.io/crates/cmd-usage/0.8.0"
+		},
 		{
 			"crate": "cmd-usage",
 			"version": "0.7.35",
@@ -1244,6 +1269,12 @@
 			"version": "0.1.0",
 			"date": "2026-09-04T07:50:07.640696Z",
 			"url": "https://crates.io/crates/cmd-usage/0.1.0"
+		},
+		{
+			"crate": "cmduse-core",
+			"version": "2.3.0",
+			"date": "2026-11-17T02:06:34.862646Z",
+			"url": "https://crates.io/crates/cmduse-core/2.3.0"
 		},
 		{
 			"crate": "cmduse-core",
