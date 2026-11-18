@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-17T21:16:23.023Z",
+	"generatedAt": "2026-11-18T02:58:07.872Z",
 	"plans": [
 		{
 			"key": "go",
@@ -10558,6 +10558,33 @@
 						}
 					},
 					{
+						"key": "gpt62sol",
+						"name": "GPT-6.2 Sol",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": 2.5
+							},
+							"allowance": 20,
+							"requestsPerMonth": 2325.5813953488373,
+							"requestsPerFiveHour": 465.1162790697675,
+							"requestsPerWeek": 1162.7906976744187,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 57.2576209885477,
+							"tps": null,
+							"index": 20,
+							"valueIndex": 64,
+							"free": false
+						}
+					},
+					{
 						"key": "gpt61terra",
 						"name": "GPT-6.1 Terra",
 						"oc": null,
@@ -13598,7 +13625,7 @@
 					"odWins": 0,
 					"ties": 8,
 					"ocOnly": 4,
-					"ccOnly": 64,
+					"ccOnly": 65,
 					"odOnly": 0
 				}
 			},
@@ -13760,6 +13787,33 @@
 							"tps": null,
 							"index": 67,
 							"valueIndex": 71,
+							"free": false
+						}
+					},
+					{
+						"key": "gpt62sol",
+						"name": "GPT-6.2 Sol",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": 2.5
+							},
+							"allowance": 20,
+							"requestsPerMonth": 2325.5813953488373,
+							"requestsPerFiveHour": 465.1162790697675,
+							"requestsPerWeek": 1162.7906976744187,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 57.2576209885477,
+							"tps": null,
+							"index": 19,
+							"valueIndex": 63,
 							"free": false
 						}
 					},
@@ -16804,7 +16858,7 @@
 					"odWins": 0,
 					"ties": 8,
 					"ocOnly": 4,
-					"ccOnly": 64,
+					"ccOnly": 65,
 					"odOnly": 0
 				}
 			}
@@ -16948,6 +17002,33 @@
 						}
 					},
 					{
+						"key": "gpt62sol",
+						"name": "GPT-6.2 Sol",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": 2.5
+							},
+							"allowance": 100,
+							"requestsPerMonth": 11627.906976744185,
+							"requestsPerFiveHour": 3488.3720930232553,
+							"requestsPerWeek": 6976.744186046511,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 57.2576209885477,
+							"tps": null,
+							"index": 34,
+							"valueIndex": 72,
+							"free": false
+						}
+					},
+					{
 						"key": "claudehaiku55",
 						"name": "Claude Haiku 5.5",
 						"oc": {
@@ -17073,6 +17154,33 @@
 							"tps": null,
 							"index": 26,
 							"valueIndex": 66,
+							"free": false
+						}
+					},
+					{
+						"key": "gpt62astra",
+						"name": "GPT-6.2 Astra",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 8,
+								"output": 40,
+								"cacheRead": 0.4,
+								"cacheWrite": 10
+							},
+							"allowance": 100,
+							"requestsPerMonth": 2906.9767441860463,
+							"requestsPerFiveHour": 872.0930232558138,
+							"requestsPerWeek": 1744.1860465116276,
+							"costPerRequest": 0.0344,
+							"payPerRequest": 0.0344,
+							"multiplier": 1,
+							"ability": 62.1387990593969,
+							"tps": null,
+							"index": 19,
+							"valueIndex": 62,
 							"free": false
 						}
 					},
@@ -20297,7 +20405,7 @@
 					"odWins": 0,
 					"ties": 6,
 					"ocOnly": 4,
-					"ccOnly": 75,
+					"ccOnly": 77,
 					"odOnly": 0
 				}
 			},
@@ -20460,6 +20568,33 @@
 						}
 					},
 					{
+						"key": "gpt62sol",
+						"name": "GPT-6.2 Sol",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": 2.5
+							},
+							"allowance": 100,
+							"requestsPerMonth": 11627.906976744185,
+							"requestsPerFiveHour": 3488.3720930232553,
+							"requestsPerWeek": 6976.744186046511,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 57.2576209885477,
+							"tps": null,
+							"index": 26,
+							"valueIndex": 64,
+							"free": false
+						}
+					},
+					{
 						"key": "claudefable52",
 						"name": "Claude Fable 5.2",
 						"oc": null,
@@ -20611,6 +20746,33 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 62,
+							"valueIndex": 53,
+							"free": false
+						}
+					},
+					{
+						"key": "gpt62astra",
+						"name": "GPT-6.2 Astra",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 8,
+								"output": 40,
+								"cacheRead": 0.4,
+								"cacheWrite": 10
+							},
+							"allowance": 100,
+							"requestsPerMonth": 2906.9767441860463,
+							"requestsPerFiveHour": 872.0930232558138,
+							"requestsPerWeek": 1744.1860465116276,
+							"costPerRequest": 0.0344,
+							"payPerRequest": 0.0344,
+							"multiplier": 1,
+							"ability": 62.1387990593969,
+							"tps": null,
+							"index": 8,
 							"valueIndex": 53,
 							"free": false
 						}
@@ -23788,7 +23950,7 @@
 					"odWins": 0,
 					"ties": 6,
 					"ocOnly": 4,
-					"ccOnly": 75,
+					"ccOnly": 77,
 					"odOnly": 0
 				}
 			}
@@ -23932,6 +24094,33 @@
 						"cc": null
 					},
 					{
+						"key": "gpt62sol",
+						"name": "GPT-6.2 Sol",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": 2.5
+							},
+							"allowance": 200,
+							"requestsPerMonth": 23255.81395348837,
+							"requestsPerFiveHour": 6976.744186046511,
+							"requestsPerWeek": 13953.488372093021,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 57.2576209885477,
+							"tps": null,
+							"index": 39,
+							"valueIndex": 75,
+							"free": false
+						}
+					},
+					{
 						"key": "claudesonnet55",
 						"name": "Claude Sonnet 5.5",
 						"oc": null,
@@ -24057,6 +24246,33 @@
 							"tps": null,
 							"index": 32,
 							"valueIndex": 70,
+							"free": false
+						}
+					},
+					{
+						"key": "gpt62astra",
+						"name": "GPT-6.2 Astra",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 8,
+								"output": 40,
+								"cacheRead": 0.4,
+								"cacheWrite": 10
+							},
+							"allowance": 200,
+							"requestsPerMonth": 5813.953488372093,
+							"requestsPerFiveHour": 1744.1860465116276,
+							"requestsPerWeek": 3488.3720930232553,
+							"costPerRequest": 0.0344,
+							"payPerRequest": 0.0344,
+							"multiplier": 1,
+							"ability": 62.1387990593969,
+							"tps": null,
+							"index": 24,
+							"valueIndex": 67,
 							"free": false
 						}
 					},
@@ -27281,7 +27497,7 @@
 					"odWins": 0,
 					"ties": 6,
 					"ocOnly": 4,
-					"ccOnly": 75,
+					"ccOnly": 77,
 					"odOnly": 0
 				}
 			},
@@ -27471,6 +27687,33 @@
 						}
 					},
 					{
+						"key": "gpt62sol",
+						"name": "GPT-6.2 Sol",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": 2.5
+							},
+							"allowance": 200,
+							"requestsPerMonth": 23255.81395348837,
+							"requestsPerFiveHour": 6976.744186046511,
+							"requestsPerWeek": 13953.488372093021,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 57.2576209885477,
+							"tps": null,
+							"index": 29,
+							"valueIndex": 67,
+							"free": false
+						}
+					},
+					{
 						"key": "claudesonnet55",
 						"name": "Claude Sonnet 5.5",
 						"oc": null,
@@ -27548,6 +27791,33 @@
 							"tps": null,
 							"index": 20,
 							"valueIndex": 61,
+							"free": false
+						}
+					},
+					{
+						"key": "gpt62astra",
+						"name": "GPT-6.2 Astra",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 8,
+								"output": 40,
+								"cacheRead": 0.4,
+								"cacheWrite": 10
+							},
+							"allowance": 200,
+							"requestsPerMonth": 5813.953488372093,
+							"requestsPerFiveHour": 1744.1860465116276,
+							"requestsPerWeek": 3488.3720930232553,
+							"costPerRequest": 0.0344,
+							"payPerRequest": 0.0344,
+							"multiplier": 1,
+							"ability": 62.1387990593969,
+							"tps": null,
+							"index": 12,
+							"valueIndex": 57,
 							"free": false
 						}
 					},
@@ -30772,7 +31042,7 @@
 					"odWins": 0,
 					"ties": 6,
 					"ocOnly": 4,
-					"ccOnly": 75,
+					"ccOnly": 77,
 					"odOnly": 0
 				}
 			}
