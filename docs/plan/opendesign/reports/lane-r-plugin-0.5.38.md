@@ -51,4 +51,36 @@ Biome 1 pre-existing info (config pins 2.6.3, CLI 2.6.7), no warnings in changed
 
 ## Commit + tag
 
-Pending release verification; appended below after the run and registry checks.
+- Commit `56c9e38 fix(plugin): ship the tool arg one-shot fix in 0.5.38` —
+  explicit paths only; another session's `oc-cmd-compare/src/index.ts` and
+  `reqshape/src/index.ts` stayed out.
+- Tag `plugin-v0.5.38` pushed over `origin` (not `bot`), as required.
+
+## Run + release verification
+
+- `plugin-v0.5.38` / `Publish npm package` run `44257511950` → success in 5m20s
+  (all steps green including "Verify the tarball is actually served"); watched
+  with `background: true`, conclusion read from the completion notification.
+- `npm latest @jeffreyjyz/opencode-command-code` → `0.5.38`.
+- `bun scripts/verify-release.ts 0.5.38 --source` (background) → verified:
+  `latest=0.5.38 version=yes tarball=200`, sha1
+  `d524a21fc96097f60ef9af9b0bba50fa972d82b0`, repository
+  `git+https://github.com/JeffreyJYZ/cmdcode-tools.git`.
+
+## Published 0.5.38 bundle proof (bundle read only, no tool call)
+
+```
+$ curl -sS .../opencode-command-code-0.5.38.tgz | tar -xzO package/dist/index.js | rg -A6 'function oduseArgs'
+function oduseArgs(arg) {
+  return dashboardArgs(arg, ["-1"]);
+}
+```
+
+The fix is in the published artifact. No `*_usage` tool was invoked at any
+point in this lane.
+
+## Local pin
+
+`~/.config/opencode/opencode.json:134` →
+`"@jeffreyjyz/opencode-command-code@0.5.38",`; `JSON.parse` validated. No
+opencode reload or restart.
