@@ -9,9 +9,18 @@ fn the_catalogues_state_their_provenance() {
     // The rate table carries the store's own model ids — those are what a turn
     // reports, so they are what a reader has to match against.
     assert!(text.contains("deepseek-v4.1-flash"), "{text}");
+    // Every rate row now comes from Open Design's published list. Check the
+    // rows themselves, not the notes: a note may legitimately mention an
+    // estimate to explain that none remain.
+    let rates = render::models_text("go", false);
+    let rate_rows: Vec<&str> = rates
+        .lines()
+        .filter(|l| l.contains('$') && !l.contains("credits ="))
+        .collect();
+    assert_eq!(rate_rows.len(), 46, "one row per model: {rates}");
     assert!(
-        text.contains("estimate"),
-        "the estimated row is marked: {text}"
+        rate_rows.iter().all(|l| l.contains("published")),
+        "every rate row is marked published: {rate_rows:?}"
     );
     assert!(text.contains("credit"), "{text}");
     // Pro's published credit allowance is in the table.
@@ -27,6 +36,10 @@ fn the_catalogues_state_their_provenance() {
         .collect();
     assert!(models.iter().any(|m| m["id"] == "glm-5.3-flash"));
     assert!(models.iter().all(|m| m["plan"] == "go"));
+    assert!(
+        models.iter().all(|m| m["rateSource"] == "published"),
+        "the JSON keeps the same provenance word as the table"
+    );
     assert!(models.iter().all(|m| m["fiveHourCapUsd"].is_number()));
     // The model row spells its display name `name`, like the other three
     // binaries; `plans[]` keeps `label`, so one concept has one key per surface.
@@ -40,4 +53,18 @@ fn the_catalogues_state_their_provenance() {
     assert_eq!(windows["monthly"], 1.0);
     assert_eq!(windows["fiveHour"], 0.0818);
     assert_eq!(windows["weekly"], 0.25);
+}
+
+#[test]
+fn a_published_rate_renders_as_published() {
+    let text = render::models_text("go", false);
+    let row = text
+        .lines()
+        .find(|l| l.trim_start().starts_with("deepseek-v4.1-flash"))
+        .expect("the Flash rate row");
+    // The old `rateSource == "repo"` check printed `estimate` for every row,
+    // because the vocabulary moved to `published`. Pin the exact label here.
+    assert!(row.contains("published"), "{row}");
+    assert!(!row.contains("estimate"), "{row}");
+    assert!(text.contains("RATE"), "{text}");
 }

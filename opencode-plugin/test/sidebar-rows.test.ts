@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
+	actionableAccountError,
+	cmdModelRows,
 	count,
 	modelKey,
 	modelRows,
@@ -7,12 +9,15 @@ import {
 	parts,
 	pctTone,
 	rate,
+	rowWidth,
 	separator,
 	tierFor,
 	until,
 	usageRows,
 	windowRows,
 } from "../src/sidebar/rows";
+import { ROW_WIDTH } from "../src/constants/sidebar";
+import { type ZenUsage, zenRows } from "../src/sidebar/zen";
 import { elapsedLabel } from "../src/sidebar/windows";
 
 describe("formatting", () => {
@@ -171,6 +176,123 @@ describe("usageRows", () => {
 	});
 	test("empty input yields no rows", () => {
 		expect(usageRows(undefined)).toEqual([]);
+	});
+	test("a fixable account error rides under Plan, a transport fault does not", () => {
+		const good = { plan: "GOAT", monthlyCap: 70, monthlyCredits: 12.68 };
+		const rows = usageRows({ ...good, error: "HTTP 401 api_key_expired" });
+		expect(rows[0]).toEqual(["Plan", "GOAT · $70/mo credits", "base", true]);
+		expect(rows[1]).toEqual(["", "usage API: HTTP 401 api_key_expired", "warn"]);
+		// The 5s poll must not blink a reason that heals on its own — the same
+		// gate zenRows and arkRows apply to their accountError row.
+		expect(
+			usageRows({ ...good, error: "error sending request for url (https://…)" }).some((row) =>
+				row[1]?.includes("usage API"),
+			),
+		).toBe(false);
+	});
+});
+
+describe("cmdModelRows", () => {
+	// The shape `parseCmdModelsJson` lifts out of `cmduse model --json`.
+	const models = () =>
+		new Map([
+			["zai-org/GLM-5.2", { id: "zai-org/GLM-5.2", requests: 142, cost: 15.72365 }],
+			["z-ai/glm-5.3-flash", { id: "z-ai/glm-5.3-flash", requests: 29, cost: 0.720255 }],
+			[
+				"deepseek/deepseek-v4.1-flash",
+				{ id: "deepseek/deepseek-v4.1-flash", requests: 1, cost: 0.0044 },
+			],
+			["zai-org/GLM-5.3", { id: "zai-org/GLM-5.3", requests: 1, cost: 0.04186 }],
+		]);
+
+	test("renders the by-model block with the shared header, order and top-3 cap", () => {
+		const rows = cmdModelRows(models());
+		expect(rows[0]).toEqual(["", "by model · this month", "muted"]);
+		// Biggest spend first; only three rows survive regardless of map size.
+		expect(rows.slice(1).map((row) => row[1])).toEqual(["$15.72", "$0.72", "$0.04"]);
+		expect(rows.length).toBe(4);
+	});
+
+	test("ties break on model id, the CLI's by_spend order", () => {
+		const tied = new Map([
+			["z/model", { id: "z/model", requests: 1, cost: 1 }],
+			["a/model", { id: "a/model", requests: 1, cost: 1 }],
+		]);
+		expect(
+			cmdModelRows(tied)
+				.slice(1)
+				.map((row) => row[0]),
+		).toEqual(["a/model", "z/model"]);
+	});
+
+	test("an empty, absent or single-model map adds nothing at all", () => {
+		expect(cmdModelRows(new Map())).toEqual([]);
+		expect(cmdModelRows(undefined)).toEqual([]);
+		expect(cmdModelRows(new Map([["only", { id: "only", requests: 1, cost: 1 }]]))).toEqual([]);
+	});
+
+	test("clips a long id so the row still fits the sidebar", () => {
+		const id = `vendor/${"very-long-model-name-".repeat(3)}`;
+		const rows = cmdModelRows(
+			new Map([
+				[id, { id, requests: 1, cost: 12.5 }],
+				["other", { id: "other", requests: 1, cost: 1 }],
+			]),
+		);
+		const long = rows[1];
+		expect(long).toBeDefined();
+		if (!long) return;
+		// 37 - "$12.50".length - 2, ellipsis included.
+		expect(long[0].length).toBe(ROW_WIDTH - "$12.50".length - 2);
+		expect(long[0].endsWith("…")).toBe(true);
+		expect(rowWidth(long)).toBeLessThanOrEqual(ROW_WIDTH);
+	});
+
+	test("shares the header wording with the Go/Zen builder", () => {
+		const zero = { requests: 0, cost: 0, tokens: 0 };
+		const zenUsage: ZenUsage = {
+			totals: { fiveHour: zero, weekly: zero, month: zero },
+			models: new Map([
+				[
+					"a",
+					{
+						id: "a",
+						provider: "",
+						fiveHour: zero,
+						weekly: zero,
+						month: { requests: 1, cost: 15.72, tokens: 0 },
+					},
+				],
+				[
+					"b",
+					{
+						id: "b",
+						provider: "",
+						fiveHour: zero,
+						weekly: zero,
+						month: { requests: 1, cost: 0.72, tokens: 0 },
+					},
+				],
+			]),
+		};
+		const zenHeader = zenRows(zenUsage, undefined).find((row) =>
+			row[1]?.startsWith("by model"),
+		);
+		const cmdHeader = cmdModelRows(models()).find((row) => row[1]?.startsWith("by model"));
+		expect(zenHeader).toBeDefined();
+		expect(cmdHeader).toEqual(zenHeader);
+	});
+});
+
+describe("actionableAccountError", () => {
+	test("keys, missing binaries and HTTP 401/403 are fixable; transport is not", () => {
+		expect(actionableAccountError("HTTP 401 api_key_expired")).toBe(true);
+		expect(actionableAccountError("no Go key")).toBe(true);
+		expect(actionableAccountError("arkcli not found on PATH")).toBe(true);
+		expect(actionableAccountError("HTTP 403 forbidden")).toBe(true);
+		expect(actionableAccountError("error sending request for url (https://…)")).toBe(false);
+		expect(actionableAccountError("parse: missing field `used`")).toBe(false);
+		expect(actionableAccountError(undefined)).toBe(false);
 	});
 });
 

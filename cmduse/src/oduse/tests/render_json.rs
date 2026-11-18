@@ -64,13 +64,32 @@ fn the_json_surface_is_the_family_shape() {
         profile: None,
         user: None,
         stale: false,
+        ..Default::default()
     });
+    with_wallet.wallet_source = Some(crate::oduse::meter::Source::Daemon);
     let parsed: serde_json::Value =
         serde_json::from_str(&render::render_json(&with_wallet, &plan("go"))).unwrap();
     assert_eq!(parsed["source"], "open-design");
+    assert_eq!(parsed["walletSource"], "daemon");
+    assert_eq!(parsed["wallet"]["expiresAt"], serde_json::Value::Null);
     assert_eq!(parsed["plan"], "go");
     assert_eq!(parsed["summary"], parsed["totals"]["month"]);
     assert_eq!(parsed["wallet"]["balanceUsd"], 3.25);
+    // The API route carries both wire timestamps through and names itself.
+    let mut api = live_report();
+    api.wallet = Some(Wallet {
+        balance_usd: 1.0,
+        expires_at: Some("2026-12-16T13:21:22.000Z".into()),
+        updated_at: Some("2026-11-16T13:21:30.404Z".into()),
+        ..Default::default()
+    });
+    api.wallet_source = Some(crate::oduse::meter::Source::Api);
+    let parsed: serde_json::Value =
+        serde_json::from_str(&render::render_json(&api, &plan("go"))).unwrap();
+    assert_eq!(parsed["walletSource"], "api");
+    assert_eq!(parsed["wallet"]["balanceUsd"], 1.0);
+    assert_eq!(parsed["wallet"]["expiresAt"], "2026-12-16T13:21:22.000Z");
+    assert_eq!(parsed["wallet"]["updatedAt"], "2026-11-16T13:21:30.404Z");
     // `caps` is the plan's own published set; the per-window picks follow it.
     assert_eq!(parsed["caps"]["monthlyUsd"], 220.0);
     assert_eq!(parsed["caps"]["fiveHourUsd"], 18.0);
@@ -106,6 +125,7 @@ fn the_json_surface_is_the_family_shape() {
     let parsed: serde_json::Value =
         serde_json::from_str(&render::render_json(&silent, &plan("go"))).unwrap();
     assert_eq!(parsed["wallet"], serde_json::Value::Null);
+    assert_eq!(parsed["walletSource"], serde_json::Value::Null);
     assert_eq!(parsed["walletError"], "daemon not running");
     // A plan without a 5-hour cap reports null, never zero.
     let parsed: serde_json::Value =
@@ -143,6 +163,7 @@ fn statusline_resolves_every_placeholder() {
     assert_eq!(json["monthCap"], 120.0);
     assert_eq!(json["capLabel"], "Flash");
     assert_eq!(json["walletUsd"], serde_json::Value::Null);
+    assert_eq!(json["walletSource"], serde_json::Value::Null);
 }
 
 #[test]

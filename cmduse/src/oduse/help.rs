@@ -1,7 +1,7 @@
 // The `oduse` help text. It lives beside the binary it documents rather than in
 // the shared parser, which already carries three of these — and its own block is
 // long enough that folding it in would bury the flag parsing.
-pub const ODUSE_HELP: &str = "oduse — OpenDesign usage (the desktop app's store + its local wallet daemon)
+pub const ODUSE_HELP: &str = "oduse — OpenDesign usage (the desktop app's store + account / local wallet)
 
 Usage: oduse [options]            Live plan dashboard (watch mode)
        oduse -1                   One-shot dashboard
@@ -37,7 +37,10 @@ Options:
                         ~/Library/Application Support/Open Design/namespaces/
                         release-stable/data/app.sqlite)
       --plan <id>       plan to measure against: go (default), plus, pro, max
-      --no-wallet       skip the desktop app's local wallet daemon
+      --no-wallet       skip both wallet routes (account API and local daemon)
+      --session-cookie <path>  file holding the console session cookie (0600);
+                        or set $OD_SESSION / $OD_SESSION_COOKIE. Never scraped
+                        from a browser; the app's local daemon is the fallback
       --window <w>      report window: month (default), all, or <n>d
       --period-start <date>  pin the period start (YYYY-MM-DD, UTC)
       --infer-anniversary   infer the period start from the first turn
@@ -52,7 +55,11 @@ Config: ~/.config/oduse/config.json
     \"statusline_colors\": true, \"statusline_ascii\": false,
     \"check_updates\": true, \"dismissed_update\": null }
 
-Reads the Open Design desktop app's own store, and its local daemon's wallet
-(127.0.0.1:7456, $OD_PORT/$OD_DAEMON_URL) when the app is running. The plan's
-windows are computed here — the app publishes caps but no per-window usage API —
-so the figures are estimates: usage events carry no cache tokens.";
+Reads the Open Design desktop app's own store. The wallet balance comes from
+GET $OD_API_URL/api/v1/wallet/balance with a user-supplied console session cookie
+($OD_SESSION / $OD_SESSION_COOKIE / --session-cookie <0600 file>), or, when no
+credential is set, the app's local daemon (127.0.0.1:7456, $OD_PORT/$OD_DAEMON_URL).
+--json names the route in walletSource (api | daemon | null). A cookie expires:
+refresh it from the console when the frame says HTTP 401. The plan's windows are
+computed here — no per-window usage API exists — so the figures are estimates:
+usage events carry no cache tokens.";

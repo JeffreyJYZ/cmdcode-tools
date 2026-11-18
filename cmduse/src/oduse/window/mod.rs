@@ -23,6 +23,7 @@ pub use anniversary::month_start;
 pub use totals::{window_caps, ModelUsage, Totals};
 
 use crate::oduse::db::Row;
+use crate::oduse::meter::Source;
 use crate::oduse::od::{Catalog, Plan};
 use crate::oduse::wallet::Wallet;
 
@@ -70,9 +71,19 @@ pub struct Report {
     /// balance, not a window meter, so it prints beside the windows rather than
     /// replacing them.
     pub wallet: Option<Wallet>,
-    /// Why the wallet is absent, when that is worth saying — a closed app, an
-    /// expired control key. `None` when it answered, and for `--no-wallet`.
+    /// Why the wallet is absent, when that is worth saying — a dead session
+    /// cookie, a closed app, an expired control key. `None` when it answered,
+    /// and for `--no-wallet`.
     pub wallet_error: Option<String>,
+    /// Which meter produced `wallet`: `api` or `daemon`; `null` when absent.
+    pub wallet_source: Option<Source>,
+    /// The account's own window meters (`billing/snapshot`), when a session
+    /// cookie answered. These win over the local cuts below: they are the
+    /// figures the console shows, anchored at the server's own `resetsAt`.
+    pub snapshot: Option<crate::oduse::snapshot::Snapshot>,
+    /// Why the snapshot did not answer. `None` when it did and when no cookie
+    /// was supplied — in the latter case the local estimate is the only source.
+    pub snapshot_error: Option<String>,
     /// The stores whose rows are in this report (`app`, `opencode`), in read
     /// order. The header names them, so a total that grew cannot look like drift.
     pub sources: Vec<&'static str>,
@@ -136,6 +147,9 @@ pub fn build(
         notes: Vec::new(),
         wallet: None,
         wallet_error: None,
+        wallet_source: None,
+        snapshot: None,
+        snapshot_error: None,
         five_hour: Totals::default(),
         weekly: Totals::default(),
         month: Totals::default(),

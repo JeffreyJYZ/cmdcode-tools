@@ -52,7 +52,13 @@ pub fn compact_line(report: &Report, plan: &Plan, history: &[f64], colour: bool)
     let wallet = report
         .wallet
         .as_ref()
-        .map(|w| format!(" · wallet {}", cmduse_core::money(w.balance_usd)))
+        .map(|w| {
+            let via = report
+                .wallet_source
+                .map(|s| format!(" ({})", s.as_str()))
+                .unwrap_or_default();
+            format!(" · wallet {}{via}", cmduse_core::money(w.balance_usd))
+        })
         .unwrap_or_default();
     // The month is bounded by the cap set its own models draw on: a report
     // holding the original Flash is capped at $120 on Go, not the $220 headline.

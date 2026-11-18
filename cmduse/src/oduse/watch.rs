@@ -5,8 +5,9 @@
 // each second instead of repainting the whole frame. One difference the source
 // forces: the store is re-read every tick, so a turn finishing in the desktop app
 // shows up on the next refresh without a restart.
+use crate::oduse::meter::{self, Source};
 use crate::oduse::od::{Catalog, Plan};
-use crate::oduse::wallet::{self, Wallet};
+use crate::oduse::wallet::Wallet;
 use crate::oduse::{period, render, sources, window};
 use std::io::Write;
 
@@ -36,8 +37,13 @@ pub struct Loop<'a> {
     pub period_anchored: bool,
     pub wallet: Option<Wallet>,
     pub wallet_error: Option<String>,
-    /// `--no-wallet`: the daemon route is off, so no poll is attempted.
+    /// Which meter supplied the last good balance.
+    pub wallet_source: Option<Source>,
+    /// `--no-wallet`: both routes are off, so no poll is attempted.
     pub no_wallet: bool,
+    /// `--session-cookie <path>` and the API host, for each tick's resolution.
+    pub session_cookie: Option<String>,
+    pub api_base: String,
 }
 
 /// `(rows, cols)` are the terminal's; a known tiny one gets the compact line.
@@ -56,19 +62,19 @@ pub fn run(mut config: Loop<'_>) {
     let colour = config.colour;
     loop {
         // Re-ask each tick, keeping the last good answer through a blip: the
-        // number on screen is still the daemon's, so nothing became unavailable.
-        if !config.no_wallet {
-            match wallet::fetch() {
-                Ok(fresh) => {
-                    config.wallet = Some(fresh);
-                    config.wallet_error = None;
-                }
-                Err(why) => {
-                    if config.wallet.is_none() {
-                        config.wallet_error = why.reason();
-                    }
-                }
-            }
+        // number on screen is still the meter's, so nothing became unavailable.
+        let resolved = meter::resolve(
+            config.no_wallet,
+            config.session_cookie.as_deref(),
+            &config.api_base,
+        );
+        if resolved.wallet.is_some() {
+            config.wallet = resolved.wallet;
+            config.wallet_error = None;
+            config.wallet_source = resolved.source;
+        } else if config.wallet.is_none() {
+            config.wallet_error = resolved.error;
+            config.wallet_source = None;
         }
         let now = window::now_ms();
         let (rows, sources, notes, read_error) =
@@ -89,6 +95,7 @@ pub fn run(mut config: Loop<'_>) {
         report.period_anchored = config.period_anchored;
         report.wallet = config.wallet.clone();
         report.wallet_error = config.wallet_error.clone();
+        report.wallet_source = config.wallet_source;
         report.sources = sources;
         report.notes = notes;
 

@@ -32,6 +32,17 @@ interface OdPlanDef {
 	defaultCaps?: CapSet;
 }
 
+/** Fail loud on a plan id no cap table knows, naming the valid ids. */
+export function planDef(planId: string): OdPlanDef {
+	const def = OD_PLANS[planId];
+	if (!def) {
+		throw new Error(
+			`unknown OpenDesign plan "${planId}" (have: ${Object.keys(OD_PLANS).join(", ")})`,
+		);
+	}
+	return def;
+}
+
 export const OD_PLANS: Record<string, OdPlanDef> = {
 	go: {
 		label: "Go",

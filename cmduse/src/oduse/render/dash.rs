@@ -64,10 +64,19 @@ pub fn render_text(
         "\n{}DESIGN {}{} {}\n",
         ink.bold, plan.label, ink.reset, caps,
     ));
+    // One line names the source of the window figures. The account's snapshot
+    // wins below; without it the local cuts remain, and the reason is said here.
+    out.push_str(&super::snapshot::source_note(
+        &ink,
+        report.snapshot.is_some(),
+        report.snapshot_error.as_deref(),
+    ));
     let five = window::window_caps(&report.models, plan, Span::FiveHour);
     let week = window::window_caps(&report.models, plan, Span::Weekly);
     let month = window::window_caps(&report.models, plan, Span::Month);
-    if five.chosen.five_hour_usd.is_some() {
+    if let Some(window) = report.snapshot.as_ref().and_then(|s| s.five_hour()) {
+        out.push_str(&super::snapshot::window_line(&ink, "5-hour", window));
+    } else if five.chosen.five_hour_usd.is_some() {
         out.push_str(&window_line(
             &ink,
             &RowSpec {
@@ -86,20 +95,27 @@ pub fn render_text(
             report.now_ms,
         ));
     }
-    out.push_str(&window_line(
-        &ink,
-        &RowSpec {
-            label: "Weekly",
-            used: &report.weekly,
-            cap: week.chosen.weekly_usd,
-            cap_note: super::caps::cap_note(&week, week.looser.as_ref().and_then(|l| l.weekly_usd)),
-            period: None,
-            anchored: false,
-            pro_rata: false,
-            rolling: Some("7d"),
-        },
-        report.now_ms,
-    ));
+    if let Some(window) = report.snapshot.as_ref().and_then(|s| s.weekly()) {
+        out.push_str(&super::snapshot::window_line(&ink, "Weekly", window));
+    } else {
+        out.push_str(&window_line(
+            &ink,
+            &RowSpec {
+                label: "Weekly",
+                used: &report.weekly,
+                cap: week.chosen.weekly_usd,
+                cap_note: super::caps::cap_note(
+                    &week,
+                    week.looser.as_ref().and_then(|l| l.weekly_usd),
+                ),
+                period: None,
+                anchored: false,
+                pro_rata: false,
+                rolling: Some("7d"),
+            },
+            report.now_ms,
+        ));
+    }
     out.push_str(&window_line(
         &ink,
         &RowSpec {
@@ -129,7 +145,7 @@ pub fn render_text(
 
     out.push_str(&model_table(&ink, report, rows));
     out.push_str(&format!(
-        "\n{}credits = list-price $ x the model's multiplier, cache reads included (priced from core/zen.json where that shelf carries the model); these are estimates.{}",
+        "\n{}credits = list-price $ x the model's multiplier; cache reads priced from Open Design's published model-prices list. Only a rate with no published source is an estimate, and any turn priced that way is counted below.{}",
         ink.dim, ink.reset
     ));
     // A cache read priced at the input rate is still priced — say which, so the

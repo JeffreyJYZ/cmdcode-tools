@@ -5,6 +5,7 @@
 // store, build, stamp the period and the wallet) exists once.
 use crate::cli;
 use crate::config::Config;
+use crate::oduse::meter::Source;
 use crate::oduse::od::{Catalog, Plan};
 use crate::oduse::period::Period;
 use crate::oduse::sources;
@@ -32,6 +33,12 @@ pub struct Ctx<'a> {
     pub period: &'a Period,
     pub wallet: Option<Wallet>,
     pub wallet_error: Option<String>,
+    /// Which meter supplied `wallet`: the account API or the local daemon.
+    pub wallet_source: Option<Source>,
+    /// `--session-cookie <path>`, stripped by `args` before the shared parser.
+    pub session_cookie: Option<String>,
+    /// API host, resolved once (`$OD_API_URL` over the console endpoint).
+    pub api_base: String,
     /// The report's read cutoff: an explicit `--since`, else `--days`.
     pub report_window: i64,
 }
@@ -72,6 +79,14 @@ impl Ctx<'_> {
         report.period_anchored = self.period.anchored;
         report.wallet = self.wallet.clone();
         report.wallet_error = self.wallet_error.clone();
+        report.wallet_source = self.wallet_source;
+        // The account's own windows, when a cookie answered. Same credential as
+        // the wallet, resolved here so every report/frame sees one answer, and
+        // no request at all when there is no cookie.
+        let snapshot =
+            crate::oduse::snapshot::resolve(self.session_cookie.as_deref(), &self.api_base);
+        report.snapshot = snapshot.snapshot;
+        report.snapshot_error = snapshot.error;
         report.sources = found.names;
         report.notes = found.notes;
         report

@@ -47,56 +47,21 @@ pub fn row_cost(row: &Row, catalog: &Catalog) -> Priced {
     Priced::default()
 }
 
-/// Cache-read rate for a model id, and whether the figure is the fallback rather
-/// than a published cache rate.
+/// Cache-read rate for one row, and whether it had to be inferred.
 ///
-/// `input` is the model's own input rate, used when no published cache rate
-/// exists — never zero, which would read as a free model rather than an omission.
-pub fn cache_read_rate(input: f64, catalog_id: &str) -> (f64, bool) {
-    match zen_cache_read(catalog_id) {
+/// Open Design's own price list publishes `cacheRead` for every model in
+/// `core/od.json`, so the published rate always wins here. `core/zen.json` is no
+/// longer consulted: its floor is a different shelf's off-peak rate and got the
+/// cache term wrong for most rows (cache is ~99% of this workload's token mass).
+///
+/// The fallback is only for a row the list does not carry, which can happen if a
+/// model is added to the store before its row reaches the table. It uses that
+/// row's own input rate — never zero, which would read as a free model rather
+/// than an omission — and reports `true` so the footer can say how many turns
+/// were estimated.
+pub fn cache_read_rate(published: Option<f64>, input: f64) -> (f64, bool) {
+    match published {
         Some(rate) => (rate, false),
         None => (input, true),
     }
-}
-
-/// Cache-read rate for a model, from `core/zen.json`'s row for it.
-///
-/// `zen.json` is the only table in the repo with a cache-read rate. The floor is
-/// the cheapest published rate for that id across **both** shelves and **every**
-/// rate sheet they carry (deepseek's peak/off-peak pair): OpenDesign's own price
-/// list is flat, so no time-of-day cut applies here and the low sheet is the
-/// published floor — the same figure the catalogue's own input/output pair comes
-/// from. The minimum must be taken across shelves, never per shelf, because one
-/// id can be sold on both at different rates (deepseek-v4.1-flash is 0.003 on Go
-/// and 0.006 on Zen) and a per-shelf insert would let the later shelf overwrite
-/// the floor.
-///
-/// Built once: pricing runs per turn, and re-parsing the catalogue each time cost
-/// 19 s on a 2 000-turn store.
-pub fn zen_cache_read(model_id: &str) -> Option<f64> {
-    static RATES: std::sync::OnceLock<std::collections::HashMap<String, f64>> =
-        std::sync::OnceLock::new();
-    let rates = RATES.get_or_init(|| {
-        let catalog = crate::ocuse::zen::catalog();
-        let mut map = std::collections::HashMap::new();
-        for model in catalog.go.models.iter().chain(catalog.zen.models.iter()) {
-            let cheapest = model
-                .variants
-                .iter()
-                .map(|v| v.cache_read)
-                .filter(|rate| *rate > 0.0)
-                .min_by(f64::total_cmp);
-            if let Some(rate) = cheapest {
-                // The same model appears on both shelves with different sheets
-                // (deepseek is 0.003 on Go, 0.006 on Zen). The cheapest is the
-                // published floor, so a later occurrence must never raise it.
-                let entry = map.entry(model.id.clone()).or_insert(rate);
-                if rate < *entry {
-                    *entry = rate;
-                }
-            }
-        }
-        map
-    });
-    rates.get(model_id).copied()
 }

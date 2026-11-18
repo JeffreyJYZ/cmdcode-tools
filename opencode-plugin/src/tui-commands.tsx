@@ -6,11 +6,12 @@
 // use). Each command keeps its id, because `bindings` below turns a user's
 // configured keybind for that id into a live binding.
 import type { Plugin as TuiPluginNs } from "@opencode/plugin/tui";
-import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runOcuse } from "./cli";
+import { arkuseArgs, ocuseArgs, oduseArgs, runArkuse, runCmduse, runOcuse, runOduse } from "./cli";
 import {
 	ARKUSE_USAGE_COMMAND_ID,
 	CMD_USAGE_COMMAND_ID,
 	OCUSE_USAGE_COMMAND_ID,
+	ODUSE_USAGE_COMMAND_ID,
 } from "./constants/providers";
 import { SettingsDialog } from "./sidebar/settings";
 
@@ -104,6 +105,33 @@ export function registerCommands(ctx: TuiPluginNs.Context): void {
 				},
 			},
 			{
+				id: ODUSE_USAGE_COMMAND_ID,
+				title: "OpenDesign usage",
+				group: GROUP,
+				slash: { name: "oduse-usage", arguments: true },
+				enabled: () => true,
+				suggested: true,
+				// Empty input means `-1` (see `oduseArgs`): a bare oduse is the
+				// live watch loop.
+				run: async (input) => {
+					let text: string;
+					try {
+						text = await runOduse(oduseArgs(input));
+					} catch (error) {
+						ctx.ui.toast.show({
+							title: "oduse-usage failed",
+							message: error instanceof Error ? error.message : String(error),
+							variant: "error",
+						});
+						return;
+					}
+					await ctx.ui.dialog.alert({
+						title: "OpenDesign usage",
+						message: text.trimEnd(),
+					});
+				},
+			},
+			{
 				id: SETTINGS_COMMAND_ID,
 				title: "Command Code settings",
 				group: GROUP,
@@ -118,6 +146,7 @@ export function registerCommands(ctx: TuiPluginNs.Context): void {
 			CMD_USAGE_COMMAND_ID,
 			OCUSE_USAGE_COMMAND_ID,
 			ARKUSE_USAGE_COMMAND_ID,
+			ODUSE_USAGE_COMMAND_ID,
 			SETTINGS_COMMAND_ID,
 		],
 	}));

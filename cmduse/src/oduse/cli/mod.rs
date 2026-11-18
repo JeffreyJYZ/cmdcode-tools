@@ -17,28 +17,18 @@ mod dispatch;
 mod frame;
 
 use crate::cli::{self, Binary, SubCmd};
+use crate::oduse::api_wallet;
 use crate::oduse::args;
+use crate::oduse::meter;
 use crate::oduse::od;
 use crate::oduse::opencode;
-use crate::oduse::wallet::{self, Wallet};
 use crate::oduse::window;
 use crate::oduse::{db, period, render};
 use ctx::Ctx;
 
-/// Resolve the wallet route once per run: `--no-wallet` is a choice (no reason),
-/// a closed app or an expired control key is a one-line reason.
-fn read_wallet(args: &cli::Args) -> (Option<Wallet>, Option<String>) {
-    if args.no_wallet {
-        return (None, None);
-    }
-    match wallet::fetch() {
-        Ok(wallet) => (Some(wallet), None),
-        Err(why) => (None, why.reason()),
-    }
-}
-
 pub fn run() {
-    let (argv, model_id) = args::split_model_id(std::env::args_os().collect());
+    let (argv, session_cookie) = args::split_session_cookie(std::env::args_os().collect());
+    let (argv, model_id) = args::split_model_id(argv);
     let args = match cli::parse_args_from(argv, Binary::Oduse) {
         Ok(a) => a,
         Err(e) => {
@@ -133,7 +123,8 @@ pub fn run() {
             std::process::exit(2);
         }
     };
-    let (wallet, wallet_error) = read_wallet(&args);
+    let api_base = api_wallet::base_url();
+    let resolved = meter::resolve(args.no_wallet, session_cookie.as_deref(), &api_base);
     let days: i64 = args.last.unwrap_or(120) as i64;
     let ctx = Ctx {
         args: &args,
@@ -151,8 +142,11 @@ pub fn run() {
         colours,
         fmt: args::output_fmt(&args),
         period: &period,
-        wallet,
-        wallet_error,
+        wallet: resolved.wallet,
+        wallet_error: resolved.error,
+        wallet_source: resolved.source,
+        session_cookie,
+        api_base,
         report_window: since_override.unwrap_or(now - days * 86_400_000),
     };
     if dispatch::subcommand(&ctx) {

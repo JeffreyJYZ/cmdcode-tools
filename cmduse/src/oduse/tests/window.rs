@@ -12,23 +12,26 @@ fn day() -> i64 {
 fn the_windows_are_rolling_and_the_month_is_the_pinned_period() {
     let now = NOW_MS;
     let rows = vec![
-        row(now - 60_000, "deepseek-v4.1-flash", 1_000_000, 0), // inside 5h: $0.15, 0.075 credits
+        // Published $0.30 in x0.5 = 0.15 credits each.
+        row(now - 60_000, "deepseek-v4.1-flash", 1_000_000, 0), // inside 5h
         row(now - 2 * 3_600_000, "deepseek-v4.1-flash", 1_000_000, 0), // inside 5h + week
-        row(now - 3 * day(), "glm-5.3-flash", 1_000_000, 0),    // inside week only
-        row(now - 4 * day(), "kimi-k2.7-code", 1_000_000, 0),   // inside month only
-        row(now - 40 * day(), "glm-5.3-flash", 1_000_000, 0),   // previous cycle
+        // Published GLM-5.3 Flash is $0.075 in (halved from the old seed).
+        row(now - 3 * day(), "glm-5.3-flash", 1_000_000, 0), // inside week only
+        row(now - 4 * day(), "kimi-k2.7-code", 1_000_000, 0), // inside month only
+        row(now - 40 * day(), "glm-5.3-flash", 1_000_000, 0), // previous cycle
     ];
     let since = crate::oduse::window::calendar_month_start(now);
     let report = build(&rows, &catalog(), od::DEFAULT_PLAN, now, Some(since));
+    // Two Flash turns at 0.15 credits each.
     assert!(
-        (report.five_hour.credits - 0.15).abs() < 1e-9,
+        (report.five_hour.credits - 0.3).abs() < 1e-9,
         "{:?}",
         report.five_hour
     );
-    // The week also holds the 3-day-old GLM turn ($0.15) and the 4-day-old Kimi
-    // one ($0.95) — inside 7 days, outside 5 hours.
+    // The week also holds the 3-day-old GLM turn (0.075) and the 4-day-old Kimi
+    // one (0.95) — inside 7 days, outside 5 hours. 0.15+0.15+0.075+0.95.
     assert!(
-        (report.weekly.credits - 1.25).abs() < 1e-9,
+        (report.weekly.credits - 1.325).abs() < 1e-9,
         "{:?}",
         report.weekly
     );

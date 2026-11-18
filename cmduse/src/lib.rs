@@ -844,26 +844,37 @@ fn output_fmt(args: &cli::Args) -> report_render::Fmt {
 /// (`*Spent`/`*Cap`, which `ocuse` and `arkuse` already used): CommandCode's
 /// month is a credit pool, so its spent half is the pool minus what the account
 /// reports left, clamped at zero. `fiveHourUsed`/`weeklyUsed`/`monthlyRemaining`
-/// ride along as aliases so an existing prompt keeps working.
+/// ride along as aliases so an existing prompt keeps working. `source`, `period`,
+/// `periodEnd` and `model` come from the shared key set; the old `monthlyCap`
+/// duplicate is gone (it was drift, not a documented alias — the `-1 --json`
+/// dashboard still carries its own `monthlyCap`). A cap the source does not
+/// publish is `null`, never `0`; the month's spent half is null with it, since
+/// `cap − remaining` has no meaning without a cap.
 fn statusline_json(
     plan: &str,
-    month_cap: f64,
+    month_cap: Option<f64>,
     month_remaining: f64,
-    five_hour: (f64, f64),
-    weekly: (f64, f64),
+    five_hour: (f64, Option<f64>),
+    weekly: (f64, Option<f64>),
+    period_end_ms: Option<f64>,
 ) -> serde_json::Value {
     let (h5u, h5c) = five_hour;
     let (wku, wkc) = weekly;
     serde_json::json!({
         "plan": plan,
-        "monthSpent": (month_cap - month_remaining).max(0.0),
+        "source": "api",
+        "period": "billing month",
+        "periodEnd": period_end_ms,
+        // The account API returns no per-model id, so there is no top model to
+        // name; the key stays null so a consumer reads one shape on every binary.
+        "model": serde_json::Value::Null,
+        "monthSpent": month_cap.map(|cap| (cap - month_remaining).max(0.0)),
         "monthCap": month_cap,
         "fiveHourSpent": h5u,
         "fiveHourCap": h5c,
         "weeklySpent": wku,
         "weeklyCap": wkc,
         "monthlyRemaining": month_remaining,
-        "monthlyCap": month_cap,
         "fiveHourUsed": h5u,
         "weeklyUsed": wku,
     })
@@ -873,16 +884,16 @@ fn statusline_cmd(args: &cli::Args) {
     let cfg = config::load(cli::Binary::Cmduse);
     let s = snapshot::snapshot(false, render::color_enabled());
     let plan = render::plan_name(&s.sub.plan_id);
-    let cap = render::plan_monthly_cap(&s.sub.plan_id).unwrap_or(0.0);
+    let cap = render::plan_monthly_cap(&s.sub.plan_id);
     if let Some(e) = &s.err {
         println!("cmduse: {e}");
         std::process::exit(1);
     }
     if args.json {
-        let w = |o: &Option<api::Window>| -> (f64, f64) {
+        let w = |o: &Option<api::Window>| -> (f64, Option<f64>) {
             (
                 o.as_ref().map(|w| w.used).unwrap_or(0.0),
-                o.as_ref().map(|w| w.cap).unwrap_or(0.0),
+                o.as_ref().map(|w| w.cap),
             )
         };
         let out = statusline_json(
@@ -891,6 +902,10 @@ fn statusline_cmd(args: &cli::Args) {
             s.credits.credits.monthly_credits,
             w(&s.credits.window_limits.five_hour),
             w(&s.credits.window_limits.weekly),
+            s.sub
+                .current_period_end
+                .as_deref()
+                .and_then(cmduse_core::dates::parse_iso_utc),
         );
         print!("{out}");
         return;
@@ -925,7 +940,8 @@ fn statusline_cmd(args: &cli::Args) {
     let d = report_render::StatusData {
         plan,
         monthly_remaining: s.credits.credits.monthly_credits,
-        monthly_cap: cap,
+        // The text template has no null token; it keeps its old zero fallback.
+        monthly_cap: cap.unwrap_or(0.0),
         five_hour: &h5,
         weekly: &wk,
         five_hour_eta: h5_eta,

@@ -21,8 +21,12 @@ fn the_dashboard_carries_the_turn_it_was_given() {
     // so the fixture's own turn rounds to $0.00.
     assert!(text.contains("$0.00"), "cents round the tiny turn: {text}");
     assert!(
-        text.contains("cache reads included"),
-        "the estimate's reason: {text}"
+        text.contains("cache reads priced from Open Design's published model-prices list"),
+        "the cache rate's real source: {text}"
+    );
+    assert!(
+        !text.contains("these are estimates"),
+        "published rows are not blanket estimates: {text}"
     );
     assert!(text.contains("/tmp/app.sqlite"), "{text}");
 }
@@ -82,10 +86,25 @@ fn the_wallet_prints_when_it_answered_and_explains_itself_when_it_did_not() {
         profile: Some("pro".into()),
         user: Some("jyz".into()),
         stale: true,
+        ..Default::default()
     });
+    answered.wallet_source = Some(crate::oduse::meter::Source::Daemon);
     let text = render::render_text(&answered, &plan("go"), "/tmp/a.db", 10, false, 20);
     assert!(
-        text.contains("wallet: $12.50 · pro · jyz · cached"),
+        text.contains("wallet: $12.50 · pro · jyz · cached (daemon)"),
+        "{text}"
+    );
+    // The API route says so and carries the expiry date beside the windows.
+    let mut api = live_report();
+    api.wallet = Some(Wallet {
+        balance_usd: 1.0,
+        expires_at: Some("2026-12-16T13:21:22.000Z".into()),
+        ..Default::default()
+    });
+    api.wallet_source = Some(crate::oduse::meter::Source::Api);
+    let text = render::render_text(&api, &plan("go"), "/tmp/a.db", 10, false, 20);
+    assert!(
+        text.contains("wallet: $1.00 (api) · expires 2026-12-16"),
         "{text}"
     );
 

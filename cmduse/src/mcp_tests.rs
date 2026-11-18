@@ -12,8 +12,8 @@ fn call(method: &str, params: Value, id: i64) -> Value {
 }
 
 /// One tool's argument names, sorted and space-joined: exact, and readable when
-/// it fails. Shared with `ocuse`'s and `arkuse`'s schema tests, so a drift on one
-/// server fails all three suites instead of passing silently on the other two.
+/// it fails. Shared with `ocuse`'s, `arkuse`'s and `oduse`'s schema tests, so a
+/// drift on one server fails all four suites instead of passing silently on the rest.
 pub(crate) fn tool_params(tools: &Value, name: &str) -> String {
     let tool = tools
         .as_array()

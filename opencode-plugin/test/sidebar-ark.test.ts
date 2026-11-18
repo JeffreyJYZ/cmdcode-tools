@@ -142,6 +142,28 @@ describe("arkRows", () => {
 		expect(rows.some((row) => row[1]?.includes("resets"))).toBe(true);
 	});
 
+	test("a period with several models gets the same by-model table as the other families", () => {
+		const body = JSON.parse(withAccount()) as Record<string, unknown>;
+		(body.models as Record<string, unknown>)["glm-5.3-flash"] = {
+			coef: 4.5,
+			fiveHour: { afp: 500, requests: 12 },
+			weekly: { afp: 900, requests: 25 },
+			month: { afp: 1_250, requests: 40 },
+		};
+		const rows = arkRows(parseArkJson(JSON.stringify(body)), "deepseek-v4.1-flash");
+		const head = rows.findIndex((row) => row[1] === "by model · this period");
+		expect(head).toBeGreaterThan(-1);
+		expect(rows[head + 1]).toEqual(["deepseek-v4.1-flash", "4,300 AFP", "base"]);
+		expect(rows[head + 2]).toEqual(["glm-5.3-flash", "1,250 AFP", "base"]);
+		expect(rows.filter((row) => row[1] === "by model · this period").length).toBe(1);
+		for (const row of rows) expect(rowWidth(row)).toBeLessThanOrEqual(ROW_WIDTH);
+	});
+
+	test("a single model keeps no dangling table heading", () => {
+		const rows = arkRows(parseArkJson(withAccount()), "deepseek-v4.1-flash");
+		expect(rows.some((row) => row[1] === "by model · this period")).toBe(false);
+	});
+
 	test("an unread model still gets a per-model row", () => {
 		const rows = arkRows(parseArkJson(withAccount()), "glm-5.3");
 		expect(rows.find((row) => row[0] === "AFP (this model)")?.[1]).toBe(

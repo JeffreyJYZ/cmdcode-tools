@@ -29,6 +29,10 @@ pub struct Wallet {
     pub user: Option<String>,
     /// The daemon served a cached snapshot; the balance may have moved since.
     pub stale: bool,
+    /// API-only: when the account's balance snapshot stops being valid.
+    pub expires_at: Option<String>,
+    /// API-only: when the account's balance snapshot was last refreshed.
+    pub updated_at: Option<String>,
 }
 
 /// Why the wallet is absent. `Disabled` is a choice, so it says nothing.
@@ -147,6 +151,9 @@ pub fn parse(body: &str) -> Result<Wallet, Unavailable> {
             .get("stale")
             .and_then(|s| s.as_bool())
             .unwrap_or(false),
+        // The daemon serves neither timestamp; the API meter fills them in.
+        expires_at: None,
+        updated_at: None,
     })
 }
 

@@ -10,6 +10,7 @@ pub mod json;
 pub mod live;
 pub mod model_table;
 pub mod report;
+pub mod snapshot;
 pub mod status;
 pub mod wallet;
 pub mod windows;

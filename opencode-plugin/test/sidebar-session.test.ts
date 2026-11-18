@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
 	type Accounted,
 	keepAccount,
+	keepUsage,
 	panelTitle,
 	rememberMeta,
 	rememberModelUsage,
@@ -106,6 +107,23 @@ describe("account snapshot cache", () => {
 		const kept = keepAccount(failed, last);
 		expect(kept.account).toBeUndefined();
 		expect(kept.accountError).toBe("HTTP 401 api_key_expired");
+	});
+	test("a failed Command Code poll keeps the last meters and only the reason", () => {
+		// cmduse's errored answer carries defaults ("Free", no windows), so its
+		// figures must not paint over a good snapshot — the same rule keepAccount
+		// applies to the other three families.
+		type CCAccount = {
+			plan: string;
+			monthlyCap?: number;
+			monthlyCredits?: number;
+			error?: string;
+		};
+		const last: CCAccount = { plan: "GOAT", monthlyCap: 70, monthlyCredits: 12.68 };
+		const failed: CCAccount = { plan: "Free", error: "HTTP 401 api_key_expired" };
+		const healthy: CCAccount = { plan: "GOAT" };
+		expect(keepUsage(failed, last)).toEqual({ ...last, error: "HTTP 401 api_key_expired" });
+		expect(keepUsage(healthy, last)).toBe(healthy);
+		expect(keepUsage(failed, undefined)).toBe(failed);
 	});
 	test("seeds nothing before the first snapshot, then the account rows", () => {
 		const before = seededRows();

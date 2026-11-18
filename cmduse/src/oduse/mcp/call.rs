@@ -20,6 +20,7 @@ pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String
         period_start,
         wallet,
         wallet_error,
+        wallet_source,
     } = *settings;
     let name = msg
         .pointer("/params/name")
@@ -79,6 +80,7 @@ pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String
         let mut report = window::build(rows, &catalog, &plan_id, window::now_ms(), period_start);
         report.wallet = wallet.cloned();
         report.wallet_error = wallet_error.map(str::to_string);
+        report.wallet_source = wallet_source;
         report.period_end_ms = period::end(report.since_ms, "month", report.month_inferred);
         report
     };
@@ -109,6 +111,7 @@ pub fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String
         let mut built = window::build(rows, &catalog, &plan_id, window::now_ms(), model_start);
         built.wallet = wallet.cloned();
         built.wallet_error = wallet_error.map(str::to_string);
+        built.wallet_source = wallet_source;
         built.period_label = model_label.clone();
         built.period_end_ms = period::end(built.since_ms, &model_mode, built.month_inferred);
         built

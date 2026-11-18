@@ -137,6 +137,13 @@ export function arkuseArgs(arg: string | undefined): string {
 	return arg !== undefined && arg.trim() !== "" ? arg : "-1";
 }
 
+/** The arg the oduse_usage tool and the /oduse-usage dialog pass on: the
+ *  agent's (or slash) args when given, else `-1`. A bare oduse is the live
+ *  watch loop and would never return. */
+export function oduseArgs(arg: string | undefined): string {
+	return arg !== undefined && arg.trim() !== "" ? arg : "-1";
+}
+
 export type RunOptions = {
 	signal?: AbortSignal;
 	/** Extra env for the child (CMD_API_KEY when the plugin resolved one). */
