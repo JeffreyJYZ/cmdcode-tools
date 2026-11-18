@@ -16,6 +16,14 @@ export const SPEED_SUFFIXES = ["ultraspeed", "highspeed", "ultrafast", "fastx", 
  */
 export const SPEED_TPS_FACTOR = 2;
 
+/**
+ * Suffixes sharing a base model's ability. `eco` is a cheaper SKU of the same
+ * model — OpenDesign prices DeepSeek V4.1 Flash Eco via `priceKey: deepseekv41flash`
+ * — so it inherits the base ability too. Kept out of `SPEED_SUFFIXES` on purpose:
+ * Eco is not a faster tier, and `lookupTps` must not multiply its throughput.
+ */
+export const ABILITY_SUFFIXES = [...SPEED_SUFFIXES, "eco"];
+
 /** Published throughput for a model that neither source scores. The suffix rule
  * would guess 512 for Ultrafast (2x its base); CommandCode advertises 1000, and a
  * stated figure always beats a derived one. */
