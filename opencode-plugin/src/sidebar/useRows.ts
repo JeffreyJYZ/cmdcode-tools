@@ -14,13 +14,23 @@ import {
 	ZEN_PROVIDER_PREFIX,
 } from "../constants/providers";
 import { type ArkUsage, arkRows } from "./ark";
-import { loadArk, loadMeta, loadOd, loadUsage, loadZen } from "./data";
+import {
+	keepCmdModels,
+	loadArk,
+	loadCmdModels,
+	loadMeta,
+	loadOd,
+	loadUsage,
+	loadZen,
+} from "./data";
 import { modelCost, modelWindows as readModelWindows, sessionCost } from "./local-cost";
 import type { OdUsage } from "./od";
 import { odRows } from "./od-rows";
 import { loadPrefs } from "./prefs";
 import {
 	actionableAccountError,
+	type CmdModels,
+	cmdModelRows,
 	type ModelMeta,
 	type ModelUsage,
 	modelKey,
@@ -78,6 +88,25 @@ export function rememberSnapshot(snapshot: Usage): void {
 /** Rows to paint before this panel's first fetch of the session completes. */
 export function seededRows(): SidebarRow[] {
 	return lastSnapshot ? usageRows(lastSnapshot) : [];
+}
+
+/**
+ * The last Command Code per-model map this process loaded, for the `by model`
+ * table. Same rule as `lastMeta`: the map is account-wide (one copy serves every
+ * session) and an empty map is never remembered — it cannot be told from "cmduse
+ * returned nothing" and would wipe a good map. A failed load keeps the last one,
+ * so one dropped spawn cannot blink the table between polls.
+ */
+let lastCmdModels: CmdModels | undefined;
+
+/** Keep a per-model map for the next Command Code panel that needs it. */
+export function rememberCmdModels(models: CmdModels): void {
+	if (models.size > 0) lastCmdModels = models;
+}
+
+/** The remembered per-model map, or undefined on the first panel. */
+export function seededCmdModels(): CmdModels | undefined {
+	return lastCmdModels;
 }
 
 /**
@@ -214,12 +243,26 @@ export function keepAccount<T extends Accounted>(next: T, last: Accounted | unde
 	return { ...next, account: last.account, accountError: undefined };
 }
 
+/**
+ * The Command Code half's counterpart to `keepAccount`. cmduse's failed `-1
+ * --json` answer carries defaults (plan "Free", no windows), so its figures must
+ * never paint over a good snapshot — `requireSnapshot` already throws for a
+ * transport fault. A fixable reason passes through with only the `error` carried
+ * over, and `usageRows` shows it under Plan, the way the other three families
+ * show their actionable failure.
+ */
+export function keepUsage<T extends { error?: string }>(next: T, last: T | undefined): T {
+	if (!next.error || !last) return next;
+	return { ...last, error: next.error };
+}
+
 export function useRows(
 	activeModelId: () => string | undefined,
 	providerID: () => string | undefined,
 	sessionID: () => string | undefined,
 ) {
 	const [usage, setUsage] = createSignal<SidebarRow[]>(seededRows());
+	const [cmdModels, setCmdModels] = createSignal<CmdModels | undefined>(seededCmdModels());
 	const [zen, setZen] = createSignal<ZenUsage | undefined>(seededZen());
 	const [ark, setArk] = createSignal<ArkUsage | undefined>(seededArk());
 	const [od, setOd] = createSignal<OdUsage | undefined>(seededOd());
@@ -272,6 +315,26 @@ export function useRows(
 			.catch(() => {});
 	};
 	/**
+	 * Re-read the Command Code per-model table, only for our own family. It is a
+	 * second spawn (`cmduse model --json`) behind a minute TTL in `data.ts`, so
+	 * calling it on every poll is cheap most ticks; a failure keeps the last good
+	 * map rather than painting an empty table. Fire-and-forget on purpose: the
+	 * outer `refresh` try/catch would otherwise skip the store-backed rows at the
+	 * end of the tick when this second CLI is missing. Only `kind === "ours"` gets
+	 * here — `sessionKind` matches `PROVIDER_ID_PREFIX`, not the OpenDesign prefix,
+	 * so an OpenDesign session is never spawned a Command Code model read.
+	 */
+	const refreshCmdModels = (): void => {
+		void loadCmdModels()
+			.then((next) => {
+				rememberCmdModels(next);
+				setCmdModels(keepCmdModels(next, lastCmdModels));
+			})
+			.catch(() => {
+				setCmdModels(keepCmdModels(undefined, lastCmdModels));
+			});
+	};
+	/**
 	 * Publish this conversation's totals and the active model's spend in it.
 	 * Both go through `local-cost`, which memoises per `prefs.costMs` and opens
 	 * no database at all while the cost rows are off.
@@ -308,9 +371,10 @@ export function useRows(
 			// so it rides the same tick only for that session kind.
 			refreshOd(kind);
 			if (kind === "ours") {
-				const snapshot = await loadUsage();
+				const snapshot = keepUsage(await loadUsage(), lastSnapshot);
 				rememberSnapshot(snapshot);
 				setUsage(usageRows(snapshot));
+				refreshCmdModels();
 			} else if (kind === "go" || kind === "zen") {
 				const snapshot = keepAccount(await loadZen(loadPrefs().ocPlan), lastZen);
 				rememberZen(snapshot);
@@ -434,6 +498,9 @@ export function useRows(
 			// and without the divider the rows read as one long list.
 			return [
 				...usage(),
+				// Period, then the by-model table, then the rule and the active
+				// model — the same order Zen/ARK draw. An empty map adds no rows.
+				...cmdModelRows(cmdModels()),
 				separator(),
 				...modelRows(model, usageFor(id), session, fallbackName),
 			];

@@ -18,7 +18,13 @@ import {
 } from "../constants/timing";
 import { type ArkUsage, parseArkJson } from "./ark";
 import { type OdUsage, parseOdJson } from "./od";
-import { type ModelMeta, modelKey, type Usage } from "./rows";
+import {
+	actionableAccountError,
+	type CmdModels,
+	type ModelMeta,
+	modelKey,
+	type Usage,
+} from "./rows";
 import { parseZenJson, type ZenUsage } from "./zen";
 
 // The sidebar spawns the same CLIs as the /cmd-usage dialog, through the same
@@ -74,12 +80,65 @@ export function parseUsageJson(text: string): Usage {
  * A snapshot is only usable when cmduse actually reached the account API.
  * `-1 --json` exits 0 on failure and then carries the defaults (plan "Free", no
  * windows) beside an `error`; painting that over a good snapshot is what made
- * the Monthly row flash during an outage. Throw so the caller keeps the last
- * snapshot, exactly as it does when the CLI is missing.
+ * the Monthly row flash during an outage. A transport fault throws so the caller
+ * keeps the last snapshot, exactly as when the CLI is missing. A reason the user
+ * can fix passes through with its `error`, so `usageRows` can name it — the same
+ * split the Go/Zen and ARK builders apply to their own `accountError`.
  */
 export function requireSnapshot(usage: Usage): Usage {
-	if (usage.error) throw new Error(usage.error);
+	if (usage.error && !actionableAccountError(usage.error)) throw new Error(usage.error);
 	return usage;
+}
+
+/**
+ * cmduse's args for the per-model table. `model --json` is a documented stable
+ * contract (`{source, since, models:{id: totals}}`); `--plain` keeps ANSI out of
+ * piped stdout. No window flag: the CLI's own period window is the same one the
+ * account snapshot describes.
+ */
+export function cmdModelsArgs(): readonly string[] {
+	return ["model", "--json", "--plain"];
+}
+
+/**
+ * Parse `cmduse model --json` into the per-model map. One model's spend arrives
+ * as `costUsd` (the CLI's own report field), not `cost`. A malformed body yields
+ * an empty map, which is exactly the skip guard the builder needs: no local
+ * turns in the window means no table, never an empty one.
+ */
+export function parseCmdModelsJson(text: string): CmdModels {
+	let body: Record<string, unknown>;
+	try {
+		body = JSON.parse(text) as Record<string, unknown>;
+	} catch {
+		return new Map();
+	}
+	const models: CmdModels = new Map();
+	const raw = (body.models ?? {}) as Record<string, unknown>;
+	for (const [id, value] of Object.entries(raw)) {
+		const m = (value ?? {}) as Record<string, unknown>;
+		models.set(id, {
+			id,
+			requests: typeof m.requests === "number" ? m.requests : 0,
+			cost: typeof m.costUsd === "number" ? m.costUsd : 0,
+		});
+	}
+	return models;
+}
+
+/**
+ * Keep the last good per-model map when this poll failed. `loadCmdModels` throws
+ * on a transport fault, so the caller passes `undefined` and gets the remembered
+ * map back — the same rule `keepAccount` applies to the meters: one dropped
+ * request must not blink the table. A real answer wins, even an empty one: an
+ * empty map means the window holds no local turns, and the builder then adds no
+ * table rather than a blank one.
+ */
+export function keepCmdModels(
+	next: CmdModels | undefined,
+	last: CmdModels | undefined,
+): CmdModels | undefined {
+	return next ?? last;
 }
 
 interface MpcRow {
@@ -220,6 +279,35 @@ export async function loadUsage(): Promise<Usage> {
 	return requireSnapshot(
 		parseUsageJson(await runCmduse(["-1", "--json", "--plain"], SIDEBAR_OPTS)),
 	);
+}
+
+/** Process-lifetime cache for the Command Code per-model table: `model --json`
+ *  is a second spawn on top of the account snapshot, so at the 5s poll it would
+ *  be one extra process per tick. A minute matches the ARK snapshot cache — the
+ *  map is account-wide, and the CLI selects its own period window, so the key is
+ *  the constant "default" just as `loadArk` uses it. A future caller that passes
+ *  a window flag can invalidate by changing the key instead of adding a cache. */
+const CMD_MODELS_TTL_MS = 60_000;
+let cmdModelsCache: { key: string; at: number; models: CmdModels } | undefined;
+
+/**
+ * The Command Code per-model map from `cmduse model --json`, cached for a minute.
+ * Throws when cmduse is missing or fails; the caller then keeps the last good map
+ * so a dropped request cannot blink the by-model table.
+ */
+export async function loadCmdModels(): Promise<CmdModels> {
+	const key = "default";
+	const now = Date.now();
+	if (
+		cmdModelsCache &&
+		cmdModelsCache.key === key &&
+		now - cmdModelsCache.at < CMD_MODELS_TTL_MS
+	) {
+		return cmdModelsCache.models;
+	}
+	const models = parseCmdModelsJson(await runCmduse(cmdModelsArgs(), SIDEBAR_OPTS));
+	cmdModelsCache = { key, at: now, models };
+	return models;
 }
 
 /**

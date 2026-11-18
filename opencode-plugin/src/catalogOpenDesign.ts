@@ -5,9 +5,9 @@
 // This endpoint publishes what Command Code's listing does not: every row
 // carries `context_limit`, `output_budget` and its input modalities, so the seed
 // and the live rows keep the API's own numbers instead of a default. Rates come
-// only from `core/od.json` rows marked `rateSource: "repo"` — oduse's table,
-// seeded from the published rates where the same model is sold elsewhere — and
-// an `estimate` row stays unpriced rather than shown as a rate nobody published.
+// from `core/od.json` rows marked `rateSource: "published"` — Open Design's own
+// `GET /v1/public/model-prices` list, which now covers every row in that table.
+// A row with no published rate stays unpriced rather than shown as a guessed one.
 import od from "../../core/od.json";
 import type { InputModality } from "./catalog";
 import { OPEN_DESIGN_BASE } from "./constants/endpoints";
@@ -52,10 +52,10 @@ function label(id: string): string {
 	return LABELS.get(id) ?? id;
 }
 
-/** Published list-price $/1M from `core/od.json`. An `estimate` row is omitted:
- * the host then shows no price for that model, which is the honest reading. */
+/** Published list-price $/1M from `core/od.json`. Every rate there now comes
+ * from Open Design's own price list; a row without one stays unpriced. */
 export function odCost(id: string): { input: number; output: number } | undefined {
-	const row = od.models.find((m) => m.id === id && m.rateSource === "repo");
+	const row = od.models.find((m) => m.id === id && m.rateSource === "published");
 	return row ? { input: row.input, output: row.output } : undefined;
 }
 

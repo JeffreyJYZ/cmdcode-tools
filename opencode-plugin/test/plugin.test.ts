@@ -12,6 +12,8 @@ import {
 	MPC_TOOL_DESCRIPTION,
 	OCUSE_TOOL_ARG_DESCRIPTION,
 	OCUSE_TOOL_DESCRIPTION,
+	ODUSE_TOOL_ARG_DESCRIPTION,
+	ODUSE_TOOL_DESCRIPTION,
 	TOOL_DESCRIPTION,
 } from "../src/constants/providers";
 import { isClaude, splitModels } from "../src/models";
@@ -122,7 +124,7 @@ describe("tool registrations", () => {
 		const plugin = await (
 			CommandCodePlugin as unknown as (input: unknown) => Promise<{
 				tool: Record<
-					"cmd_usage" | "mpc_prices" | "ocuse_usage" | "arkuse_usage",
+					"cmd_usage" | "mpc_prices" | "ocuse_usage" | "arkuse_usage" | "oduse_usage",
 					ToolEntry
 				>;
 			}>
@@ -132,11 +134,13 @@ describe("tool registrations", () => {
 			"cmd_usage",
 			"mpc_prices",
 			"ocuse_usage",
+			"oduse_usage",
 		]);
 		expect(plugin.tool.cmd_usage.description).toBe(TOOL_DESCRIPTION);
 		expect(plugin.tool.mpc_prices.description).toBe(MPC_TOOL_DESCRIPTION);
 		expect(plugin.tool.ocuse_usage.description).toBe(OCUSE_TOOL_DESCRIPTION);
 		expect(plugin.tool.arkuse_usage.description).toBe(ARKUSE_TOOL_DESCRIPTION);
+		expect(plugin.tool.oduse_usage.description).toBe(ODUSE_TOOL_DESCRIPTION);
 		const schema = z.object(plugin.tool.mpc_prices.args);
 		expect(schema.parse({})).toEqual({});
 		expect(schema.parse({ arg: "--json" })).toEqual({ arg: "--json" });
@@ -178,6 +182,7 @@ describe("tool registrations", () => {
 			"mpc_prices",
 			"ocuse_usage",
 			"arkuse_usage",
+			"oduse_usage",
 		]);
 		const mpc = added.find((t) => t.name === "mpc_prices");
 		expect(mpc?.description).toBe(MPC_TOOL_DESCRIPTION);
@@ -188,6 +193,9 @@ describe("tool registrations", () => {
 		const arkuse = added.find((t) => t.name === "arkuse_usage");
 		expect(arkuse?.description).toBe(ARKUSE_TOOL_DESCRIPTION);
 		expect(arkuse?.input.properties.arg.description).toBe(ARKUSE_TOOL_ARG_DESCRIPTION);
+		const oduse = added.find((t) => t.name === "oduse_usage");
+		expect(oduse?.description).toBe(ODUSE_TOOL_DESCRIPTION);
+		expect(oduse?.input.properties.arg.description).toBe(ODUSE_TOOL_ARG_DESCRIPTION);
 	});
 	test("mpc_prices description answers cost per request and per month", () => {
 		expect(MPC_TOOL_DESCRIPTION).toContain("per request");

@@ -11,6 +11,7 @@ import { RGBA } from "@opentui/core";
 import { testRender } from "@opentui/solid";
 import { hostColors, Panel } from "../src/sidebar/panel";
 import type { SidebarRow } from "../src/sidebar/rows";
+import { panelTitle } from "../src/sidebar/useRows";
 
 const theme = {
 	text: {
@@ -48,6 +49,31 @@ describe("an empty panel", () => {
 			.join("")
 			.trim();
 		expect(text).toBe("");
+	});
+
+	test("every family's empty first paint mounts without throwing", async () => {
+		// The fallback is in the shared Panel, but each family reaches it with
+		// its own title on a cold start (before its first CLI spawn). Prove all
+		// four rather than trusting one representative.
+		for (const kind of ["ours", "go", "zen", "ark", "od"] as const) {
+			const setup = await testRender(
+				() => (
+					<Panel
+						title={() => panelTitle(kind)}
+						rows={() => empty}
+						colors={() => hostColors(theme)}
+					/>
+				),
+				{ width: 42, height: 8 },
+			);
+			await setup.renderOnce();
+			const text = setup
+				.captureSpans()
+				.lines.flatMap((line) => line.spans.map((span) => span.text))
+				.join("")
+				.trim();
+			expect(text, panelTitle(kind)).toBe("");
+		}
 	});
 
 	test("a single-row panel still paints the title", async () => {

@@ -89,9 +89,10 @@ Each command passes its arguments through to the CLI that owns it, and each has 
 | `/cmd-usage`    | `cmd_usage`    | `cmduse` — plan, credits, windows, billing period; `plans` for the plan table |
 | `/ocuse-usage`  | `ocuse_usage`  | `ocuse` — OpenCode Go/Zen meters and per-model spend; empty args mean `-1`    |
 | `/arkuse-usage` | `arkuse_usage` | `arkuse` — Volcengine ARK Agent Plan meters in AFP; empty args mean `-1`      |
+| `/oduse-usage`  | `oduse_usage`  | `oduse` — OpenDesign credits against plan windows; empty args mean `-1`       |
 | —               | `mpc_prices`   | `mpc` — per-model price comparison across Command Code and OpenCode Go plans  |
 
-A bare `ocuse` or `arkuse` is a live watch loop that would never return to the dialog, so an empty argument means the one-shot dashboard.
+A bare `ocuse`, `arkuse` or `oduse` is a live watch loop that would never return to the dialog, so an empty argument means the one-shot dashboard.
 
 ## Links
 

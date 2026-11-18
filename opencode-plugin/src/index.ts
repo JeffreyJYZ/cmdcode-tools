@@ -9,7 +9,16 @@ import { z } from "zod";
 import pkg from "../package.json";
 import { whoami } from "./api";
 import { liveCost, supportsImage } from "./catalogLive";
-import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runMpc, runOcuse } from "./cli";
+import {
+	arkuseArgs,
+	ocuseArgs,
+	oduseArgs,
+	runArkuse,
+	runCmduse,
+	runMpc,
+	runOcuse,
+	runOduse,
+} from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import {
 	DEFAULT_CONTEXT_LENGTH,
@@ -24,6 +33,8 @@ import {
 	MPC_TOOL_DESCRIPTION,
 	OCUSE_TOOL_ARG_DESCRIPTION,
 	OCUSE_TOOL_DESCRIPTION,
+	ODUSE_TOOL_ARG_DESCRIPTION,
+	ODUSE_TOOL_DESCRIPTION,
 	TOOL_DESCRIPTION,
 } from "./constants/providers";
 import { resolveKey } from "./key";
@@ -322,6 +333,13 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 				template:
 					"Call the arkuse_usage tool and present its markdown output verbatim to the user. If the tool errors, arkcli or its agent-plan profile is missing — usage still shows where the store has it. $ARGUMENTS",
 			};
+			// /oduse-usage command -> agent calls the oduse_usage tool, for the
+			// OpenDesign side. Same shape again.
+			cfg.command["oduse-usage"] = {
+				description: "Show OpenDesign usage: credits against the plan's server windows",
+				template:
+					"Call the oduse_usage tool and present its markdown output verbatim to the user. If the tool errors, the OpenDesign app store or session cookie is missing — usage still shows what the local store has. $ARGUMENTS",
+			};
 		},
 
 		// opencode >=1.14.49 resolves the model list here, with auth injected.
@@ -392,6 +410,17 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 				// the watch loop.
 				async execute(args) {
 					return runArkuse(arkuseArgs(args.arg));
+				},
+			}),
+			oduse_usage: tool({
+				description: ODUSE_TOOL_DESCRIPTION,
+				args: {
+					arg: z.string().optional().describe(ODUSE_TOOL_ARG_DESCRIPTION),
+				},
+				// Same thin-spawn contract for OpenDesign: empty arg means `-1`,
+				// never the watch loop.
+				async execute(args) {
+					return runOduse(oduseArgs(args.arg));
 				},
 			}),
 		},

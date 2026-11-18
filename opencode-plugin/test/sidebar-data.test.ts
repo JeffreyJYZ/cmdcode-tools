@@ -5,12 +5,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SPAWN_OPTIONS } from "../src/constants/cli";
 import {
+	cmdModelsArgs,
+	keepCmdModels,
 	metaArgs,
+	parseCmdModelsJson,
 	parseMpcJson,
 	parseUsageJson,
 	requireSnapshot,
 	zenArgs,
 } from "../src/sidebar/data";
+import { cmdModelRows } from "../src/sidebar/rows";
 import {
 	loadModelUsage,
 	loadModelWindowStart,
@@ -73,6 +77,84 @@ describe("requireSnapshot", () => {
 
 	test("a null error is not an error", () => {
 		expect(requireSnapshot(parseUsageJson(USAGE)).error).toBeUndefined();
+	});
+
+	test("a fixable reason passes through so the builder can name it", () => {
+		const usage = parseUsageJson(
+			JSON.stringify({ error: "HTTP 401 api_key_expired", plan: "Free" }),
+		);
+		expect(requireSnapshot(usage)).toBe(usage);
+		expect(usage.error).toBe("HTTP 401 api_key_expired");
+	});
+});
+
+describe("cmduse model --json", () => {
+	// The real shape: models keyed by id, spend under `costUsd` (not `cost`).
+	const MODEL_JSON = JSON.stringify({
+		source: "local",
+		since: null,
+		models: {
+			"deepseek/deepseek-v4.1-flash": {
+				cacheRead: 4096,
+				cacheWrite: 0,
+				costUsd: 0.0044,
+				requests: 1,
+				tokensIn: 33234,
+				tokensOut: 2,
+			},
+			"zai-org/GLM-5.2": {
+				cacheRead: 7742976,
+				cacheWrite: 0,
+				costUsd: 15.72,
+				requests: 142,
+				tokensIn: 9637736,
+				tokensOut: 49466,
+			},
+		},
+	});
+
+	test("lifts the per-model map from the documented contract", () => {
+		const models = parseCmdModelsJson(MODEL_JSON);
+		expect(models.size).toBe(2);
+		expect(models.get("zai-org/GLM-5.2")).toEqual({
+			id: "zai-org/GLM-5.2",
+			requests: 142,
+			cost: 15.72,
+		});
+		expect(models.get("deepseek/deepseek-v4.1-flash")?.cost).toBe(0.0044);
+	});
+
+	test("an empty window yields an empty map — the builder then adds no table", () => {
+		// Verified on this machine: `--days 1` and `--days 7` both return `{}`.
+		expect(parseCmdModelsJson(JSON.stringify({ source: "local", models: {} })).size).toBe(0);
+		expect(cmdModelRows(parseCmdModelsJson(JSON.stringify({ models: {} })))).toEqual([]);
+	});
+
+	test("a malformed body reads as an empty map, never a fabricated table", () => {
+		expect(parseCmdModelsJson("not json").size).toBe(0);
+		expect(parseCmdModelsJson("{}").size).toBe(0);
+	});
+
+	test("keeps the documented args and never adds a window flag", () => {
+		// The CLI's own period window is the one the account snapshot describes;
+		// `--shape off` belongs to mpc, not here.
+		expect(cmdModelsArgs()).toEqual(["model", "--json", "--plain"]);
+	});
+
+	test("a failed poll keeps the last good rows; a real answer wins", () => {
+		const last = parseCmdModelsJson(MODEL_JSON);
+		const kept = keepCmdModels(undefined, last);
+		expect(kept).toBe(last);
+		expect(
+			cmdModelRows(kept)
+				.slice(1)
+				.map((row) => row[1]),
+		).toEqual(["$15.72", "$0"]);
+		// A genuine answer — even an empty one meaning "no local turns" — wins:
+		// the table drops out rather than showing yesterday's models.
+		const empty = new Map();
+		expect(keepCmdModels(empty, last)).toBe(empty);
+		expect(cmdModelRows(keepCmdModels(empty, last))).toEqual([]);
 	});
 });
 

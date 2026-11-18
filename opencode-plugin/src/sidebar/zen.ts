@@ -310,7 +310,7 @@ export function zenRows(
 	if (!usage) return [];
 	const now = Date.now();
 	const oc = meta?.oc;
-	const rows: SidebarRow[] = [["Plan", `${oc?.plan ?? "Go"} · limits per model`, "base"]];
+	const rows: SidebarRow[] = [["Plan", `${oc?.plan ?? "Go"} · limits per model`, "base", true]];
 	// The reason the console's own numbers are missing belongs with the Plan row,
 	// not buried under the local rows: an expired key means the panel below is an
 	// estimate, and nothing else on screen says so. A transport fault is not that

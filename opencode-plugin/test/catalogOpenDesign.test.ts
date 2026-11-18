@@ -42,14 +42,19 @@ describe("seed", () => {
 		}>;
 		expect(flash?.limit).toEqual({ context: 1_048_000, output: 128_000 });
 	});
-	test("cost comes only from a published rate; an estimate stays unpriced", () => {
-		expect(odCost("deepseek-v4.1-flash")).toEqual({ input: 0.15, output: 0.6 });
-		expect(odCost("deepseek-v4.1-flash-eco")).toBeUndefined();
+	test("every published price-list row is priced, including Eco", () => {
+		// Open Design's own price list gives both rows $0.3 / $1.2 per 1M; the
+		// old $0.15 / $0.6 seed and the estimate label are gone.
+		expect(odCost("deepseek-v4.1-flash")).toEqual({ input: 0.3, output: 1.2 });
+		expect(odCost("deepseek-v4.1-flash-eco")).toEqual({ input: 0.3, output: 1.2 });
+		// A payload-only id that used to be unpriced is now table-backed too.
+		expect(odCost("hy4-flash")).toEqual({ input: 0.07, output: 0.281 });
+		expect(odCost("no-such-model")).toBeUndefined();
 		const [flash, eco] = modelRecords(OPEN_DESIGN_SEED) as Array<{
 			cost: Array<{ input: number; output: number }>;
 		}>;
-		expect(flash?.cost[0]?.input).toBe(0.15);
-		expect(eco?.cost).toEqual([]);
+		expect(flash?.cost[0]?.input).toBe(0.3);
+		expect(eco?.cost[0]?.output).toBe(1.2);
 	});
 });
 

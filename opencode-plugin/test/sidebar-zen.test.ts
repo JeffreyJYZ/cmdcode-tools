@@ -72,7 +72,7 @@ describe("zenRows", () => {
 			{ requests: 5, cost: 0.25 },
 		);
 		const find = (label: string) => rows.find((row) => row[0] === label);
-		expect(find("Plan")).toEqual(["Plan", "Go · limits per model", "base"]);
+		expect(find("Plan")).toEqual(["Plan", "Go · limits per model", "base", true]);
 		// 5h = 20% of $60 = $12; 50% of the odd half-cent is traced back exactly.
 		expect(find("5-hour")).toEqual(["5-hour", "$0.50/$12 (4.2%)", "base"]);
 		expect(find("Weekly")).toEqual(["Weekly", "$1/$30 (3.3%)", "base"]);
@@ -229,7 +229,7 @@ describe("zenRows", () => {
 			oc: { plan: "Zen" },
 		});
 		const find = (label: string) => rows.find((row) => row[0] === label);
-		expect(find("Plan")).toEqual(["Plan", "Zen · limits per model", "base"]);
+		expect(find("Plan")).toEqual(["Plan", "Zen · limits per model", "base", true]);
 		expect(find("5-hour")).toEqual(["5-hour", "$0.50 · 1 req", "base"]);
 		expect(find("Allowance")).toBeUndefined();
 		expect(find("Rates")).toBeUndefined();
@@ -530,7 +530,7 @@ describe("the account's own meters", () => {
 		const body = JSON.parse(sample) as Record<string, unknown>;
 		body.accountError = "HTTP 401 api_key_expired";
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
-		expect(rows[0]).toEqual(["Plan", "Go · limits per model", "base"]);
+		expect(rows[0]).toEqual(["Plan", "Go · limits per model", "base", true]);
 		expect(rows[1]).toEqual(["", "usage API: HTTP 401 api_key_expired", "warn"]);
 		// An older ocuse names nothing, so the panel is exactly as it was.
 		const quiet = zenRows(parseZenJson(sample), meta);

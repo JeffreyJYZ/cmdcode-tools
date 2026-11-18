@@ -25,7 +25,16 @@ import {
 	refreshLiveCatalog,
 } from "./catalogLive";
 import { fetchModelList as fetchOpenDesignModels, OPEN_DESIGN_SEED } from "./catalogOpenDesign";
-import { arkuseArgs, ocuseArgs, runArkuse, runCmduse, runMpc, runOcuse } from "./cli";
+import {
+	arkuseArgs,
+	ocuseArgs,
+	oduseArgs,
+	runArkuse,
+	runCmduse,
+	runMpc,
+	runOcuse,
+	runOduse,
+} from "./cli";
 import { PROVIDER_BASE } from "./constants/endpoints";
 import { KNOWN_MODELS } from "./constants/gating";
 import { DEFAULT_CONTEXT_LENGTH, DEFAULT_OUTPUT_TOKENS } from "./constants/models";
@@ -41,6 +50,8 @@ import {
 	MPC_TOOL_DESCRIPTION,
 	OCUSE_TOOL_ARG_DESCRIPTION,
 	OCUSE_TOOL_DESCRIPTION,
+	ODUSE_TOOL_ARG_DESCRIPTION,
+	ODUSE_TOOL_DESCRIPTION,
 	OPEN_DESIGN_ENV,
 	OPEN_DESIGN_INTEGRATION_ID,
 	OPEN_DESIGN_NAME,
@@ -467,6 +478,31 @@ export const commandCodeV2: PluginNs.Plugin = {
 							: undefined;
 					return {
 						content: await runArkuse(arkuseArgs(arg)),
+					};
+				},
+			} as never);
+			// oduse_usage: the same pattern for the OpenDesign side. Empty arg
+			// means `-1`, never the watch loop.
+			editor.add({
+				name: "oduse_usage",
+				description: ODUSE_TOOL_DESCRIPTION,
+				input: {
+					type: "object",
+					properties: {
+						arg: {
+							type: "string",
+							description: ODUSE_TOOL_ARG_DESCRIPTION,
+						},
+					},
+					additionalProperties: false,
+				},
+				async execute(input: unknown) {
+					const arg =
+						typeof (input as { arg?: unknown })?.arg === "string"
+							? (input as { arg: string }).arg
+							: undefined;
+					return {
+						content: await runOduse(oduseArgs(arg)),
 					};
 				},
 			} as never);

@@ -152,6 +152,21 @@ export interface ModelUsage {
 	cost: number;
 }
 
+/**
+ * One model's period totals from `cmduse model --json`, keyed by the id the CLI
+ * publishes. The account snapshot behind `usageRows` carries no per-model field,
+ * so this table comes from a second, documented spawn — the same data the
+ * Go/Zen, ARK and OpenDesign builders read from their own snapshots.
+ */
+export interface CmdModelUsage {
+	id: string;
+	requests: number;
+	cost: number;
+}
+
+/** Keyed by model id, the key `cmduse model --json` publishes. */
+export type CmdModels = Map<string, CmdModelUsage>;
+
 export interface Usage {
 	plan?: string;
 	monthlyCap?: number;
@@ -332,6 +347,13 @@ export function usageRows(usage: Usage | undefined, now = Date.now()): SidebarRo
 			typeof usage.monthlyCap === "number" ? ` · $${usage.monthlyCap}/mo credits` : "";
 		rows.push(["Plan", `${usage.plan}${credits}`, "base", true]);
 	}
+	// The Command Code half gets its reason from `cmduse -1 --json`, which exits
+	// 0 with defaults on a failed account call. `requireSnapshot` throws on a
+	// transport fault, so only a reason the user can act on reaches here — the
+	// same gate `zenRows` and `arkRows` apply to their `accountError` row.
+	if (usage.error && actionableAccountError(usage.error)) {
+		rows.push(["", clip(`usage API: ${usage.error}`, valueWidth("")), "warn"]);
+	}
 	if (typeof usage.monthlyCap === "number" && typeof usage.monthlyCredits === "number") {
 		// cmduse clamps used into [0, cap]: leftover credits can exceed the cap.
 		const used = Math.min(
@@ -354,6 +376,32 @@ export function usageRows(usage: Usage | undefined, now = Date.now()): SidebarRo
 		if (typeof usage.requests === "number") parts.push(`${count(usage.requests)} requests`);
 		if (typeof usage.cost === "number") parts.push(money(usage.cost));
 		rows.push(["Period", parts.join(" · "), "base"]);
+	}
+	return rows;
+}
+
+/**
+ * The Command Code by-model table: the top few models by period spend, same
+ * block `zenRows` and `arkRows` draw — a muted `by model · <window>` header, then
+ * at most three rows, each clipped to the sidebar with the value's room reserved.
+ *
+ * Ordering is the CLI's own `by_spend`: biggest spend first, model id as the
+ * tiebreak (byte order, not locale order). Below two models the table is noise,
+ * the call those two builders make too. An empty or absent map adds nothing at
+ * all — no header, no zero-height block — because `cmduse model --json` returns
+ * `{}` when the window holds no local turns.
+ */
+export function cmdModelRows(models: CmdModels | undefined): SidebarRow[] {
+	if (!models || models.size < 2) return [];
+	const ranked = [...models.values()]
+		.sort((a, b) => b.cost - a.cost || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+		.slice(0, 3);
+	const rows: SidebarRow[] = [["", "by model · this month", "muted"]];
+	for (const entry of ranked) {
+		const value = money(entry.cost);
+		// Reserve room for `: ` and the value; keep a floor so a very large value
+		// cannot clip the model name away entirely. Same clamp ARK's table uses.
+		rows.push([clip(entry.id, Math.max(4, ROW_WIDTH - value.length - 2)), value, "base"]);
 	}
 	return rows;
 }

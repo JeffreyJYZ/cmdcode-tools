@@ -96,6 +96,17 @@ export const ARKUSE_TOOL_DESCRIPTION =
 export const ARKUSE_TOOL_ARG_DESCRIPTION =
 	"Optional: extra arkuse flags (e.g. '--plan medium', '--profile <name>', 'daily', '--json'); empty means the one-shot dashboard";
 
+/** The oduse_usage tool description, shared by the v1 and v2 halves. */
+export const ODUSE_TOOL_DESCRIPTION =
+	"Fetch live OpenDesign usage: credits spent against the plan's server windows (5h, weekly, monthly), the wallet balance, and per-model spend. Defaults to the one-shot dashboard; pass extra oduse flags for more (e.g. '--plan plus', 'daily', '--json').";
+
+/** The oduse_usage `arg` description, shared by the v1 and v2 halves. */
+export const ODUSE_TOOL_ARG_DESCRIPTION =
+	"Optional: extra oduse flags (e.g. '--plan plus', 'daily', '--session-cookie <path>', '--no-wallet', '--json'); empty means the one-shot dashboard";
+
+/** The v2 /oduse-usage slash command id (registered and bound in tui-commands.tsx). */
+export const ODUSE_USAGE_COMMAND_ID = "command-code.oduse-usage";
+
 export type Lane = {
 	id: "command-code-anthropic" | "command-code-openai";
 	name: string;

@@ -350,6 +350,19 @@ export function arkRows(usage: ArkUsage | undefined, fallbackName?: string): Sid
 			"muted",
 		]);
 	}
+	// Per-model AFP for the period, biggest first — the same table the Go/Zen
+	// and OpenDesign blocks draw. arkuse publishes no per-model quota, so a row
+	// carries the AFP figure alone rather than a spend/allowance pair; the
+	// request count stays on the active-model row below. Below two models the
+	// table is noise, the call those two blocks make too.
+	const ranked = [...usage.models.values()].sort((a, b) => b.month.afp - a.month.afp).slice(0, 3);
+	if (ranked.length > 1) {
+		rows.push(["", "by model · this period", "muted"]);
+		for (const entry of ranked) {
+			const value = afp(entry.month.afp);
+			rows.push([clip(entry.id, Math.max(4, ROW_WIDTH - value.length - 2)), value, "base"]);
+		}
+	}
 	rows.push(separator());
 	if (!fallbackName) return rows;
 	const model = usage.models.get(fallbackName);
