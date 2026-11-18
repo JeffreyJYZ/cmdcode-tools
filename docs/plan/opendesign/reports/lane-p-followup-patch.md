@@ -32,6 +32,12 @@ unpriced: []
 
 `bun test && bun check && bun fmt --check && bunx biome lint`: 343 pass / 0 fail (1364 expects), no type errors in 80 files, 89 files formatted, biome lint exit 0 (one informational schema-version notice: config 2.6.3, CLI 2.6.7). `opencode-plugin/dist/index.js` rebuilt and embeds `version: "0.5.37"`.
 
-## Release
+## Release (final)
 
-Pending: `plugin-v0.5.36` run `44247321813` was still `in_progress` when this was written. Tag/push/watch/`verify-release`/`npm latest` will be appended after it finishes.
+- Waited for `plugin-v0.5.36` run `44247321813` to reach `completed` / `success` before creating the next tag.
+- Patch commit `664c1c5`; tag `plugin-v0.5.37` created and pushed to `origin`, pointing at that commit.
+- `plugin-v0.5.37` run `44247981232` (`Publish npm package`): `completed` / `success` in 5m24s; every job green, including "Verify the tarball is actually served". Watched in the background.
+- `bun scripts/verify-release.ts 0.5.37 --source`: `latest=0.5.37 version=yes tarball=200 sha1=5fa90e93870db5691118b64f29ee289c343ed3e6`, repository `git+https://github.com/JeffreyJYZ/cmdcode-tools.git`, `verified @jeffreyjyz/opencode-command-code@0.5.37`. Ran in the background.
+- `npm dist-tags` before tag: `latest: 0.5.36`; after: `0.5.37`.
+- No other tag, version file, crate, remote or publish path touched. `npm publish` was never run by hand; OIDC from the tag did the publish.
+- Still untracked (left to their owning lanes): `docs/plan/opendesign/briefs/lane-o-plugin-cache-rates.md`, `docs/plan/opendesign/briefs/lane-p-followup-patch.md`.
