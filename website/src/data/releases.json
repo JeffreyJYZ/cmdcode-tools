@@ -1,6 +1,13 @@
 {
-	"generatedAt": "2026-11-17T11:13:45.925Z",
+	"generatedAt": "2026-11-18T10:20:04.236Z",
 	"github": [
+		{
+			"tag": "cmduse-v0.8.4",
+			"name": "cmduse-v0.8.4",
+			"publishedAt": "2026-11-18T05:50:47Z",
+			"url": "https://github.com/JeffreyJYZ/cmdcode-tools/releases/tag/cmduse-v0.8.4",
+			"notes": "## What's Changed\n* feat: OpenDesign release 0.8.4 — rates, account meter, four-binary parity by @jyzbot in https://github.com/JeffreyJYZ/cmdcode-tools/pull/37\n\n\n**Full Changelog**: https://github.com/JeffreyJYZ/cmdcode-tools/compare/cmduse-v0.8.3...cmduse-v0.8.4"
+		},
 		{
 			"tag": "cmduse-v0.8.3",
 			"name": "cmduse-v0.8.3",
@@ -291,6 +298,12 @@
 			"version": "0.1.13",
 			"date": "2026-11-17T10:18:36.553Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.13"
+		},
+		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.14",
+			"date": "2026-11-18T05:59:41.701Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.14"
 		},
 		{
 			"package": "@jeffreyjyz/reqshape",
@@ -749,6 +762,30 @@
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.35"
 		},
 		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.36",
+			"date": "2026-11-18T05:56:01.370Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.36"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.37",
+			"date": "2026-11-18T06:01:27.543Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.37"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.38",
+			"date": "2026-11-18T07:17:46.081Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.38"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-command-code",
+			"version": "0.5.39",
+			"date": "2026-11-18T07:40:59.227Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-command-code/v/0.5.39"
+		},
+		{
 			"package": "@jeffreyjyz/opencode-context",
 			"version": "0.1.0",
 			"date": "2026-10-04T06:05:56.479Z",
@@ -840,6 +877,12 @@
 		}
 	],
 	"crates": [
+		{
+			"crate": "cmd-usage",
+			"version": "0.8.4",
+			"date": "2026-11-18T05:51:53.001160Z",
+			"url": "https://crates.io/crates/cmd-usage/0.8.4"
+		},
 		{
 			"crate": "cmd-usage",
 			"version": "0.8.3",
@@ -1313,6 +1356,12 @@
 			"version": "0.1.0",
 			"date": "2026-09-04T07:50:07.640696Z",
 			"url": "https://crates.io/crates/cmd-usage/0.1.0"
+		},
+		{
+			"crate": "cmduse-core",
+			"version": "2.4.0",
+			"date": "2026-11-18T05:51:23.070760Z",
+			"url": "https://crates.io/crates/cmduse-core/2.4.0"
 		},
 		{
 			"crate": "cmduse-core",
