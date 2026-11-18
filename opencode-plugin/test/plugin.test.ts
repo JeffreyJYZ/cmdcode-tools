@@ -14,6 +14,8 @@ import {
 	OCUSE_TOOL_DESCRIPTION,
 	ODUSE_TOOL_ARG_DESCRIPTION,
 	ODUSE_TOOL_DESCRIPTION,
+	TOOL_ARG_DESCRIPTION,
+	TOOL_ARG_WATCH_LOOP_CLAUSE,
 	TOOL_DESCRIPTION,
 } from "../src/constants/providers";
 import { isClaude, splitModels } from "../src/models";
@@ -117,6 +119,11 @@ describe("wire split", () => {
 	});
 });
 
+// v1 registers Zod raw shapes; zod's public $ZodType type hides `.description`,
+// so read the host-visible field through a narrow cast (runtime is unchanged).
+const v1ArgDescription = (shape: z.ZodRawShape, key: string): string | undefined =>
+	(shape[key] as unknown as { description?: string } | undefined)?.description;
+
 describe("tool registrations", () => {
 	test("v1 registers mpc_prices beside cmd_usage", async () => {
 		const { CommandCodePlugin } = await import("../src/index");
@@ -141,6 +148,23 @@ describe("tool registrations", () => {
 		expect(plugin.tool.ocuse_usage.description).toBe(OCUSE_TOOL_DESCRIPTION);
 		expect(plugin.tool.arkuse_usage.description).toBe(ARKUSE_TOOL_DESCRIPTION);
 		expect(plugin.tool.oduse_usage.description).toBe(ODUSE_TOOL_DESCRIPTION);
+		// Read what the host receives, not the constants file: lane S fixed the
+		// constants while both halves still registered an inline cmd_usage literal.
+		// This assertion is the guard that would have caught that regression.
+		const cmdArg = v1ArgDescription(plugin.tool.cmd_usage.args, "arg");
+		expect(cmdArg).toBe(TOOL_ARG_DESCRIPTION);
+		expect(cmdArg).toContain(TOOL_ARG_WATCH_LOOP_CLAUSE);
+		expect(cmdArg).not.toContain("'plans' for the plan table only");
+		expect(v1ArgDescription(plugin.tool.mpc_prices.args, "arg")).toBe(MPC_TOOL_ARG_DESCRIPTION);
+		expect(v1ArgDescription(plugin.tool.ocuse_usage.args, "arg")).toBe(
+			OCUSE_TOOL_ARG_DESCRIPTION,
+		);
+		expect(v1ArgDescription(plugin.tool.arkuse_usage.args, "arg")).toBe(
+			ARKUSE_TOOL_ARG_DESCRIPTION,
+		);
+		expect(v1ArgDescription(plugin.tool.oduse_usage.args, "arg")).toBe(
+			ODUSE_TOOL_ARG_DESCRIPTION,
+		);
 		const schema = z.object(plugin.tool.mpc_prices.args);
 		expect(schema.parse({})).toEqual({});
 		expect(schema.parse({ arg: "--json" })).toEqual({ arg: "--json" });
@@ -184,6 +208,15 @@ describe("tool registrations", () => {
 			"arkuse_usage",
 			"oduse_usage",
 		]);
+		// Assert the registered arg, not the constant: an inline literal here
+		// passed lane S's constants-only guard while shipping the old tool text.
+		const cmd = added.find((t) => t.name === "cmd_usage");
+		expect(cmd?.description).toBe(TOOL_DESCRIPTION);
+		expect(cmd?.input.properties.arg.description).toBe(TOOL_ARG_DESCRIPTION);
+		expect(cmd?.input.properties.arg.description).toContain(TOOL_ARG_WATCH_LOOP_CLAUSE);
+		expect(cmd?.input.properties.arg.description).not.toContain(
+			"'plans' for the plan table only",
+		);
 		const mpc = added.find((t) => t.name === "mpc_prices");
 		expect(mpc?.description).toBe(MPC_TOOL_DESCRIPTION);
 		expect(mpc?.input.properties.arg.description).toBe(MPC_TOOL_ARG_DESCRIPTION);
@@ -217,5 +250,30 @@ describe("tool registrations", () => {
 		const serverWindows = ODUSE_TOOL_DESCRIPTION.match(/server windows \(([^)]*)\)/)?.[1];
 		expect(serverWindows).toBeTruthy();
 		expect(serverWindows?.toLowerCase()).not.toContain("monthly");
+	});
+});
+
+describe("usage tool arg descriptions", () => {
+	// The four usage tools share one contract: an arg is extra flags on the
+	// one-shot dashboard, or a subcommand run as-is, never the live watch loop.
+	// Keep the guard keyed on one shared clause constant (not four copies of the
+	// sentence) so a future fifth tool cannot omit the rule unnoticed.
+	const usageArgDescriptions = [
+		["cmd", TOOL_ARG_DESCRIPTION],
+		["ocuse", OCUSE_TOOL_ARG_DESCRIPTION],
+		["arkuse", ARKUSE_TOOL_ARG_DESCRIPTION],
+		["oduse", ODUSE_TOOL_ARG_DESCRIPTION],
+	] as const;
+
+	test("every usage tool states the shared watch-loop rule", () => {
+		for (const [, description] of usageArgDescriptions) {
+			expect(description).toContain(TOOL_ARG_WATCH_LOOP_CLAUSE);
+			expect(description).toContain("one-shot dashboard");
+			expect(description).toContain("subcommand");
+		}
+	});
+
+	test("the shared clause is the watch-loop rule itself", () => {
+		expect(TOOL_ARG_WATCH_LOOP_CLAUSE).toBe("never starts the live watch loop");
 	});
 });

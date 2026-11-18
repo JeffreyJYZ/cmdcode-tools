@@ -56,6 +56,7 @@ import {
 	OPEN_DESIGN_INTEGRATION_ID,
 	OPEN_DESIGN_NAME,
 	PLUGIN_ID,
+	TOOL_ARG_DESCRIPTION,
 	TOOL_DESCRIPTION,
 } from "./constants/providers";
 import { candidateKeys, resolveKey } from "./key";
@@ -381,8 +382,7 @@ export const commandCodeV2: PluginNs.Plugin = {
 					properties: {
 						arg: {
 							type: "string",
-							description:
-								"Optional: 'plans' for the plan table only, or extra cmduse flags (e.g. '--tz +05:30 daily')",
+							description: TOOL_ARG_DESCRIPTION,
 						},
 					},
 					additionalProperties: false,
