@@ -209,4 +209,13 @@ describe("tool registrations", () => {
 		expect(MPC_TOOL_ARG_DESCRIPTION).toContain("--oc-plan");
 		expect(MPC_TOOL_ARG_DESCRIPTION).toContain("--usage");
 	});
+	test("oduse description does not list a monthly server window", () => {
+		// cmduse/src/oduse/snapshot.rs has only 5h and weekly server accessors;
+		// the monthly figure comes from the local store in dash.rs. An agent
+		// reading the description must not be told to expect a monthly server
+		// window. Assert the property, not the surrounding prose.
+		const serverWindows = ODUSE_TOOL_DESCRIPTION.match(/server windows \(([^)]*)\)/)?.[1];
+		expect(serverWindows).toBeTruthy();
+		expect(serverWindows?.toLowerCase()).not.toContain("monthly");
+	});
 });

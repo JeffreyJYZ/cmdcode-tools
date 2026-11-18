@@ -45,16 +45,72 @@ describe("seed", () => {
 	test("every published price-list row is priced, including Eco", () => {
 		// Open Design's own price list gives both rows $0.3 / $1.2 per 1M; the
 		// old $0.15 / $0.6 seed and the estimate label are gone.
-		expect(odCost("deepseek-v4.1-flash")).toEqual({ input: 0.3, output: 1.2 });
-		expect(odCost("deepseek-v4.1-flash-eco")).toEqual({ input: 0.3, output: 1.2 });
+		// Cache reads are published too and must ride through `odCost`, or every
+		// opencode-derived cost figure understates a cache-heavy lane by the bill.
+		expect(odCost("deepseek-v4.1-flash")).toEqual({
+			input: 0.3,
+			output: 1.2,
+			cacheRead: 0.006,
+			cacheWrite: 0,
+		});
+		expect(odCost("deepseek-v4.1-flash-eco")).toEqual({
+			input: 0.3,
+			output: 1.2,
+			cacheRead: 0.006,
+			cacheWrite: 0,
+		});
 		// A payload-only id that used to be unpriced is now table-backed too.
-		expect(odCost("hy4-flash")).toEqual({ input: 0.07, output: 0.281 });
+		expect(odCost("hy4-flash")).toEqual({
+			input: 0.07,
+			output: 0.281,
+			cacheRead: 0.003,
+			cacheWrite: 0,
+		});
 		expect(odCost("no-such-model")).toBeUndefined();
 		const [flash, eco] = modelRecords(OPEN_DESIGN_SEED) as Array<{
 			cost: Array<{ input: number; output: number }>;
 		}>;
 		expect(flash?.cost[0]?.input).toBe(0.3);
 		expect(eco?.cost[0]?.output).toBe(1.2);
+	});
+});
+
+describe("published cache rates reach the model record", () => {
+	type Record_ = {
+		id: string;
+		cost: Array<{
+			input: number;
+			output: number;
+			cache: { read: number; write: number };
+		}>;
+	};
+	const records = (ids: string[]) =>
+		modelRecords(
+			ids.map((id) => ({
+				id,
+				name: id,
+				context: 0,
+				output: 0,
+				modalities: ["text"] as const,
+			})),
+		) as Record_[];
+
+	test("DeepSeek V4.1 Flash matches core/od.json exactly", () => {
+		// Quoted from core/od.json: input 0.3, output 1.2, cacheRead 0.006, no cacheWrite.
+		const [flash] = records(["deepseek-v4.1-flash"]);
+		expect(flash?.cost).toEqual([
+			{ input: 0.3, output: 1.2, cache: { read: 0.006, write: 0 } },
+		]);
+	});
+
+	test("a row without a published cacheWrite advertises write 0", () => {
+		const [flash] = records(["deepseek-v4.1-flash"]);
+		expect(flash?.cost[0]?.cache.write).toBe(0);
+	});
+
+	test("an unpriced model still has no cost entry", () => {
+		const [ghost] = records(["no-such-model"]);
+		expect(ghost?.cost).toEqual([]);
 	});
 });
 

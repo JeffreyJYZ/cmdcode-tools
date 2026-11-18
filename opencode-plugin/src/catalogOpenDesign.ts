@@ -52,11 +52,30 @@ function label(id: string): string {
 	return LABELS.get(id) ?? id;
 }
 
+/** A published rate row in `core/od.json`. Cache reads are published for every
+ * row; cache writes only for some (an absent one means "not charged", i.e. 0). */
+type OdRateRow = {
+	input: number;
+	output: number;
+	cacheRead: number;
+	cacheWrite?: number;
+};
+
 /** Published list-price $/1M from `core/od.json`. Every rate there now comes
- * from Open Design's own price list; a row without one stays unpriced. */
-export function odCost(id: string): { input: number; output: number } | undefined {
-	const row = od.models.find((m) => m.id === id && m.rateSource === "published");
-	return row ? { input: row.input, output: row.output } : undefined;
+ * from Open Design's own price list; a row without one stays unpriced. Cache
+ * rates ride through so opencode's own cost figures are not understated. */
+export function odCost(
+	id: string,
+): { input: number; output: number; cacheRead: number; cacheWrite: number } | undefined {
+	const row = od.models.find((m) => m.id === id && m.rateSource === "published") as
+		OdRateRow | undefined;
+	if (!row) return undefined;
+	return {
+		input: row.input,
+		output: row.output,
+		cacheRead: row.cacheRead,
+		cacheWrite: row.cacheWrite ?? 0,
+	};
 }
 
 /** Modalities the host can declare. Anything the listing adds that the host has
@@ -132,7 +151,13 @@ export function modelRecords(list: readonly OpenDesignModel[]): unknown[] {
 			variants: [],
 			time: { released: 0 },
 			cost: cost
-				? [{ input: cost.input, output: cost.output, cache: { read: 0, write: 0 } }]
+				? [
+						{
+							input: cost.input,
+							output: cost.output,
+							cache: { read: cost.cacheRead, write: cost.cacheWrite },
+						},
+					]
 				: [],
 			status: "active",
 			enabled: true,

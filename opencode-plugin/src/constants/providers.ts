@@ -98,7 +98,7 @@ export const ARKUSE_TOOL_ARG_DESCRIPTION =
 
 /** The oduse_usage tool description, shared by the v1 and v2 halves. */
 export const ODUSE_TOOL_DESCRIPTION =
-	"Fetch live OpenDesign usage: credits spent against the plan's server windows (5h, weekly, monthly), the wallet balance, and per-model spend. Defaults to the one-shot dashboard; pass extra oduse flags for more (e.g. '--plan plus', 'daily', '--json').";
+	"Fetch live OpenDesign usage: credits spent against the plan's server windows (5h, weekly) and a local monthly estimate, the wallet balance, and per-model spend. Defaults to the one-shot dashboard; pass extra oduse flags for more (e.g. '--plan plus', 'daily', '--json').";
 
 /** The oduse_usage `arg` description, shared by the v1 and v2 halves. */
 export const ODUSE_TOOL_ARG_DESCRIPTION =
