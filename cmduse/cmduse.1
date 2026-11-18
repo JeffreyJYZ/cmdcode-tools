@@ -1,4 +1,4 @@
-.TH CMDUSE 1 "2026-10" "cmd-usage 0.8.3" "User Commands"
+.TH CMDUSE 1 "2026-11-18" "cmd-usage" "User Commands"
 .SH NAME
 cmduse \- live Command Code (commandcode.ai) usage dashboard and reporter
 .br
@@ -165,15 +165,19 @@ Fetch once and print a single compact line (no trailing newline) built from
 the configured statusline template.  Suitable for shell prompts, tmux
 status, and headless scripts.  On any API error prints
 .I "cmduse: <error>"
-to stdout and exits 1.  \fB\-\-json\fR prints one JSON object:
-plan, monthlyRemaining, monthlyCap, fiveHourUsed, fiveHourCap, weeklyUsed,
-weeklyCap (all dollars as JSON numbers; plan is the human name such as
-"GOAT").
+to stdout and exits 1.  \fB\-\-json\fR prints one JSON object with the same
+keys on all four binaries: fiveHourCap, fiveHourSpent, fiveHourUsed, model,
+monthCap, monthSpent, monthlyRemaining, period, periodEnd, plan, source,
+weeklyCap, weeklySpent and weeklyUsed.  The money figures are JSON numbers
+(plan is the human name such as "GOAT"); a cap a plan does not publish is
+null, never 0.  The former monthlyCap duplicate is gone from the statusline
+(the \fB\-1 \-\-json\fR dashboard keeps its own monthlyCap); the
+fiveHourUsed/weeklyUsed/monthlyRemaining names remain as aliases.
 .TP
 .B mcp
 Run an MCP (Model Context Protocol) stdio server: newline\-delimited
-JSON\-RPC on stdin/stdout, diagnostics on stderr.  Exposes seven tools \(
-usage, plans, models, daily, hourly, session, model \) whose output is the same
+JSON\-RPC on stdin/stdout, diagnostics on stderr.  Exposes seven tools (
+usage, plans, models, daily, hourly, session, model ) whose output is the same
 text the corresponding subcommands print.  The seven tools and their
 arguments are identical across \fBcmduse\fR, \fBocuse\fR and \fBarkuse\fR
 (each adds \fBplan\fR, the plan its source needs): \fBmodels\fR takes
@@ -464,7 +468,7 @@ response and must not be derived client\-side.
 The statusline template supports the placeholders
 .I {plan} {credits} {cap} {credits_bar} {5h_bar} {5h_pct} {5h_used} {5h_cap} {5h_eta}
 .I {wk_bar} {wk_pct} {wk_used} {wk_cap} {wk_eta}
-. Unknown placeholders are dropped; an unclosed brace passes through;
+Unknown placeholders are dropped; an unclosed brace passes through;
 multi\-line templates are allowed.  \fBsl_colors=false\fR strips ANSI after
 rendering; \fBsl_ascii=true\fR renders bars with "#" and "\-" instead of the
 box glyphs.  {credits} is remaining monthly credits, {cap} the plan monthly
@@ -700,7 +704,7 @@ endpoint names the plan the account is on, so the plan is explicit
 .SS ocuse commands
 .TP
 .B (no command)
-Run the live dashboard in watch mode: a frame redrawn in place every 10
+Run the live dashboard in watch mode: a frame redrawn in place every 5
 seconds (colour, severity gauges, and the spend\-burst sparkline) until
 Ctrl\-C.  The frame and countdown reuse \fBcmduse\fR's in\-place redraw
 contract, so a shrinking frame never scrolls.
@@ -908,7 +912,7 @@ regenerated from OpenCode's own docs sources with
 \fBocuse mcp\fR runs an MCP stdio server (newline\-delimited JSON\-RPC on
 stdin/stdout, diagnostics on stderr) exposing seven tools \(em \fIusage\fR,
 \fIplans\fR, \fImodels\fR, \fIdaily\fR, \fIhourly\fR, \fIsession\fR,
-\fImodel\fR \) whose output matches the corresponding subcommands.  Tool
+\fImodel\fR ) whose output matches the corresponding subcommands.  Tool
 execution errors are returned as results with \fIisError\fR true, never as
 JSON\-RPC errors.  stdout carries protocol traffic only.
 .SS ocuse files
@@ -925,7 +929,7 @@ Read (never written) as the fallback Go key \(em the legacy v1 location of the
 credential \fB/connect\fR stores; on v2 the live one is the \fBcredential\fR row
 of opencode's store, which is read first.  \fB$OCUSE_API_KEY\fR and
 \fB$OPENCODE_API_KEY\fR override both.
-.SS arkuse
+.SH ARKUSE
 .B arkuse
 tracks a Volcengine ARK Agent Plan and reports in
 .BR AFP ,
@@ -1013,7 +1017,7 @@ control plane's \fIaccount\fR object.
 .B mcp
 Run an MCP stdio server exposing the same seven tools \(em \fIusage\fR,
 \fIplans\fR, \fImodels\fR, \fIdaily\fR, \fIhourly\fR, \fIsession\fR,
-\fImodel\fR \) whose output matches the subcommands.
+\fImodel\fR ) whose output matches the subcommands.
 .SS arkuse options
 The shared options are those under
 .BR "ocuse options" ,
@@ -1074,10 +1078,11 @@ The store path; opened read\-only.
 .SH ODUSE
 .B oduse
 tracks an OpenDesign subscription from the Open Design desktop app's own
-SQLite store, read\-only, and from that app's local daemon.
+SQLite store, read\-only, and from the account's balance API or that app's
+local daemon.
 .SS oduse synopsis
 .B oduse
-[\fIOPTIONS\fR]
+[\fB\-\-session\-cookie\fR \fIpath\fR] [\fIOPTIONS\fR]
 .br
 .B oduse \-1
 [\fB\-\-json\fR] [\fIOPTIONS\fR]
@@ -1125,15 +1130,19 @@ block with each model's multiplier, credits and share.
 The same reports as \fBcmduse\fR \'s with \fIcredits\fR in place of the cache
 columns; CSV columns are
 \fIday|hour|session,requests,tokens_in,tokens_out,credits,cost_usd\fR.
-Cache reads are priced (from \fIcore/zen.json\fR\'s rate for the same model,
-else the model\'s input rate) and are most of a cache-heavy turn\'s bill.
+Cache reads are priced from each model\'s published \fIcacheRead\fR rate in
+\fIcore/od.json\fR (a row the list does not carry falls back to its own input
+rate, flagged in the footer) and are most of a cache-heavy turn\'s bill.  A
+published \fIlongContext\fR tier replaces all four rates for the whole turn
+once its fresh input passes \fIinputTokensAbove\fR; \fBprice\fR and
+\fBcredits\fR have no token count and stay flat.
 .TP
 .B models, plans
 The catalogue from
 .IR core/od.json :
 four plans with their prices, monthly / weekly / 5\-hour caps, plan\-model
 credits and concurrency, then every model's multiplier and \fB$\fR/1M rates,
-each marked \fIpublished\fR or \fIestimate\fR.
+every row marked \fIpublished\fR, from Open Design\'s own price list.
 .TP
 .B statusline
 The family template engine.  Placeholders are \fB{plan}\fR \fB{period}\fR
@@ -1162,8 +1171,18 @@ The plan: \fIgo\fR (default), \fIplus\fR, \fIpro\fR or \fImax\fR.  Told,
 because the store records no subscription and the wallet reports a balance.
 .TP
 .B \-\-no\-wallet
-Skip the desktop app's local daemon.  Without it a closed app is one line
-(\fIwallet: daemon not running at http://127.0.0.1:7456\fR), never an error.
+Skip both wallet routes: the account's balance API and the desktop app's local
+daemon.  Without a credential no HTTP request is made at all.
+.TP
+.B \-\-session\-cookie \fIpath\fR
+A file holding the console session cookie used for
+\fIGET /api/v1/wallet/balance\fR and
+\fIGET /api/v1/workspaces/current/billing/snapshot\fR.  The file must be mode 0600; a looser one is
+refused.  The cookie can also come from \fB$OD_SESSION\fR or
+\fB$OD_SESSION_COOKIE\fR (these win over the flag).  It is supplied by the user,
+never read from a browser, never logged, and never the model API key.  It
+expires: sign in to the console again to refresh it, and the frame names an
+expired one as \fIapi HTTP 401\fR.  Without it the local daemon is the fallback.
 .TP
 .B \-\-window \fIw\fR, \-\-period\-start \fIdate\fR, \-\-infer\-anniversary, \-\-rows \fIn\fR
 As in \fBocuse\fR.
@@ -1172,15 +1191,18 @@ Two facts shape the figures.  OpenDesign publishes its caps but exposes no
 per\-window usage API, so the 5\-hour, 7\-day and monthly windows are this
 machine's own cut of the store (em a rolling cut for the two throttles, and the
 pinned period or calendar month for the monthly one (em and the frame labels
-them estimates.  The store's usage events also carry no cache tokens, which
-understates a cache\-heavy turn: that is the same estimate, and the dashboard
-says so on its footer.
+them estimates.  The app store's events carry no cache counters, but
+opencode.db does; cache reads are priced from Open Design's own published
+model\-prices list, and a turn whose cache rate had to be inferred is
+counted on the footer.
 .PP
 Credits are the plan's unit: a model's list\-price dollars multiplied by its
 credit multiplier.  A cap a plan does not publish prints as absent, never as
 zero (em only Go has a 5\-hour window (em and the plan\-model credits are a
 published allowance with no local meter, because the store names models but not
-which of them are the plan's own.
+which of them are the plan's own.  Token rates, cache rates and
+long-context tiers come from Open Design\'s published \fI/public/model\-prices\fR
+endpoint (fetched 2026\-11\-17); the plan pages still supply the multipliers.
 .PP
 Design Plan caps are per model class: Go publishes $220/month, $55/7 days and
 $18/5 hours for DeepSeek V4.1 Flash Eco, and $120/month, $30/7 days and $10/5
@@ -1191,15 +1213,45 @@ plan anchors \(em a pinned \fB\-\-period\-start\fR, an explicit \fB\-\-since\fR,
 the inferred subscription anniversary \(em and says \(lqno period anchor\(rq
 otherwise; the default calendar month is not the plan's cycle.
 .PP
-The wallet is the only server\-side number that exists.  It is a balance rather
-than a window meter, so it prints beside the windows: the desktop app's daemon
-serves \fIGET /api/integrations/vela/wallet\fR on 127.0.0.1 (7456 by default;
-\fB$OD_BIND_HOST\fR, \fB$OD_PORT\fR and \fB$OD_DAEMON_URL\fR override) with the
-control key it stored at sign\-in.  \fBoduse\fR never reads, copies or prints
-that key; it only talks to localhost, with a 300\:ms connect timeout so a closed
-port costs milliseconds.  A refusal the daemon reports itself
-(\fIunauthorized\fR, an expired key) keeps the daemon's own words on the same
-line.
+The wallet is a server\-side number, but it is a balance rather than a window
+meter, so it prints beside the windows and \fB\-\-json\fR names the route that
+supplied it in \fIwalletSource\fR (\fIapi\fR, \fIdaemon\fR or null).  Preferred
+is the account's own figure,
+\fIGET https://amr\-api.open\-design.ai/api/v1/wallet/balance\fR
+(\fB$OD_API_URL\fR overrides the host), authenticated by the console session
+cookie \fB$OD_SESSION\fR / \fB$OD_SESSION_COOKIE\fR /
+\fB\-\-session\-cookie\fR \fIpath\fR.  \fBbalanceUsd\fR is a decimal string
+(\fI"1.0000"\fR); \fIexpiresAt\fR and \fIupdatedAt\fR are carried into
+\fB\-\-json\fR and the expiry date onto the frame line.  A non\-200 or a body
+that will not parse is a named failure, never a zero; a dead cookie falls back
+to the local daemon.  With no credential there is no request at all: the
+desktop app's daemon serves \fIGET /api/integrations/vela/wallet\fR on 127.0.0.1
+(7456 by default; \fB$OD_BIND_HOST\fR, \fB$OD_PORT\fR and \fB$OD_DAEMON_URL\fR
+override) with the control key it stored at sign\-in.  \fBoduse\fR never reads,
+copies or prints that key; it only talks to localhost, with a 300\:ms connect
+timeout (the API gets 2\:s) so a closed port costs milliseconds.  A refusal
+the daemon reports itself (\fIunauthorized\fR, an expired key) keeps the
+daemon's own words on the same line.
+.PP
+When the same session cookie is present, \fBoduse\fR also fetches
+\fIGET https://amr\-api.open\-design.ai/api/v1/workspaces/current/billing/snapshot\fR
+(\fB$OD_WORKSPACE\fR substitutes a workspace id, \fB$OD_API_URL\fR the host).
+One request returns the plan, the wallet and both \fIdesignPlanWindows\fR, and
+those windows win over the local estimates: the frame prints
+\fI$4.59 used of $5.00 \(ci 8.3% left \(ci 4149/50000 credits \(ci resets 14:21Z\fR.
+The reset instant is the server's \fIresetsAt\fR, never a local \fInow \- 5h\fR
+cut or a guessed subscription anchor.  A credit is \fB$0.0001\fR, proved by the
+console ledger (\fIlistChargedUsd 0.0043\fR beside \fIlistChargeCredits 43\fR), so
+the 50,000 and 150,000 windows are $5 and $15 \(em the published $18/$55 caps at
+Eco's 0.27, not the Flash figures.  Both the raw credits and the dollars are
+shown.  The Monthly row has no snapshot equivalent and stays local.
+\fB\-\-json\fR keeps every existing key and adds \fImeterSource\fR (\fIsnapshot\fR
+or \fIlocal\fR), a \fIsnapshot\fR object with \fIcreditToUsd\fR, the plan, period,
+balance and each window's raw credits, dollars, \fIleftPct\fR and \fIresetsAt\fR,
+plus \fIsnapshotError\fR.  With no cookie there is no request at all and one dim
+line reads \fIwindows: local estimate \(em no session cookie\fR; a 401, 403, 404,
+a hang or a malformed body names the reason and falls back to the local windows,
+never a zero.
 .SS oduse files
 .TP
 .I ~/.config/oduse/config.json
@@ -1211,6 +1263,14 @@ The app's store; opened read\-only.
 .I $OD_OPENCODE_DB, $OPENCODE_DB
 The harness store, read as the second source and filtered to the
 \fIopen\-design\fR providers; opened read\-only.
+.TP
+.I $OD_SESSION, $OD_SESSION_COOKIE, \-\-session\-cookie \fIpath\fR
+Console session cookie for the balance API.  The env forms carry the value; the
+flag names a 0600 file.  Read\-only, expires, never scraped from a browser.
+.TP
+.I $OD_API_URL
+Balance API host (default \fIhttps://amr\-api.open\-design.ai\fR); the path is
+fixed.
 .SH SEE ALSO
 .BR cmd (1),
 the Command Code CLI for login and authentication.
