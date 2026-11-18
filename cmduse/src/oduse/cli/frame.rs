@@ -68,6 +68,9 @@ pub fn dashboard(ctx: &Ctx) {
         period_anchored: ctx.period.anchored,
         wallet: ctx.wallet.clone(),
         wallet_error: ctx.wallet_error.clone(),
+        wallet_source: ctx.wallet_source,
         no_wallet: ctx.args.no_wallet,
+        session_cookie: ctx.session_cookie.clone(),
+        api_base: ctx.api_base.clone(),
     });
 }

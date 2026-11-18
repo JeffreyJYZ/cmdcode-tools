@@ -39,15 +39,11 @@ fn every_wire_id_the_gateway_serves_keys_a_row() {
         );
         assert!(!model.label.is_empty(), "{id} keeps its human label");
     }
-    // The row set and the live list agree: nothing is carried that the gateway
-    // cannot serve, so no row is dead weight.
-    for model in &c.models {
-        assert!(
-            LIVE_IDS.contains(&model.id.as_str()),
-            "{} is in od.json but the gateway does not serve it",
-            model.id
-        );
-    }
+    // The table also carries the 32 ids from Open Design's published price list
+    // that this gateway snapshot does not serve yet. They are priced rows rather
+    // than dead weight: `published_rates.rs` pins all 46, and a lane can start
+    // serving one without a code change.
+    assert_eq!(c.models.len(), 46);
 }
 
 #[test]
@@ -71,9 +67,10 @@ fn a_turn_on_a_served_id_prices_and_one_off_the_list_stays_unpriced() {
     assert_eq!(report.month.unpriced, 0, "{:?}", report.month);
     assert!(report.month.credits > 0.0, "{:?}", report.month);
     let by_id = |id: &str| report.models.iter().find(|m| m.id == id).expect(id);
-    // Haiku at x2 on $0.10 = $0.20 credits for 1M input. The multiplier stays
-    // whatever the table says — its 2x-vs-4x conflict is an open decision.
-    assert!((by_id("claude-haiku-5.5").month.credits - 0.2).abs() < 1e-9);
+    // Haiku's 1M input is above its published 100k long-context tier, so all
+    // four rates switch and 1M in costs $0.5 x2 = 1.0 credits. The multiplier
+    // stays whatever the table says — its 2x-vs-4x conflict is still open.
+    assert!((by_id("claude-haiku-5.5").month.credits - 1.0).abs() < 1e-9);
     // An id the list does not carry is counted as unpriced, never silently $0.
     let unknown = vec![row(NOW_MS - 60_000, "retired-model-9", 5_000, 100)];
     let report = crate::oduse::window::build(

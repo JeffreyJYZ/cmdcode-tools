@@ -775,11 +775,14 @@ pub fn statusline_template(
 /// object — plan and period label, period/month spend, the two rolling windows,
 /// and the top model. The `*Cap` keys are retired (always null): Go grants
 /// limits per model, so no account-wide pool exists, and the summed ceiling
-/// they carried read as a budget the console does not have.
+/// they carried read as a budget the console does not have. The key set is the
+/// shared one from `report_render::STATUSLINE_KEYS`, aliases included.
 pub fn statusline_json(report: &Report, plan_id: &str) -> String {
     serde_json::json!({
         "plan": plan_id,
+        "source": "opencode.db",
         "period": report.period_label,
+        "periodEnd": report.period_end_ms,
         "monthSpent": report.month.cost,
         "monthCap": serde_json::Value::Null,
         "fiveHourSpent": report.five_hour.cost,
@@ -787,6 +790,11 @@ pub fn statusline_json(report: &Report, plan_id: &str) -> String {
         "weeklySpent": report.weekly.cost,
         "weeklyCap": serde_json::Value::Null,
         "model": report.models.first().map(|m| m.id.clone()),
+        // The aliases keep their cmduse meaning; there is no credit pool here,
+        // so the remainder is null rather than a fabricated zero.
+        "fiveHourUsed": report.five_hour.cost,
+        "weeklyUsed": report.weekly.cost,
+        "monthlyRemaining": serde_json::Value::Null,
     })
     .to_string()
 }
@@ -2313,6 +2321,13 @@ mod tests {
         assert_eq!(json["fiveHourCap"], serde_json::Value::Null);
         assert_eq!(json["weeklyCap"], serde_json::Value::Null);
         assert_eq!(json["model"], "glm-5.3-flash");
+    }
+
+    #[test]
+    fn ocuse_statusline_json_carries_the_shared_keys() {
+        let json: serde_json::Value =
+            serde_json::from_str(&statusline_json(&report(), "go")).unwrap();
+        crate::report_render::assert_statusline_keys(&json);
     }
 
     #[test]

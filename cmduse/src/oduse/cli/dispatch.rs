@@ -81,6 +81,7 @@ pub fn subcommand(ctx: &Ctx) -> bool {
                 period_start: ctx.period.start,
                 wallet: ctx.wallet.as_ref(),
                 wallet_error: ctx.wallet_error.as_deref(),
+                wallet_source: ctx.wallet_source,
             });
         }
         Some(SubCmd::Model) => {

@@ -98,6 +98,7 @@ fn oduse_help_carries_the_shared_tokens() {
         "--db",
         "--plan",
         "--no-wallet",
+        "--session-cookie",
         "--window",
         "--period-start",
         "--infer-anniversary",
@@ -150,6 +151,29 @@ fn model_id_is_pulled_out_before_parsing() {
     assert_eq!(id.as_deref(), Some("glm-5.3-flash"));
     let (_, id) = args::split_model_id(argv(&["daily", "--days", "7"]));
     assert!(id.is_none());
+}
+
+#[test]
+fn the_session_cookie_flag_is_stripped_before_the_shared_parser() {
+    // The flag is oduse-only and its value is a file path, never a cookie. A
+    // bare flag stays for the shared parser to refuse rather than being eaten.
+    let (rest, path) = args::split_session_cookie(argv(&[
+        "-1",
+        "--session-cookie",
+        "/tmp/cookie",
+        "model",
+        "glm-5.3-flash",
+    ]));
+    assert_eq!(path.as_deref(), Some("/tmp/cookie"));
+    let (rest, id) = args::split_model_id(rest);
+    assert_eq!(id.as_deref(), Some("glm-5.3-flash"));
+    assert!(cli::parse_args_from(rest, cli::Binary::Oduse).is_ok());
+    let (rest, path) = args::split_session_cookie(argv(&["--session-cookie=/tmp/c"]));
+    assert_eq!(path.as_deref(), Some("/tmp/c"));
+    assert!(rest.len() == 1);
+    let (rest, path) = args::split_session_cookie(argv(&["--session-cookie"]));
+    assert_eq!(path, None);
+    assert!(cli::parse_args_from(rest, cli::Binary::Oduse).is_err());
 }
 
 #[test]

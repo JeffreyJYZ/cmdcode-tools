@@ -374,22 +374,73 @@ fn per_model_panel_rides_both_dashboards() {
 fn statusline_json_uses_the_family_window_names() {
     // The pool is exhausted (nothing left), so the whole cap counts as spent —
     // the same arithmetic the dashboard prints as `$70.00 / $70.00`.
-    let v = crate::statusline_json("GOAT", 70.0, 0.0, (1.0, 14.0), (2.0, 35.0));
+    let v = crate::statusline_json(
+        "GOAT",
+        Some(70.0),
+        0.0,
+        (1.0, Some(14.0)),
+        (2.0, Some(35.0)),
+        None,
+    );
     assert_eq!(v["monthSpent"], 70.0);
     assert_eq!(v["monthCap"], 70.0);
     assert_eq!(v["fiveHourSpent"], 1.0);
     assert_eq!(v["weeklyCap"], 35.0);
     // A partly used pool reports the difference, and never a negative spend.
-    let v = crate::statusline_json("GOAT", 70.0, 30.0, (0.0, 0.0), (0.0, 0.0));
-    assert_eq!(v["monthSpent"], 40.0);
-    let v = crate::statusline_json("GOAT", 70.0, 90.0, (0.0, 0.0), (0.0, 0.0));
-    assert_eq!(v["monthSpent"], 0.0);
+    let no_windows =
+        |rem: f64| crate::statusline_json("GOAT", Some(70.0), rem, (0.0, None), (0.0, None), None);
+    assert_eq!(no_windows(30.0)["monthSpent"], 40.0);
+    assert_eq!(no_windows(90.0)["monthSpent"], 0.0);
+    // A cap the source does not publish is null, never zero — including the
+    // month, whose spent figure is derived from it, and both rolling windows.
+    let uncapped = crate::statusline_json("GOAT", None, 30.0, (0.0, None), (0.0, None), None);
+    assert_eq!(uncapped["monthCap"], serde_json::Value::Null);
+    assert_eq!(uncapped["monthSpent"], serde_json::Value::Null);
+    assert_eq!(uncapped["fiveHourCap"], serde_json::Value::Null);
+    assert_eq!(uncapped["weeklyCap"], serde_json::Value::Null);
     // The older names keep their old values, as aliases.
-    let v = crate::statusline_json("GOAT", 70.0, 30.0, (1.0, 14.0), (2.0, 35.0));
+    let v = crate::statusline_json(
+        "GOAT",
+        Some(70.0),
+        30.0,
+        (1.0, Some(14.0)),
+        (2.0, Some(35.0)),
+        None,
+    );
     assert_eq!(v["monthlyRemaining"], 30.0);
-    assert_eq!(v["monthlyCap"], 70.0);
     assert_eq!(v["fiveHourUsed"], 1.0);
     assert_eq!(v["weeklyUsed"], 2.0);
+    // `monthlyCap` was drift, not an alias: the six-key meter set already has
+    // `monthCap`, and the `-1 --json` dashboard keeps its own `monthlyCap`.
+    assert!(v.get("monthlyCap").is_none());
+}
+
+#[test]
+fn cmduse_statusline_json_carries_the_shared_keys() {
+    let v = crate::statusline_json(
+        "GOAT",
+        Some(70.0),
+        30.0,
+        (1.0, Some(14.0)),
+        (2.0, Some(35.0)),
+        Some(1_796_447_625_000.0),
+    );
+    crate::report_render::assert_statusline_keys(&v);
+    assert_eq!(v["source"], "api");
+    assert_eq!(v["period"], "billing month");
+    assert_eq!(v["periodEnd"], 1_796_447_625_000.0);
+    assert_eq!(v["model"], serde_json::Value::Null);
+}
+
+#[test]
+fn statusline_meter_keys_are_oduse_extras_not_shared() {
+    // meterSource/snapshotError name a server meter only OpenDesign has. They
+    // belong in EXTRA, so cmduse/ocuse/arkuse are not forced to emit concepts
+    // their sources cannot produce; the shared key assertion stays honest.
+    assert!(!crate::report_render::STATUSLINE_KEYS.contains(&"meterSource"));
+    assert!(!crate::report_render::STATUSLINE_KEYS.contains(&"snapshotError"));
+    assert!(crate::report_render::STATUSLINE_EXTRA_KEYS.contains(&"meterSource"));
+    assert!(crate::report_render::STATUSLINE_EXTRA_KEYS.contains(&"snapshotError"));
 }
 
 #[test]
@@ -547,7 +598,7 @@ fn update_box_borders_align_and_wraps() {
 
 #[test]
 fn report_json_envelopes_are_the_shared_contract() {
-    // Parity is enforced, not eyeballed: the three binaries emit one envelope per
+    // Parity is enforced, not eyeballed: the four binaries emit one envelope per
     // report, and each asserts its own emitter against the core constants.
     use crate::report_render::{hourly_table, model_table, project_table, table, Fmt};
     use crate::report_render::{

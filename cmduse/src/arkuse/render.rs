@@ -907,6 +907,13 @@ pub fn statusline_json(report: &Report, plan_id: &str) -> String {
         "weeklySpent": report.weekly.afp,
         "weeklyCap": quota_of(catalog.windows.weekly),
         "model": report.models.first().map(|m| m.id.clone()),
+        // The aliases keep their cmduse meaning; AFP has no credit remainder,
+        // so that one stays null rather than a fabricated zero.
+        "fiveHourUsed": report.five_hour.afp,
+        "weeklyUsed": report.weekly.afp,
+        "monthlyRemaining": serde_json::Value::Null,
+        // Unit-specific extras: AFP is this plan's currency and the control
+        // plane's meters have no counterpart on the other three binaries.
         "afp": {
             "fiveHour": report.five_hour.afp,
             "weekly": report.weekly.afp,
@@ -1685,6 +1692,17 @@ mod tests {
             ..Default::default()
         }];
         crate::arkuse::window::build(&rows, &ark::catalog(), ark::DEFAULT_PLAN, now, None, None)
+    }
+
+    #[test]
+    fn arkuse_statusline_json_carries_the_shared_keys() {
+        let json: serde_json::Value =
+            serde_json::from_str(&statusline_json(&report(), ark::DEFAULT_PLAN)).unwrap();
+        crate::report_render::assert_statusline_keys(&json);
+        // Unit-specific extras stay; they name concepts no other family has.
+        assert!(json.get("afp").is_some());
+        assert!(json.get("account").is_some());
+        assert!(json.get("accountError").is_some());
     }
 
     #[test]

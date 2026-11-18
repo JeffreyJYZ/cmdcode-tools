@@ -1,17 +1,15 @@
 // The OpenDesign catalogue: what each plan allows and what a model costs.
 //
-// Hand-maintained in `core/od.json` from the plan page, because Open Design
-// publishes its caps as prose — there is no machine-readable source to extract
-// from. Token rates are taken from the repo's own model catalogue where the id
-// appears there (`rateSource: "repo"`): `core/zen.json` first, and for an id that
-// shop does not sell, `opencode-plugin/src/catalog.ts` (generated from the
-// published CLI bundle). Every figure the plan page does not publish is marked
-// `estimate` so `oduse models` can say which is which.
+// Hand-maintained in `core/od.json`. Plan caps and multipliers come from the
+// pricing prose; token rates, cache rates and long-context tiers come verbatim
+// from Open Design's own `GET /v1/public/model-prices` list (the raw payload is
+// kept under `docs/plan/opendesign/reference/`). Every row is `published`: the
+// list covers every model this table carries, so no rate needs an `estimate`
+// label any more. `catalogId` remains only as the old Go/Zen spelling of a wire
+// id; pricing keys on the wire id itself.
 //
 // The table is keyed by the gateway's **wire id**, because a turn records what
-// the gateway served — an id the rows do not carry is metered at zero. Where the
-// Go/Zen shelf spells the same model differently, `catalogId` names it there and
-// only the provenance lookup reads that.
+// the gateway served — an id the rows do not carry is metered at zero.
 //
 // Which plan the account is on is not discoverable either: the store records no
 // subscription and the daemon's wallet reports a balance, not a tier, so `--plan`
@@ -61,10 +59,10 @@ pub struct Model {
     /// always finds its row.
     pub id: String,
     pub label: String,
-    /// The same model's id in the repo's token catalogue (`core/zen.json`) where
-    /// that table spells it differently — the shelf writes `claude-haiku-5-5`
-    /// where the gateway serves `claude-haiku-5.5`. Only the provenance lookup
-    /// uses it; pricing keys on [`Model::id`].
+    /// Legacy spelling of the same model from the Go/Zen catalogue
+    /// (`claude-haiku-5-5` where the gateway serves `claude-haiku-5.5`). Kept for
+    /// readers and `--json`; no pricing or rate lookup uses it any more — Open
+    /// Design's price list is keyed by the wire [`Model::id`] itself.
     #[serde(default, rename = "catalogId")]
     pub catalog_id: Option<String>,
     /// credits = list-price dollars x this multiplier.
@@ -73,11 +71,39 @@ pub struct Model {
     pub input: f64,
     /// `$`/1M output tokens.
     pub output: f64,
-    /// `repo` when the rate comes from the repo's own model catalogue
-    /// (`core/zen.json`, else `opencode-plugin/src/catalog.ts`), `estimate`
-    /// otherwise.
-    #[serde(rename = "rateSource")]
-    pub rate_source: String,
+    /// `$`/1M cache-read tokens, straight from the published price list. A
+    /// missing value means the list has no row for this model, not a free rate.
+    #[serde(default, rename = "cacheRead")]
+    pub cache_read: Option<f64>,
+    /// `$`/1M cache-write tokens. Recorded for completeness: the store has no
+    /// cache-write counter, so this cannot change a figure today.
+    #[serde(default, rename = "cacheWrite")]
+    pub cache_write: Option<f64>,
+    /// Published replacement rates for a large turn; absent on a flat-rate
+    /// model. The whole turn is repriced once the input threshold is crossed.
+    #[serde(default, rename = "longContext")]
+    pub long_context: Option<LongContext>,
+    /// Provenance of the token rates, with three cases: `published` (Open
+    /// Design's own price list — the only authoritative one), `estimate` (a
+    /// seeded stand-in, used only where no rate is published), and absent
+    /// (`None`, no claim at all). Every current row is `published`; the field is
+    /// optional so a row that carries no label still parses and renders as
+    /// unlabelled rather than being silently promoted to published.
+    #[serde(default, rename = "rateSource")]
+    pub rate_source: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct LongContext {
+    /// The published `inputTokensAbove` threshold, in fresh input tokens.
+    #[serde(rename = "inputTokensAbove")]
+    pub input_tokens_above: u64,
+    pub input: f64,
+    pub output: f64,
+    #[serde(rename = "cacheRead")]
+    pub cache_read: f64,
+    #[serde(default, rename = "cacheWrite")]
+    pub cache_write: Option<f64>,
 }
 
 impl Model {
@@ -126,8 +152,8 @@ impl Catalog {
     /// carry — the caller then reports it as unpriced rather than free.
     ///
     /// Cache tokens are not counted here; [`Self::turn_cost`] is the turn's real
-    /// price (it also takes `cache_read`), and this stays the bare input/output
-    /// form the catalogue's own rows are stated in.
+    /// price. There is no token count in a `price`/`credits` caller to decide a
+    /// long-context tier, so those two always use the flat published rate.
     pub fn price(&self, model_id: &str, input: u64, output: u64) -> Option<f64> {
         let model = self.model(model_id)?;
         Some((input as f64 * model.input + output as f64 * model.output) / 1e6)
@@ -137,10 +163,10 @@ impl Catalog {
     /// folded in — see [`crate::oduse::price`], which is the one place the rule
     /// lives:
     ///
-    /// * **cache reads are priced.** `core/od.json` carries no cache rate, so the
-    ///   rate comes from `core/zen.json`'s row for the same model (`catalogId`,
-    ///   else the wire id), and a model that shelf does not sell prices cache
-    ///   reads at its own input rate.
+    /// * **cache reads are priced** at the model's published `cacheRead`, never
+    ///   at `core/zen.json`'s rate for a sibling id.
+    /// * **a published long-context tier replaces all four rates** once the
+    ///   fresh-input threshold is crossed; see the comment in the body.
     /// * **reasoning is not added to output** — opencode bills it inside `output`
     ///   already, and this catalogue has no reasoning rate.
     /// * the result is `None` for a model the catalogue has never seen, which the
@@ -153,10 +179,20 @@ impl Catalog {
         cache_read: u64,
     ) -> Option<crate::oduse::price::Priced> {
         let model = self.model(model_id)?;
+        // The store's `input` is the fresh-input counter; `cache_read` is a
+        // disjoint counter, not a prefix of it, so only `input` can decide a
+        // published `inputTokensAbove` tier. Output rides the chosen tier but
+        // never selects it. A model without a tier keeps its flat rates.
+        let (input_rate, output_rate, published_cache) = match &model.long_context {
+            Some(tier) if input > tier.input_tokens_above => {
+                (tier.input, tier.output, Some(tier.cache_read))
+            }
+            _ => (model.input, model.output, model.cache_read),
+        };
         let (cache_rate, cache_estimated) =
-            crate::oduse::price::cache_read_rate(model.input, model.catalog_id());
-        let cost = (input as f64 * model.input
-            + output as f64 * model.output
+            crate::oduse::price::cache_read_rate(published_cache, input_rate);
+        let cost = (input as f64 * input_rate
+            + output as f64 * output_rate
             + cache_read as f64 * cache_rate)
             / 1e6;
         Some(crate::oduse::price::Priced {

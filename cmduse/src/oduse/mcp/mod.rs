@@ -12,6 +12,7 @@
 mod call;
 mod tools;
 
+use crate::oduse::meter::Source;
 use crate::oduse::wallet::Wallet;
 use serde_json::{json, Value};
 
@@ -32,6 +33,7 @@ pub struct Settings<'a> {
     pub period_start: Option<i64>,
     pub wallet: Option<&'a Wallet>,
     pub wallet_error: Option<&'a str>,
+    pub wallet_source: Option<Source>,
 }
 
 /// Serve stdin -> stdout until the host closes the pipe.

@@ -1,6 +1,6 @@
 use crate::render::{color_for, compact, money, BOLD, CYAN, DIM, RESET};
 
-/// JSON envelope keys for the four report commands. All three binaries live in
+/// JSON envelope keys for the four report commands. All four binaries live in
 /// this crate and each asserts its own emitter against these in a unit test, so
 /// the envelopes cannot drift apart the way they did on 2026-11-13 (`cmduse` said
 /// `projects` where the others said `sessions`, and had no `source` on `daily`).
@@ -15,6 +15,67 @@ pub const REPORT_HOURLY_KEYS: [&str; 4] = ["hours", "scope", "source", "total"];
 pub const REPORT_MODEL_KEYS: [&str; 5] = ["models", "scope", "since", "sinceMs", "source"];
 #[cfg(test)]
 pub const REPORT_SESSION_KEYS: [&str; 4] = ["projects", "scope", "sessions", "source"];
+
+/// The keys every `statusline --json` carries, whatever the binary. Sorted, so
+/// a test compares directly against a map's key order. One list, not four: a
+/// fourth hand-written copy is how the envelope keys drifted in the first place.
+/// A family may add its own unit keys on top (`afp`, `capLabel`, `walletUsd`,
+/// `account`), but it may never drop one of these — that is what this asserts.
+#[cfg(test)]
+pub const STATUSLINE_KEYS: [&str; 14] = [
+    "fiveHourCap",
+    "fiveHourSpent",
+    "fiveHourUsed",
+    "model",
+    "monthCap",
+    "monthSpent",
+    "monthlyRemaining",
+    "period",
+    "periodEnd",
+    "plan",
+    "source",
+    "weeklyCap",
+    "weeklySpent",
+    "weeklyUsed",
+];
+
+/// Family unit keys allowed on top of the shared set. One list, not four: a
+/// binary that invents a new extra must add it here deliberately, and a dropped
+/// shared key still fails the assertion below.
+#[cfg(test)]
+pub const STATUSLINE_EXTRA_KEYS: [&str; 8] = [
+    "account",
+    "accountError",
+    "afp",
+    "capLabel",
+    "meterSource",
+    "snapshotError",
+    "walletSource",
+    "walletUsd",
+];
+
+/// The shared assertion every binary's statusline test calls. Values differ by
+/// source and a missing concept is `null`; the *shape* is the contract. No key
+/// from the shared set may go missing, and no undeclared key may appear.
+#[cfg(test)]
+pub fn assert_statusline_keys(json: &serde_json::Value) {
+    let obj = json
+        .as_object()
+        .expect("statusline --json must be an object");
+    for key in STATUSLINE_KEYS {
+        assert!(
+            obj.contains_key(key),
+            "statusline JSON dropped shared key {key:?}"
+        );
+    }
+    for key in obj.keys() {
+        assert!(
+            STATUSLINE_KEYS.contains(&key.as_str())
+                || STATUSLINE_EXTRA_KEYS.contains(&key.as_str()),
+            "statusline JSON grew an undeclared key {key:?}"
+        );
+    }
+}
 
 /// Output format for the report tables. JSON and CSV are machine-readable
 /// (never colored); `Table` honors the caller's color decision.

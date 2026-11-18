@@ -9,6 +9,8 @@
 //   {wallet}                       the daemon's balance, or a dash
 //   {models}                       top model by period credits
 // Unknown placeholders are dropped; `|` and newlines are literal separators.
+// The 5-hour and weekly figures come from the account snapshot when one answered,
+// the same meter the dashboard prints; the local store is the fallback.
 use crate::oduse::od::Plan;
 use crate::oduse::window::Report;
 use cmduse_core::{money, pct};
@@ -47,65 +49,102 @@ pub fn statusline_template(
         Some(wallet) => money(wallet.balance_usd),
         None => "—".to_string(),
     };
-    // Each placeholder divides by the set its own window's models draw on: a
-    // DeepSeek V4.1 Flash month is capped at $120 on Go, not the $220 the Eco
-    // variant gets.
+    // One resolver for all three surfaces: a machine consumer must not read a
+    // local estimate while the frame beside it prints the account's number.
+    let meter = super::json::window_meter(report, plan);
+    // The month still divides by the set its own models draw on: a DeepSeek V4.1
+    // Flash month is capped at $120 on Go, not the $220 the Eco variant gets.
     let month =
         crate::oduse::window::window_caps(&report.models, plan, crate::oduse::window::Span::Month);
-    let week =
-        crate::oduse::window::window_caps(&report.models, plan, crate::oduse::window::Span::Weekly);
-    let five = crate::oduse::window::window_caps(
-        &report.models,
-        plan,
-        crate::oduse::window::Span::FiveHour,
-    );
     crate::report_render::render_template(tpl, |key| match key {
         "plan" => plan.id.clone(),
         "period" => report.period_label.clone(),
         "month" => cash(report.month.credits),
         "month_pct" => share(report.month.credits, Some(month.chosen.monthly_usd)),
         "month_bar" => gauge(report.month.credits, Some(month.chosen.monthly_usd)),
-        "five_hour" | "5h" => cash(report.five_hour.credits),
-        "five_hour_pct" | "5h_pct" => share(report.five_hour.credits, five.chosen.five_hour_usd),
-        "five_hour_bar" | "5h_bar" => gauge(report.five_hour.credits, five.chosen.five_hour_usd),
-        "weekly" | "wk" => cash(report.weekly.credits),
-        "weekly_pct" | "wk_pct" => share(report.weekly.credits, week.chosen.weekly_usd),
-        "weekly_bar" | "wk_bar" => gauge(report.weekly.credits, week.chosen.weekly_usd),
+        "five_hour" | "5h" => cash(meter.five_hour_spent),
+        "five_hour_pct" | "5h_pct" => share(meter.five_hour_spent, meter.five_hour_cap),
+        "five_hour_bar" | "5h_bar" => gauge(meter.five_hour_spent, meter.five_hour_cap),
+        "weekly" | "wk" => cash(meter.weekly_spent),
+        "weekly_pct" | "wk_pct" => share(meter.weekly_spent, meter.weekly_cap),
+        "weekly_bar" | "wk_bar" => gauge(meter.weekly_spent, meter.weekly_cap),
         "wallet" => wallet(),
         "models" => top_model(),
         _ => String::new(),
     })
 }
 
-/// `oduse statusline --json`: the same numbers the template resolves. The
-/// `*Cap` keys are filled here rather than null — OpenDesign publishes caps,
-/// unlike Go's per-model allowances — and a cap the plan does not publish is
-/// null, which is why the 5-hour one is null on Plus/Pro/Max.
+/// `oduse statusline --json`: the same numbers the template and the dashboard
+/// frame resolve. The `*Cap` keys are filled here rather than null — OpenDesign
+/// publishes caps, unlike Go's per-model allowances — and a cap the plan does
+/// not publish is null, which is why the 5-hour one is null on Plus/Pro/Max with
+/// no snapshot answer. `meterSource` names the meter behind the 5h/weekly figures;
+/// `source` keeps its older meaning, the store the rows came from.
 pub fn statusline_json(report: &Report, plan: &Plan) -> String {
+    // One resolver for all three surfaces: a machine consumer must not read a
+    // local estimate while the frame beside it prints the account's number.
+    let meter = super::json::window_meter(report, plan);
     // The caps a consumer divides by are the ones the window's own models draw
     // on, not the plan's headline set: a report on DeepSeek V4.1 Flash is capped
     // at $120/mo on Go, not the $220 the Eco variant gets.
-    let five = crate::oduse::window::window_caps(
-        &report.models,
-        plan,
-        crate::oduse::window::Span::FiveHour,
-    );
-    let week =
-        crate::oduse::window::window_caps(&report.models, plan, crate::oduse::window::Span::Weekly);
     let month =
         crate::oduse::window::window_caps(&report.models, plan, crate::oduse::window::Span::Month);
     serde_json::json!({
         "plan": plan.id,
+        "source": "open-design",
+        // `snapshotError` is the key the dashboard JSON emits: null unless a
+        // cookie was present and the request failed.
+        "meterSource": meter.source.as_str(),
+        "snapshotError": report.snapshot_error,
         "period": report.period_label,
+        "periodEnd": report.period_end_ms,
         "monthSpent": report.month.credits,
         "monthCap": month.chosen.monthly_usd,
-        "fiveHourSpent": report.five_hour.credits,
-        "fiveHourCap": five.chosen.five_hour_usd,
-        "weeklySpent": report.weekly.credits,
-        "weeklyCap": week.chosen.weekly_usd,
+        "fiveHourSpent": meter.five_hour_spent,
+        "fiveHourCap": meter.five_hour_cap,
+        "weeklySpent": meter.weekly_spent,
+        "weeklyCap": meter.weekly_cap,
+        "model": report.models.first().map(|m| m.id.clone()),
+        // The aliases keep their cmduse meaning; the wallet is a balance in
+        // dollars, not a credit remainder, so this one stays null.
+        "fiveHourUsed": meter.five_hour_spent,
+        "weeklyUsed": meter.weekly_spent,
+        "monthlyRemaining": serde_json::Value::Null,
+        // Unit-specific extras with no counterpart on the other three binaries:
+        // which per-model cap set was chosen, and the wallet daemon's balance.
         "capLabel": month.chosen.label,
         "walletUsd": report.wallet.as_ref().map(|w| w.balance_usd),
-        "model": report.models.first().map(|m| m.id.clone()),
+        "walletSource": report.wallet_source.map(|s| s.as_str()),
     })
     .to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn oduse_statusline_json_carries_the_shared_keys() {
+        // This test lives beside the emitter, not in oduse/tests/**: that tree
+        // is owned by another lane this round, and the shared key assertion
+        // must not wait on it. A hand-built empty report is enough for a shape.
+        let catalog = crate::oduse::od::catalog();
+        let report = crate::oduse::window::build(
+            &[],
+            &catalog,
+            crate::oduse::od::DEFAULT_PLAN,
+            1_800_000_000_000,
+            Some(crate::oduse::window::calendar_month_start(
+                1_800_000_000_000,
+            )),
+        );
+        let plan = catalog.plan(crate::oduse::od::DEFAULT_PLAN).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&statusline_json(&report, plan)).unwrap();
+        crate::report_render::assert_statusline_keys(&json);
+        // Unit-specific extras stay; they name concepts no other family has.
+        assert!(json.get("capLabel").is_some());
+        assert!(json.get("walletUsd").is_some());
+        assert!(json.get("walletSource").is_some());
+    }
 }

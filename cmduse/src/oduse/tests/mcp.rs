@@ -18,6 +18,7 @@ fn call(method: &str, params: Value, id: i64) -> Value {
             // estimate is what the fixtures are written against.
             wallet: None,
             wallet_error: Some("daemon not running"),
+            wallet_source: None,
         },
     )
     .expect("notification")

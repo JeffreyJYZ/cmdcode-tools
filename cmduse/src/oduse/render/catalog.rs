@@ -3,14 +3,18 @@
 // No plan is marked as current: the store records no subscription and the
 // daemon's wallet reports a balance, so the plan is the one `--plan` named and
 // the heading says so rather than guessing.
+//
+// The RATE column is a provenance label, not a quality guess: only `published`
+// means Open Design's own price list. `estimate` is a seeded stand-in and a
+// missing `rateSource` carries no claim, so neither may read as published.
 use crate::oduse::od::Catalog;
 use cmduse_core::money;
 
 use super::ink::Ink;
 
 /// Every plan's price, caps and concurrency, then what a credit is, then the
-/// rate table with the multiplier and whether the rate is published or an
-/// estimate.
+/// rate table with the multiplier and each row's provenance: published,
+/// estimate, or unlabelled.
 pub fn plans_text(colour: bool) -> String {
     let ink = Ink::new(colour);
     let catalog = crate::oduse::od::catalog();
@@ -75,11 +79,7 @@ fn models_table(ink: &Ink, catalog: &Catalog) -> String {
             format!("x{}", trim(model.multiplier)),
             ink.cyan_on(format!("{:>7}", format!("${}", model.input))),
             ink.cyan_on(format!("{:>7}", format!("${}", model.output))),
-            if model.rate_source == "repo" {
-                ink.dim_on(format!("{:>9}", "published"))
-            } else {
-                ink.dim_on(format!("{:>9}", "estimate"))
-            },
+            ink.dim_on(format!("{:>9}", rate_label(model.rate_source.as_deref()))),
         ));
     }
     out
@@ -123,6 +123,16 @@ pub fn models_text(plan_id: &str, colour: bool) -> String {
     out
 }
 
+/// The three provenance cases, rendered distinctly. Only `published` is
+/// authoritative; an estimate and a row with no label at all say so.
+fn rate_label(rate_source: Option<&str>) -> &'static str {
+    match rate_source {
+        Some("published") => "published",
+        Some("estimate") => "estimate",
+        _ => "—",
+    }
+}
+
 /// `0.5` not `0.50`, `1` not `1.0`.
 fn trim(value: f64) -> String {
     let rounded = (value * 100.0).round() / 100.0;
@@ -130,5 +140,20 @@ fn trim(value: f64) -> String {
         format!("{}", rounded.round() as i64)
     } else {
         format!("{rounded}")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::rate_label;
+
+    #[test]
+    fn only_published_is_labelled_published() {
+        assert_eq!(rate_label(Some("published")), "published");
+        assert_eq!(rate_label(Some("estimate")), "estimate");
+        // A row with no rateSource at all carries no claim, so it must never be
+        // promoted to published by a fall-through.
+        assert_eq!(rate_label(None), "—");
+        assert_eq!(rate_label(Some("repo")), "—");
     }
 }

@@ -67,6 +67,33 @@ pub fn split_model_id(argv: Vec<OsString>) -> (Vec<OsString>, Option<String>) {
     (argv, id)
 }
 
+/// `--session-cookie <path>` (or `--session-cookie=<path>`) is oduse-only, so it
+/// is pulled out of argv before the shared parser sees it — the same seam
+/// `split_model_id` uses. The value is a file path, never a cookie value: a
+/// secret on the command line would be visible to every process on the machine.
+pub fn split_session_cookie(argv: Vec<OsString>) -> (Vec<OsString>, Option<String>) {
+    let mut rest = Vec::with_capacity(argv.len());
+    let mut path = None;
+    let mut args = argv.into_iter();
+    while let Some(arg) = args.next() {
+        let text = arg.to_string_lossy();
+        if text == "--session-cookie" {
+            match args.next() {
+                Some(value) => path = Some(value.to_string_lossy().into_owned()),
+                // Leave a bare flag for the shared parser to refuse.
+                None => rest.push(arg),
+            }
+            continue;
+        }
+        if let Some(value) = text.strip_prefix("--session-cookie=") {
+            path = Some(value.to_string());
+            continue;
+        }
+        rest.push(arg);
+    }
+    (rest, path)
+}
+
 /// The live watch loop is the default, but `-1`/`--once` and `--json` both want
 /// one frame printed and an exit.
 pub fn wants_watch(args: &cli::Args) -> bool {
