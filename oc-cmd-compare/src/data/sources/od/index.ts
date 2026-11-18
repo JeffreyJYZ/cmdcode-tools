@@ -1,23 +1,20 @@
-import { OD_MODELS, type OdModel } from "./models.ts";
-import { OD_PLANS } from "./plans.ts";
+import { allowanceAndCap } from "./caps.ts";
+import { OD_MODELS } from "./models.ts";
+import { planDef } from "./plans.ts";
+import { odRate } from "./rates.ts";
 import { normalizeKey } from "#~/keys.ts";
-import type { CapSet, CatalogEntry, ModelPricing, PlanInfo, ProviderId } from "#~/types.ts";
+import type { CatalogEntry, ModelPricing, PlanInfo, ProviderId } from "#~/types.ts";
 
-function planDef(planId: string) {
-	const def = OD_PLANS[planId];
-	if (!def) {
-		throw new Error(
-			`unknown OpenDesign plan "${planId}" (have: ${Object.keys(OD_PLANS).join(", ")})`,
-		);
-	}
-	return def;
-}
+export { capFor, odCapLines } from "./caps.ts";
 
-/** Per-model token rates to price an OpenDesign row with, keyed by canonical key. */
+/**
+ * Last-resort rates from the other two catalogs, keyed by canonical key. Only
+ * used when core/od.json has no row at all; every such price is flagged in
+ * `crossPriced` so a foreign rate is never passed off as one Open Design
+ * published. CC is preferred over OC, whose rows may be off-peak or tiered.
+ */
 function pricedKeys(priced: Record<ProviderId, CatalogEntry[]>): Map<string, ModelPricing> {
 	const byKey = new Map<string, ModelPricing>();
-	// CommandCode's rates are the vendor list; an OpenCode row may be its
-	// off-peak or tiered variant, so it is only the fallback.
 	for (const entry of [...priced.cc, ...priced["oc-go"]]) {
 		if (!byKey.has(entry.key)) byKey.set(entry.key, entry.pricing);
 	}
@@ -32,77 +29,50 @@ export interface OdLoad {
 	uncapped: string[];
 	/** In the plan's model list but not this tier (Go carries no top models). */
 	excluded: string[];
+	/** Priced from another catalog because core/od.json has no row — never silent. */
+	crossPriced: string[];
 	/** Plan id the load was made for, so --check can name its cap table. */
 	planId: string;
 }
 
 /**
- * The cap set a coding model draws. Plans that publish per-model caps (Go,
- * Plus) resolve their own row, else `defaultCaps`; a plan with neither leaves
- * the model uncapped. Null for a top model — it draws Top Model Credits, which
- * have no windows, and is handled by the caller.
- */
-export function capFor(model: OdModel, planId: string): CapSet | null {
-	if (model.tier === "top") return null;
-	const def = planDef(planId);
-	return def.caps?.[normalizeKey(model.name)] ?? def.defaultCaps ?? null;
-}
-
-function allowanceAndCap(
-	model: OdModel,
-	planId: string,
-): { allowance: number | null; cap: CapSet | null } {
-	const def = planDef(planId);
-	if (model.tier === "top") {
-		// Top Model Credits are charged at model value, with no multiplier.
-		return { allowance: def.top > 0 ? def.top : null, cap: null };
-	}
-	const cap = capFor(model, planId);
-	if (cap) return { allowance: cap.month, cap };
-	// Pro/Max publish one pool: keep the plan-credit ÷ multiplier projection.
-	// A plan with neither per-model caps nor a pool publishes no allowance, so
-	// the model stays absent rather than reading a fabricated zero.
-	if (def.credits > 0) return { allowance: def.credits / model.multiplier, cap: null };
-	return { allowance: null, cap: null };
-}
-
-/** One line per published cap set, plus the default, for `--check` to print. */
-export function odCapLines(planId: string): string[] {
-	const def = planDef(planId);
-	const lines: string[] = [];
-	const fmt = (name: string, c: CapSet): string =>
-		`${name}: $${c.month}/mo · $${c.week}/wk · ${c.fiveHour === null ? "no 5h" : `$${c.fiveHour}/5h`}`;
-	for (const [key, cap] of Object.entries(def.caps ?? {})) {
-		lines.push(fmt(OD_MODELS.find((m) => normalizeKey(m.name) === key)?.name ?? key, cap));
-	}
-	if (def.defaultCaps) lines.push(fmt("default", def.defaultCaps));
-	return lines;
-}
-
-/**
- * OpenDesign publishes credit multipliers and estimated request counts, not
- * per-model token rates. Rows are priced from the same model's catalog row on
- * the other two providers, and a model with no such row is reported rather than
- * given a made-up rate.
+ * Price each row from Open Design's own published list, carried in core/od.json
+ * and keyed by the model's wire id. Rates and credit multiplier both come from
+ * that row: cross-pricing silently understated DeepSeek V4.1 Flash by 2x. A row
+ * with no published rate stays unpriced; another catalog is used only when
+ * core/od.json has no row for the model at all, and is then flagged.
  */
 export function loadOdCatalog(planId: string, priced: Record<ProviderId, CatalogEntry[]>): OdLoad {
 	const def = planDef(planId);
-	const rates = pricedKeys(priced);
+	const fallback = pricedKeys(priced);
 	const entries: CatalogEntry[] = [];
 	const missing: string[] = [];
 	const uncapped: string[] = [];
 	const excluded: string[] = [];
+	const crossPriced: string[] = [];
 	for (const model of OD_MODELS) {
 		if (model.plans && !model.plans.includes(planId)) {
 			excluded.push(model.name);
 			continue;
 		}
-		const pricing = rates.get(normalizeKey(model.priceKey ?? model.name));
+		const row = odRate(model.id);
+		let multiplier = model.multiplier; // fallback for a plan with no published row
+		let pricing: ModelPricing | undefined;
+		if (row) {
+			// Published multiplier wins, including the open Haiku 5.5 conflict
+			// (core/od.json is the declared source of truth). A registered row
+			// with no published rate is never cross-priced.
+			multiplier = row.multiplier;
+			pricing = row.pricing ?? undefined;
+		} else {
+			pricing = fallback.get(normalizeKey(model.name));
+			if (pricing) crossPriced.push(model.name);
+		}
 		if (!pricing) {
 			missing.push(model.name);
 			continue;
 		}
-		const { allowance, cap } = allowanceAndCap(model, planId);
+		const { allowance, cap } = allowanceAndCap(model, planId, multiplier);
 		if (allowance === null) {
 			uncapped.push(model.name);
 			continue;
@@ -117,7 +87,7 @@ export function loadOdCatalog(planId: string, priced: Record<ProviderId, Catalog
 			...(cap ? { cap } : {}),
 		});
 	}
-	return { entries, missing, uncapped, excluded, planId };
+	return { entries, missing, uncapped, excluded, crossPriced, planId };
 }
 
 /** Plan price + its own credit windows; windows apply to Coding Plan credits only. */

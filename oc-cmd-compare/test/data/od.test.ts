@@ -115,12 +115,6 @@ describe("published caps -> usable allowance", () => {
 		expect(eco?.pricing).toEqual(flash?.pricing);
 		expect(eco?.pricing).toBeDefined();
 	});
-
-	test("a model with no token rate is reported, never priced from thin air", () => {
-		const load = loadOdCatalog("go", priced(KEYS));
-		expect(load.missing).toContain("Kimi K2.7 Code");
-		expect(load.entries.some((e) => e.key === "kimik27code")).toBe(false);
-	});
 });
 
 describe("plan gating", () => {

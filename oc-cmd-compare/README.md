@@ -282,6 +282,8 @@ bun lint          # Biome lint
 bun fmt --check   # verify formatting
 ```
 
+OpenDesign token rates ship inside the package (`src/data/sources/od/od.generated.ts`), generated from the monorepo's `core/od.json` by `bun run extract:od`. The published tarball contains only `src/`, so the installed CLI never resolves a path back into the monorepo; `test/data/od-packaged-rates.test.ts` fails if the shipped values drift from the source of truth.
+
 ## Links
 
 - [Source (GitHub)](https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/oc-cmd-compare)

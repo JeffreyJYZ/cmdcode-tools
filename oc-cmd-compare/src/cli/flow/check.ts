@@ -32,7 +32,10 @@ export async function runCheck(
 		console.log(`OpenDesign entries:      ${od.entries.length}`);
 		console.log(`OpenDesign not in plan:  ${od.excluded.join(", ") || "—"}`);
 		console.log(
-			`OpenDesign unpriced:     ${od.missing.length} (no token rate on either catalog): ${od.missing.join(", ") || "—"}`,
+			`OpenDesign unpriced:     ${od.missing.length} (no published rate, never invented): ${od.missing.join(", ") || "—"}`,
+		);
+		console.log(
+			`OpenDesign cross-priced: ${od.crossPriced.length} (no row in core/od.json, rate from another catalog): ${od.crossPriced.join(", ") || "—"}`,
 		);
 		console.log(
 			`OpenDesign uncapped:     ${od.uncapped.length} (no published cap, never zero): ${od.uncapped.join(", ") || "—"}`,
