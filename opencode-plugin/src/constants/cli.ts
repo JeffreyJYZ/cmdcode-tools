@@ -10,8 +10,10 @@ export const DEFAULT_ARGS: readonly string[] = ["-1", "--plain"];
  * into the model's context. */
 export const MPC_DEFAULT_ARGS: readonly string[] = ["--minimal"];
 
-/** cmduse subcommands — when the arg starts with one, pass it through
- * untouched; otherwise it is extra flags for the one-shot dashboard. */
+/** Subcommands all four readers accept — when any token is one, pass the argv
+ * through untouched; otherwise it is extra flags for the one-shot dashboard.
+ * `mcp` is included though no tool advertises it: it is a real subcommand the
+ * binaries accept, and this set is the one place that list lives. */
 export const SUBCOMMANDS: ReadonlySet<string> = new Set([
 	"plans",
 	"models",
@@ -21,6 +23,7 @@ export const SUBCOMMANDS: ReadonlySet<string> = new Set([
 	"session",
 	"statusline",
 	"config",
+	"mcp",
 ]);
 
 /** `detached` is load-bearing, not tidiness: it starts the child in its own

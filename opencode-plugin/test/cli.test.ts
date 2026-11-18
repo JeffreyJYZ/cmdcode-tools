@@ -1,17 +1,21 @@
 import { describe, expect, test } from "bun:test";
+import { spawn } from "node:child_process";
 import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+	arkuseArgs,
 	buildCmduseArgs,
 	buildMpcArgs,
 	cmduseCandidates,
 	mpcCandidates,
 	ocuseArgs,
 	ocuseCandidates,
+	oduseArgs,
 	runCmduse,
 	runMpc,
 	runOcuse,
+	runOduse,
 	splitCliArgs,
 } from "../src/cli";
 import {
@@ -194,18 +198,133 @@ describe("ocuseCandidates", () => {
 	});
 });
 
-describe("ocuseArgs", () => {
-	test("empty input defaults to the one-shot dashboard", () => {
-		// A bare ocuse is the live watch loop and would never return to the
-		// agent or resolve the dialog, so empty never passes through.
-		expect(ocuseArgs(undefined)).toBe("-1");
-		expect(ocuseArgs("")).toBe("-1");
-		expect(ocuseArgs("   ")).toBe("-1");
+/** All four usage-tool builders must carry the same anti-hang rule. A string
+ * assertion alone missed the shipped bug, so the real-spawn tests below are the
+ * ones that actually prove a tool call returns. */
+const USAGE_BUILDERS = [
+	["buildCmduseArgs", (arg: string | undefined) => buildCmduseArgs(arg ?? "")],
+	["ocuseArgs", ocuseArgs],
+	["arkuseArgs", arkuseArgs],
+	["oduseArgs", oduseArgs],
+] as const;
+
+describe("one-shot guard on every usage-tool builder", () => {
+	for (const [name, build] of USAGE_BUILDERS) {
+		test(`${name}: flag-only args get a one-shot`, () => {
+			// The old ocuse/arkuse/oduse builders passed "--rows 5" through
+			// verbatim — the binary read that as the watch loop and hung.
+			expect(build("--rows 5")).toContain("-1");
+		});
+		test(`${name}: empty is exactly one one-shot`, () => {
+			const args = build("");
+			expect(args.filter((t) => t === "-1" || t === "--once")).toHaveLength(1);
+		});
+		test(`${name}: a subcommand passes through untouched`, () => {
+			expect(build("daily")).toEqual(["daily"]);
+			expect(build("daily --days 14")).toEqual(["daily", "--days", "14"]);
+		});
+		test(`${name}: an explicit -1 is not doubled`, () => {
+			const args = build("-1 --json");
+			expect(args.filter((t) => t === "-1" || t === "--once")).toHaveLength(1);
+		});
+	}
+});
+
+describe("one-shot default shape", () => {
+	test("cmduse keeps its --plain (no colors / no redraw)", () => {
+		expect(buildCmduseArgs("")).toEqual(["-1", "--plain"]);
 	});
-	test("given args pass through untouched", () => {
-		expect(ocuseArgs("daily")).toBe("daily");
-		expect(ocuseArgs("--plan go-plus --json")).toBe("--plan go-plus --json");
+	test("the three sibling tools are exactly -1", () => {
+		for (const build of [ocuseArgs, arkuseArgs, oduseArgs]) {
+			expect(build(undefined)).toEqual(["-1"]);
+			expect(build("")).toEqual(["-1"]);
+			expect(build("   ")).toEqual(["-1"]);
+		}
+		expect(oduseArgs("--no-wallet")).toEqual(["-1", "--no-wallet"]);
+		expect(ocuseArgs("--plan go-plus")).toEqual(["-1", "--plan", "go-plus"]);
+		expect(arkuseArgs("--json")).toEqual(["-1", "--json"]);
+		expect(ocuseArgs("--once --json")).toEqual(["--once", "--json"]);
 	});
+});
+
+describe("real spawn: produced argv cannot start the watch loop", () => {
+	test("a shim that hangs on a bare flag exits on the produced argv", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "oduse-argv-"));
+		const shim = join(dir, "oduse");
+		// Any argv containing -1/--once exits; anything else is the watch loop.
+		writeFileSync(
+			shim,
+			'#!/bin/sh\ncase " $* " in *" -1 "*|*" --once "*) exit 0;; esac\nwhile :; do sleep 1; done\n',
+		);
+		chmodSync(shim, 0o755);
+		try {
+			// Pre-fix argv ("--no-wallet" verbatim) proves the shim can detect a hang.
+			await expect(
+				runOduse("--no-wallet", { candidates: [shim], timeoutMs: 200 }),
+			).rejects.toThrow("timed out after 200ms");
+			// The builder's argv is what keeps the tool call finite.
+			await expect(
+				runOduse(oduseArgs("--no-wallet"), { candidates: [shim], timeoutMs: 2000 }),
+			).resolves.toBe("");
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	}, 5000);
+
+	const oduseBin = (() => {
+		const { spawnSync } = require("node:child_process") as typeof import("node:child_process");
+		// Same resolution order as scripts/check-parity.ts: $ODUSE_BIN, the dev
+		// build in this repo, then a bare dev/installed name.
+		const candidates = [
+			process.env.ODUSE_BIN,
+			join(import.meta.dir, "..", "..", "target", "debug", "odusedev"),
+			"odusedev",
+			"oduse",
+		].filter((bin): bin is string => Boolean(bin));
+		for (const bin of candidates) {
+			try {
+				if (spawnSync(bin, ["-V"], { stdio: "ignore", timeout: 3000 }).status === 0)
+					return bin;
+			} catch {
+				// try the next candidate
+			}
+		}
+		return undefined;
+	})();
+
+	test.skipIf(!oduseBin)(
+		"real oduse --no-wallet exits (not the watch loop)",
+		async () => {
+			const bin = oduseBin;
+			if (!bin) return;
+			const args = oduseArgs("--no-wallet");
+			expect(args[0]).toBe("-1");
+			const { code, signal } = await new Promise<{
+				code: number | null;
+				signal: string | null;
+			}>((resolve, reject) => {
+				const child = spawn(bin, args, { stdio: "ignore", detached: true });
+				// The one-shot reads the local store and takes ~10 s here; 30 s is
+				// generous enough for CI load but still bounds a real hang.
+				const timer = setTimeout(() => {
+					child.kill("SIGKILL");
+					reject(new Error(`hang: oduse ${args.join(" ")} did not exit within 30000ms`));
+				}, 30000);
+				child.on("error", (err) => {
+					clearTimeout(timer);
+					reject(err);
+				});
+				child.on("close", (c, s) => {
+					clearTimeout(timer);
+					resolve({ code: c, signal: s });
+				});
+			});
+			// A bounded exit is the whole point: any code is fine, a timeout is not.
+			expect(signal).toBeNull();
+			expect(code).not.toBeNull();
+		},
+		40000,
+	);
 });
 
 describe("runOcuse", () => {
