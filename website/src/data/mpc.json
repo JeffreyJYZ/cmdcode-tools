@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-18T11:31:32.333Z",
+	"generatedAt": "2026-11-19T01:28:35.219Z",
 	"plans": [
 		{
 			"key": "go",
@@ -10429,33 +10429,6 @@
 						}
 					},
 					{
-						"key": "gemini4carbon",
-						"name": "Gemini 4 Carbon",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": 3488.3720930232557,
-							"requestsPerFiveHour": 697.6744186046512,
-							"requestsPerWeek": 1744.1860465116279,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.0057333333333333325,
-							"multiplier": 1.5,
-							"ability": 60.025738829526,
-							"tps": null,
-							"index": 25,
-							"valueIndex": 74,
-							"free": false
-						}
-					},
-					{
 						"key": "beam10",
 						"name": "Beam Free",
 						"oc": {
@@ -10477,7 +10450,7 @@
 							"ability": 17.7307282547205,
 							"tps": null,
 							"index": 100,
-							"valueIndex": 73,
+							"valueIndex": 74,
 							"free": true
 						},
 						"cc": null
@@ -10558,6 +10531,33 @@
 						}
 					},
 					{
+						"key": "gemini4neon",
+						"name": "Gemini 4 Neon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 3,
+								"output": 15,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": 1550.3875968992247,
+							"requestsPerFiveHour": 310.07751937984494,
+							"requestsPerWeek": 775.1937984496124,
+							"costPerRequest": 0.0129,
+							"payPerRequest": 0.0129,
+							"multiplier": 1,
+							"ability": 61.3982491392674,
+							"tps": null,
+							"index": 14,
+							"valueIndex": 64,
+							"free": false
+						}
+					},
+					{
 						"key": "gpt62sol",
 						"name": "GPT-6.2 Sol",
 						"oc": null,
@@ -10580,7 +10580,7 @@
 							"ability": 57.2576209885477,
 							"tps": null,
 							"index": 20,
-							"valueIndex": 64,
+							"valueIndex": 62,
 							"free": false
 						}
 					},
@@ -10607,7 +10607,7 @@
 							"ability": 51.3265188577015,
 							"tps": null,
 							"index": 29,
-							"valueIndex": 62,
+							"valueIndex": 61,
 							"free": false
 						}
 					},
@@ -10634,7 +10634,7 @@
 							"ability": 54.54133407109,
 							"tps": null,
 							"index": 20,
-							"valueIndex": 58,
+							"valueIndex": 57,
 							"free": false
 						}
 					},
@@ -10660,7 +10660,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 50,
-							"valueIndex": 44,
+							"valueIndex": 45,
 							"free": false
 						},
 						"cc": {
@@ -10826,7 +10826,7 @@
 							"ability": 42.8914543287565,
 							"tps": null,
 							"index": 28,
-							"valueIndex": 43,
+							"valueIndex": 42,
 							"free": false
 						}
 					},
@@ -10906,7 +10906,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 10,
-							"valueIndex": 32,
+							"valueIndex": 31,
 							"free": false
 						},
 						"cc": {
@@ -10928,7 +10928,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 19,
-							"valueIndex": 39,
+							"valueIndex": 38,
 							"free": false
 						}
 					},
@@ -11003,7 +11003,7 @@
 							"ability": 20.1068756031705,
 							"tps": null,
 							"index": 53,
-							"valueIndex": 17,
+							"valueIndex": 18,
 							"free": false
 						}
 					},
@@ -11132,7 +11132,7 @@
 							"ability": 13.6203422723141,
 							"tps": null,
 							"index": 43,
-							"valueIndex": 0,
+							"valueIndex": 1,
 							"free": false
 						}
 					},
@@ -12586,6 +12586,33 @@
 						}
 					},
 					{
+						"key": "gemini4carbon",
+						"name": "Gemini 4 Carbon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": 3488.3720930232557,
+							"requestsPerFiveHour": 697.6744186046512,
+							"requestsPerWeek": 1744.1860465116279,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0057333333333333325,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 25,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini36flash",
 						"name": "Gemini 3.6 Flash",
 						"oc": null,
@@ -13625,7 +13652,7 @@
 					"odWins": 0,
 					"ties": 8,
 					"ocOnly": 4,
-					"ccOnly": 65,
+					"ccOnly": 66,
 					"odOnly": 0
 				}
 			},
@@ -13683,85 +13710,10 @@
 							"ability": 17.7307282547205,
 							"tps": null,
 							"index": 100,
-							"valueIndex": 73,
+							"valueIndex": 74,
 							"free": true
 						},
 						"cc": null
-					},
-					{
-						"key": "gemini4carbon",
-						"name": "Gemini 4 Carbon",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 30,
-							"requestsPerMonth": 3488.3720930232557,
-							"requestsPerFiveHour": 697.6744186046512,
-							"requestsPerWeek": 1744.1860465116279,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.0057333333333333325,
-							"multiplier": 1.5,
-							"ability": 60.025738829526,
-							"tps": null,
-							"index": 25,
-							"valueIndex": 73,
-							"free": false
-						}
-					},
-					{
-						"key": "claudehaiku55",
-						"name": "Claude Haiku 5.5",
-						"oc": {
-							"provider": "oc-go",
-							"plan": "Go Plus",
-							"pricing": {
-								"input": 0.1,
-								"output": 0.5,
-								"cacheRead": 0.01,
-								"cacheWrite": 0.125
-							},
-							"allowance": 60,
-							"requestsPerMonth": 88235.29411764705,
-							"requestsPerFiveHour": 17647.05882352941,
-							"requestsPerWeek": 44117.647058823524,
-							"costPerRequest": 0.00068,
-							"payPerRequest": 0.00045333333333333337,
-							"multiplier": 1.5,
-							"ability": 36.4845435880142,
-							"tps": null,
-							"index": 69,
-							"valueIndex": 71,
-							"free": false
-						},
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 0.1,
-								"output": 0.5,
-								"cacheRead": 0.01,
-								"cacheWrite": 0.125
-							},
-							"allowance": 30,
-							"requestsPerMonth": 44117.647058823524,
-							"requestsPerFiveHour": 8823.529411764704,
-							"requestsPerWeek": 22058.823529411762,
-							"costPerRequest": 0.00068,
-							"payPerRequest": 0.00045333333333333337,
-							"multiplier": 1.5,
-							"ability": 36.4845435880142,
-							"tps": null,
-							"index": 59,
-							"valueIndex": 64,
-							"free": false
-						}
 					},
 					{
 						"key": "museember",
@@ -13791,6 +13743,81 @@
 						}
 					},
 					{
+						"key": "claudehaiku55",
+						"name": "Claude Haiku 5.5",
+						"oc": {
+							"provider": "oc-go",
+							"plan": "Go Plus",
+							"pricing": {
+								"input": 0.1,
+								"output": 0.5,
+								"cacheRead": 0.01,
+								"cacheWrite": 0.125
+							},
+							"allowance": 60,
+							"requestsPerMonth": 88235.29411764705,
+							"requestsPerFiveHour": 17647.05882352941,
+							"requestsPerWeek": 44117.647058823524,
+							"costPerRequest": 0.00068,
+							"payPerRequest": 0.00045333333333333337,
+							"multiplier": 1.5,
+							"ability": 36.4845435880142,
+							"tps": null,
+							"index": 69,
+							"valueIndex": 70,
+							"free": false
+						},
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 0.1,
+								"output": 0.5,
+								"cacheRead": 0.01,
+								"cacheWrite": 0.125
+							},
+							"allowance": 30,
+							"requestsPerMonth": 44117.647058823524,
+							"requestsPerFiveHour": 8823.529411764704,
+							"requestsPerWeek": 22058.823529411762,
+							"costPerRequest": 0.00068,
+							"payPerRequest": 0.00045333333333333337,
+							"multiplier": 1.5,
+							"ability": 36.4845435880142,
+							"tps": null,
+							"index": 59,
+							"valueIndex": 63,
+							"free": false
+						}
+					},
+					{
+						"key": "gemini4neon",
+						"name": "Gemini 4 Neon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 3,
+								"output": 15,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 20,
+							"requestsPerMonth": 1550.3875968992247,
+							"requestsPerFiveHour": 310.07751937984494,
+							"requestsPerWeek": 775.1937984496124,
+							"costPerRequest": 0.0129,
+							"payPerRequest": 0.0129,
+							"multiplier": 1,
+							"ability": 61.3982491392674,
+							"tps": null,
+							"index": 14,
+							"valueIndex": 63,
+							"free": false
+						}
+					},
+					{
 						"key": "gpt62sol",
 						"name": "GPT-6.2 Sol",
 						"oc": null,
@@ -13813,7 +13840,7 @@
 							"ability": 57.2576209885477,
 							"tps": null,
 							"index": 19,
-							"valueIndex": 63,
+							"valueIndex": 61,
 							"free": false
 						}
 					},
@@ -13840,7 +13867,7 @@
 							"ability": 51.3265188577015,
 							"tps": null,
 							"index": 29,
-							"valueIndex": 62,
+							"valueIndex": 60,
 							"free": false
 						}
 					},
@@ -13866,7 +13893,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 68,
-							"valueIndex": 59,
+							"valueIndex": 58,
 							"free": false
 						},
 						"cc": {
@@ -13889,33 +13916,6 @@
 							"tps": null,
 							"index": 59,
 							"valueIndex": 51,
-							"free": false
-						}
-					},
-					{
-						"key": "claudesonnet55",
-						"name": "Claude Sonnet 5.5",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Pro",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": 2.5
-							},
-							"allowance": 20,
-							"requestsPerMonth": 2325.5813953488373,
-							"requestsPerFiveHour": 465.1162790697675,
-							"requestsPerWeek": 1162.7906976744187,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.0086,
-							"multiplier": 1,
-							"ability": 54.54133407109,
-							"tps": null,
-							"index": 19,
-							"valueIndex": 58,
 							"free": false
 						}
 					},
@@ -13963,7 +13963,34 @@
 							"ability": 34.5552385392508,
 							"tps": null,
 							"index": 38,
-							"valueIndex": 36,
+							"valueIndex": 35,
+							"free": false
+						}
+					},
+					{
+						"key": "claudesonnet55",
+						"name": "Claude Sonnet 5.5",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": 2.5
+							},
+							"allowance": 20,
+							"requestsPerMonth": 2325.5813953488373,
+							"requestsPerFiveHour": 465.1162790697675,
+							"requestsPerWeek": 1162.7906976744187,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0086,
+							"multiplier": 1,
+							"ability": 54.54133407109,
+							"tps": null,
+							"index": 19,
+							"valueIndex": 56,
 							"free": false
 						}
 					},
@@ -14011,7 +14038,7 @@
 							"ability": 27.8552004938153,
 							"tps": null,
 							"index": 59,
-							"valueIndex": 46,
+							"valueIndex": 45,
 							"free": false
 						}
 					},
@@ -14037,7 +14064,7 @@
 							"ability": 42.8914543287565,
 							"tps": null,
 							"index": 39,
-							"valueIndex": 51,
+							"valueIndex": 50,
 							"free": false
 						},
 						"cc": {
@@ -14059,7 +14086,7 @@
 							"ability": 42.8914543287565,
 							"tps": null,
 							"index": 27,
-							"valueIndex": 42,
+							"valueIndex": 41,
 							"free": false
 						}
 					},
@@ -14085,7 +14112,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 28,
-							"valueIndex": 46,
+							"valueIndex": 44,
 							"free": false
 						},
 						"cc": {
@@ -14107,7 +14134,7 @@
 							"ability": 46.4526236744189,
 							"tps": null,
 							"index": 18,
-							"valueIndex": 38,
+							"valueIndex": 37,
 							"free": false
 						}
 					},
@@ -14133,7 +14160,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 65,
-							"valueIndex": 44,
+							"valueIndex": 43,
 							"free": false
 						},
 						"cc": {
@@ -14155,7 +14182,7 @@
 							"ability": 31.653381843882,
 							"tps": null,
 							"index": 30,
-							"valueIndex": 18,
+							"valueIndex": 17,
 							"free": false
 						}
 					},
@@ -14182,7 +14209,7 @@
 							"ability": 29.570119369837,
 							"tps": null,
 							"index": 55,
-							"valueIndex": 40,
+							"valueIndex": 39,
 							"free": false
 						}
 					},
@@ -14209,7 +14236,7 @@
 							"ability": 29.570119369837,
 							"tps": null,
 							"index": 55,
-							"valueIndex": 40,
+							"valueIndex": 39,
 							"free": false
 						}
 					},
@@ -14262,7 +14289,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 18,
-							"valueIndex": 14,
+							"valueIndex": 13,
 							"free": false
 						},
 						"cc": {
@@ -14284,7 +14311,7 @@
 							"ability": 35.4850117067196,
 							"tps": null,
 							"index": 9,
-							"valueIndex": 7,
+							"valueIndex": 6,
 							"free": false
 						}
 					},
@@ -14311,7 +14338,7 @@
 							"ability": 29.8897833093321,
 							"tps": null,
 							"index": 22,
-							"valueIndex": 12,
+							"valueIndex": 11,
 							"free": false
 						}
 					},
@@ -14338,7 +14365,7 @@
 							"ability": 26.1249946754784,
 							"tps": null,
 							"index": 24,
-							"valueIndex": 4,
+							"valueIndex": 3,
 							"free": false
 						}
 					},
@@ -15819,6 +15846,33 @@
 						}
 					},
 					{
+						"key": "gemini4carbon",
+						"name": "Gemini 4 Carbon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Pro",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 30,
+							"requestsPerMonth": 3488.3720930232557,
+							"requestsPerFiveHour": 697.6744186046512,
+							"requestsPerWeek": 1744.1860465116279,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.0057333333333333325,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 25,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini36flash",
 						"name": "Gemini 3.6 Flash",
 						"oc": null,
@@ -16858,7 +16912,7 @@
 					"odWins": 0,
 					"ties": 8,
 					"ocOnly": 4,
-					"ccOnly": 65,
+					"ccOnly": 66,
 					"odOnly": 0
 				}
 			}
@@ -16891,33 +16945,6 @@
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
-						}
-					},
-					{
-						"key": "gemini4carbon",
-						"name": "Gemini 4 Carbon",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 17441.86046511628,
-							"requestsPerFiveHour": 5232.558139534884,
-							"requestsPerWeek": 10465.116279069767,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.005733333333333333,
-							"multiplier": 1.5,
-							"ability": 60.025738829526,
-							"tps": null,
-							"index": 39,
-							"valueIndex": 81,
-							"free": false
 						}
 					},
 					{
@@ -16973,6 +17000,33 @@
 							"free": true
 						},
 						"cc": null
+					},
+					{
+						"key": "gemini4neon",
+						"name": "Gemini 4 Neon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 3,
+								"output": 15,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 100,
+							"requestsPerMonth": 7751.937984496124,
+							"requestsPerFiveHour": 2325.5813953488373,
+							"requestsPerWeek": 4651.162790697675,
+							"costPerRequest": 0.0129,
+							"payPerRequest": 0.0129,
+							"multiplier": 1,
+							"ability": 61.3982491392674,
+							"tps": null,
+							"index": 30,
+							"valueIndex": 74,
+							"free": false
+						}
 					},
 					{
 						"key": "claudefable52",
@@ -19966,6 +20020,33 @@
 						}
 					},
 					{
+						"key": "gemini4carbon",
+						"name": "Gemini 4 Carbon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 17441.86046511628,
+							"requestsPerFiveHour": 5232.558139534884,
+							"requestsPerWeek": 10465.116279069767,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.005733333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 39,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini38flash",
 						"name": "Gemini 3.8 Flash",
 						"oc": null,
@@ -20405,7 +20486,7 @@
 					"odWins": 0,
 					"ties": 6,
 					"ocOnly": 4,
-					"ccOnly": 77,
+					"ccOnly": 78,
 					"odOnly": 0
 				}
 			},
@@ -20466,33 +20547,6 @@
 						"cc": null
 					},
 					{
-						"key": "gemini4carbon",
-						"name": "Gemini 4 Carbon",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 10x",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 150,
-							"requestsPerMonth": 17441.86046511628,
-							"requestsPerFiveHour": 5232.558139534884,
-							"requestsPerWeek": 10465.116279069767,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.005733333333333333,
-							"multiplier": 1.5,
-							"ability": 60.025738829526,
-							"tps": null,
-							"index": 31,
-							"valueIndex": 74,
-							"free": false
-						}
-					},
-					{
 						"key": "museember",
 						"name": "Muse Ember",
 						"oc": null,
@@ -20516,6 +20570,33 @@
 							"tps": null,
 							"index": 70,
 							"valueIndex": 73,
+							"free": false
+						}
+					},
+					{
+						"key": "gemini4neon",
+						"name": "Gemini 4 Neon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 3,
+								"output": 15,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 100,
+							"requestsPerMonth": 7751.937984496124,
+							"requestsPerFiveHour": 2325.5813953488373,
+							"requestsPerWeek": 4651.162790697675,
+							"costPerRequest": 0.0129,
+							"payPerRequest": 0.0129,
+							"multiplier": 1,
+							"ability": 61.3982491392674,
+							"tps": null,
+							"index": 21,
+							"valueIndex": 66,
 							"free": false
 						}
 					},
@@ -23511,6 +23592,33 @@
 						}
 					},
 					{
+						"key": "gemini4carbon",
+						"name": "Gemini 4 Carbon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 10x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 150,
+							"requestsPerMonth": 17441.86046511628,
+							"requestsPerFiveHour": 5232.558139534884,
+							"requestsPerWeek": 10465.116279069767,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.005733333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 31,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini38flash",
 						"name": "Gemini 3.8 Flash",
 						"oc": null,
@@ -23950,7 +24058,7 @@
 					"odWins": 0,
 					"ties": 6,
 					"ocOnly": 4,
-					"ccOnly": 77,
+					"ccOnly": 78,
 					"odOnly": 0
 				}
 			}
@@ -23986,29 +24094,29 @@
 						}
 					},
 					{
-						"key": "gemini4carbon",
-						"name": "Gemini 4 Carbon",
+						"key": "gemini4neon",
+						"name": "Gemini 4 Neon",
 						"oc": null,
 						"cc": {
 							"provider": "cc",
 							"plan": "Max 20x",
 							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
+								"input": 3,
+								"output": 15,
+								"cacheRead": 0.15,
 								"cacheWrite": null
 							},
-							"allowance": 300,
-							"requestsPerMonth": 34883.72093023256,
-							"requestsPerFiveHour": 10465.116279069767,
-							"requestsPerWeek": 20930.232558139534,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.005733333333333333,
-							"multiplier": 1.5,
-							"ability": 60.025738829526,
+							"allowance": 200,
+							"requestsPerMonth": 15503.875968992248,
+							"requestsPerFiveHour": 4651.162790697675,
+							"requestsPerWeek": 9302.32558139535,
+							"costPerRequest": 0.0129,
+							"payPerRequest": 0.0129,
+							"multiplier": 1,
+							"ability": 61.3982491392674,
 							"tps": null,
-							"index": 43,
-							"valueIndex": 84,
+							"index": 35,
+							"valueIndex": 78,
 							"free": false
 						}
 					},
@@ -27058,6 +27166,33 @@
 						}
 					},
 					{
+						"key": "gemini4carbon",
+						"name": "Gemini 4 Carbon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 34883.72093023256,
+							"requestsPerFiveHour": 10465.116279069767,
+							"requestsPerWeek": 20930.232558139534,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.005733333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 43,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini38flash",
 						"name": "Gemini 3.8 Flash",
 						"oc": null,
@@ -27497,7 +27632,7 @@
 					"odWins": 0,
 					"ties": 6,
 					"ocOnly": 4,
-					"ccOnly": 77,
+					"ccOnly": 78,
 					"odOnly": 0
 				}
 			},
@@ -27528,33 +27663,6 @@
 							"index": 100,
 							"valueIndex": 100,
 							"free": true
-						}
-					},
-					{
-						"key": "gemini4carbon",
-						"name": "Gemini 4 Carbon",
-						"oc": null,
-						"cc": {
-							"provider": "cc",
-							"plan": "Max 20x",
-							"pricing": {
-								"input": 2,
-								"output": 10,
-								"cacheRead": 0.1,
-								"cacheWrite": null
-							},
-							"allowance": 300,
-							"requestsPerMonth": 34883.72093023256,
-							"requestsPerFiveHour": 10465.116279069767,
-							"requestsPerWeek": 20930.232558139534,
-							"costPerRequest": 0.0086,
-							"payPerRequest": 0.005733333333333333,
-							"multiplier": 1.5,
-							"ability": 60.025738829526,
-							"tps": null,
-							"index": 33,
-							"valueIndex": 77,
-							"free": false
 						}
 					},
 					{
@@ -27608,6 +27716,33 @@
 							"tps": null,
 							"index": 71,
 							"valueIndex": 75,
+							"free": false
+						}
+					},
+					{
+						"key": "gemini4neon",
+						"name": "Gemini 4 Neon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 3,
+								"output": 15,
+								"cacheRead": 0.15,
+								"cacheWrite": null
+							},
+							"allowance": 200,
+							"requestsPerMonth": 15503.875968992248,
+							"requestsPerFiveHour": 4651.162790697675,
+							"requestsPerWeek": 9302.32558139535,
+							"costPerRequest": 0.0129,
+							"payPerRequest": 0.0129,
+							"multiplier": 1,
+							"ability": 61.3982491392674,
+							"tps": null,
+							"index": 24,
+							"valueIndex": 70,
 							"free": false
 						}
 					},
@@ -30603,6 +30738,33 @@
 						}
 					},
 					{
+						"key": "gemini4carbon",
+						"name": "Gemini 4 Carbon",
+						"oc": null,
+						"cc": {
+							"provider": "cc",
+							"plan": "Max 20x",
+							"pricing": {
+								"input": 2,
+								"output": 10,
+								"cacheRead": 0.1,
+								"cacheWrite": null
+							},
+							"allowance": 300,
+							"requestsPerMonth": 34883.72093023256,
+							"requestsPerFiveHour": 10465.116279069767,
+							"requestsPerWeek": 20930.232558139534,
+							"costPerRequest": 0.0086,
+							"payPerRequest": 0.005733333333333333,
+							"multiplier": 1.5,
+							"ability": null,
+							"tps": null,
+							"index": 33,
+							"valueIndex": null,
+							"free": false
+						}
+					},
+					{
 						"key": "gemini38flash",
 						"name": "Gemini 3.8 Flash",
 						"oc": null,
@@ -31042,7 +31204,7 @@
 					"odWins": 0,
 					"ties": 6,
 					"ocOnly": 4,
-					"ccOnly": 77,
+					"ccOnly": 78,
 					"odOnly": 0
 				}
 			}
