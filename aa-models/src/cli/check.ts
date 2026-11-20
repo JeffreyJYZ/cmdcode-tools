@@ -24,7 +24,7 @@ export interface CheckDeps {
 }
 
 /**
- * `aa check` validates sources, so it never uses the cache: the dispatched
+ * `aam check` validates sources, so it never uses the cache: the dispatched
  * catalogue may be a TTL hit or a last-good replay, and its counts would describe
  * the cache rather than the source. It reloads with the cache off and both stores
  * unwritable, then prints the state of the file a default run would serve, so a
@@ -50,7 +50,7 @@ export async function runCheck(
 			noCacheWrite: true,
 		});
 	} catch (error) {
-		console.error(`aa: ${error instanceof Error ? error.message : String(error)}`);
+		console.error(`aam: ${error instanceof Error ? error.message : String(error)}`);
 		return 1;
 	}
 
@@ -85,6 +85,6 @@ export async function runCheck(
 	console.log(`coverage       ${scored} scored / ${live.models.length} total`);
 	console.log(cacheNote(cache));
 	for (const note of live.notes) console.log(`note: ${note}`);
-	if (!ok) console.error("aa: no source produced a model");
+	if (!ok) console.error("aam: no source produced a model");
 	return ok ? 0 : 1;
 }

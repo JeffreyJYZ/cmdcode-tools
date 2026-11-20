@@ -32,7 +32,7 @@ interface CacheFile extends StoredCatalogue {
 }
 
 /**
- * What `aa check` reports about the file a default run would read.
+ * What `aam check` reports about the file a default run would read.
  * `usable` is true only when that run would actually serve this file.
  */
 export interface CacheState {
@@ -99,7 +99,7 @@ function verdict(file: Partial<CacheFile> | null, ttl: number): CacheState {
 	return { ...state, usable: true, reason: "served" };
 }
 
-/** What `aa check` prints: the file a default run would read, and whether it would. */
+/** What `aam check` prints: the file a default run would read, and whether it would. */
 export async function inspectCache(ttl: number): Promise<CacheState> {
 	return verdict(await readCacheFile(), ttl);
 }
@@ -139,7 +139,7 @@ export async function writeCache(catalogue: StoredCatalogue): Promise<void> {
 	});
 }
 
-/** The cache line `aa check` prints, so a default run's numbers have a reason. */
+/** The cache line `aam check` prints, so a default run's numbers have a reason. */
 export function cacheNote(state: CacheState): string {
 	if (!state.present) return `cache: ${state.path} · nothing written yet`;
 	const age = ageLabel(state.ageMs ?? 0);

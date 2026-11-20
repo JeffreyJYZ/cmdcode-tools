@@ -19,7 +19,7 @@ const MODELS = [
 const CATALOGUE = catalogue(MODELS);
 const options = (...argv: string[]) => toOptions(parseArgv(argv));
 
-describe("aa model", () => {
+describe("aam model", () => {
 	test("an exact slug resolves even when the query filters nothing else", () => {
 		const { out, restore } = captureConsole();
 		try {
@@ -53,7 +53,7 @@ describe("aa model", () => {
 	});
 });
 
-describe("aa fields", () => {
+describe("aam fields", () => {
 	test("counts models per dot-path", () => {
 		const rows = fieldRows(MODELS);
 		const byPath = new Map(rows.map((row) => [row.path, row.count]));

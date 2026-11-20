@@ -15,7 +15,7 @@ export interface LoadOptions {
 	/** Cache TTL in ms; 0 disables reads and writes. */
 	cacheTtlMs: number;
 	/**
-	 * Leave both stores untouched: no TTL cache, no last-good rewrite. `aa check`
+	 * Leave both stores untouched: no TTL cache, no last-good rewrite. `aam check`
 	 * sets it on the dispatch load so a poisoned cache is still there when the
 	 * command reports on it — a diagnostic must not repair what it diagnoses.
 	 */

@@ -3,10 +3,10 @@ import type { Catalogue } from "#~/sources/index.ts";
 import { renderRecord } from "./output.ts";
 import type { Options } from "./options.ts";
 
-/** `aa check` lives in its own module; `run.ts` still imports it from here. */
+/** `aam check` lives in its own module; `run.ts` still imports it from here. */
 export { type CheckDeps, runCheck, sourceRows } from "./check.ts";
 
-/** `aa model` — exact slug, then exact key, then the same filter every list uses. */
+/** `aam model` — exact slug, then exact key, then the same filter every list uses. */
 export function runModel(catalogue: Catalogue, options: Options, matches: Model[]): number {
 	const query = (options.query ?? "").toLowerCase();
 	const bySlug = catalogue.models.filter((model) => model.slug.toLowerCase() === query);
@@ -16,11 +16,11 @@ export function runModel(catalogue: Catalogue, options: Options, matches: Model[
 	const exact = bySlug.length > 0 ? bySlug : byKey;
 	const found = exact.length > 0 ? exact : matches;
 	if (found.length === 0) {
-		console.error(`aa: no model matches "${options.query}"`);
+		console.error(`aam: no model matches "${options.query}"`);
 		return 1;
 	}
 	if (found.length > 1) {
-		console.error(`aa: "${options.query}" matches ${found.length} models — narrow it:`);
+		console.error(`aam: "${options.query}" matches ${found.length} models — narrow it:`);
 		for (const model of found) console.error(`  ${model.slug}  ${model.name}`);
 		return 1;
 	}

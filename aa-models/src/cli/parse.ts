@@ -55,7 +55,7 @@ export const KNOWN = new Set([
 const SUBCOMMANDS = new Set(["model", "fields", "check"]);
 
 export function parseArgv(argv: string[]): Parsed {
-	const cli = cac("aa");
+	const cli = cac("aam");
 	cli.option("--model <re>", "name/slug/creator regex (or substring when invalid)")
 		.option("--creator <list>", "comma-separated creators, exact and case-insensitive")
 		.option("--where <expr>", "path op value (repeatable): = != > >= < <= ~")
@@ -92,11 +92,11 @@ export function parseArgv(argv: string[]): Parsed {
 	cli.command("check", "validate each source");
 	cli.help();
 	cli.version(pkg.version);
-	cli.example("aa --rows 10 --sort tps");
-	cli.example("aa model deepseek-v4.1-flash --json");
-	cli.example("aa --where price.blended\\<1 --open-weights");
+	cli.example("aam --rows 10 --sort tps");
+	cli.example("aam model deepseek-v4.1-flash --json");
+	cli.example("aam --where price.blended\\<1 --open-weights");
 
-	const parsed = cli.parse(["node", "aa", ...argv], { run: false });
+	const parsed = cli.parse(["node", "aam", ...argv], { run: false });
 	const bag = (parsed.options ?? {}) as Record<string, unknown>;
 	const help = bag.help === true || bag.h === true;
 	const version = bag.version === true || bag.v === true;

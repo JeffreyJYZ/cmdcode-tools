@@ -18,7 +18,7 @@ const CACHE_UNITS: Record<string, number> = {
 
 export interface Options {
 	command: Command;
-	/** Query of `aa model <query>`. */
+	/** Query of `aam model <query>`. */
 	query?: string;
 	model?: string;
 	creators?: string[];
