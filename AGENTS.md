@@ -43,6 +43,15 @@ cmduse/            cmd-usage, published to crates.io (bins: cmduse, cmdusedev,
                    read by cmduse's local reports and by ocuse/arkuse
   src/mcp.rs       `cmduse mcp` MCP stdio server (hand-rolled JSON-RPC; tool bodies
                    are the same *_output helpers the subcommands call)
+aa-models/         @jeffreyjyz/aa-models (bins aam, aamdev — `aa` would shadow
+                   macOS /usr/bin/aa): the Artificial Analysis catalogue CLI
+  src/sources/     manifest (encrypted RSC payload: the full covered set) →
+                   leaderboard → models page → API when AA_API_KEY is set; merged
+                   by slug, best score wins, a null score never becomes 0
+  src/sources/cache.ts  schema + LOADER_REVISION identity; a cache written by a
+                   different build is ignored, never migrated
+  src/filter.ts + where.ts  every filter flag; sort.ts keeps nulls last both ways
+  src/view/        columns, table, formats, help
 opencode-plugin/   @jeffreyjyz/opencode-command-code (dual opencode v1 (server())
                    + v2 (setup()) entrypoints; imports ../../core/{gating,conformance}.json;
                    usage rendering delegates to the cmduse CLI via src/cli.ts)
