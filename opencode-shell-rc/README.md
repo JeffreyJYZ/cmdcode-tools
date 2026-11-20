@@ -123,6 +123,21 @@ Four properties are deliberate:
 
 The user's escape hatch still wins: `~/.config/opencode/shell.zsh` is sourced after the guards, so a single machine can undo one.
 
+## Migrating
+
+Both `blocked` shapes load through the same normaliser, so converting is optional — but a config that keeps the legacy map stays legacy forever. `shell-rc-migrate` rewrites it on disk, preserving `env` and every other key:
+
+```console
+$ shell-rc-migrate --check          # exit 1 when a migration is needed
+$ shell-rc-migrate --dry-run        # print the new JSON, write nothing
+$ shell-rc-migrate                  # migrate, backing up the original once
+migrated /Users/you/.config/opencode/shell-rc.json
+```
+
+The default target is `$XDG_CONFIG_HOME/opencode/shell-rc.json` (falling back to `~/.config/opencode/shell-rc.json`); `--config <path>` overrides it. Before the first write the original is copied to `<file>.pre-0.5.1.bak`; an existing backup is never clobbered. An already-migrated config, a missing file, and a config with no legacy `blocked` map write nothing and exit 0. Malformed JSON prints the parser's message and exits 2. `--check` exits 1 when a migration is needed and 0 otherwise, for CI.
+
+The migrated array renders byte-identical guards to the legacy map, so this is a cleanup, not a behaviour change.
+
 ## Custom environment
 
 The same config file exports variables into agent shells, so a setting the agent needs does not have to live in `.zshrc`, where it would also reach every interactive shell:

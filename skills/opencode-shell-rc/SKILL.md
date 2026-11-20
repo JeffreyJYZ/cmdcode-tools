@@ -43,6 +43,8 @@ Message: `<name> is blocked in agent shells — ` then `use <alternative>` when 
 
 Backwards compatibility: the old string map (`{"grep": "rg"}`) is still accepted and becomes `{name, alternative: value}` per pair, but it is legacy. Missing, non-object, or malformed `blocked` falls back to the defaults (empty). Duplicate `name`: the later entry wins. Order is preserved. Invalid names, blank entries, and `cat` are skipped.
 
+To convert a legacy map on disk run `shell-rc-migrate` (`--dry-run`, `--check`, `--config <path>`); it keeps a one-shot backup, and both forms render identical guards.
+
 ### `env`
 
 ```json
