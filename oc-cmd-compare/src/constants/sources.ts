@@ -92,6 +92,8 @@ export const OC_MODELS_URL = "https://opencode.ai/zen/go/v1/models";
  * is needed; the paid list at `/api/v2/language/models` answers 403 without one. */
 export const API_URL = "https://artificialanalysis.ai/api/v2/language/models/free";
 export const AA_MODELS_URL = "https://artificialanalysis.ai/models";
+/** Keyless leaderboard: the richest AA surface (far more rows than /models). */
+export const AA_LEADERBOARD_URL = "https://artificialanalysis.ai/leaderboards/models";
 
 // CommandCode only publishes Intelligence and Tok/s on the GOAT/Pro catalogs.
 export const PAGES = [

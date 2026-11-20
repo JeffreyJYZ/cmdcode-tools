@@ -68,6 +68,17 @@ export const OCUSE_USAGE_COMMAND_ID = "command-code.ocuse-usage";
 /** The v2 /arkuse-usage slash command id (registered and bound in tui.tsx). */
 export const ARKUSE_USAGE_COMMAND_ID = "command-code.arkuse-usage";
 
+/** Normative rule every usage tool states in its `arg` description: an arg is
+ * added to the one-shot dashboard (or a subcommand runs as-is), never the live
+ * watch loop. One source of truth — the guard test in plugin.test.ts checks all
+ * four usage tools contain it, so a fifth tool cannot silently drop it. */
+export const TOOL_ARG_WATCH_LOOP_CLAUSE = "never starts the live watch loop";
+
+/** The cmd_usage `arg` description, shared by the v1 and v2 halves. */
+export const TOOL_ARG_DESCRIPTION =
+	"Optional: extra cmduse flags (e.g. '--tz +05:30', '--json') added to the one-shot dashboard, or a subcommand (e.g. 'plans', 'daily') run as-is; " +
+	TOOL_ARG_WATCH_LOOP_CLAUSE;
+
 /** The cmd_usage tool description, shared by the v1 and v2 halves. */
 export const TOOL_DESCRIPTION =
 	"Fetch live Command Code plan/usage: plan name, monthly credits, 5-hour & weekly windows, billing-period summary. Pass arg='plans' for the plan comparison table only, or extra cmduse flags (e.g. '--tz +05:30 daily').";
@@ -86,7 +97,8 @@ export const OCUSE_TOOL_DESCRIPTION =
 
 /** The ocuse_usage `arg` description, shared by the v1 and v2 halves. */
 export const OCUSE_TOOL_ARG_DESCRIPTION =
-	"Optional: extra ocuse flags (e.g. '--plan go-plus', 'daily', '--json'); empty means the one-shot dashboard";
+	"Optional: extra ocuse flags (e.g. '--plan go-plus', '--json') added to the one-shot dashboard, or a subcommand (e.g. 'daily') run as-is; " +
+	TOOL_ARG_WATCH_LOOP_CLAUSE;
 
 /** The arkuse_usage tool description, shared by the v1 and v2 halves. */
 export const ARKUSE_TOOL_DESCRIPTION =
@@ -94,15 +106,17 @@ export const ARKUSE_TOOL_DESCRIPTION =
 
 /** The arkuse_usage `arg` description, shared by the v1 and v2 halves. */
 export const ARKUSE_TOOL_ARG_DESCRIPTION =
-	"Optional: extra arkuse flags (e.g. '--plan medium', '--profile <name>', 'daily', '--json'); empty means the one-shot dashboard";
+	"Optional: extra arkuse flags (e.g. '--plan medium', '--profile <name>', '--json') added to the one-shot dashboard, or a subcommand (e.g. 'daily') run as-is; " +
+	TOOL_ARG_WATCH_LOOP_CLAUSE;
 
 /** The oduse_usage tool description, shared by the v1 and v2 halves. */
 export const ODUSE_TOOL_DESCRIPTION =
-	"Fetch live OpenDesign usage: credits spent against the plan's server windows (5h, weekly, monthly), the wallet balance, and per-model spend. Defaults to the one-shot dashboard; pass extra oduse flags for more (e.g. '--plan plus', 'daily', '--json').";
+	"Fetch live OpenDesign usage: credits spent against the plan's server windows (5h, weekly) and a local monthly estimate, the wallet balance, and per-model spend. Defaults to the one-shot dashboard; pass extra oduse flags for more (e.g. '--plan plus', 'daily', '--json').";
 
 /** The oduse_usage `arg` description, shared by the v1 and v2 halves. */
 export const ODUSE_TOOL_ARG_DESCRIPTION =
-	"Optional: extra oduse flags (e.g. '--plan plus', 'daily', '--session-cookie <path>', '--no-wallet', '--json'); empty means the one-shot dashboard";
+	"Optional: extra oduse flags (e.g. '--plan plus', '--session-cookie <path>', '--no-wallet', '--json') added to the one-shot dashboard, or a subcommand (e.g. 'daily') run as-is; " +
+	TOOL_ARG_WATCH_LOOP_CLAUSE;
 
 /** The v2 /oduse-usage slash command id (registered and bound in tui-commands.tsx). */
 export const ODUSE_USAGE_COMMAND_ID = "command-code.oduse-usage";

@@ -32,6 +32,12 @@ describe("normalizeKey", () => {
 		// Flash", so the AA index lands on the row that is listed here.
 		expect(normalizeKey("Qwen3.8-Flash-Next")).toBe("qwen38flash");
 		expect(normalizeKey("qwen3-8-flash-next")).toBe(normalizeKey("Qwen 3.8 Flash"));
+		// CommandCode calls the Contributor tier "Muse Spark 1.2 at ~95% off":
+		// same model, discounted SKU, so it shares the base ability.
+		expect(normalizeKey("Muse Spark 1.2 Contributor")).toBe(normalizeKey("Muse Spark 1.2"));
+		expect(normalizeKey("muse-spark-1-3-contributor")).toBe(normalizeKey("Muse Spark 1.3"));
+		// Vendor prefix artefact: OpenCode writes "Tencent", its slug does not.
+		expect(normalizeKey("Tencent Hy4 Flash")).toBe(normalizeKey("hy4-flash"));
 	});
 	test("strips one trailing Free marker generically", () => {
 		// The docs append "Free" to every free model; the other catalog omits

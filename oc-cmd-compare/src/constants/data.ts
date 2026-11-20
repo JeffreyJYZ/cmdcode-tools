@@ -31,6 +31,14 @@ export const ALIASES: Record<string, string> = {
 	// Analysis has no plain "Flash" one. Without this the row has no ability or
 	// speed at all, since neither index scores it under the marketing name.
 	qwen38flashnext: "qwen38flash",
+	// CommandCode's own blurb calls these "Muse Spark 1.2/1.3 at ~95% off": the
+	// same model in a discounted contributor tier, so it shares the base ability.
+	// Both have an id/price of their own and neither has a separate AA score.
+	musespark12contributor: "musespark12",
+	musespark13contributor: "musespark13",
+	// OpenCode prefixes the vendor; CommandCode's slug is bare. Same model, both
+	// currently unscored, but one key must not split it in two.
+	tencenthy4flash: "hy4flash",
 };
 
 /** The monthly-limit cell of a free model: "Unlimited", often with a note. */

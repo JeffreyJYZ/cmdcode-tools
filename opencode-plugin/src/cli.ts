@@ -100,16 +100,27 @@ export function splitCliArgs(input: string): string[] {
 	return out;
 }
 
+/** Shared argv rule for all four readers. A subcommand (or an already explicit
+ * `-1`/`--once`) passes through untouched; any other flags are a dashboard
+ * request, so the one-shot default is prepended. Without that guard a flag-only
+ * tool arg is read as "no one-shot requested" and starts the live watch loop —
+ * which never returns to the tool caller. */
+function dashboardArgs(arg: string | undefined, defaults: readonly string[]): string[] {
+	const tokens = splitCliArgs(arg ?? "");
+	if (!tokens.length) return [...defaults];
+	// Subcommands may follow their own flags (--tz +05:30 daily), so scan all
+	// tokens; a dashboard invocation never names one.
+	if (tokens.some((t) => SUBCOMMANDS.has(t))) return tokens;
+	// An explicit one-shot is already safe — never duplicate it.
+	if (tokens.some((t) => t === "-1" || t === "--once")) return tokens;
+	return [...defaults, ...tokens];
+}
+
 /** argv for a cmduse invocation: the default one-shot dashboard plus any
  * pass-through flags, or a subcommand invocation ("plans",
  * "--tz +05:30 daily") passed through untouched. */
 export function buildCmduseArgs(arg: string): string[] {
-	const tokens = splitCliArgs(arg);
-	if (!tokens.length) return [...DEFAULT_ARGS];
-	// Subcommands may follow their own flags (--tz +05:30 daily), so scan all
-	// tokens; a dashboard invocation never names one.
-	if (tokens.some((t) => SUBCOMMANDS.has(t))) return tokens;
-	return [...DEFAULT_ARGS, ...tokens];
+	return dashboardArgs(arg, DEFAULT_ARGS);
 }
 
 /** argv for an mpc invocation: mpc has no subcommands, so the arg
@@ -121,27 +132,21 @@ export function buildMpcArgs(arg: string): string[] {
 	return tokens;
 }
 
-/**
- * The arg the ocuse_usage tool and the /ocuse-usage dialog pass on: the
- * agent's (or slash) args when given, else `-1`. A bare ocuse is the live
- * watch loop and would never return, so empty input never passes through.
- */
-export function ocuseArgs(arg: string | undefined): string {
-	return arg !== undefined && arg.trim() !== "" ? arg : "-1";
+/** argv for the ocuse_usage tool and the /ocuse-usage dialog. Always a token
+ * array: `dashboardArgs` gives flags the one-shot guard, so neither an empty
+ * arg nor a flag-only arg can start the live watch loop and hang the caller. */
+export function ocuseArgs(arg: string | undefined): string[] {
+	return dashboardArgs(arg, ["-1"]);
 }
 
-/** The arg the arkuse_usage tool and the /arkuse-usage dialog pass on: the
- *  agent's (or slash) args when given, else `-1`. A bare arkuse is the live
- *  watch loop and would never return. */
-export function arkuseArgs(arg: string | undefined): string {
-	return arg !== undefined && arg.trim() !== "" ? arg : "-1";
+/** argv for the arkuse_usage tool and the /arkuse-usage dialog (same rule). */
+export function arkuseArgs(arg: string | undefined): string[] {
+	return dashboardArgs(arg, ["-1"]);
 }
 
-/** The arg the oduse_usage tool and the /oduse-usage dialog pass on: the
- *  agent's (or slash) args when given, else `-1`. A bare oduse is the live
- *  watch loop and would never return. */
-export function oduseArgs(arg: string | undefined): string {
-	return arg !== undefined && arg.trim() !== "" ? arg : "-1";
+/** argv for the oduse_usage tool and the /oduse-usage dialog (same rule). */
+export function oduseArgs(arg: string | undefined): string[] {
+	return dashboardArgs(arg, ["-1"]);
 }
 
 export type RunOptions = {
