@@ -57,6 +57,10 @@ pub fn render_text(
         c(compact(report.month.input)),
         c(compact(report.month.output)),
     ));
+    // Which price table priced every figure below: the live list, its cache, or
+    // the baked seed (with the reason). A stale fallback must never read fresh.
+    let catalog = crate::oduse::od::catalog();
+    out.push_str(&catalogue_line(&ink, &catalog));
     out.push_str(&wallet_line(&ink, report));
 
     let caps = super::caps::caps_heading(&ink, plan);
@@ -178,4 +182,43 @@ pub fn render_text(
     }
     out.push('\n');
     out
+}
+
+/// One dim line naming the price table's origin. `live` and `cache, 3h old` both
+/// carry the count of rows whose rates came from the published list; `builtin`
+/// names the seed date and the reason, so a stale fallback cannot be mistaken
+/// for a fresh answer.
+fn catalogue_line(ink: &Ink, catalog: &crate::oduse::od::Catalog) -> String {
+    let p = &catalog.provenance;
+    let live = if p.models > 0 {
+        format!(" · {} rows live", p.models)
+    } else {
+        String::new()
+    };
+    let unlisted = if p.unlisted > 0 {
+        format!(
+            " · {} in the price list with no published multiplier (not listed)",
+            p.unlisted
+        )
+    } else {
+        String::new()
+    };
+    let why = match (p.origin, p.error.as_deref()) {
+        (crate::oduse::od::Origin::Builtin, Some(reason)) => {
+            format!(
+                " · offline seed {}, live list not used ({reason})",
+                catalog.extracted_at
+            )
+        }
+        (crate::oduse::od::Origin::Builtin, None) => {
+            format!(" · offline seed {}", catalog.extracted_at)
+        }
+        _ => String::new(),
+    };
+    format!(
+        "{}catalogue: {}{live}{unlisted}{why}{}\n",
+        ink.dim,
+        p.label(),
+        ink.reset
+    )
 }

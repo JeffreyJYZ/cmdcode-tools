@@ -336,13 +336,12 @@ mod tests {
         // The ocuse bin includes this from the published crate, so a broken
         // path or a missing file must fail here, not at `cargo publish`.
         assert!(ZEN_JSON.contains("\"go\""), "zen.json looks wrong");
-        // The plan dimension is generated, not hand-written: assert both plan
-        // ids so a stale single-plan snapshot fails the build instead of
-        // silently dropping Go Plus.
-        assert!(
-            ZEN_JSON.contains("\"go-plus\""),
-            "zen.json is missing the Go Plus plan"
-        );
+        // The plan dimension is generated, not hand-written: assert every plan
+        // id the endpoint publishes so a stale snapshot fails the build instead
+        // of silently dropping a plan `--plan` cannot then select.
+        for plan in ["\"go-plus\"", "\"go-teams\""] {
+            assert!(ZEN_JSON.contains(plan), "zen.json is missing plan {plan}");
+        }
         assert!(
             ZEN_JSON.contains("\"allowanceByModel\""),
             "zen.json is missing per-plan allowances"

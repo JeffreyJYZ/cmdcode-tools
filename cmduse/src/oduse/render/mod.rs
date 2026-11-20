@@ -40,3 +40,32 @@ pub fn shorten(path: &str) -> String {
         _ => path.to_string(),
     }
 }
+
+/// The catalogue's origin as one JSON object, read by the dashboard JSON, the
+/// statusline and the two catalogue commands so no surface can disagree on
+/// whether the figures below are live, cached or the baked seed.
+///
+/// `ratesFrom` and `multipliersFrom` are separate on purpose: the price list
+/// publishes token rates only, so the multiplier beside every rate is always the
+/// baked file's. `error` is set only when the seed answered, and `ageSecs` only
+/// on a cache answer.
+pub fn catalog_json() -> serde_json::Value {
+    let p = crate::oduse::od::catalog().provenance;
+    let rates_from = if p.models > 0 {
+        "price-list"
+    } else {
+        "builtin"
+    };
+    serde_json::json!({
+        "source": p.kind(),
+        // When the list was fetched (`live`) or written to the cache (`cache`);
+        // null for the seed, which carries only its build date.
+        "at": p.at,
+        "ageSecs": p.age_secs,
+        "rowsLive": p.models,
+        "rowsUnlisted": p.unlisted,
+        "ratesFrom": rates_from,
+        "multipliersFrom": "builtin",
+        "error": p.error,
+    })
+}

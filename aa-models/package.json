@@ -1,0 +1,45 @@
+{
+	"name": "@jeffreyjyz/aa-models",
+	"version": "0.1.0",
+	"description": "Artificial Analysis model catalogue as a CLI: list, filter, sort and emit the full record as JSON",
+	"license": "MIT",
+	"type": "module",
+	"bin": {
+		"aa": "src/index.ts",
+		"aadev": "src/index.ts"
+	},
+	"imports": {
+		"#~/*": "./src/*"
+	},
+	"files": [
+		"src",
+		"LICENSE"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"start": "bun run src/index.ts",
+		"test": "bun test",
+		"lint": "biome lint --write .",
+		"typecheck": "bun check",
+		"dev:link": "ln -sfn \"$PWD/src/index.ts\" \"$HOME/.bun/bin/aadev\""
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.13",
+		"@types/bun": "latest",
+		"typescript": "^7"
+	},
+	"dependencies": {
+		"cac": "^7.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/JeffreyJYZ/cmdcode-tools.git",
+		"directory": "aa-models"
+	},
+	"bugs": {
+		"url": "https://github.com/JeffreyJYZ/cmdcode-tools/issues"
+	},
+	"homepage": "https://github.com/JeffreyJYZ/cmdcode-tools/tree/main/aa-models#readme"
+}

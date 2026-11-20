@@ -88,6 +88,16 @@ const ALLOW: Allow[] = [
 		binaries: ["ocuse", "arkuse", "oduse"],
 		reason: "Infers a missing period start from the first local request; cmduse has no local period to infer because the account API supplies it.",
 	},
+	{
+		flag: "--cache",
+		binaries: ["ocuse", "oduse"],
+		reason: "Both price turns from a model catalogue fetched live and held on disk, so --cache picks that file's TTL (0 disables it). cmduse's prices arrive with the account API's usage and arkuse's ark.json is baked AFP coefficients with no endpoint to refetch, so neither binary has a file to expire.",
+	},
+	{
+		flag: "--no-catalog",
+		binaries: ["ocuse", "oduse"],
+		reason: "Both fall back to the catalogue baked into the binary, so --no-catalog skips the live fetch and its cache entirely. cmduse has no baked price table and arkuse's baked ark.json is its only source, which makes the flag meaningless on either.",
+	},
 ];
 
 function executable(path: string): boolean {

@@ -5,10 +5,10 @@
 //   bun run dev:link -- --dir <dir>  # override the link directory
 //
 // Builds the Rust bins (`cargo build -p cmd-usage`, debug), then symlinks ONLY
-// the four dev names — `cmdusedev`, `ocusedev` (Rust, from `target/debug/`) and
-// `mpcdev`, `reqshapedev` (the bun entry files). The installed `cmduse` /
-// `ocuse` / `mpc` / `reqshape` are never touched, so nothing published is
-// shadowed; consumers point at these via CMDUSE_BIN / OCUSE_BIN / MPC_BIN /
+// the five dev names — `cmdusedev`, `ocusedev` (Rust, from `target/debug/`) and
+// `mpcdev`, `reqshapedev`, `aadev` (the bun entry files). The installed `cmduse`
+// / `ocuse` / `mpc` / `reqshape` / `aa` are never touched, so nothing published
+// is shadowed; consumers point at these via CMDUSE_BIN / OCUSE_BIN / MPC_BIN /
 // REQSHAPE_BIN.
 //
 // Idempotent: every link is removed and recreated, so a stale or dangling link
@@ -34,6 +34,7 @@ const DEV_COMMANDS: DevCommand[] = [
 	{ name: "ocusedev", target: join(ROOT, "target/debug/ocusedev") },
 	{ name: "mpcdev", target: join(ROOT, "oc-cmd-compare/src/index.ts") },
 	{ name: "reqshapedev", target: join(ROOT, "reqshape/src/index.ts") },
+	{ name: "aadev", target: join(ROOT, "aa-models/src/index.ts") },
 ];
 
 /** `--dir <path>` override, else `$HOME/dev/bin` with `~` expanded. */

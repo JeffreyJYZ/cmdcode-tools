@@ -1,13 +1,33 @@
 import type { Metric, Options } from "#~/cli/options.ts";
 import type { CompareRow, EntryMetrics } from "#~/types.ts";
 
+/**
+ * How well a needle hits one row: 0 when the name or key starts with it, 1 at
+ * a word boundary inside, 2 anywhere, `null` for no hit. Case-insensitive
+ * substring, never a regex, so `--model`'s invalid-pattern fallback and the
+ * picker agree on what "matches" and a printable key cannot throw.
+ */
+export function nameTier(row: CompareRow, needle: string): number | null {
+	const want = needle.toLowerCase();
+	if (want === "") return 0;
+	let best: number | null = null;
+	for (const text of [row.name, row.key]) {
+		const hay = text.toLowerCase();
+		const at = hay.indexOf(want);
+		if (at < 0) continue;
+		const tier = at === 0 ? 0 : /[\s\-_/]/.test(hay.charAt(at - 1)) ? 1 : 2;
+		if (best === null || tier < best) best = tier;
+	}
+	return best;
+}
+
 export function matches(row: CompareRow, pattern: Options["model"]): boolean {
 	if (!pattern) return true;
 	try {
 		const re = new RegExp(pattern, "i");
 		return re.test(row.name) || re.test(row.key);
 	} catch {
-		return row.name.toLowerCase().includes(pattern.toLowerCase());
+		return nameTier(row, pattern) !== null;
 	}
 }
 

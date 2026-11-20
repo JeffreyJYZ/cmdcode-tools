@@ -43,11 +43,14 @@ pub const STATUSLINE_KEYS: [&str; 14] = [
 /// binary that invents a new extra must add it here deliberately, and a dropped
 /// shared key still fails the assertion below.
 #[cfg(test)]
-pub const STATUSLINE_EXTRA_KEYS: [&str; 8] = [
+pub const STATUSLINE_EXTRA_KEYS: [&str; 11] = [
     "account",
     "accountError",
     "afp",
     "capLabel",
+    "catalogAgeSecs",
+    "catalogAt",
+    "catalogSource",
     "meterSource",
     "snapshotError",
     "walletSource",

@@ -11,14 +11,91 @@
 // The table is keyed by the gateway's **wire id**, because a turn records what
 // the gateway served — an id the rows do not carry is metered at zero.
 //
+// **The token rates in `core/od.json` are the offline seed, not the source.**
+// `oduse::catalogue` fetches the same public price list at run time (disk-cached
+// 6 h) and merges its rates over this table; the baked file is what answers when
+// the fetch and the cache both fail. The plan caps, labels, credit multipliers
+// and notes always come from the baked file, because the price list publishes
+// none of them. `Catalog::provenance` says which of the two answered.
+//
 // Which plan the account is on is not discoverable either: the store records no
 // subscription and the daemon's wallet reports a balance, not a tier, so `--plan`
 // is told and defaults to [`DEFAULT_PLAN`].
 use serde::Deserialize;
+use std::sync::OnceLock;
 
 // Re-exported from `cmduse-core` so the path stays inside its own crate (an
 // `include_str!` reaching outside is fine locally and fatal at `cargo publish`).
 const RAW: &str = cmduse_core::OD_JSON;
+
+/// Where the token-rate half of the table came from. The baked seed is a
+/// fallback, never a fresh answer, so it must never render as `live`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Origin {
+    /// Fetched from the public price list during this run.
+    Live,
+    /// Read from the run-time disk cache; `age_secs` says how old.
+    Cache,
+    /// The offline seed in `cmduse_core::OD_JSON` — no live answer this run.
+    #[default]
+    Builtin,
+}
+
+/// What `oduse::catalogue` resolved for this run. Pure data, so the renderers
+/// can print it without knowing how it was fetched.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct Provenance {
+    pub origin: Origin,
+    /// When the live list was fetched, epoch seconds — the run's clock for a
+    /// live answer, the cache file's write time for a cached one, and `None`
+    /// for the seed (which carries only its build date).
+    pub at: Option<i64>,
+    /// Cache age in seconds (`None` for live and builtin).
+    pub age_secs: Option<i64>,
+    /// Rows whose rates the live answer supplied (the rest kept the baked seed's).
+    pub models: usize,
+    /// Live rows the baked table has no multiplier for, so they are not listed:
+    /// the price list publishes no multiplier and one is never invented.
+    pub unlisted: usize,
+    /// Why the baked seed answered, when it did — a fetch or parse failure, or
+    /// `--no-catalog`. `None` on a live or cache answer.
+    pub error: Option<String>,
+}
+
+impl Provenance {
+    /// The machine word: `live`, `cache` or `builtin`.
+    pub fn kind(&self) -> &'static str {
+        match self.origin {
+            Origin::Live => "live",
+            Origin::Cache => "cache",
+            Origin::Builtin => "builtin",
+        }
+    }
+
+    /// The human label: `live`, `cache, 3h old`, or `builtin`.
+    pub fn label(&self) -> String {
+        match self.origin {
+            Origin::Live => "live".into(),
+            Origin::Cache => format!(
+                "cache, {} old",
+                crate::oduse::catalogue::short_age(self.age_secs.unwrap_or(0))
+            ),
+            Origin::Builtin => "builtin".into(),
+        }
+    }
+}
+
+/// The catalog resolved for this process, installed once by the CLI. `None`
+/// means nothing was resolved (a test or a library caller), so [`catalog`]
+/// answers from the baked seed.
+static INSTALLED: OnceLock<Catalog> = OnceLock::new();
+
+/// Install the run's resolved catalogue and hand it back. Idempotent: a second
+/// call returns the first answer, so the watch loop and its renderers cannot
+/// disagree.
+pub fn install(resolved: Catalog) -> Catalog {
+    INSTALLED.get_or_init(|| resolved).clone()
+}
 
 /// The plan `oduse` measures against when `--plan` is not given.
 pub const DEFAULT_PLAN: &str = "go";
@@ -91,6 +168,11 @@ pub struct Model {
     /// unlabelled rather than being silently promoted to published.
     #[serde(default, rename = "rateSource")]
     pub rate_source: Option<String>,
+    /// Set by `catalogue::merge` when this row's rates came from the live price
+    /// list (or its cache) rather than the baked seed. The multiplier and label
+    /// beside it are always the baked table's: the price list publishes neither.
+    #[serde(skip)]
+    pub live_rates: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -128,11 +210,26 @@ pub struct Catalog {
     pub notes: Vec<String>,
     pub plans: Vec<Plan>,
     pub models: Vec<Model>,
+    /// Which source answered this run — set by `catalogue::resolve`, never read
+    /// from the JSON.
+    #[serde(skip)]
+    pub provenance: Provenance,
 }
 
-/// Parsed per call; the file is a compile-time constant.
-pub fn catalog() -> Catalog {
+/// Parse the baked seed exactly as shipped. This is the offline answer, not the
+/// live table: `catalogue::resolve` merges the price list over it at run time.
+pub fn baked() -> Catalog {
     serde_json::from_str(RAW).expect("core/od.json is hand-maintained; check its JSON")
+}
+
+/// The process's resolved catalogue: whatever `install` was given, else the
+/// baked seed. Every renderer and report goes through here so the whole run —
+/// dashboard, `--json`, statusline and MCP — reads one table and one provenance.
+pub fn catalog() -> Catalog {
+    match INSTALLED.get() {
+        Some(resolved) => resolved.clone(),
+        None => baked(),
+    }
 }
 
 impl Catalog {

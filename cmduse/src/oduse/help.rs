@@ -37,6 +37,10 @@ Options:
                         ~/Library/Application Support/Open Design/namespaces/
                         release-stable/data/app.sqlite)
       --plan <id>       plan to measure against: go (default), plus, pro, max
+      --cache <dur>     Live price-list cache TTL (default 6h; 0 disables it).
+                        Accepts a unit suffix: 30m, 6h, 2d (bare = seconds)
+      --no-catalog      Skip the live price list and its cache; price every turn
+                        from the baked seed in core/od.json
       --no-wallet       skip both wallet routes (account API and local daemon)
       --session-cookie <path>  file holding the console session cookie (0600);
                         or set $OD_SESSION / $OD_SESSION_COOKIE. Never scraped

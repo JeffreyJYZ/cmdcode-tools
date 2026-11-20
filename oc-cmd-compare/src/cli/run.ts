@@ -2,6 +2,7 @@
 import { COLUMN_HELP } from "#~/view/text/help.ts";
 import { COLUMN_IDS } from "#~/constants/view.ts";
 import { loadUsage } from "#~/data/usage/index.ts";
+import { pickable, pickRows } from "#~/pick/pick.ts";
 import { renderUsage } from "#~/view/layout/usage.ts";
 import {
 	fitColumns,
@@ -129,6 +130,9 @@ export async function run(argv: string[]): Promise<number> {
 	}
 
 	const limit = options.width ?? process.stdout.columns ?? 120;
+	if (pickable(options)) {
+		return pickRows(result, meta, limit);
+	}
 	const fitted = trimsToWidth(options)
 		? fitColumns(result, requested, limit)
 		: { ids: requested, dropped: [] as string[] };

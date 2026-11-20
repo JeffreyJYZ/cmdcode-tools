@@ -543,7 +543,8 @@ Options:
       --db <path>       opencode store (default $OPENCODE_DB or
                         ~/.local/share/opencode/opencode.db); the pi and dsh
                         session logs are read beside it
-      --plan <id>       Go plan to measure against: go (default) or go-plus
+      --plan <id>       Go plan to measure against: go (default), go-plus,
+                        go-teams
       --no-api          Skip OpenCode Go's usage endpoint and stay local-only
       --window <w>      report window: month (default), all, or <n>d
       --period-start <date>  pin the period start (YYYY-MM-DD, UTC)

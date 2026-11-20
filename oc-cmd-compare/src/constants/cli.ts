@@ -78,6 +78,7 @@ export const KNOWN = new Set([
 	"check",
 	"config",
 	"printConfig",
+	"pick",
 	"usage",
 	"usageFile",
 	"usageLog",

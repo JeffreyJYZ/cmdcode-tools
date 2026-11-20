@@ -434,7 +434,7 @@ mod tests {
         let catalog = crate::ocuse::zen::catalog();
         let report = build(
             &rows,
-            &catalog,
+            catalog,
             crate::ocuse::zen::DEFAULT_PLAN,
             now * 1000,
             None,
@@ -488,7 +488,7 @@ mod tests {
         };
         let report = build(
             &rows,
-            &crate::ocuse::zen::catalog(),
+            crate::ocuse::zen::catalog(),
             crate::ocuse::zen::DEFAULT_PLAN,
             now * 1000,
             None,
@@ -525,7 +525,7 @@ mod tests {
         let rows = vec![row(now - 60, "cheap", 0.1), row(now - 60, "pricey", 5.0)];
         let report = build(
             &rows,
-            &crate::ocuse::zen::catalog(),
+            crate::ocuse::zen::catalog(),
             crate::ocuse::zen::DEFAULT_PLAN,
             now * 1000,
             None,
@@ -548,7 +548,7 @@ mod tests {
         rows.extend([dsh, again]);
         let report = build(
             &rows,
-            &crate::ocuse::zen::catalog(),
+            crate::ocuse::zen::catalog(),
             crate::ocuse::zen::DEFAULT_PLAN,
             now * 1000,
             None,

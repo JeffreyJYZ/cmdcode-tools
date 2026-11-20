@@ -8,6 +8,8 @@
 //   {weekly} {weekly_pct} {weekly_bar}            (aliases {wk} {wk_pct} {wk_bar})
 //   {wallet}                       the daemon's balance, or a dash
 //   {models}                       top model by period credits
+//   {catalog}                      where the price table came from: live, cache,
+//                                  or builtin
 // Unknown placeholders are dropped; `|` and newlines are literal separators.
 // The 5-hour and weekly figures come from the account snapshot when one answered,
 // the same meter the dashboard prints; the local store is the fallback.
@@ -70,6 +72,7 @@ pub fn statusline_template(
         "weekly_bar" | "wk_bar" => gauge(meter.weekly_spent, meter.weekly_cap),
         "wallet" => wallet(),
         "models" => top_model(),
+        "catalog" => crate::oduse::od::catalog().provenance.label(),
         _ => String::new(),
     })
 }
@@ -89,9 +92,17 @@ pub fn statusline_json(report: &Report, plan: &Plan) -> String {
     // at $120/mo on Go, not the $220 the Eco variant gets.
     let month =
         crate::oduse::window::window_caps(&report.models, plan, crate::oduse::window::Span::Month);
+    // The catalogue's origin, read from the one shared object so this surface
+    // cannot drift from the dashboard's `catalog`.
+    let catalog = super::catalog_json();
     serde_json::json!({
         "plan": plan.id,
         "source": "open-design",
+        // Which price table priced the figures: live, cache (with its age) or the
+        // baked seed. A consumer must never read a seed figure as a live one.
+        "catalogSource": catalog["source"],
+        "catalogAt": catalog["at"],
+        "catalogAgeSecs": catalog["ageSecs"],
         // `snapshotError` is the key the dashboard JSON emits: null unless a
         // cookie was present and the request failed.
         "meterSource": meter.source.as_str(),
@@ -142,9 +153,28 @@ mod tests {
         let json: serde_json::Value =
             serde_json::from_str(&statusline_json(&report, plan)).unwrap();
         crate::report_render::assert_statusline_keys(&json);
-        // Unit-specific extras stay; they name concepts no other family has.
+        // Unit-specific extras stay; they name concepts no family has.
         assert!(json.get("capLabel").is_some());
         assert!(json.get("walletUsd").is_some());
         assert!(json.get("walletSource").is_some());
+        // Provenance rides beside them, always present.
+        assert_eq!(json["catalogSource"], "builtin");
+        assert!(json.get("catalogAt").is_some());
+        assert!(json.get("catalogAgeSecs").is_some());
+    }
+
+    #[test]
+    fn the_catalog_placeholder_names_the_table_origin() {
+        let catalog = crate::oduse::od::catalog();
+        let report = crate::oduse::window::build(
+            &[],
+            &catalog,
+            crate::oduse::od::DEFAULT_PLAN,
+            1_800_000_000_000,
+            None,
+        );
+        let plan = catalog.plan(crate::oduse::od::DEFAULT_PLAN).unwrap();
+        let text = statusline_template(&report, plan, "{catalog}", false, false, 20);
+        assert_eq!(text, "builtin");
     }
 }

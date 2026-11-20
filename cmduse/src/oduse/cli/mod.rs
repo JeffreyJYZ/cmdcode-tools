@@ -19,6 +19,7 @@ mod frame;
 use crate::cli::{self, Binary, SubCmd};
 use crate::oduse::api_wallet;
 use crate::oduse::args;
+use crate::oduse::catalogue;
 use crate::oduse::meter;
 use crate::oduse::od;
 use crate::oduse::opencode;
@@ -29,6 +30,13 @@ use ctx::Ctx;
 pub fn run() {
     let (argv, session_cookie) = args::split_session_cookie(std::env::args_os().collect());
     let (argv, model_id) = args::split_model_id(argv);
+    let (argv, catalog_settings) = match args::split_catalog_flags(argv) {
+        Ok(pair) => pair,
+        Err(e) => {
+            eprintln!("error: {e}");
+            std::process::exit(2);
+        }
+    };
     let args = match cli::parse_args_from(argv, Binary::Oduse) {
         Ok(a) => a,
         Err(e) => {
@@ -74,6 +82,11 @@ pub fn run() {
     let opencode_path = opencode::default_path();
     let now = window::now_ms();
 
+    // One catalogue for the whole run: the live price list (disk-cached 6 h)
+    // merged over the baked seed, installed so the dashboard, `--json`, the
+    // statusline and MCP all read the same table and the same provenance.
+    let catalog = od::install(catalogue::resolve(catalog_settings, now / 1000));
+
     // `plans` needs neither the store nor a plan id: the catalogue is static.
     if let Some(SubCmd::Plans) = args.subcmd {
         if args.json {
@@ -86,7 +99,6 @@ pub fn run() {
 
     // Which plan the caps belong to: told, because the store records no
     // subscription and the wallet reports a balance rather than a tier.
-    let catalog = od::catalog();
     let plan_id = args
         .plan
         .clone()

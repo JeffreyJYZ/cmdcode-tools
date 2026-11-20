@@ -11,6 +11,7 @@
 // month is the subscription anniversary, and it meters with its own price basis.
 // So the local derivation is a fallback, not the primary source.
 pub mod api;
+pub mod catalogue;
 pub mod cli;
 pub mod db;
 pub mod mcp;

@@ -88,6 +88,7 @@ pub fn plans_json() -> String {
         "extractedAt": catalog.extracted_at,
         "source": catalog.source,
         "creditUnit": catalog.credit_unit,
+        "catalog": super::catalog_json(),
         "windows": window_share(),
         "notes": catalog.notes,
         "plans": catalog.plans.iter().map(plan_json).collect::<Vec<_>>(),
@@ -99,6 +100,8 @@ pub fn plans_json() -> String {
             "input": m.input,
             "output": m.output,
             "rateSource": m.rate_source,
+            "ratesFrom": if m.live_rates { "price-list" } else { "builtin" },
+            "multiplierFrom": "builtin",
         })).collect::<Vec<_>>(),
     })
     .to_string()
@@ -124,6 +127,8 @@ pub fn models_json(plan_id: &str) -> String {
                 "input": model.input,
                 "output": model.output,
                 "rateSource": model.rate_source,
+                "ratesFrom": if model.live_rates { "price-list" } else { "builtin" },
+                "multiplierFrom": "builtin",
                 "plan": plan.map(|p| p.id.clone()),
                 "monthCapUsd": caps["monthlyUsd"],
                 "fiveHourCapUsd": caps["fiveHourUsd"],
@@ -136,4 +141,36 @@ pub fn models_json(plan_id: &str) -> String {
         out.push('\n');
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_catalogue_json_names_where_each_half_came_from() {
+        let plans: serde_json::Value = serde_json::from_str(&plans_json()).unwrap();
+        let catalog = plans.get("catalog").expect("catalog object");
+        // Nothing installed in a test: the baked seed answered, and it must say
+        // so rather than claim a live list.
+        assert_eq!(catalog["source"], "builtin");
+        assert_eq!(catalog["ratesFrom"], "builtin");
+        assert_eq!(catalog["multipliersFrom"], "builtin");
+        let model = plans["models"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|m| m["id"] == "deepseek-v4.1-flash")
+            .unwrap();
+        assert_eq!(model["ratesFrom"], "builtin");
+        assert_eq!(model["multiplierFrom"], "builtin");
+        // The per-line `models --json` carries the same two fields.
+        let row = models_json("go")
+            .lines()
+            .map(|l| serde_json::from_str::<serde_json::Value>(l).unwrap())
+            .find(|m| m["id"] == "deepseek-v4.1-flash")
+            .unwrap();
+        assert_eq!(row["ratesFrom"], "builtin");
+        assert_eq!(row["multiplierFrom"], "builtin");
+    }
 }
