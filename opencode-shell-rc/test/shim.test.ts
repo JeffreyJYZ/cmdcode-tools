@@ -17,6 +17,7 @@ import { restoreEnv } from "./helpers";
 const saved = {
 	HOME: process.env.HOME,
 	XDG_STATE_HOME: process.env.XDG_STATE_HOME,
+	XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
 };
 let dir: string;
 
@@ -24,11 +25,13 @@ beforeEach(() => {
 	dir = mkdtempSync(join(tmpdir(), "shell-rc-test-"));
 	process.env.HOME = dir;
 	process.env.XDG_STATE_HOME = join(dir, "state");
+	process.env.XDG_CONFIG_HOME = join(dir, "config");
 });
 
 afterEach(() => {
 	restoreEnv("HOME", saved.HOME);
 	restoreEnv("XDG_STATE_HOME", saved.XDG_STATE_HOME);
+	restoreEnv("XDG_CONFIG_HOME", saved.XDG_CONFIG_HOME);
 	rmSync(dir, { recursive: true, force: true });
 });
 
@@ -162,5 +165,27 @@ describe("prepare", () => {
 			}).trim();
 		expect(run("-ic")).toBe("");
 		expect(run("-c")).toBe("1");
+	});
+
+	test.skipIf(!hasZsh)("a JSON edit refreshes guards.zsh without refreshing state", () => {
+		writeFileSync(join(dir, ".zshrc"), "alias gp='echo FAKE_PUSH'\n");
+		prepare();
+		const config = join(dir, "config", "opencode", "shell-rc.json");
+		mkdirSync(join(dir, "config", "opencode"), { recursive: true });
+		writeFileSync(config, JSON.stringify({ blocked: { ack: "echo" } }));
+		prepare();
+		const guards = join(stateDir(), "guards.zsh");
+		expect(readFileSync(guards, "utf8")).toContain("function ack {");
+		const state = readFileSync(stateFile(), "utf8");
+
+		writeFileSync(
+			config,
+			JSON.stringify({ blocked: { tccutil: "TCC changes are human-only; ask the user" } }),
+		);
+		prepare();
+		expect(readFileSync(stateFile(), "utf8")).toBe(state);
+		const script = readFileSync(guards, "utf8");
+		expect(script).toContain("function tccutil {");
+		expect(script).not.toContain("function ack {");
 	});
 });
