@@ -17,6 +17,16 @@ Personal tooling for [opencode](https://opencode.ai) and Command Code, kept in o
 
 Everything Command Code (commandcode.ai) usage lives under `core/` + `cmduse/` + `opencode-plugin/`: a terminal dashboard with a built-in MCP server, and an opencode provider. One Cargo workspace shares the plan table and window math via `cmduse-core`; the opencode plugin is a separate TS package that registers the providers and delegates usage rendering to the `cmduse` CLI. The three `opencode-*` plugins are opencode v2 plugins (server half, and a TUI half where needed). See each project's `AGENTS.md` for design rules and the traps found the hard way.
 
+## Skills
+
+Install one skill per tool from this repo:
+
+```sh
+skills add JeffreyJYZ/cmdcode-tools
+```
+
+Skills: `cmdcode-tools` (umbrella), `cmduse`, `mpc`, `reqshape`, `opencode-plugin`, `opencode-shell-rc`, `opencode-context`, `opencode-session-dir`.
+
 ## cmduse components
 
 | Component             | Crate / dir                                              | Install                                                                                              | Docs                                                                                                             |

@@ -99,24 +99,26 @@ $ echo $?
 
 ```json
 {
-	"blocked": {
-		"grep": "rg",
-		"find": "fd",
-		"sed": "sd (or read for line ranges)",
-		"ack": "rg"
-	}
+	"blocked": [
+		{ "name": "grep", "alternative": "rg", "reason": "respects .gitignore and is faster" },
+		{ "name": "find", "alternative": "fd" },
+		{ "name": "sed", "alternative": "sd (or read for line ranges)" },
+		{ "name": "tccutil", "reason": "TCC changes are the user's; there is no grant verb" }
+	]
 }
 ```
 
-The value is the tool named in the error message. `sed`'s names `read` too, since `sed -n 'a,bp'` is a range read with no `sd` equivalent.
+`name` is the command to shadow (letters, digits, `.`, `_`, `+`, `-` after trimming). `alternative` is what to use instead — a command line whose first word is checked against `PATH`. `reason` is one short sentence shown in parentheses. The message is `<name> is blocked in agent shells — use <alternative> (<reason>)` when the alternative exists, or just the reason when it does not; an alternative that is not on `PATH` falls back to the reason, then to the alternative text verbatim. `sed`'s alternative names `read` too, since `sed -n 'a,bp'` is a range read with no `sd` equivalent.
+
+The legacy string map still works: `"grep": "rg"` is read as `{ "name": "grep", "alternative": "rg" }`. A duplicate `name` resolves to the later entry; malformed values and invalid names are skipped rather than guessed.
 
 `cat` is deliberately never worth adding to that list: it emits raw bytes, while `bat` reformats (headers, line numbers, decoration), so the output a pipeline or an agent reads would no longer be the file.
 
-Three properties are deliberate:
+Four properties are deliberate:
 
 - **Opt-in.** No `blocked` entry means no guard, so the shim's `-f` test skips the file entirely — and a config you empty removes the file.
 - **Agent shells only.** zsh functions are not exported, so a `git` hook, a Makefile, a binary or a `/bin/sh` script that shells out still runs the real `grep`. What changes is only what the model types into the shell tool. A `#!/bin/zsh` script is the one exception — it inherits the shim's `ZDOTDIR`, so it is guarded exactly like the shell tool itself.
-- **Skipped when the replacement is missing.** Blocking `find` on a machine without `fd` would leave the agent with no way to search, so a guard whose replacement is not on `PATH` is not written at all.
+- **Missing replacement says why.** A guard is never dropped just because its alternative is not installed: the refusal uses the `reason` (or the alternative text itself) with no `use` hint, so an outright block still explains itself. An entry with neither an alternative nor a reason is skipped — there is nothing useful to say.
 - **Not a jail.** `command grep` and `/usr/bin/grep` still work — the guard is a speed bump long enough for the model to reconsider, not a security boundary.
 
 The user's escape hatch still wins: `~/.config/opencode/shell.zsh` is sourced after the guards, so a single machine can undo one.
