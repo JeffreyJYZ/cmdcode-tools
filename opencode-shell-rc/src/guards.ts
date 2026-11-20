@@ -90,8 +90,10 @@ function validName(name: string): boolean {
 
 /**
  * The guard script. An entry is skipped when its name is not a usable function
- * name or when the replacement is not installed — blocking `find` without `fd`
- * on PATH would leave the agent with no way to search at all.
+ * name or when the replacement is blank. A replacement whose first word resolves
+ * on PATH keeps the `use <replacement>` hint; otherwise the value is already a
+ * sentence — a command that must be blocked outright, with no substitute — and
+ * goes into the refusal verbatim, with no `use`.
  */
 export function renderGuards(
 	blocked: Blocked,
@@ -105,7 +107,8 @@ export function renderGuards(
 		// blocked `cat` would hand back something that is not the file.
 		if (name === "cat") continue;
 		const binary = replacement.split(/\s+/)[0];
-		if (!binary || !installed(binary)) continue;
+		if (!binary) continue;
+		const instruction = installed(binary) ? `use ${replacement}` : replacement;
 		lines.push(
 			// A loaded interactive shell often already has an alias of the same
 			// name (`grep='grep --color=auto'` ships with oh-my-zsh), and zsh
@@ -114,7 +117,7 @@ export function renderGuards(
 			// definition syntax zsh parses without alias expansion.
 			`unalias ${name} 2>/dev/null`,
 			`function ${name} {`,
-			`  print -u2 -- "${name} is blocked in agent shells — use ${replacement}"`,
+			`  print -u2 -- "${name} is blocked in agent shells — ${instruction}"`,
 			"  return 127",
 			"}",
 		);

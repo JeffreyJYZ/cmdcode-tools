@@ -62,10 +62,27 @@ describe("renderGuards", () => {
 		expect(script).toContain("return 127");
 	});
 
-	test("skips a binary whose replacement is not installed", () => {
-		expect(renderGuards({ find: "definitely-not-installed-xyz" })).not.toContain(
-			"function find {",
+	test("keeps `use` when the replacement resolves on PATH", () => {
+		const script = renderGuards({ find: "fd" }, (command) => command === "fd");
+		expect(script).toContain("find is blocked in agent shells — use fd");
+	});
+
+	test("writes a sentence replacement whose first word is not installed", () => {
+		const script = renderGuards(
+			{ tccutil: "TCC changes are human-only; ask the user" },
+			() => false,
 		);
+		expect(script).toContain("function tccutil {");
+		expect(script).toContain(
+			"tccutil is blocked in agent shells — TCC changes are human-only; ask the user",
+		);
+		expect(script).not.toContain("use TCC");
+		expect(script).toContain("return 127");
+	});
+
+	test("skips an entry whose replacement is blank", () => {
+		expect(renderGuards({ find: "   " }, () => true)).not.toContain("function find {");
+		expect(renderGuards({ find: "" }, () => true)).not.toContain("function find {");
 	});
 
 	test("skips names that cannot be zsh function names", () => {
@@ -104,6 +121,18 @@ describe("syncGuards", () => {
 		expect(syncGuards(() => true)).toBe(true);
 		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
 		expect(readFileSync(path, "utf8")).toContain("function ack {");
+	});
+
+	test("writes a sentence replacement even with no binary on PATH", () => {
+		writeConfig({ blocked: { tccutil: "TCC changes are human-only; ask the user" } });
+		expect(syncGuards(() => false)).toBe(true);
+		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+		const script = readFileSync(path, "utf8");
+		expect(script).toContain("function tccutil {");
+		expect(script).toContain(
+			"tccutil is blocked in agent shells — TCC changes are human-only; ask the user",
+		);
+		expect(script).not.toContain("use TCC");
 	});
 });
 
@@ -168,5 +197,27 @@ describe("the generated script in a real shell", () => {
 			{ encoding: "utf8" },
 		);
 		expect(real.length).toBeGreaterThan(0);
+	});
+
+	test.skipIf(!hasZsh)("a sentence guard refuses the command with its own message", () => {
+		writeConfig({ blocked: { tccutil: "TCC changes are human-only; ask the user" } });
+		syncGuards(() => false);
+		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+		let status = 0;
+		let stderr = "";
+		try {
+			execFileSync("zsh", ["-f", "-c", `source ${path}; tccutil`], {
+				stdio: ["ignore", "pipe", "pipe"],
+			});
+		} catch (error) {
+			const failed = error as { status?: number; stderr?: Buffer };
+			status = failed.status ?? 0;
+			stderr = failed.stderr?.toString() ?? "";
+		}
+		expect(status).toBe(127);
+		expect(stderr).toContain(
+			"tccutil is blocked in agent shells — TCC changes are human-only; ask the user",
+		);
+		expect(stderr).not.toContain("use ");
 	});
 });
