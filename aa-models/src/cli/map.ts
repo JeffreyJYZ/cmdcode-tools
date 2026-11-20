@@ -70,7 +70,7 @@ export function toOptions(parsed: Parsed): Options {
 			: oneOf("format", bag.format, FORMATS);
 	const command = commandOf(parsed);
 	if (command === "model" && (parsed.query === undefined || parsed.query === "")) {
-		throw new Error("aa model expects a slug, key or name");
+		throw new Error("aam model expects a slug, key or name");
 	}
 	return {
 		command,

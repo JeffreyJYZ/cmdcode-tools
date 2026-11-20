@@ -57,7 +57,7 @@ function poisonedCache(): void {
 	);
 }
 
-describe("aa check", () => {
+describe("aam check", () => {
 	test("counts each source that answered", () => {
 		const rows = sourceRows(LIVE.models, LIVE.sources);
 		expect(rows).toEqual([

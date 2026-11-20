@@ -5,8 +5,8 @@
 	"license": "MIT",
 	"type": "module",
 	"bin": {
-		"aa": "src/index.ts",
-		"aadev": "src/index.ts"
+		"aam": "src/index.ts",
+		"aamdev": "src/index.ts"
 	},
 	"imports": {
 		"#~/*": "./src/*"
@@ -23,7 +23,7 @@
 		"test": "bun test",
 		"lint": "biome lint --write .",
 		"typecheck": "bun check",
-		"dev:link": "ln -sfn \"$PWD/src/index.ts\" \"$HOME/.bun/bin/aadev\""
+		"dev:link": "ln -sfn \"$PWD/src/index.ts\" \"$HOME/.bun/bin/aamdev\""
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.13",

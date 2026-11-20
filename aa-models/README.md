@@ -6,9 +6,9 @@ The Artificial Analysis model catalogue as a CLI: list every model, filter and s
 
 ## What it is
 
-Artificial Analysis publishes benchmark scores, output speed and token prices for a growing catalogue of models, spread across a leaderboard page, a models page, a manifest and an API. `aa` merges every source it can reach into one `Model` record per slug, keeping only the values AA actually published: a missing number stays `null`, never `0`, and nothing is carried across from a different model.
+Artificial Analysis publishes benchmark scores, output speed and token prices for a growing catalogue of models, spread across a leaderboard page, a models page, a manifest and an API. `aam` merges every source it can reach into one `Model` record per slug, keeping only the values AA actually published: a missing number stays `null`, never `0`, and nothing is carried across from a different model.
 
-It is built to be consumed. `mpc` imports the catalogue for ability scores, and any script can read `aa --json` for the same data, with a stable `aa-models/1` schema and one row per model rather than per effort variant.
+It is built to be consumed. `mpc` imports the catalogue for ability scores, and any script can read `aam --json` for the same data, with a stable `aa-models/1` schema and one row per model rather than per effort variant.
 
 ## Install
 
@@ -25,22 +25,22 @@ bun install
 bun run src/index.ts --help
 ```
 
-Working on the CLI itself? `bun run dev:link` points `aadev` at this checkout, so an installed `aa` is never shadowed:
+Working on the CLI itself? `bun run dev:link` points `aamdev` at this checkout, so an installed `aam` is never shadowed:
 
 ```sh
 bun run dev:link
-aadev --rows 5
+aamdev --rows 5
 ```
 
 ## Usage
 
 ```sh
-aa                                    # every model, intelligence descending, unscored last
-aa --scored --open-weights             # only measured open-weights models
-aa --where "price.blended<1" --sort tps # cheaper than $1 blended, fastest first
-aa model glm-5.3                       # one model's full record
-aa fields | head                       # what AA actually publishes
-aa check                               # validate each source
+aam                                    # every model, intelligence descending, unscored last
+aam --scored --open-weights             # only measured open-weights models
+aam --where "price.blended<1" --sort tps # cheaper than $1 blended, fastest first
+aam model glm-5.3                       # one model's full record
+aam fields | head                       # what AA actually publishes
+aam check                               # validate each source
 ```
 
 The keyless path works out of the box: the full manifest and the leaderboard scrape need no credentials. Set `AA_API_KEY` (or pass `--aa-key`) to add the API, which covers more rows and the in-band `intelligence_index_version`. Without a key you lose the API's paginated full list and whatever only that endpoint publishes; every scraped field still arrives.
@@ -48,11 +48,11 @@ The keyless path works out of the box: the full manifest and the leaderboard scr
 ## Commands
 
 ```sh
-aa                        list every model (default sort: intelligence desc, unscored last)
-aa model <slug|key|name>   one model's full record; exit 1 when nothing matches
-aa fields                 every field present across the loaded catalogue, with coverage counts
-aa check                  validate each source, print counts/versions/notes, exit 1 on a broken source
-aa --json                 the output contract below
+aam                        list every model (default sort: intelligence desc, unscored last)
+aam model <slug|key|name>   one model's full record; exit 1 when nothing matches
+aam fields                 every field present across the loaded catalogue, with coverage counts
+aam check                  validate each source, print counts/versions/notes, exit 1 on a broken source
+aam --json                 the output contract below
 ```
 
 ## Flags
@@ -82,8 +82,8 @@ aa --json                 the output contract below
 | `--cache <dur>`                       | cache TTL: `0`, `30s`, `15m`, `6h`, `1d` (default `1h`)                                                     |
 | `--width <n>`                         | table width (default terminal width, then 120)                                                              |
 | `--color <mode>`                      | `auto`, `always` or `never`; `NO_COLOR` is honoured                                                         |
-| `--check`                             | same as `aa check`                                                                                          |
-| `--fields`                            | same as `aa fields`                                                                                         |
+| `--check`                             | same as `aam check`                                                                                         |
+| `--fields`                            | same as `aam fields`                                                                                        |
 
 Environment: `AA_API_KEY` for the key, `AA_CACHE_DIR` for the cache directory (default `$XDG_CACHE_HOME/aa-models` or `~/.cache/aa-models`).
 

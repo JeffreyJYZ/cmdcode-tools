@@ -6,8 +6,8 @@
 //
 // Builds the Rust bins (`cargo build -p cmd-usage`, debug), then symlinks ONLY
 // the five dev names — `cmdusedev`, `ocusedev` (Rust, from `target/debug/`) and
-// `mpcdev`, `reqshapedev`, `aadev` (the bun entry files). The installed `cmduse`
-// / `ocuse` / `mpc` / `reqshape` / `aa` are never touched, so nothing published
+// `mpcdev`, `reqshapedev`, `aamdev` (the bun entry files). The installed `cmduse`
+// / `ocuse` / `mpc` / `reqshape` / `aam` are never touched, so nothing published
 // is shadowed; consumers point at these via CMDUSE_BIN / OCUSE_BIN / MPC_BIN /
 // REQSHAPE_BIN.
 //
@@ -34,7 +34,7 @@ const DEV_COMMANDS: DevCommand[] = [
 	{ name: "ocusedev", target: join(ROOT, "target/debug/ocusedev") },
 	{ name: "mpcdev", target: join(ROOT, "oc-cmd-compare/src/index.ts") },
 	{ name: "reqshapedev", target: join(ROOT, "reqshape/src/index.ts") },
-	{ name: "aadev", target: join(ROOT, "aa-models/src/index.ts") },
+	{ name: "aamdev", target: join(ROOT, "aa-models/src/index.ts") },
 ];
 
 /** `--dir <path>` override, else `$HOME/dev/bin` with `~` expanded. */

@@ -4,6 +4,6 @@ import { run } from "./cli/run.ts";
 try {
 	process.exitCode = await run(process.argv.slice(2));
 } catch (error) {
-	console.error(`aa: ${error instanceof Error ? error.message : String(error)}`);
+	console.error(`aam: ${error instanceof Error ? error.message : String(error)}`);
 	process.exitCode = 1;
 }

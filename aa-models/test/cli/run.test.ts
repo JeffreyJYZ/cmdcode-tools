@@ -38,7 +38,7 @@ afterEach(() => {
 	rmSync(dir, { recursive: true, force: true });
 });
 
-describe("aa check dispatch", () => {
+describe("aam check dispatch", () => {
 	/**
 	 * `check` reloads cache-less and then reports the file a default run would read.
 	 * Its dispatch load must not write first, or a poisoned cache is repaired before

@@ -102,7 +102,7 @@ export function renderRows(catalogue: Catalogue, models: Model[], options: Optio
 	return `${table.text}\n\n${footer(catalogue, models.length, options)}`;
 }
 
-/** `aa model` in table mode: every field as a labelled line. */
+/** `aam model` in table mode: every field as a labelled line. */
 export function renderRecord(model: Model): string {
 	const lines: string[] = [];
 	const push = (label: string, value: unknown): void => {

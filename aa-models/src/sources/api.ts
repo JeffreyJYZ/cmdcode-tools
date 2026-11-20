@@ -20,7 +20,7 @@ export class FetchError extends Error {
 
 /**
  * One line per cause: a retired path is not a bad key, and a quota is not a
- * subscription gap. These hints are what `aa check` prints.
+ * subscription gap. These hints are what `aam check` prints.
  */
 export function statusHint(status: number): string {
 	if (status === 401) return "AA_API_KEY rejected, replace the key";

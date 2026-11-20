@@ -31,7 +31,7 @@ const PAGES: Array<[source: string, url: string, parse: (html: string) => Model[
 
 /**
  * Both keyless pages, fetched together. One dead page is a note, not a blank
- * list; neither answering throws with the URLs, which is what `aa check` shows.
+ * list; neither answering throws with the URLs, which is what `aam check` shows.
  */
 export async function loadLeaderboard(): Promise<SourceResult> {
 	const notes: string[] = [];
