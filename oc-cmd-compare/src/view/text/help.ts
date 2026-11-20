@@ -42,4 +42,10 @@ Presets: default   = every column, trimmed to the terminal width (--no-fit keeps
          --medium  = allowance and the rate views per side + win + cost + val
          --detail  = every column, untrimmed (for copy/paste or agents)
          --columns = an exact list; bypasses presets and trimming
---od-plan adds the OpenDesign columns to a preset; an exact --columns list is left alone.`;
+--od-plan adds the OpenDesign columns to a preset; an exact --columns list is left alone.
+
+Interactive: --pick opens the searchable list in a terminal — type to narrow, up/down or j/k move,
+             enter prints the highlighted row, esc/q/ctrl-c quit. Never runs without a TTY.`;
+
+/** The picker's own key list, so its footer hint and this help cannot drift. */
+export const PICK_KEYS = "↑↓/jk move · enter print · esc q quit · ⌫ edit";

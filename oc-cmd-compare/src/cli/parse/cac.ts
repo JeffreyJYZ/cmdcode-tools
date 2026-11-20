@@ -55,6 +55,10 @@ export function parseFlags(argv: string[]): Bag {
 		.option("--no-config", "ignore the config file")
 		.option("--plugin <paths>", "extra config plugins, comma-separated")
 		.option("--print-config", "print the effective settings and exit")
+		.option(
+			"--pick",
+			"interactive search: type to narrow, enter prints the highlighted row (TTY only)",
+		)
 		.option("--usage", "project your real usage from cmduse onto both plans")
 		.option("--usage-file <path>", "read usage from a JSON file instead")
 		.option("--usage-window <w>", "usage range: period | all | <n>d (default period)")

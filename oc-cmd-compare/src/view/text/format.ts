@@ -24,6 +24,14 @@ export function fmtRate(n: number): string {
 	return `$${Number(n.toFixed(4))}`;
 }
 
+/** Clip to `width` characters, marking the cut with `…` — never a silent cut. */
+export function clip(text: string, width: number): string {
+	if (width <= 0) return "";
+	if (text.length <= width) return text;
+	if (width === 1) return "…";
+	return `${text.slice(0, width - 1)}…`;
+}
+
 export function fmtAllowance(m: EntryMetrics | undefined): string {
 	if (!m) return "—";
 	return m.free ? "free" : fmtRate(m.allowance);

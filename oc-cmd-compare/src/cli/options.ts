@@ -47,6 +47,8 @@ export interface Options {
 	colorMode: ColorMode;
 	check: boolean;
 	printConfig: boolean;
+	/** `--pick`: full-screen interactive search instead of the static table. */
+	pick: boolean;
 	usage: boolean;
 	usageFile?: string;
 	usageLog?: string;

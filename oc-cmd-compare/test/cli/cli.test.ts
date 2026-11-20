@@ -69,6 +69,11 @@ describe("parseArgs", () => {
 		expect(o.json).toBe(true);
 	});
 
+	test("--pick is a plain flag, off by default", () => {
+		expect(parseArgs([]).pick).toBe(false);
+		expect(parseArgs(["--pick"]).pick).toBe(true);
+	});
+
 	test("--no-* flags map to the negated option", () => {
 		const o = parseArgs(["--no-color", "--no-fallback", "--no-ability"]);
 		expect(o.colorMode).toBe("never");

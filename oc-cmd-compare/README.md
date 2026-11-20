@@ -53,10 +53,35 @@ mpc --shape measured                  # force reqshape even on a thin sample
 mpc --shape off                       # force the fixed workload (default: auto)
 mpc --bench aa-web                    # ability scores from Artificial Analysis
 mpc --json                            # machine-readable output
+mpc --pick                            # full-screen search over the same rows (see below)
 mpc --check                           # validate live sources and report drift
 ```
 
 Flags are parsed with [cac](https://github.com/cacjs/cac); `--help` and `--version` come from it. Unknown flags and out-of-range values are rejected.
+
+## Interactive picker (`--pick`)
+
+In a terminal, `mpc --pick` opens a full-screen search over the rows this run already built — nothing extra is
+fetched. Typing any fragment narrows the list on every keystroke: matching is a case-insensitive substring over
+the model name and its canonical key (never a regex, so any character is safe), and a name that starts with the
+query ranks above one that only contains it mid-word, with the current `--metric` order as the tiebreak. The
+highlighted model's full row — every column `--detail` would show, trimmed to the terminal — sits underneath, and
+a side the model does not carry reads `—` exactly as it does in the table.
+
+| key                            | action                             |
+| ------------------------------ | ---------------------------------- |
+| printable characters           | narrow the list                    |
+| `Backspace`                    | edit the query                     |
+| `↑` / `↓` or `k` / `j`         | move the highlight                 |
+| `Enter`                        | print the highlighted row and exit |
+| `Esc`, `q`, `Ctrl-C`, `Ctrl-D` | quit without printing              |
+
+`q`, `j` and `k` are only special while the query is empty (`j`/`k` move, `q` quits), so a `qwen` or `kimi` row
+is still reachable through any fragment — `wen` and `imi` match them. Once you have typed one character, every
+key is part of the search. The picker never opens without a TTY on both ends, and never with `--json`,
+`--format`, `--usage`, `--check` or `--print-config` — those keep printing exactly what they print today, so
+scripts and agents are unaffected. The terminal is restored on every exit path, including a crash, a `Ctrl-C`
+or a `SIGTERM`.
 
 ## Your real usage (`--usage`)
 

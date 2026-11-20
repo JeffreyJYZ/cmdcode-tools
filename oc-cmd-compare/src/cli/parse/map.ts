@@ -89,6 +89,7 @@ export function toOptions(bag: Bag): Options {
 		colorMode: colorMode(bag.color),
 		check: bag.check === true,
 		printConfig: bag.printConfig === true,
+		pick: bag.pick === true,
 		usage: bag.usage === true,
 		usageFile: bag.usageFile === undefined ? undefined : String(bag.usageFile),
 		usageLog: bag.usageLog === undefined ? undefined : String(bag.usageLog),
