@@ -45,6 +45,19 @@ aam check                               # validate each source
 
 The keyless path works out of the box: the full manifest and the leaderboard scrape need no credentials. Set `AA_API_KEY` (or pass `--aa-key`) to add the API, which covers more rows and the in-band `intelligence_index_version`. Without a key you lose the API's paginated full list and whatever only that endpoint publishes; every scraped field still arrives.
 
+## Use as a library
+
+The same loader is a library; nothing CLI-specific loads with it.
+
+```ts
+import { loadCatalogue } from "@jeffreyjyz/aa-models";
+
+const catalogue = await loadCatalogue({ cacheTtlMs: 0 });
+for (const model of catalogue.models) console.log(model.name, model.intelligenceIndex);
+```
+
+`loadCatalogue` returns a `Catalogue` (`models`, `sources`, `indexVersion`, `fetchedAt`, `stale`, `notes`), and each `Model` carries `keys` — every canonical join key the model answers to.
+
 ## Commands
 
 ```sh

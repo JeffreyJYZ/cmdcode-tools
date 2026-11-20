@@ -3,6 +3,9 @@
  * literal inside `self.__next_f.push([1,"…"])`; joining the decoded strings
  * yields the flight text the page renders from, with plain `"key":`
  * keys instead of the `\"`-escaped form seen in the raw HTML.
+ *
+ * Moved here from the old AA source directory: CommandCode's docs use the same
+ * payload, and that is now the only reader.
  */
 export function decodeFlight(html: string): string {
 	const chunks: string[] = [];

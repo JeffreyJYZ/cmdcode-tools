@@ -1,7 +1,5 @@
 import { fetchText } from "#~/data/scrape/index.ts";
-import { loadAaApi } from "#~/data/sources/aa/api.ts";
-import { hydrate, readLastGood } from "#~/data/sources/aa/lastGood.ts";
-import { loadAaWeb } from "#~/data/sources/aa/web.ts";
+import { loadAa } from "#~/data/sources/aa.ts";
 import { normalizeKey } from "#~/keys.ts";
 import { loadCc } from "./cc.ts";
 import type { AbilityOptions, BenchData, Resolved } from "./types.ts";
@@ -38,6 +36,14 @@ async function loadUrl(url: string): Promise<Map<string, number>> {
 	return parseJsonScores(await fetchText(url));
 }
 
+/** The footer label: counts always, the index version and a source problem when known. */
+function aaLabel(data: BenchData, prefix?: string, notes: string[] = []): string {
+	const parts = [`${data.intelligence.size} models`, `${data.tps.size} speed`];
+	if (data.indexVersion) parts.push(`index ${data.indexVersion}`);
+	const head = `Artificial Analysis (${prefix ? `${prefix}, ` : ""}${parts.join(", ")})`;
+	return notes.length > 0 ? `${head} — ${notes.join("; ")}` : head;
+}
+
 export async function resolvePrimary(opts: AbilityOptions): Promise<Resolved> {
 	const [scheme, arg] = opts.source.includes(":")
 		? [opts.source.split(":")[0] ?? "", opts.source.slice(opts.source.indexOf(":") + 1)]
@@ -50,56 +56,26 @@ export async function resolvePrimary(opts: AbilityOptions): Promise<Resolved> {
 				data: await loadCc(),
 				label: "CommandCode Intelligence",
 			};
-		case "aa-web":
-			return {
-				scheme: "aa-web",
-				data: await loadAaWeb(),
-				label: "Artificial Analysis (web, partial)",
-			};
+		case "aa-web": {
+			// Keyless by definition: the package's manifest and page scrape cover
+			// far more rows than the old models-page top-N ever did.
+			const { data, notes } = await loadAa();
+			return { scheme: "aa-web", data, label: aaLabel(data, "web", notes) };
+		}
 		case "aa": {
 			const key = opts.key ?? process.env.AA_API_KEY;
 			if (!key) {
 				throw new Error("--bench aa needs a key: set AA_API_KEY or pass --aa-key");
 			}
-			try {
-				const data = await loadAaApi(key);
-				if (data.intelligence.size === 0) {
-					throw new Error(
-						"Artificial Analysis returned no scores — check the key and response shape",
-					);
-				}
-				return {
-					scheme: "aa",
-					data,
-					label: `Artificial Analysis (${data.intelligence.size} models, ${data.tps.size} speed${
-						data.indexVersion ? `, index ${data.indexVersion}` : ""
-					})`,
-				};
-			} catch (error) {
-				// A spent daily quota, a rotated key or a retired path must not blank a third
-				// of the table: replay the last complete answer, and say how old it is. Only
-				// when there is no stored answer does the keyless page scrape take over.
-				const reason = error instanceof Error ? error.message : String(error);
-				const cached = await readLastGood();
-				if (cached && cached.intelligence.length > 0) {
-					const ageHours = Math.max(
-						0,
-						Math.round((Date.now() - cached.fetchedAt) / 3_600_000),
-					);
-					return {
-						scheme: "aa",
-						data: hydrate(cached),
-						label: `Artificial Analysis (last good, ${ageHours}h old — API: ${reason})`,
-					};
-				}
-				const data = await loadAaWeb();
-				if (data.intelligence.size === 0) throw error;
-				return {
-					scheme: "aa-web",
-					data,
-					label: `Artificial Analysis (web, partial — API: ${reason})`,
-				};
+			// One load merges the API with the keyless sources, so a spent daily
+			// quota degrades coverage (the label says so) instead of the run.
+			const { data, notes } = await loadAa({ apiKey: key });
+			if (data.intelligence.size === 0) {
+				throw new Error(
+					"Artificial Analysis returned no scores — check the key and response shape",
+				);
 			}
+			return { scheme: "aa", data, label: aaLabel(data, undefined, notes) };
 		}
 		case "file":
 			if (!arg) throw new Error("--bench file:<path> needs a path");
@@ -123,21 +99,15 @@ export async function resolvePrimary(opts: AbilityOptions): Promise<Resolved> {
 }
 
 /**
- * Artificial Analysis as a gap filler: the full API when a key is available,
- * otherwise the keyless page scrape (partial).
+ * Artificial Analysis as a gap filler: the merged catalogue, which asks the API
+ * when a key is available and reads the keyless sources otherwise.
  */
 export async function loadAaFallback(
 	opts: AbilityOptions,
 ): Promise<{ data: BenchData; how: string }> {
 	const key = opts.key ?? process.env.AA_API_KEY;
-	if (key) {
-		try {
-			return { data: await loadAaApi(key), how: "AA API" };
-		} catch {
-			// fall through to the scrape
-		}
-	}
-	return { data: await loadAaWeb(), how: "AA web scrape" };
+	if (key) return { data: (await loadAa({ apiKey: key })).data, how: "AA API" };
+	return { data: (await loadAa()).data, how: "AA keyless sources" };
 }
 
 export type { AbilityOptions, AbilityResult, AbilitySource, BenchData } from "./types.ts";

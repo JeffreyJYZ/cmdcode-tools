@@ -1,6 +1,6 @@
 import { PAGES, TPS_HEADER } from "#~/constants/sources.ts";
 import { extractNumericColumn, fetchText, parseTables } from "#~/data/scrape/index.ts";
-import { decodeFlight, readArray } from "#~/data/sources/aa/flight.ts";
+import { decodeFlight, readArray } from "#~/data/bench/flight.ts";
 import { aaKeyVariants } from "#~/keys.ts";
 import { type BenchData, emptyData } from "./types.ts";
 

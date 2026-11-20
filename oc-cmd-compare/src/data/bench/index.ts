@@ -1,4 +1,3 @@
-import { loadAaWeb } from "#~/data/sources/aa/web.ts";
 import { loadCc } from "./cc.ts";
 import { loadAaFallback, resolvePrimary } from "./resolve.ts";
 import type { AbilityOptions, AbilityResult } from "./types.ts";
@@ -40,14 +39,9 @@ export async function loadAbility(opts: AbilityOptions): Promise<AbilityResult> 
 	}
 
 	const fills: string[] = [];
-	// The API leads, so give the same benchmark's keyless page scrape a second look.
-	if (primary.scheme === "aa") {
-		const web = await loadAaWeb();
-		const added =
-			merge(primary.data.intelligence, web.intelligence, opts.keys) +
-			merge(primary.data.tps, web.tps, opts.keys);
-		if (added > 0) fills.push(`${added} values from AA web scrape`);
-	}
+	// An `aa`/`aa-web` lead is already the package's merged catalogue (API when
+	// keyed, manifest and pages always), so there is no same-benchmark scrape
+	// left to merge into it.
 	{
 		const cc = await loadCc();
 		const added =
