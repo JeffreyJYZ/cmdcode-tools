@@ -27,17 +27,67 @@ import { DEFAULT_BLOCKED, GUARDS_FILE, SHELL_RC_CONFIG } from "./constants/shell
 /** Read `HOME` per call so tests can point it at a temporary directory. */
 const home = (): string => process.env.HOME ?? homedir();
 
-/** A blocked command and the tool that should be used instead. */
-export type Blocked = Record<string, string>;
+/** One guard entry: the command to shadow, and what to say instead. */
+export interface BlockedEntry {
+	name: string;
+	alternative?: string;
+	reason?: string;
+}
+
+/** The legacy shape, still accepted by the config file and by {@link renderGuards}. */
+export type LegacyBlocked = Record<string, string>;
+
+/** Both accepted shapes of `blocked` — the new array and the legacy string map. */
+export type Blocked = BlockedEntry[] | LegacyBlocked;
 
 export interface Config {
-	blocked: Blocked;
+	blocked: BlockedEntry[];
 }
 
 /** `$XDG_CONFIG_HOME/opencode/shell-rc.json` — absent means the defaults. */
 export function configFile(): string {
 	const config = process.env.XDG_CONFIG_HOME ?? join(home(), ".config");
 	return join(config, "opencode", SHELL_RC_CONFIG);
+}
+
+/**
+ * Normalise either accepted shape into a flat, ordered list of entries.
+ *
+ * The new array carries `{ name, alternative?, reason? }`; the legacy map's
+ * values become `alternative`. Anything else is a fault, not an instruction:
+ * it becomes the empty list (today's defaults), never a guessed guard list.
+ * A repeated `name` is resolved here too — the later entry wins.
+ */
+export function normalizeBlocked(value: unknown): BlockedEntry[] {
+	const entries: BlockedEntry[] = [];
+	if (Array.isArray(value)) {
+		for (const item of value) {
+			if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+			const raw = item as Record<string, unknown>;
+			if (typeof raw.name !== "string" || !raw.name.trim()) continue;
+			const entry: BlockedEntry = { name: raw.name.trim() };
+			if (typeof raw.alternative === "string" && raw.alternative.trim()) {
+				entry.alternative = raw.alternative.trim();
+			}
+			if (typeof raw.reason === "string" && raw.reason.trim()) {
+				entry.reason = raw.reason.trim();
+			}
+			// Nothing to say means no guard at all — not a function whose refusal
+			// is only the command name.
+			if (entry.alternative || entry.reason) entries.push(entry);
+		}
+	} else if (value && typeof value === "object") {
+		for (const [name, replacement] of Object.entries(value as Record<string, unknown>)) {
+			if (typeof replacement !== "string" || !replacement.trim()) continue;
+			entries.push({ name: name.trim(), alternative: replacement.trim() });
+		}
+	}
+	const byName = new Map<string, BlockedEntry>();
+	for (const entry of entries) {
+		byName.delete(entry.name);
+		byName.set(entry.name, entry);
+	}
+	return [...byName.values()];
 }
 
 /**
@@ -52,19 +102,9 @@ export function loadConfig(): Config {
 		const parsed = JSON.parse(readFileSync(configFile(), "utf8")) as {
 			blocked?: unknown;
 		};
-		const blocked: Blocked = {};
-		if (parsed.blocked && typeof parsed.blocked === "object") {
-			for (const [name, replacement] of Object.entries(
-				parsed.blocked as Record<string, unknown>,
-			)) {
-				if (typeof replacement === "string" && replacement.trim().length > 0) {
-					blocked[name] = replacement.trim();
-				}
-			}
-		}
-		return { blocked };
+		return { blocked: normalizeBlocked(parsed.blocked) };
 	} catch {
-		return { blocked: { ...DEFAULT_BLOCKED } };
+		return { blocked: normalizeBlocked(DEFAULT_BLOCKED) };
 	}
 }
 
@@ -89,26 +129,53 @@ function validName(name: string): boolean {
 }
 
 /**
- * The guard script. An entry is skipped when its name is not a usable function
- * name or when the replacement is blank. A replacement whose first word resolves
- * on PATH keeps the `use <replacement>` hint; otherwise the value is already a
- * sentence — a command that must be blocked outright, with no substitute — and
- * goes into the refusal verbatim, with no `use`.
+ * Escape the four characters that are special inside the double-quoted zsh
+ * string the message is written into. A reason containing `"`, `$` or a
+ * backtick must be inert data, never syntax the generated script interprets.
+ */
+function escapeZshDoubleQuoted(text: string): string {
+	return text.replace(/[\\"$`]/g, (character) => `\\${character}`);
+}
+
+/**
+ * The guard script, from either the new array or the legacy map.
+ *
+ * Composition (per `docs/plan/skills-and-guards/schema.md`): an `alternative`
+ * whose first word resolves on PATH gives `use <alternative>`, with a `reason`
+ * appended in parentheses when present; otherwise a `reason` alone gives the
+ * reason; otherwise a bare `alternative` is printed verbatim (the 0.4.3 sentence
+ * case); with neither, the entry is skipped. Invalid names, blank entries and
+ * `cat` are skipped as before.
  */
 export function renderGuards(
 	blocked: Blocked,
 	installed: (command: string) => boolean = resolves,
 ): string {
 	const lines = ["# Generated by opencode-shell-rc. Sourced by agent shells only."];
-	for (const [name, replacement] of Object.entries(blocked)) {
+	for (const entry of normalizeBlocked(blocked)) {
+		const { name } = entry;
 		if (!validName(name)) continue;
 		// `cat` stays out of every config: it emits raw bytes, while `bat` (the
 		// usual replacement) reformats with headers, numbers and decoration, so a
 		// blocked `cat` would hand back something that is not the file.
 		if (name === "cat") continue;
-		const binary = replacement.split(/\s+/)[0];
-		if (!binary) continue;
-		const instruction = installed(binary) ? `use ${replacement}` : replacement;
+		const alternative = entry.alternative ?? "";
+		const reason = entry.reason ?? "";
+		let instruction = "";
+		if (alternative) {
+			const binary = alternative.split(/\s+/)[0] ?? "";
+			if (installed(binary)) {
+				instruction = `use ${alternative}${reason ? ` (${reason})` : ""}`;
+			} else {
+				instruction = reason || alternative;
+			}
+		} else if (reason) {
+			instruction = reason;
+		}
+		if (!instruction) continue;
+		const message = escapeZshDoubleQuoted(
+			`${name} is blocked in agent shells — ${instruction}`,
+		);
 		lines.push(
 			// A loaded interactive shell often already has an alias of the same
 			// name (`grep='grep --color=auto'` ships with oh-my-zsh), and zsh
@@ -117,7 +184,9 @@ export function renderGuards(
 			// definition syntax zsh parses without alias expansion.
 			`unalias ${name} 2>/dev/null`,
 			`function ${name} {`,
-			`  print -u2 -- "${name} is blocked in agent shells — ${instruction}"`,
+			// `print -r` keeps a literal backslash in a reason from being turned
+			// into an escape by zsh's print builtin (`\t` would become a tab).
+			`  print -r -u2 -- "${message}"`,
 			"  return 127",
 			"}",
 		);

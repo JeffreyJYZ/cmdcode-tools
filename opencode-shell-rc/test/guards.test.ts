@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { configFile, loadConfig, renderGuards, syncGuards } from "../src/guards";
+import { configFile, loadConfig, normalizeBlocked, renderGuards, syncGuards } from "../src/guards";
 import { restoreEnv } from "./helpers";
 
 const saved = {
@@ -32,44 +32,166 @@ const writeConfig = (body: unknown): void => {
 	writeFileSync(configFile(), JSON.stringify(body));
 };
 
-describe("loadConfig", () => {
-	test("blocks nothing by default — the guard layer is opt-in", () => {
-		expect(loadConfig()).toEqual({ blocked: {} });
+const guardsPath = (): string => join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+
+describe("normalizeBlocked", () => {
+	test("normalises the array form, trimming each field", () => {
+		expect(
+			normalizeBlocked([
+				{ name: " grep ", alternative: " rg ", reason: " faster " },
+				{ name: "tccutil", reason: "human-only" },
+			]),
+		).toEqual([
+			{ name: "grep", alternative: "rg", reason: "faster" },
+			{ name: "tccutil", reason: "human-only" },
+		]);
 	});
 
-	test("reads a configured list", () => {
-		writeConfig({ blocked: { cat: "bat", find: "fd" } });
-		expect(loadConfig()).toEqual({ blocked: { cat: "bat", find: "fd" } });
+	test("normalises the legacy string map to alternatives", () => {
+		expect(normalizeBlocked({ cat: "bat", find: "fd" })).toEqual([
+			{ name: "cat", alternative: "bat" },
+			{ name: "find", alternative: "fd" },
+		]);
+	});
+
+	test("drops malformed entries and keeps the rest in order", () => {
+		expect(
+			normalizeBlocked([
+				null,
+				"grep",
+				{ alternative: "rg" },
+				{ name: "find", alternative: 3, reason: "" },
+				{ name: "sed", alternative: "sd" },
+			]),
+		).toEqual([{ name: "sed", alternative: "sd" }]);
+	});
+
+	test("a later duplicate wins", () => {
+		expect(
+			normalizeBlocked([
+				{ name: "grep", alternative: "rg", reason: "first" },
+				{ name: "sed", alternative: "sd" },
+				{ name: "grep", alternative: "ag", reason: "second" },
+			]),
+		).toEqual([
+			{ name: "sed", alternative: "sd" },
+			{ name: "grep", alternative: "ag", reason: "second" },
+		]);
+	});
+
+	test("anything else falls back to the empty list", () => {
+		expect(normalizeBlocked(undefined)).toEqual([]);
+		expect(normalizeBlocked(null)).toEqual([]);
+		expect(normalizeBlocked("grep")).toEqual([]);
+		expect(normalizeBlocked(3)).toEqual([]);
+	});
+});
+
+describe("loadConfig", () => {
+	test("blocks nothing by default — the guard layer is opt-in", () => {
+		expect(loadConfig()).toEqual({ blocked: [] });
+	});
+
+	test("reads the array form", () => {
+		writeConfig({ blocked: [{ name: "grep", alternative: "rg" }] });
+		expect(loadConfig()).toEqual({ blocked: [{ name: "grep", alternative: "rg" }] });
+	});
+
+	test("still reads the legacy string map", () => {
+		writeConfig({ blocked: { find: "fd", grep: "rg" } });
+		expect(loadConfig()).toEqual({
+			blocked: [
+				{ name: "find", alternative: "fd" },
+				{ name: "grep", alternative: "rg" },
+			],
+		});
 	});
 
 	test("a malformed file blocks nothing rather than guessing", () => {
 		mkdirSync(join(dir, "config", "opencode"), { recursive: true });
 		writeFileSync(configFile(), "{not json");
-		expect(loadConfig()).toEqual({ blocked: {} });
+		expect(loadConfig()).toEqual({ blocked: [] });
 	});
 
-	test("ignores entries whose replacement is not a string", () => {
-		writeConfig({ blocked: { find: "fd", grep: 3 } });
-		expect(loadConfig()).toEqual({ blocked: { find: "fd" } });
+	test("a blocked that is neither array nor object blocks nothing", () => {
+		writeConfig({ blocked: "grep" });
+		expect(loadConfig()).toEqual({ blocked: [] });
+	});
+
+	test("ignores entries whose alternative is not a string", () => {
+		writeConfig({
+			blocked: [
+				{ name: "find", alternative: "fd" },
+				{ name: "grep", alternative: 3 },
+			],
+		});
+		expect(loadConfig()).toEqual({ blocked: [{ name: "find", alternative: "fd" }] });
+	});
+
+	test("resolves duplicates through the normaliser", () => {
+		writeConfig({
+			blocked: [
+				{ name: "grep", alternative: "rg" },
+				{ name: "grep", alternative: "ag" },
+			],
+		});
+		expect(loadConfig()).toEqual({ blocked: [{ name: "grep", alternative: "ag" }] });
 	});
 });
 
 describe("renderGuards", () => {
 	test("writes a failing function that names the replacement", () => {
-		const script = renderGuards({ find: "fd" }, () => true);
+		const script = renderGuards([{ name: "find", alternative: "fd" }], () => true);
 		expect(script).toContain("function find {");
+		expect(script).toContain("unalias find 2>/dev/null");
 		expect(script).toContain("use fd");
 		expect(script).toContain("return 127");
 	});
 
-	test("keeps `use` when the replacement resolves on PATH", () => {
-		const script = renderGuards({ find: "fd" }, (command) => command === "fd");
+	test("appends a reason in parentheses when the alternative resolves on PATH", () => {
+		const script = renderGuards(
+			[{ name: "grep", alternative: "rg", reason: "respects .gitignore and is faster" }],
+			(command) => command === "rg",
+		);
+		expect(script).toContain(
+			"grep is blocked in agent shells — use rg (respects .gitignore and is faster)",
+		);
+	});
+
+	test("keeps an alternative's own trailing parentheses as written", () => {
+		const script = renderGuards(
+			[{ name: "sed", alternative: "sd (or read for line ranges)" }],
+			() => true,
+		);
+		expect(script).toContain(
+			"sed is blocked in agent shells — use sd (or read for line ranges)",
+		);
+	});
+
+	test("keeps `use` when the alternative resolves on PATH", () => {
+		const script = renderGuards(
+			[{ name: "find", alternative: "fd" }],
+			(command) => command === "fd",
+		);
 		expect(script).toContain("find is blocked in agent shells — use fd");
 	});
 
-	test("writes a sentence replacement whose first word is not installed", () => {
+	test("a reason alone is printed with no `use`", () => {
 		const script = renderGuards(
-			{ tccutil: "TCC changes are human-only; ask the user" },
+			[{ name: "tccutil", reason: "TCC changes are human-only; ask the user" }],
+			() => true,
+		);
+		expect(script).toContain(
+			"tccutil is blocked in agent shells — TCC changes are human-only; ask the user",
+		);
+		expect(script).not.toContain("use TCC");
+		expect(script).toContain("return 127");
+	});
+
+	test("writes a sentence alternative whose first word is not installed", () => {
+		// The 0.4.3 case: the value is already a sentence, so it is printed verbatim.
+		const script = renderGuards(
+			[{ name: "tccutil", alternative: "TCC changes are human-only; ask the user" }],
 			() => false,
 		);
 		expect(script).toContain("function tccutil {");
@@ -80,24 +202,70 @@ describe("renderGuards", () => {
 		expect(script).toContain("return 127");
 	});
 
-	test("skips an entry whose replacement is blank", () => {
-		expect(renderGuards({ find: "   " }, () => true)).not.toContain("function find {");
-		expect(renderGuards({ find: "" }, () => true)).not.toContain("function find {");
+	test("an alternative not on PATH falls back to the reason", () => {
+		const script = renderGuards(
+			[{ name: "tccutil", alternative: "tcc", reason: "ask the user" }],
+			() => false,
+		);
+		expect(script).toContain("tccutil is blocked in agent shells — ask the user");
+		expect(script).not.toContain("use tcc");
+	});
+
+	test("skips an entry with neither an alternative nor a reason", () => {
+		expect(renderGuards([{ name: "grep" }], () => true)).not.toContain("function grep {");
+	});
+
+	test("skips an entry whose alternative and reason are blank", () => {
+		expect(
+			renderGuards([{ name: "find", alternative: "   ", reason: "" }], () => true),
+		).not.toContain("function find {");
 	});
 
 	test("skips names that cannot be zsh function names", () => {
-		expect(renderGuards({ "bad name": "fd" }, () => true)).not.toContain("function bad name");
+		expect(renderGuards([{ name: "bad name", alternative: "fd" }], () => true)).not.toContain(
+			"function bad name",
+		);
 	});
 
 	test("never blocks cat, even when a config asks for it", () => {
 		// cat emits raw bytes; bat reformats, so the output stops being the file.
-		expect(renderGuards({ cat: "bat" }, () => true)).not.toContain("function cat");
+		expect(renderGuards([{ name: "cat", alternative: "bat" }], () => true)).not.toContain(
+			"function cat",
+		);
+	});
+
+	test("still renders the legacy string map", () => {
+		const script = renderGuards({ find: "fd" }, () => true);
+		expect(script).toContain("function find {");
+		expect(script).toContain("use fd");
+	});
+
+	test("a later duplicate wins", () => {
+		const script = renderGuards(
+			[
+				{ name: "grep", alternative: "rg" },
+				{ name: "grep", alternative: "ag" },
+			],
+			() => true,
+		);
+		expect(script).toContain("use ag");
+		expect(script).not.toContain("use rg");
+		expect(script.match(/function grep \{/g)).toHaveLength(1);
+	});
+
+	test('escapes `\\`, `"`, `$` and the backtick in a reason', () => {
+		const reason = 'say "hi" $HOME `whoami` and C:\\tmp';
+		const escaped = 'say \\"hi\\" \\$HOME \\`whoami\\` and C:\\\\tmp';
+		const script = renderGuards([{ name: "grep", alternative: "rg", reason }], () => true);
+		expect(script).toContain(`use rg (${escaped})`);
+		// The reason carries two backticks (opening and closing); both are inert.
+		expect(script.match(/\\`/g)?.length).toBe(2);
 	});
 });
 
 describe("syncGuards", () => {
 	test("writes nothing when nothing is blocked, and removes a stale file", () => {
-		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+		const path = guardsPath();
 		// Default config: no guards, no file at all — the shim's `-f` test skips it.
 		expect(syncGuards(() => true)).toBe(false);
 		mkdirSync(join(dir, "state", "opencode", "shell-rc"), { recursive: true });
@@ -106,33 +274,42 @@ describe("syncGuards", () => {
 		expect(() => readFileSync(path, "utf8")).toThrow();
 	});
 
-	test("writes the script and is idempotent", () => {
-		writeConfig({ blocked: { grep: "rg" } });
+	test("writes the array-form script and is idempotent", () => {
+		writeConfig({ blocked: [{ name: "grep", alternative: "rg" }] });
 		expect(syncGuards(() => true)).toBe(true);
-		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+		const path = guardsPath();
 		const first = readFileSync(path, "utf8");
+		expect(first).toContain("function grep {");
 		expect(syncGuards(() => true)).toBe(false);
 		expect(readFileSync(path, "utf8")).toBe(first);
 	});
 
-	test("follows a config edit", () => {
+	test("still follows a legacy-map config edit", () => {
 		syncGuards(() => true);
 		writeConfig({ blocked: { ack: "rg" } });
 		expect(syncGuards(() => true)).toBe(true);
-		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
-		expect(readFileSync(path, "utf8")).toContain("function ack {");
+		expect(readFileSync(guardsPath(), "utf8")).toContain("function ack {");
 	});
 
-	test("writes a sentence replacement even with no binary on PATH", () => {
-		writeConfig({ blocked: { tccutil: "TCC changes are human-only; ask the user" } });
+	test("writes a sentence alternative even with no binary on PATH", () => {
+		writeConfig({
+			blocked: [{ name: "tccutil", alternative: "TCC changes are human-only; ask the user" }],
+		});
 		expect(syncGuards(() => false)).toBe(true);
-		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
-		const script = readFileSync(path, "utf8");
+		const script = readFileSync(guardsPath(), "utf8");
 		expect(script).toContain("function tccutil {");
 		expect(script).toContain(
 			"tccutil is blocked in agent shells — TCC changes are human-only; ask the user",
 		);
 		expect(script).not.toContain("use TCC");
+	});
+
+	test("writes the escaped reason verbatim into the script", () => {
+		const reason = 'say "hi" $HOME `whoami` and C:\\tmp';
+		writeConfig({ blocked: [{ name: "grep", alternative: "rg", reason }] });
+		expect(syncGuards(() => true)).toBe(true);
+		const script = readFileSync(guardsPath(), "utf8");
+		expect(script).toContain('say \\"hi\\" \\$HOME \\`whoami\\` and C:\\\\tmp');
 	});
 });
 
@@ -151,9 +328,9 @@ describe("the generated script in a real shell", () => {
 	test.skipIf(!hasZsh)(
 		"still defines the function when the shell already aliased the name",
 		() => {
-			writeConfig({ blocked: { grep: "rg" } });
+			writeConfig({ blocked: [{ name: "grep", alternative: "rg" }] });
 			syncGuards();
-			const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+			const path = guardsPath();
 			// oh-my-zsh ships `alias grep='grep --color=auto'`; zsh refuses a
 			// function whose name is an alias, which silently left grep unblocked.
 			let stderr = "";
@@ -173,9 +350,9 @@ describe("the generated script in a real shell", () => {
 	);
 
 	test.skipIf(!hasZsh)("blocks the binary and leaves the real one reachable", () => {
-		writeConfig({ blocked: { grep: "rg" } });
+		writeConfig({ blocked: [{ name: "grep", alternative: "rg" }] });
 		syncGuards();
-		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+		const path = guardsPath();
 		// `grep` as a command is the function now; `command grep` is the binary.
 		let status = 0;
 		let stderr = "";
@@ -199,10 +376,12 @@ describe("the generated script in a real shell", () => {
 		expect(real.length).toBeGreaterThan(0);
 	});
 
-	test.skipIf(!hasZsh)("a sentence guard refuses the command with its own message", () => {
-		writeConfig({ blocked: { tccutil: "TCC changes are human-only; ask the user" } });
+	test.skipIf(!hasZsh)("a reason alone refuses the command with its own message", () => {
+		writeConfig({
+			blocked: [{ name: "tccutil", reason: "TCC changes are human-only; ask the user" }],
+		});
 		syncGuards(() => false);
-		const path = join(dir, "state", "opencode", "shell-rc", "guards.zsh");
+		const path = guardsPath();
 		let status = 0;
 		let stderr = "";
 		try {
@@ -219,5 +398,22 @@ describe("the generated script in a real shell", () => {
 			"tccutil is blocked in agent shells — TCC changes are human-only; ask the user",
 		);
 		expect(stderr).not.toContain("use ");
+	});
+
+	test.skipIf(!hasZsh)("a reason with quotes and `$` prints literally, without executing", () => {
+		const reason = 'say "hi" $HOME `whoami` and C:\\tmp';
+		writeConfig({ blocked: [{ name: "grep", alternative: "rg", reason }] });
+		syncGuards(() => true);
+		const path = guardsPath();
+		let stderr = "";
+		try {
+			execFileSync("zsh", ["-f", "-c", `source ${path}; grep`], {
+				stdio: ["ignore", "pipe", "pipe"],
+			});
+		} catch (error) {
+			stderr = (error as { stderr?: Buffer }).stderr?.toString() ?? "";
+		}
+		expect(stderr).toContain('use rg (say "hi" $HOME `whoami` and C:\\tmp)');
+		expect(stderr).not.toContain("parse error");
 	});
 });
