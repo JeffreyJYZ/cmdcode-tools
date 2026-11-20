@@ -35,6 +35,7 @@ import {
 	OCUSE_TOOL_DESCRIPTION,
 	ODUSE_TOOL_ARG_DESCRIPTION,
 	ODUSE_TOOL_DESCRIPTION,
+	TOOL_ARG_DESCRIPTION,
 	TOOL_DESCRIPTION,
 } from "./constants/providers";
 import { resolveKey } from "./key";
@@ -359,12 +360,7 @@ export const CommandCodePlugin: PluginV1 = async (_input) => {
 			cmd_usage: tool({
 				description: TOOL_DESCRIPTION,
 				args: {
-					arg: z
-						.string()
-						.optional()
-						.describe(
-							"Optional: 'plans' for the plan table only, or extra cmduse flags",
-						),
+					arg: z.string().optional().describe(TOOL_ARG_DESCRIPTION),
 				},
 				// Rendering lives in the cmduse binary (Rust core); this is a thin
 				// spawn wrapper. Piped stdout is plain text (colors auto-off).

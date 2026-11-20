@@ -1,4 +1,9 @@
-import { SPEED_SUFFIXES, SPEED_TPS_FACTOR, TPS_OVERRIDES } from "#~/constants/scoring.ts";
+import {
+	ABILITY_SUFFIXES,
+	SPEED_SUFFIXES,
+	SPEED_TPS_FACTOR,
+	TPS_OVERRIDES,
+} from "#~/constants/scoring.ts";
 
 /**
  * The base key a speed variant shares weights with, or undefined. FlashX is the
@@ -14,13 +19,14 @@ function baseKey(key: string, suffixes: string[]): string | undefined {
 
 /**
  * Benchmark lookup. A speed variant has the base model's weights, so it
- * inherits the base ability when the benchmark has no row of its own.
- * `suffixes` is configurable; empty means no inheritance.
+ * inherits the base ability when the benchmark has no row of its own; `eco` is
+ * a cheaper SKU of the same model and inherits on the same basis. `suffixes` is
+ * configurable; empty means no inheritance.
  */
 export function lookupAbility(
 	scores: Map<string, number>,
 	key: string,
-	suffixes: string[] = SPEED_SUFFIXES,
+	suffixes: string[] = ABILITY_SUFFIXES,
 ): number | null {
 	const direct = scores.get(key);
 	if (direct !== undefined) return direct;

@@ -65,6 +65,12 @@ describe("lookupAbility", () => {
 	test("flashx inherits the flash tier, not the base", () => {
 		expect(lookupAbility(scores, "glm53flashx")).toBe(41.8);
 	});
+	test("eco is a cheaper SKU of the base, not a speed tier", () => {
+		const withBase = new Map([...scores, ["deepseekv41flash", 32.6]]);
+		expect(lookupAbility(withBase, "deepseekv41flasheco")).toBe(32.6);
+		// Eco must not borrow a multiplied throughput the way a Fast tier does.
+		expect(lookupTps(new Map([["deepseekv41flash", 216]]), "deepseekv41flasheco")).toBeNull();
+	});
 	test("no base means no score", () => {
 		expect(lookupAbility(scores, "mimov26proultraspeed")).toBeNull();
 	});
