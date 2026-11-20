@@ -145,11 +145,15 @@ interface Model {
 		outputSpeed: number | null;
 	}>;
 	sources: string[];
+	/** Which AA field the throughput came from: `api`, `page` or `timescale`. */
+	outputSpeedSource: string | null;
 	raw?: unknown;
 }
 ```
 
 `evals` is the escape hatch: every other finite scalar AA publishes for the model, keyed by AA's own field path. `raw` appears only with `--raw`.
+
+`outputSpeed` is read from one declared source order — the API's `performance.median_output_tokens_per_second`, then the page's `outputSpeed`, then `timescaleData.medianOutputSpeed` — because they measure different things. `outputSpeedSource` says which one a row got, and a higher tier is never replaced by a lower one during a merge.
 
 ## Links
 

@@ -272,14 +272,18 @@ VAL = 100 * (0.35*ability + 0.10*tps + 0.25*volume + 0.15*cache + 0.15*output)
 
 `--bench-weight` and `--tps-weight` set the ability and speed shares; the remaining weight splits volume/cache/output 50/25/25. Ability and `tps` come from the same source, so `--bench cc` reads both CommandCode's `Intelligence` and `Tok/s` columns. Speed variants (`…Fast`, `…HighSpeed`, `…UltraSpeed`, `…FlashX`) inherit their base model's ability — same weights — and, when the benchmark publishes no throughput for the variant, the base's throughput ×`SPEED_TPS_FACTOR` (a speed tier is multiples of its base). Without that a Fast model was scored at the neutral rate, ranking it below its slower base. Unscored models show `ability —` and `VAL —` and are excluded from the ability normalisation range.
 
-| `--bench`                   | source                                                  | coverage                            |
-| --------------------------- | ------------------------------------------------------- | ----------------------------------- |
-| `aa`                        | Artificial Analysis API (paginated)                     | full; needs `AA_API_KEY`            |
-| `aa-web`                    | Artificial Analysis models page scrape                  | partial (only the models AA embeds) |
-| `cc`                        | CommandCode's `Intelligence` column                     | every matched model                 |
-| `file:<path>` / `url:<url>` | your JSON, `{ "model": score }` or `[{ model, score }]` | whatever you supply                 |
+| `--bench`                   | source                                                      | coverage                                      |
+| --------------------------- | ----------------------------------------------------------- | --------------------------------------------- |
+| `aa`                        | Artificial Analysis: API plus the keyless sources           | full; needs `AA_API_KEY`                      |
+| `aa-web`                    | Artificial Analysis keyless sources (manifest + both pages) | every listed model; scores and speeds partial |
+| `cc`                        | CommandCode's `Intelligence` column                         | every matched model                           |
+| `file:<path>` / `url:<url>` | your JSON, `{ "model": score }` or `[{ model, score }]`     | whatever you supply                           |
 
-The default is `aa` when an AA key is available (`AA_API_KEY` or `--aa-key`), otherwise `cc`; an explicit `--bench` always wins. After the lead source, misses are filled from the same benchmark's keyless page scrape (`aa-web`) and then from CommandCode, the last resort — `--no-fallback` disables the fills. Because CC's `Intelligence` column and AA publish the same index, a `cc`-led run asks AA only when it still lacks throughput (CC's plan pages no longer publish `Tok/s`). Everything is fetched live, every run — **`mpc` writes no cache**: `aa-web` reads the index and speed straight out of the models page's embedded React Server Components payload, so a source that is down costs only the columns it alone supplies, never a stale value.
+The default is `aa` when an AA key is available (`AA_API_KEY` or `--aa-key`), otherwise `cc`; an explicit `--bench` always wins. After the lead source, misses are filled from CommandCode, the last resort — `--no-fallback` disables the fill. Because CC's `Intelligence` column and AA publish the same index, a `cc`-led run asks AA only when it still lacks throughput (CC's plan pages no longer publish `Tok/s`). AA access goes through [`@jeffreyjyz/aa-models`](https://www.npmjs.com/package/@jeffreyjyz/aa-models), which merges AA's encrypted manifest, both keyless pages and the paginated API into one record per model.
+
+Throughput always comes from one declared field order — the API's documented `median_output_tokens_per_second` first, then the page chart series (`outputSpeed`), then the older `timescaleData.medianOutputSpeed` — because the API and the pages publish different numbers for the same model (229.62 vs 160.63 tok/s for DeepSeek V4.1 Flash on 2026-11-20). The larger figure never overrides the better-documented field, so a model's `tps` does not jump when one source drops out.
+
+`mpc` keeps the package's TTL cache out of the path (`cacheTtlMs: 0`), so every run is live. The package's last-good file is a failure fallback, not a cache: when a source fails (the AA free tier allows 100 requests/day and answers `429` when spent), the figures it alone published are replayed from `~/.cache/aa-models/last-good.json` (`AA_CACHE_DIR` overrides the directory), and the `ability` line names the failure and the replay's age (`last good, 20m old`) so stored data never reads as fresh. An empty catalogue is never written, and a partial run never restamps the store.
 
 ## Model matching
 

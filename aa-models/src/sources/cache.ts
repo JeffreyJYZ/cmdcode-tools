@@ -13,7 +13,7 @@ import { ageLabel, cacheDir, writeJson } from "./lastGood.ts";
  * TTL — which is how a repaired key-merge kept serving 384 models. `CACHE_SCHEMA`
  * moves only when this payload's own fields change.
  */
-export const LOADER_REVISION = "1";
+export const LOADER_REVISION = "2";
 export const CACHE_SCHEMA = "aa-models/2";
 
 /** The catalogue as it lands on disk. `stale` is never persisted. */

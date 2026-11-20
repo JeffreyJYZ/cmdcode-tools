@@ -50,6 +50,11 @@ export function ageLabel(ms: number): string {
 	return hours < 48 ? `${hours}h` : `${Math.round(hours / 24)}d`;
 }
 
+/** The replay label: an age, so stored data is never read as a live figure. */
+export function lastGoodNote(stored: LastGood): string {
+	return `last good, ${ageLabel(Date.now() - stored.fetchedAt)} old`;
+}
+
 /** Best effort: a read-only cache dir must not fail a run. */
 export async function writeJson(name: string, body: unknown): Promise<void> {
 	try {

@@ -1,48 +1,12 @@
 import type { Model } from "#~/model.ts";
+import { type Rec, asRecord, asString, dig, positive } from "./row.ts";
+import { takeSpeed } from "./speed.ts";
 
 export interface SourceResult {
 	models: Model[];
 	notes: string[];
 }
 
-type Rec = Record<string, unknown>;
-
-export const asRecord = (value: unknown): Rec | null =>
-	value && typeof value === "object" && !Array.isArray(value) ? (value as Rec) : null;
-export const asString = (value: unknown): string | null =>
-	typeof value === "string" && value.trim() ? value.trim() : null;
-const finite = (value: unknown): value is number =>
-	typeof value === "number" && Number.isFinite(value);
-export const positive = (value: unknown): number | null =>
-	finite(value) && value > 0 ? value : null;
-export function dig(value: unknown, pattern: RegExp): number | null {
-	const rec = asRecord(value);
-	if (!rec) return null;
-	for (const [key, child] of Object.entries(rec)) {
-		if (pattern.test(key) && finite(child)) return child;
-	}
-	for (const child of Object.values(rec)) {
-		const found = dig(child, pattern);
-		if (found !== null) return found;
-	}
-	return null;
-}
-
-/** Top-level fields already modelled elsewhere, never duplicated into `evals`. */
-const CONSUMED =
-	/^(slug|shortName|suffix|releaseDate|isReasoning|isOpenWeights|contextWindowTokens|intelligenceIndex|outputSpeed|timeToFirstToken|price1mInputTokens|price1mOutputTokens|price1mBlended0To3To1)$/;
-export function walkEvals(value: unknown, prefix: string, out: Record<string, number>): void {
-	const rec = asRecord(value);
-	if (!rec) return;
-	for (const [key, child] of Object.entries(rec)) {
-		const path = prefix ? `${prefix}.${key}` : key;
-		if (finite(child)) {
-			if (!CONSUMED.test(path)) out[path] = child;
-		} else if (child && typeof child === "object" && !Array.isArray(child)) {
-			walkEvals(child, path, out);
-		}
-	}
-}
 /** AA's modality flags. Text is implied whenever the row lists any flag for a side. */
 export function modalitiesOf(row: Rec): Model["modalities"] {
 	const pick = (side: "input" | "output"): string[] => {
@@ -80,7 +44,41 @@ export function priceOf(row: Rec): Model["price"] {
 const union = (a: string[], b: string[]): string[] => [...new Set([...a, ...b])];
 const higher = (a: number | null, b: number | null): number | null =>
 	a === null ? b : b === null ? a : Math.max(a, b);
-export function mergeModels(groups: Model[][]): Model[] {
+
+/**
+ * Highest score leads the model; every other row of the same release becomes a
+ * labelled variant, so a variant's speed never lands on the lead by itself.
+ */
+export function collapse(group: Array<{ model: Model; rowSlug: string }>): Model[] {
+	if (group.length === 1) return group.flatMap(({ model }) => [model]);
+	const rank = (model: Model) => model.intelligenceIndex ?? Number.NEGATIVE_INFINITY;
+	const [first, ...rest] = [...group].sort(
+		(a, b) =>
+			rank(b.model) - rank(a.model) ||
+			(b.model.outputSpeed ?? 0) - (a.model.outputSpeed ?? 0),
+	);
+	if (!first) return [];
+	const efforts = new Set(group.flatMap(({ model }) => model.reasoning.efforts));
+	return [
+		{
+			...first.model,
+			reasoning: { ...first.model.reasoning, efforts: [...efforts] },
+			variants: [first, ...rest].slice(1).map(({ model, rowSlug }) => ({
+				slug: rowSlug,
+				label: model.reasoning.efforts[0] ?? null,
+				intelligenceIndex: model.intelligenceIndex,
+				outputSpeed: model.outputSpeed,
+			})),
+		},
+	];
+}
+
+/**
+ * Merge groups into one model per release. `outputSpeed` keeps the better-ranked
+ * field rather than the larger number, so the API's documented median is never
+ * displaced by a page chart aggregate. `gaps` replays a last-good catalogue: the
+ * live figure always wins the score, and only that.
+ */ export function mergeModels(groups: Model[][], gaps = false): Model[] {
 	const out: Model[] = [];
 	const bySlug = new Map<string, Model>();
 	const byKey = new Map<string, Model>();
@@ -91,7 +89,7 @@ export function mergeModels(groups: Model[][]): Model[] {
 		// rows one source already listed apart (AA lists every dated build).
 		const found = exact ?? (keyed && !sharesSource(keyed, model) ? keyed : undefined);
 		const target = found ?? { ...model, keys: [...model.keys], sources: [...model.sources] };
-		if (found) absorb(found, model);
+		if (found) absorb(found, model, gaps);
 		else out.push(target);
 		bySlug.set(target.slug, target);
 		for (const key of union(target.keys, model.keys)) {
@@ -103,9 +101,11 @@ export function mergeModels(groups: Model[][]): Model[] {
 const sharesSource = (a: Model, b: Model): boolean =>
 	a.sources.some((source) => b.sources.includes(source));
 
-function absorb(into: Model, from: Model): void {
-	into.intelligenceIndex = higher(into.intelligenceIndex, from.intelligenceIndex);
-	into.outputSpeed = higher(into.outputSpeed, from.outputSpeed);
+function absorb(into: Model, from: Model, gaps: boolean): void {
+	into.intelligenceIndex = gaps
+		? (into.intelligenceIndex ?? from.intelligenceIndex)
+		: higher(into.intelligenceIndex, from.intelligenceIndex);
+	takeSpeed(into, from);
 	into.latency ??= from.latency;
 	into.contextWindow ??= from.contextWindow;
 	into.maxOutputTokens ??= from.maxOutputTokens;
