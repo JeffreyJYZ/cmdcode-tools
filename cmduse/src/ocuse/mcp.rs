@@ -157,7 +157,7 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
         "usage" => rows().map(|rows| {
             let mut report = window::build(
                 &rows,
-                &zen::catalog(),
+                zen::catalog(),
                 &plan_id,
                 window::now_ms(),
                 None,
@@ -218,7 +218,7 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
         "model" => rows().map(|rows| {
             let mut report = window::build(
                 &rows,
-                &zen::catalog(),
+                zen::catalog(),
                 &plan_id,
                 window::now_ms(),
                 model_start,
@@ -259,13 +259,13 @@ fn tool_call(msg: &Value, settings: &Settings) -> Result<Value, (i64, String)> {
 
 fn tools() -> Value {
     json!([
-        { "name": "usage", "description": "OpenCode Go/Zen usage: period totals, rolling windows, per-model spend against each model's monthly limit. Defaults to the Go plan.", "inputSchema": { "type": "object", "properties": { "plan": { "type": "string", "description": "Go plan: go (default) or go-plus" } } } },
+        { "name": "usage", "description": "OpenCode Go/Zen usage: period totals, rolling windows, per-model spend against each model's monthly limit. Defaults to the Go plan.", "inputSchema": { "type": "object", "properties": { "plan": { "type": "string", "description": "Go plan: go (default), go-plus or go-teams" } } } },
         { "name": "plans", "description": "The Go/Zen catalogue from the docs: both Go plans' per-model monthly limits and the shared $/1M rates.", "inputSchema": { "type": "object", "properties": {} } },
-        { "name": "models", "description": "The Go catalogue for a plan: every model's $/1M in/out/cache-read rates and its monthly limit, marked granted or not.", "inputSchema": { "type": "object", "properties": { "plan": { "type": "string", "description": "Go plan: go (default) or go-plus" }, "gated": { "type": "boolean", "description": "Only models the plan grants" } } } },
+        { "name": "models", "description": "The Go catalogue for a plan: every model's $/1M in/out/cache-read rates and its monthly limit, marked granted or not.", "inputSchema": { "type": "object", "properties": { "plan": { "type": "string", "description": "Go plan: go (default), go-plus or go-teams" }, "gated": { "type": "boolean", "description": "Only models the plan grants" } } } },
         { "name": "daily", "description": "Spend, requests and tokens per day.", "inputSchema": { "type": "object", "properties": { "days": { "type": "integer", "description": "days of history (default 120)" }, "tz": { "type": "string", "description": "UTC offset for the day buckets, e.g. +05:30" } } } },
         { "name": "hourly", "description": "Spend, requests and tokens per hour.", "inputSchema": { "type": "object", "properties": { "hours": { "type": "integer", "description": "hours of history (default 24)" }, "tz": { "type": "string", "description": "UTC offset for the hour buckets, e.g. -08:00" } } } },
         { "name": "session", "description": "Spend per OpenCode session, newest first.", "inputSchema": { "type": "object", "properties": { "since": { "type": "string", "description": "ISO-8601 instant to count from, e.g. 2026-08-27T00:00:00Z" }, "days": { "type": "integer", "description": "days back (used when since is absent)" }, "rows": { "type": "integer", "description": "sessions to list (0 = every row)" } } } },
-        { "name": "model", "description": "One model's limit, spend and window figures against the given Go plan; without id, the whole period table.", "inputSchema": { "type": "object", "properties": { "id": { "type": "string", "description": "model id, e.g. glm-5.2 (omit for the table)" }, "plan": { "type": "string", "description": "Go plan: go (default) or go-plus" }, "since": { "type": "string", "description": "ISO-8601 instant to count from" }, "days": { "type": "integer", "description": "days back (used when since is absent)" }, "rows": { "type": "integer", "description": "table rows to list (0 = every row)" } } } },
+        { "name": "model", "description": "One model's limit, spend and window figures against the given Go plan; without id, the whole period table.", "inputSchema": { "type": "object", "properties": { "id": { "type": "string", "description": "model id, e.g. glm-5.3 (omit for the table)" }, "plan": { "type": "string", "description": "Go plan: go (default), go-plus or go-teams" }, "since": { "type": "string", "description": "ISO-8601 instant to count from" }, "days": { "type": "integer", "description": "days back (used when since is absent)" }, "rows": { "type": "integer", "description": "table rows to list (0 = every row)" } } } },
     ])
 }
 

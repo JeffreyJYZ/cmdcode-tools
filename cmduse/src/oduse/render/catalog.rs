@@ -23,8 +23,9 @@ pub fn plans_text(colour: bool) -> String {
         ink.bold,
         ink.reset,
         ink.dim_on(format!(
-            "(hand-maintained, updated {})",
-            catalog.extracted_at
+            "(plans + multipliers hand-maintained, updated {}; rates {})",
+            catalog.extracted_at,
+            catalog.provenance.label()
         )),
     );
     out.push_str(&format!(
@@ -110,10 +111,11 @@ pub fn models_text(plan_id: &str, colour: bool) -> String {
         ink.bold,
         ink.reset,
         ink.dim_on(format!(
-            "({} models · {} · credits = list-price $ x multiplier)",
+            "({} models · {} · rates {} · credits = list-price $ x multiplier)",
             catalog.models.len(),
             plan.map(|p| format!("{}/mo cap", money(p.monthly_usd)))
-                .unwrap_or_default()
+                .unwrap_or_default(),
+            catalog.provenance.label()
         )),
     );
     let table = models_table(&ink, &catalog);

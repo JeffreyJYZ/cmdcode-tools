@@ -53,6 +53,89 @@ const VALUE_FLAGS: &[&str] = &[
     "--rows",
 ];
 
+/// The catalogue flags. They are lifted out of argv rather than added to the
+/// shared parser: that parser is cmduse's first, and cmduse has no catalogue of
+/// its own to point at another source.
+#[derive(Debug, Default)]
+struct CatalogueFlags {
+    /// `--no-catalog`: the baked `core/zen.json`, never the network or a cache.
+    no_catalog: bool,
+    /// `--cache <dur>`; `None` keeps the default 6h TTL.
+    ttl_secs: Option<u64>,
+    /// A `--cache` value that is not a duration — reported before anything runs.
+    error: Option<String>,
+}
+
+impl CatalogueFlags {
+    fn options(&self) -> crate::ocuse::catalogue::Options {
+        let mut opts = crate::ocuse::catalogue::Options {
+            no_catalog: self.no_catalog,
+            ..Default::default()
+        };
+        if let Some(ttl) = self.ttl_secs {
+            opts.ttl_secs = ttl;
+        }
+        opts
+    }
+}
+
+/// Drop `--no-catalog` and `--cache <dur>` from argv, remembering both.
+fn lift_catalogue_flags(argv: Vec<OsString>) -> (Vec<OsString>, CatalogueFlags) {
+    let mut flags = CatalogueFlags::default();
+    let mut kept: Vec<OsString> = Vec::with_capacity(argv.len());
+    let mut iter = argv.into_iter();
+    while let Some(arg) = iter.next() {
+        let text = arg.to_string_lossy().into_owned();
+        if text == "--no-catalog" {
+            flags.no_catalog = true;
+            continue;
+        }
+        if text != "--cache" && !text.starts_with("--cache=") {
+            kept.push(arg);
+            continue;
+        }
+        let value = match text.strip_prefix("--cache=") {
+            Some(value) => value.to_string(),
+            None => match iter.next() {
+                Some(value) => value.to_string_lossy().into_owned(),
+                None => {
+                    flags.error = Some("--cache needs a duration (0, 30s, 15m, 6h, 1d)".into());
+                    continue;
+                }
+            },
+        };
+        match parse_duration(&value) {
+            Some(ttl) => flags.ttl_secs = Some(ttl),
+            None => {
+                flags.error = Some(format!(
+                    "--cache expects 0, 30s, 15m, 6h or 1d (got '{value}')"
+                ))
+            }
+        }
+    }
+    (kept, flags)
+}
+
+/// `0` / `30s` / `15m` / `6h` / `1d`, or a bare count of seconds.
+fn parse_duration(text: &str) -> Option<u64> {
+    let text = text.trim();
+    let (digits, scale) = match text.chars().last()? {
+        's' => (text.get(..text.len() - 1)?, 1),
+        'm' => (text.get(..text.len() - 1)?, 60),
+        'h' => (text.get(..text.len() - 1)?, 3_600),
+        'd' => (text.get(..text.len() - 1)?, 86_400),
+        _ => (text, 1),
+    };
+    digits.parse::<u64>().ok().map(|count| count * scale)
+}
+
+/// argv -> (what the shared parser sees, the `model` id, the catalogue flags).
+fn prepare(argv: Vec<OsString>) -> (Vec<OsString>, Option<String>, CatalogueFlags) {
+    let (argv, flags) = lift_catalogue_flags(argv);
+    let (argv, model_id) = split_model_id(argv);
+    (argv, model_id, flags)
+}
+
 /// ocuse's `model` command takes an optional model id, which is a plain
 /// positional; the shared parser (written for cmduse, whose `model` takes none)
 /// rejects a stray positional. Pull the id out first so `ocuse model <id>`
@@ -93,6 +176,15 @@ fn split_model_id(argv: Vec<OsString>) -> (Vec<OsString>, Option<String>) {
         .collect();
     (argv, id)
 }
+
+/// ocuse-only catalogue flags. They are lifted from argv in this file rather
+/// than parsed by the shared parser (`cli.rs` is cmduse's), so their help cannot
+/// live in `OCUSE_HELP`; printed right after it, so no flag is undocumented.
+const CATALOGUE_HELP: &str = "\
+Catalogue (ocuse only; live from GET /zen/go/v1/models, 6h disk cache):
+      --no-catalog      Use only the catalogue baked into the binary
+      --cache <dur>     Catalogue cache TTL: 0 (off), 30s, 15m, 6h (default), 1d
+";
 
 /// The live watch loop is the default command, but `-1`/`--once` and `--json`
 /// both want a single frame printed and an exit. A bare `--json` used to fall
@@ -154,7 +246,11 @@ fn period_end(report: &window::Report, window_mode: &str, inferred: bool) -> Opt
 }
 
 pub fn run() {
-    let (argv, model_id) = split_model_id(std::env::args_os().collect());
+    let (argv, model_id, flags) = prepare(std::env::args_os().collect());
+    if let Some(why) = &flags.error {
+        eprintln!("ocuse: {why}");
+        std::process::exit(2);
+    }
     let args = match cli::parse_args_from(argv, Binary::Ocuse) {
         Ok(a) => a,
         Err(e) => {
@@ -164,6 +260,7 @@ pub fn run() {
     };
     if args.help {
         cli::usage(Binary::Ocuse);
+        print!("{CATALOGUE_HELP}");
         return;
     }
     if let Some(cs) = args.config_set {
@@ -200,6 +297,12 @@ pub fn run() {
     let rows: usize = args.rows_cap(15);
     let now = window::now_ms();
     let tz_secs = args.tz.unwrap_or(0);
+
+    // The catalogue every number below is measured against: Go's own model list
+    // when it answers, a cache inside its TTL, else the baked seed. Resolved
+    // once, before any renderer reads it, so the watch loop never refetches and
+    // every output names the same source.
+    crate::ocuse::catalogue::init(&flags.options());
 
     // `plans` needs neither the store nor a plan id: the catalogue is static.
     if let Some(SubCmd::Plans) = args.subcmd {
@@ -349,7 +452,7 @@ pub fn run() {
     let build_at = |t: i64, account: Option<&api::Usage>, account_error: Option<&str>| {
         let mut report = build(
             &read_since(report_window),
-            &catalog,
+            catalog,
             &plan_id,
             t,
             period_start,
@@ -814,6 +917,46 @@ mod tests {
                 assert_eq!(a.subcmd.as_ref(), Some(&want), "{binary:?} {word}");
             }
         }
+    }
+
+    #[test]
+    fn catalogue_flags_are_lifted_before_the_shared_parser() {
+        let (rest, id, flags) = prepare(argv(&["--no-catalog", "-1"]));
+        assert!(flags.no_catalog);
+        assert!(flags.ttl_secs.is_none());
+        assert!(id.is_none());
+        // The shared parser never sees them, and the run is otherwise intact.
+        assert!(
+            cli::parse_args_from(rest, Binary::Ocuse)
+                .expect("parses")
+                .once
+        );
+        // cmduse has no catalogue of its own, so the flag stays ocuse's.
+        assert!(cli::parse_args_from(argv(&["--no-catalog"]), Binary::Cmduse).is_err());
+    }
+
+    #[test]
+    fn cache_flag_takes_durations_and_keeps_the_model_id() {
+        for (text, want) in [
+            ("0", 0),
+            ("30s", 30),
+            ("15m", 900),
+            ("6h", 21_600),
+            ("1d", 86_400),
+            ("45", 45),
+        ] {
+            let (_, _, flags) = prepare(argv(&["--cache", text, "-1"]));
+            assert_eq!(flags.error, None, "{text}");
+            assert_eq!(flags.ttl_secs, Some(want), "{text}");
+        }
+        // The attached form parses too, and its value is never mistaken for the
+        // `model` positional.
+        let (_, id, flags) = prepare(argv(&["model", "--cache=2h", "glm-5.3-flash"]));
+        assert_eq!(id.as_deref(), Some("glm-5.3-flash"));
+        assert_eq!(flags.ttl_secs, Some(7_200));
+        // A word is not a duration, and it fails before anything runs.
+        assert!(prepare(argv(&["--cache", "soon"])).2.error.is_some());
+        assert!(prepare(argv(&["--cache"])).2.error.is_some());
     }
 
     #[test]

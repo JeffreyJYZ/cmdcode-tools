@@ -36,7 +36,7 @@ cmduse mcp                   # MCP stdio server
 cmduse config set sl="{plan} {credits}/{cap} 5h:{5h_pct} wk:{wk_pct}"
 ```
 
-`ocuse`, `arkuse` and `oduse` take the same shape: bare / `-1` / `daily` / `hourly` / `session` / `model` / `plans` / `statusline` / `mcp`. Source-forced differences: ocuse's `--plan go|go-plus`, `--db`/`--no-api`/`--window`/`--period-start`/`--infer-anniversary`; arkuse's `--plan <tier>` and `--profile <arkcli>`; oduse's `--no-wallet`. One shared `--rows N` cap on every table (`0` = all); `--json`/`--csv` always carry every row, and a trimmed table ends `… N more`.
+`ocuse`, `arkuse` and `oduse` take the same shape: bare / `-1` / `daily` / `hourly` / `session` / `model` / `plans` / `statusline` / `mcp`. Source-forced differences: ocuse's `--plan go|go-plus|go-teams`, `--db`/`--no-api`/`--window`/`--period-start`/`--infer-anniversary`; arkuse's `--plan <tier>` and `--profile <arkcli>`; oduse's `--no-wallet`. One shared `--rows N` cap on every table (`0` = all); `--json`/`--csv` always carry every row, and a trimmed table ends `… N more`.
 
 ## MCP server and config
 

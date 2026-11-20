@@ -644,10 +644,27 @@ write it \(em with the legacy
 as the fallback for a v1 install).
 It reports what actually ran on this machine from opencode's own store for
 everything the endpoint does not carry \(em the per\-model table,
-\fBdaily\fR/\fBhourly\fR, tokens \(em priced by opencode itself, against the
-token rates and per\-model limits the OpenCode docs publish (the generated
-catalogue
-.IR core/zen.json ).
+\fBdaily\fR/\fBhourly\fR, tokens \(em priced by opencode itself, against a
+catalogue of token rates and per\-model limits that
+.B ocuse
+fetches live from
+.IR GET\ /zen/go/v1/models
+(no key; an 8s timeout and one retry on a transport fault).  The catalogue is
+cached for 6 hours under
+.I ~/.cache/cmduse/
+(\fB$CMDUSE_CACHE_DIR\fR moves it, \fB\-\-cache\fR sets the TTL), and only
+when both the endpoint and the cache fail does it fall back to the copy baked
+into the binary from the generated
+.IR core/zen.json .
+Which one answered is never silent: the dashboard prints a \fIcatalogue:\fR
+line, \fB\-\-json\fR carries a \fIcatalog\fR object, \fBstatusline \-\-json\fR
+carries \fIcatalogSource\fR/\fIcatalogAt\fR/\fIcatalogAgeSecs\fR, and the
+\fBplans\fR/\fBmodels\fR headers say so too \(em \fIlive\fR, \fIcache, 3h old\fR
+or \fIbuiltin\fR, with the fetch time and, after a fallback, the reason the
+fetch failed.  The endpoint supplies membership, the token rates, the peak
+multiplier and every plan's per\-model limits; each plan's \fB$\fR/month price
+and the window split are the docs', so they stay from the baked copy, as does
+the Zen pay\-as\-you\-go table (a second endpoint).
 The endpoint's figures win wherever both exist: the server's 5\-hour window is
 a block with its own reset, its week is anchored to Monday 00:00 UTC, its month
 is the subscription anniversary, and it meters with its own price basis, none
@@ -663,8 +680,9 @@ console.
 .PP
 Go meters per model: each model has a monthly dollar limit, and its 5\-hour,
 weekly, and monthly windows are fixed shares of that limit (20%, 50%, and
-100%).  Go ships as two plans that share one token price list but grant
-different per\-model limits: Go and Go Plus.  Neither the store nor the usage
+100%).  Go ships as three plans that share one token price list but grant
+different per\-model limits: Go, Go Plus, and Go Teams (per member, a 2\-member
+minimum).  Neither the store nor the usage
 endpoint names the plan the account is on, so the plan is explicit
 (\fB\-\-plan\fR) and defaults to
 .BR go .
@@ -722,8 +740,11 @@ Machine\-readable projection (one object): \fIsource\fR, \fIgeneratedAt\fR,
 \fIrolling\fR, \fIweekly\fR, \fImonthly\fR, each \fI{status, percent,
 resetsAt}\fR with \fIresetsAt\fR in epoch ms \(em or \fBnull\fR when the
 endpoint was not reached), \fItotals\fR (each of month, fiveHour,
-weekly carrying cost, requests, and tokens), and the per\-model breakdown
-\fImodels\fR.  A bare \fB\-\-json\fR also leaves the watch loop, so it prints
+weekly carrying cost, requests, and tokens), the per\-model breakdown
+\fImodels\fR, and \fIcatalog\fR \(em \fI{source, at, ageSecs, error}\fR: which
+catalogue the limits came from (\fIlive\fR, \fIcache\fR or \fIbuiltin\fR), when
+it was fetched or generated (epoch ms), how old a cache answer is, and why a
+fetch failed.  A bare \fB\-\-json\fR also leaves the watch loop, so it prints
 and exits rather than redrawing.
 .TP
 .B model [\fIid\fR]
@@ -762,22 +783,29 @@ The Go catalogue for the selected plan: each model's name, id, \fB$\fR/1M
 in/out/cache\-read rates, the plan's monthly limit, and a \fIGRANTED\fR column.
 Without \fB\-\-gated\fR every catalogued model is listed and marked;
 \fB\-\-gated\fR keeps only the models the plan grants (present in the plan's
-allowance map).  \fB\-\-json\fR prints one JSON object per line with keys id,
-name, input, output, cacheRead, limit (null when not granted) and granted.
-Needs no database; works offline.
+allowance map).  The header names the catalogue in force (\fIlive\fR,
+\fIcache\fR or \fIbuiltin\fR).  \fB\-\-json\fR prints one JSON object per line
+with keys id, name, input, output, cacheRead, limit (null when not granted) and
+granted.  Needs no database; works offline.
 .TP
 .B plans
-Print the Go/Zen catalogue: both Go plans (label, price, and each model's
-monthly limit) beside the shared token rates, then a line for the Zen
-pay\-as\-you\-go models.  \fB\-\-json\fR emits one object with
-\fIextractedAt\fR, \fIwindows\fR (the 5\-hour/weekly/monthly shares),
-\fIplans\fR (id, label, priceUsd, allowanceByModel), and the Go and Zen rate
-tables.  Needs no database; works offline.
+Print the Go/Zen catalogue: every Go plan the endpoint publishes (label, price,
+and each model's monthly limit) beside the shared token rates, then a line for
+the Zen pay\-as\-you\-go models.  The header names the catalogue in force and
+when it was fetched.  \fB\-\-json\fR emits one object with \fIextractedAt\fR,
+\fIcatalog\fR (the same provenance as \fB\-\-json\fR above), \fIwindows\fR (the
+5\-hour/weekly/monthly shares), \fIplans\fR (id, label, priceUsd,
+allowanceByModel), and the Go and Zen rate tables.  Needs no database; works
+offline.
 .TP
 .B statusline
 Print one compact line: month spend, 5\-hour spend, and the top model.
 \fB\-\-json\fR prints one object: plan, period, monthSpent, monthCap,
-fiveHourSpent, fiveHourCap, weeklySpent, weeklyCap, model.
+fiveHourSpent, fiveHourCap, weeklySpent, weeklyCap, model, plus
+\fIcatalogSource\fR, \fIcatalogAt\fR and \fIcatalogAgeSecs\fR \(em which
+catalogue the limits came from and how old it is.  The template placeholder
+\fB{catalog}\fR resolves to the same answer as text (\fIlive\fR,
+\fIcache, 3h old\fR, \fIbuiltin\fR).
 .TP
 .B mcp
 Run an MCP stdio server; see \fBocuse mcp server\fR below.
@@ -802,7 +830,8 @@ allowance.  The header names each client read, and \fB\-\-json\fR carries the
 list as \fBclients\fR; a missing store contributes nothing.
 .TP
 .B \-\-plan \fIid\fR
-Which Go plan to measure against: \fBgo\fR (default) or \fBgo-plus\fR.  There
+Which Go plan to measure against: \fBgo\fR (default), \fBgo\-plus\fR, or
+\fBgo\-teams\fR.  There
 is deliberately no auto\-detection: the usage endpoint reports percentages
 rather than a plan id, and the local store records no subscription, so the plan
 must be given.  An unknown id exits 2 and lists the known ids.
@@ -810,6 +839,22 @@ must be given.  An unknown id exits 2 and lists the known ids.
 .B \-\-no\-api
 Do not call OpenCode Go's usage endpoint: report the local estimate only.
 Useful offline, or to compare the local windows against the account's.
+.TP
+.B \-\-no\-catalog
+Do not fetch the Go catalogue and do not read its cache: use only the copy
+baked into the binary from
+.IR core/zen.json .
+For offline use and for tests; the dashboard then says
+\fIcatalogue: builtin\fR.
+.TP
+.B \-\-cache \fIdur\fR
+Catalogue cache lifetime: \fI0\fR (off \(em neither read nor written),
+\fI30s\fR, \fI15m\fR, \fI6h\fR (default), \fI1d\fR, or a bare number of
+seconds.  The cache lives at
+.I ~/.cache/cmduse/ocuse\-catalogue.json
+(\fB$CMDUSE_CACHE_DIR\fR moves the directory); a result is written only after a
+parse that produced at least one plan with per\-model limits, so a bad run can
+never poison it.  Anything else exits 2.
 .TP
 .B \-\-days \fIn\fR
 Days of history to read (default 120).  Bounds the
@@ -904,10 +949,15 @@ and weekly rows show no countdown.  The period defaults to the calendar month, w
 \fIin / out\fR and names the resolved end date.  A model whose spend
 crosses its limit is flagged \fILIMIT EXCEEDED\fR.  There is no
 \fISuccess N%\fR figure \(em opencode's store records no per\-request success
-or error signal.  Limits and rates come from
-.IR core/zen.json ,
-regenerated from OpenCode's own docs sources with
-.BR "bun scripts/extract\-zen.ts" .
+or error signal.  Limits and rates are fetched from OpenCode's own model list
+.RI ( GET\ /zen/go/v1/models )
+each run and cached 6 hours, so they follow upstream between releases instead of
+waiting for one; the generated
+.I core/zen.json
+baked into the binary (via
+.BR "bun scripts/extract\-zen.ts" )
+is the offline fallback, and which of the two answered is printed rather than
+assumed.
 .SS ocuse mcp server
 \fBocuse mcp\fR runs an MCP stdio server (newline\-delimited JSON\-RPC on
 stdin/stdout, diagnostics on stderr) exposing seven tools \(em \fIusage\fR,
@@ -929,6 +979,12 @@ Read (never written) as the fallback Go key \(em the legacy v1 location of the
 credential \fB/connect\fR stores; on v2 the live one is the \fBcredential\fR row
 of opencode's store, which is read first.  \fB$OCUSE_API_KEY\fR and
 \fB$OPENCODE_API_KEY\fR override both.
+.TP
+.I ~/.cache/cmduse/ocuse\-catalogue.json
+The Go catalogue as last fetched (the same shape as \fIcore/zen.json\fR), read
+while inside the TTL and rewritten by a successful fetch.  Never written from a
+result with no per\-model limits.  \fB$CMDUSE_CACHE_DIR\fR moves the directory;
+\fB\-\-cache 0\fR disables it.
 .SH ARKUSE
 .B arkuse
 tracks a Volcengine ARK Agent Plan and reports in
@@ -1138,18 +1194,22 @@ once its fresh input passes \fIinputTokensAbove\fR; \fBprice\fR and
 \fBcredits\fR have no token count and stay flat.
 .TP
 .B models, plans
-The catalogue from
-.IR core/od.json :
-four plans with their prices, monthly / weekly / 5\-hour caps, plan\-model
-credits and concurrency, then every model's multiplier and \fB$\fR/1M rates,
-every row marked \fIpublished\fR, from Open Design\'s own price list.
+The catalogue: four plans with their prices, monthly / weekly / 5\-hour caps,
+plan\-model credits and concurrency, then every model\'s multiplier and
+\fB$\fR/1M rates, every row marked \fIpublished\fR.  Token rates, cache rates
+and long\-context tiers are fetched at run time from Open Design\'s public
+price list; the plan caps, labels and multipliers come from
+.IR core/od.json ,
+the offline seed that answers when the list cannot be reached.  The heading and
+the \fIcatalog\fR object in \fB\-\-json\fR name which of the two answered.
 .TP
 .B statusline
 The family template engine.  Placeholders are \fB{plan}\fR \fB{period}\fR
 \fB{month}\fR \fB{month_pct}\fR \fB{month_bar}\fR \fB{five_hour}\fR
 \fB{five_hour_pct}\fR \fB{five_hour_bar}\fR (aliases \fB{5h}*\fR)
 \fB{weekly}\fR \fB{weekly_pct}\fR \fB{weekly_bar}\fR (aliases
-\fB{wk}*\fR) \fB{wallet}\fR and \fB{models}\fR.
+\fB{wk}*\fR) \fB{wallet}\fR \fB{models}\fR and \fB{catalog}\fR (where the
+price table came from: \fIlive\fR, \fIcache, 3h old\fR or \fIbuiltin\fR).
 .TP
 .B mcp
 An MCP stdio server with the family's seven tools.  \fBmodels\fR takes no
@@ -1169,6 +1229,19 @@ line on the report, never an error.
 .B \-\-plan \fIid\fR
 The plan: \fIgo\fR (default), \fIplus\fR, \fIpro\fR or \fImax\fR.  Told,
 because the store records no subscription and the wallet reports a balance.
+.TP
+.B \-\-cache \fIdur\fR
+How long the fetched price list stays valid on disk: default \fB6h\fR, a unit
+suffix accepted (\fI30m\fR, \fI6h\fR, \fI2d\fR; a bare number is seconds), and
+\fI0\fR disables the disk cache entirely.  The file lives at
+\fI~/.cache/cmduse/od\-model\-prices.json\fR (\fB$CMDUSE_CACHE_DIR\fR moves the
+directory) and is written only after a payload parses to at least one row, so an
+empty answer can never be served from it.  A transport error gets one retry; a
+4xx does not.
+.TP
+.B \-\-no\-catalog
+Skip the live price list and its cache; price every turn from the baked seed in
+\fIcore/od.json\fR and say \fIbuiltin\fR on the frame.
 .TP
 .B \-\-no\-wallet
 Skip both wallet routes: the account's balance API and the desktop app's local
@@ -1200,9 +1273,19 @@ Credits are the plan's unit: a model's list\-price dollars multiplied by its
 credit multiplier.  A cap a plan does not publish prints as absent, never as
 zero (em only Go has a 5\-hour window (em and the plan\-model credits are a
 published allowance with no local meter, because the store names models but not
-which of them are the plan's own.  Token rates, cache rates and
-long-context tiers come from Open Design\'s published \fI/public/model\-prices\fR
-endpoint (fetched 2026\-11\-17); the plan pages still supply the multipliers.
+which of them are the plan\'s own.  Token rates, cache rates and
+long-context tiers are fetched at run time from Open Design\'s public
+\fI/public/model\-prices\fR endpoint (no key, no cookie) and merged over the
+offline seed in \fIcore/od.json\fR field by field: the price list supplies the
+rates, the seed supplies the plan caps, labels and multipliers it does not
+publish.  Where the answer came from is printed \(em \fIlive\fR, \fIcache, 3h
+old\fR, or \fIbuiltin\fR with its reason \(em in the frame\'s \fIcatalogue\fR
+line, the \fB\-\-json\fR \fIcatalog\fR object (\fIsource\fR, \fIat\fR,
+\fIageSecs\fR, \fIrowsLive\fR, \fIrowsUnlisted\fR, \fIratesFrom\fR,
+\fImultipliersFrom\fR, \fIerror\fR) and \fIstatusline \-\-json\fR\'s
+\fIcatalogSource\fR, \fIcatalogAt\fR and \fIcatalogAgeSecs\fR, so a fallback
+never reads as fresh.  A model the price list carries and the seed has no
+multiplier for is counted, never listed at an invented 1x.
 .PP
 Design Plan caps are per model class: Go publishes $220/month, $55/7 days and
 $18/5 hours for DeepSeek V4.1 Flash Eco, and $120/month, $30/7 days and $10/5
@@ -1271,6 +1354,11 @@ flag names a 0600 file.  Read\-only, expires, never scraped from a browser.
 .I $OD_API_URL
 Balance API host (default \fIhttps://amr\-api.open\-design.ai\fR); the path is
 fixed.
+.TP
+.I ~/.cache/cmduse/od\-model\-prices.json
+The last fetched price list, body verbatim; its mtime is its age.  Valid for the
+\fB\-\-cache\fR TTL (6h by default).  \fB$CMDUSE_CACHE_DIR\fR moves the directory;
+\fB\-\-cache 0\fR stops \fBoduse\fR reading or writing it.
 .SH SEE ALSO
 .BR cmd (1),
 the Command Code CLI for login and authentication.

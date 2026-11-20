@@ -1,41 +1,61 @@
-// Regenerates core/zen.json from OpenCode's own docs.
+// Regenerates core/zen.json from OpenCode's own model list API.
 //
-//   bun scripts/extract-zen.ts                 # latest docs
-//   bun scripts/extract-zen.ts --go md --zen md   # parse local fixtures
+//   bun scripts/extract-zen.ts                                  # live API
+//   bun scripts/extract-zen.ts --go p.json --zen q.json [--docs go.mdx]
+//
+// Why the API and not the docs: the docs article used to carry the priced
+// tables (monthly limit per plan), and `priced plan slot` scraping was the
+// source of truth until Nov 2026. Upstream then moved the article
+// (`services/www` -> `services/site`), dropped the priced tables, and told
+// readers to use `GET /zen/go/v1/models` "for every field in the response,
+// including Go's monthly usage limits". The endpoint is also the meter the
+// user is actually billed against, so it wins wherever the two disagree.
+// The docs markdown is still read for the two things the API does not carry:
+// each plan's price and the window split (5h = 20%, weekly = 50%, monthly =
+// 100%). A dead docs URL therefore degrades to a documented fallback with a
+// warning instead of blocking the refresh, which is what kept the file a month
+// stale in the first place.
 //
 // Two products, one file:
-//   go  — the Go subscription, which comes in two plans sharing one token price
-//         list (**Go** $10/mo and **Go Plus** $40/mo) but granting each model a
-//         different monthly dollar limit. Rates live once under `go.models`; the
-//         plan dimension lives under `go.plans.<id>.allowanceByModel`, alongside
-//         the shared window split (5h = 20%, weekly = 50%, monthly = 100%).
-//   zen — pay-as-you-go: $/1M rates only (no limits; you spend a balance)
+//   go  — the Go subscription, whose plans share one token price list but grant
+//         each model a different monthly dollar limit. Rates live once under
+//         `go.models`; the plan dimension lives under `go.plans.<id>
+//         .allowanceByModel`. Plans are discovered from the payload's
+//         `go.monthly_usage` keys (today "go", "go-plus", "go-teams").
+//   zen — pay-as-you-go: $/1M rates only (no limits; you spend a balance).
 //
-// Model ids come from each page's endpoint table (name -> id), because the
-// pricing tables name models in prose ("GLM 5.3 Flash (≤ 200K tokens)").
+// Membership is the endpoint's list. A model absent from it is retired and
+// must not keep a limit, so the file is rebuilt whole and the run prints every
+// id it added or dropped.
+//
 // Rate variants (peak/off-peak, context tiers) are kept as separate entries
-// keyed by variant label, so a caller can pick the right one later.
-//
-// The two Go plans sit in `<PlanTabs syncKey="go-plan">` -> `<div slot="go|go-plus">`:
-// the pricing tables carry a `Monthly limit` column that differs per plan, while
-// Input/Output/Cached columns repeat verbatim. We parse each priced slot, take
-// the first for the shared rates, and record every slot's limits under its plan.
+// keyed by variant label, so a caller can pick the right one later. Only a
+// time-of-day multiplier is a peak split; a `date` or `service_tier` one is a
+// scheduled reprice or a different service tier and is left alone.
 import { writeFile } from "node:fs/promises";
 
-// The docs pages are rendered HTML; their source is markdown with pipe tables,
-// so scrape the .mdx the pages themselves link ("Edit page"). More stable than
-// HTML tables and identical to what readers see.
-const GO_URL =
-	"https://raw.githubusercontent.com/anomalyco/opencode/dev/services/www/src/docs/content/console/go.mdx";
-const ZEN_URL =
-	"https://raw.githubusercontent.com/anomalyco/opencode/dev/services/www/src/docs/content/console/models.mdx";
+const GO_API = "https://opencode.ai/zen/go/v1/models";
+const ZEN_API = "https://opencode.ai/zen/v1/models";
+const GO_DOCS =
+	"https://raw.githubusercontent.com/anomalyco/opencode/dev/services/site/src/docs/content/console/go.mdx";
 const OUT = new URL("../core/zen.json", import.meta.url).pathname;
 
 /** The documented window split for Go, as fractions of a model's monthly limit. */
 export const GO_WINDOW_SHARE = { fiveHour: 0.2, weekly: 0.5, monthly: 1 } as const;
 
+/**
+ * Plan prices, used only when the docs article cannot be read. Kept in step with
+ * the article's plan table (Go $10/mo, Go Plus $40/mo, Go Teams $20/member/mo).
+ * A miss prints a warning, so a silent drift is impossible.
+ */
+export const PLAN_PRICE_FALLBACK: Record<string, number> = {
+	go: 10,
+	"go-plus": 40,
+	"go-teams": 20,
+};
+
 export interface RateVariant {
-	/** "peak" | "off-peak" | null — DeepSeek's time-of-day split. */
+	/** "peak" | "off-peak" | null — the time-of-day split, when the model has one. */
 	peak: "peak" | "off-peak" | null;
 	/** Context tier ceiling in tokens (e.g. 272000): applies when input ≤ this. */
 	tierMaxTokens: number | null;
@@ -62,33 +82,42 @@ export interface GoPlan {
 }
 
 export interface GoCatalogue {
+	/** Where the limits and rates came from. */
+	source: string;
 	windowShare: typeof GO_WINDOW_SHARE;
-	/** Token rates, shared across plans (pricing is the same for both). */
+	/** Token rates, shared across plans (pricing is the same for every plan). */
 	models: ZenModel[];
-	/** Keyed by plan slug ("go", "go-plus"); only the allowances differ. */
+	/** Keyed by plan slug ("go", "go-plus", "go-teams"); only the allowances differ. */
 	plans: Record<string, GoPlan>;
 }
 
 export interface ZenCatalog {
 	extractedAt: string;
 	go: GoCatalogue;
-	zen: { models: ZenModel[] };
+	zen: { source: string; models: ZenModel[] };
 }
 
-const MONEY = /^\$?([\d.]+)$/;
-const FREE = /^free$/i;
-const DASH = /^[-—]$/;
-
-function money(cell: string | undefined): number | undefined {
-	const value = (cell ?? "").trim();
-	if (FREE.test(value)) return 0;
-	const match = value.match(MONEY);
-	return match ? Number(match[1]) : undefined;
+interface CacheRates {
+	read?: number;
+	/** A scalar, or a TTL map (`{"30m": 0.25, "12h": 0.5}`). */
+	write?: number | Record<string, number>;
 }
 
-/** Model names in prose and in the id table differ only in punctuation. */
-function normalize(name: string): string {
-	return name.toLowerCase().replace(/[^a-z0-9]+/g, "");
+interface Rate {
+	price?: number;
+	cache?: CacheRates;
+	overrides?: Array<{ when?: { context?: { gt?: number } }; price?: number; cache?: CacheRates }>;
+}
+
+/** One entry of `GET /zen/go/v1/models` (the fields this file reads). */
+export interface ApiModel {
+	id: string;
+	name?: string;
+	cost?: {
+		text?: { input?: Rate; output?: Rate };
+		multipliers?: Array<{ when?: Record<string, unknown>; factor?: number }>;
+	};
+	go?: { monthly_usage?: Record<string, number | null> | null };
 }
 
 /** "Go Plus" -> "go-plus"; a stable key for the plan map and the `--plan` flag. */
@@ -99,35 +128,167 @@ export function slugify(label: string): string {
 		.replace(/^-+|-+$/g, "");
 }
 
-/** "GLM 5.3 Flash (≤ 200K tokens)" -> name + tier; "(Peak)" -> peak variant. */
-export function tierBounds(cell: string): {
-	tierMaxTokens: number | null;
-	tierMinTokens: number | null;
-} {
-	const match = cell.match(/\(\s*(≤|<=|>|>=)\s*([\d.]+)\s*([KM])\s*tokens?\s*\)/i);
-	if (!match) return { tierMaxTokens: null, tierMinTokens: null };
-	const tokens = Math.round(
-		Number(match[2]) * ((match[3] ?? "K").toUpperCase() === "M" ? 1_000_000 : 1000),
-	);
-	const ceiling = match[1] === "≤" || match[1] === "<=";
-	return ceiling
-		? { tierMaxTokens: tokens, tierMinTokens: null }
-		: { tierMaxTokens: null, tierMinTokens: tokens };
+/** "go-plus" -> "Go Plus", for a plan's display label. */
+export function humanize(id: string): string {
+	return id
+		.split(/[-_]+/)
+		.filter(Boolean)
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(" ");
 }
 
-export function splitName(cell: string): {
-	name: string;
-	peak: RateVariant["peak"];
-	tierMaxTokens: number | null;
-	tierMinTokens: number | null;
-} {
-	const bounds = tierBounds(cell);
-	const peak = /\(peak\)/i.test(cell) ? "peak" : /\(off-?peak\)/i.test(cell) ? "off-peak" : null;
-	const name = cell
-		.replace(/\(\s*(?:≤|<=|>|>=)\s*[\d.]+\s*[KM]\s*tokens?\s*\)/i, "")
-		.replace(/\((?:peak|off-?peak)\)/i, "")
-		.trim();
-	return { name, peak, ...bounds };
+/** Rates are money per 1M tokens: six decimals is well below any published rate. */
+function round(rate: number): number {
+	return Math.round(rate * 1e6) / 1e6;
+}
+
+/** Cache write is a scalar or a TTL map; the base (first) rate is the one we price. */
+export function writeRate(write: number | Record<string, number> | undefined): number | null {
+	if (typeof write === "number") return write;
+	if (write && typeof write === "object") {
+		const first = Object.values(write)[0];
+		return typeof first === "number" ? first : null;
+	}
+	return null;
+}
+
+/** Context tiers are `overrides` keyed by `when.context.gt`, on input and/or output. */
+function thresholds(input: Rate | undefined, output: Rate | undefined): number[] {
+	const found = new Set<number>();
+	for (const rate of [input, output]) {
+		for (const override of rate?.overrides ?? []) {
+			const gt = override.when?.context?.gt;
+			if (typeof gt === "number") found.add(gt);
+		}
+	}
+	return [...found].sort((a, b) => a - b);
+}
+
+/** A time-of-day multiplier's factor; `date`/`service_tier` multipliers are not peak. */
+export function peakFactor(multipliers: unknown): number | null {
+	if (!Array.isArray(multipliers)) return null;
+	for (const multiplier of multipliers as Array<{
+		when?: Record<string, unknown>;
+		factor?: number;
+	}>) {
+		const when = multiplier.when ?? {};
+		const days = when.utc_days as { in?: unknown } | undefined;
+		const hours = when.any as unknown[] | undefined;
+		if (!Array.isArray(days?.in) || !Array.isArray(hours)) continue;
+		if (typeof multiplier.factor === "number" && multiplier.factor !== 1)
+			return multiplier.factor;
+	}
+	return null;
+}
+
+/** One model's `cost.text` -> its rate variants (base tier, higher tiers, peak sheets). */
+export function rateVariants(model: ApiModel): RateVariant[] {
+	const text = model.cost?.text;
+	const input = text?.input;
+	const output = text?.output;
+	if (typeof input?.price !== "number" || typeof output?.price !== "number") return [];
+
+	const bounds = thresholds(input, output);
+	/** One tier's rates; `gt` names the threshold whose override applies, if any. */
+	const at = (gt: number | undefined, max: number | null, min: number | null): RateVariant => {
+		// An override without `gt` must not answer the base tier's `undefined`.
+		const override = (rate: Rate | undefined) =>
+			gt === undefined
+				? undefined
+				: (rate?.overrides ?? []).find((o) => o.when?.context?.gt === gt);
+		const inputOverride = override(input);
+		const outputOverride = override(output);
+		return {
+			peak: null,
+			tierMaxTokens: max,
+			tierMinTokens: min,
+			input: round(inputOverride?.price ?? input.price ?? 0),
+			output: round(outputOverride?.price ?? output.price ?? 0),
+			cacheRead: round(inputOverride?.cache?.read ?? input.cache?.read ?? 0),
+			cacheWrite: round(writeRate(inputOverride?.cache?.write ?? input.cache?.write) ?? 0),
+		};
+	};
+
+	const plain: RateVariant[] =
+		bounds.length === 0
+			? [at(undefined, null, null)]
+			: [
+					at(undefined, bounds[0] ?? null, null),
+					...bounds.map((gt, i) => at(gt, bounds[i + 1] ?? null, gt)),
+				];
+
+	const factor = peakFactor(model.cost?.multipliers);
+	if (factor === null) return plain;
+	const scale = (v: RateVariant): RateVariant => ({
+		...v,
+		input: round(v.input * factor),
+		output: round(v.output * factor),
+		cacheRead: round(v.cacheRead * factor),
+		cacheWrite: round(v.cacheWrite * factor),
+	});
+	return [
+		...plain.map((v) => ({ ...v, peak: "off-peak" as const })),
+		...plain.map((v) => ({ ...scale(v), peak: "peak" as const })),
+	];
+}
+
+/** One API payload -> the catalogue's model list, sorted by id. */
+export function parseModels(payload: unknown, label: string): ZenModel[] {
+	const data = (payload as { data?: unknown } | null)?.data;
+	if (!Array.isArray(data) || data.length === 0)
+		throw new Error(`${label}: payload carries no models — endpoint shape changed`);
+	const models: ZenModel[] = [];
+	const unpriced: string[] = [];
+	for (const raw of data) {
+		const model = raw as ApiModel;
+		if (!model || typeof model.id !== "string") continue;
+		const variants = rateVariants(model);
+		if (variants.length === 0) {
+			unpriced.push(model.id);
+			continue;
+		}
+		models.push({ id: model.id, name: model.name?.trim() || model.id, variants });
+	}
+	if (unpriced.length > 0)
+		console.warn(
+			`warning: ${label}: ${unpriced.length} models publish no text rates: ${unpriced.join(", ")}`,
+		);
+	return models.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/** Every plan the payload's `go.monthly_usage` maps name, plus each one's allowances. */
+export function parsePlans(payload: unknown, models: ZenModel[]): Record<string, GoPlan> {
+	const byId = new Map<string, ApiModel>();
+	for (const raw of (payload as { data?: unknown[] }).data ?? []) {
+		const model = raw as ApiModel;
+		if (model && typeof model.id === "string") byId.set(model.id, model);
+	}
+	const planIds = [
+		...new Set(
+			[...byId.values()].flatMap((m) =>
+				Object.keys(m.go?.monthly_usage ?? {}).filter(
+					(key) => typeof m.go?.monthly_usage?.[key] === "number",
+				),
+			),
+		),
+	].sort();
+	if (planIds.length < 2)
+		throw new Error(
+			`expected one usage key per Go plan, found ${planIds.length} — endpoint shape changed`,
+		);
+
+	const plans: Record<string, GoPlan> = {};
+	for (const id of planIds) {
+		const allowanceByModel: Record<string, number> = {};
+		for (const model of models) {
+			const limit = byId.get(model.id)?.go?.monthly_usage?.[id];
+			if (typeof limit === "number" && limit > 0) allowanceByModel[model.id] = limit;
+		}
+		if (Object.keys(allowanceByModel).length === 0)
+			throw new Error(`plan "${id}" lists no per-model limits — endpoint shape changed`);
+		plans[id] = { label: humanize(id), priceUsd: 0, allowanceByModel };
+	}
+	return plans;
 }
 
 /** Tables are pipe rows; a header row plus `|---|` separator precede the data. */
@@ -145,154 +306,72 @@ function tableRows(markdown: string): string[][] {
 	return rows;
 }
 
-/** `| Name | model-id | endpoint | sdk |` -> name -> id. */
-export function parseEndpoints(markdown: string): Map<string, string> {
-	const map = new Map<string, string>();
-	for (const cells of tableRows(markdown)) {
-		if (cells.length < 2) continue;
-		const id = cells[1] ?? "";
-		// Model ids are bare slugs; skip headers and anything with spaces.
-		if (!/^[a-z0-9][a-z0-9._-]*$/.test(id)) continue;
-		// The endpoint column carries the request URL; it is what separates a
-		// data row from any other table on the page.
-		if (!/^https?:\/\//.test(cells[2] ?? "")) continue;
-		const name = (cells[0] ?? "")
-			.replace(/\[[^\]]*\]\([^)]*\)/g, "")
-			.replace(/\s+/g, " ")
-			.trim();
-		if (!name) continue;
-		map.set(name, id);
-	}
-	return map;
-}
-
-/** `| Plan | Price | Included usage |` -> { go: 10, "go-plus": 40 }. */
+/**
+ * `| Plan | Price | Included usage |` -> { go: 10, "go-plus": 40, "go-teams": 20 }.
+ * Only the plan table names a price per month; other tables are skipped.
+ */
 export function parsePlanPrices(markdown: string): Map<string, number> {
 	const prices = new Map<string, number>();
 	for (const cells of tableRows(markdown)) {
-		const label = cells[0] ?? "";
-		const match = (cells[1] ?? "").match(/\$([\d.]+)\s*\/\s*month/i);
+		const [label = "", price = ""] = cells;
+		const match = price.match(/\$([\d.]+)[^|]*\/\s*month/i);
 		if (!label || !match) continue;
 		prices.set(slugify(label), Number(match[1]));
 	}
 	return prices;
 }
 
-/** "go-plus" -> "Go Plus", for a plan's display label. */
-export function humanize(id: string): string {
-	return id
-		.split(/[-_]+/)
-		.filter(Boolean)
-		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-		.join(" ");
-}
-
-/** Every `<div slot="go|go-plus">body</div>` inside a `<PlanTabs>`, in order. */
-export function planSlots(markdown: string): Array<{ id: string; body: string }> {
-	const out: Array<{ id: string; body: string }> = [];
-	const re = /<div\s+slot="([^"]+)"\s*>([\s\S]*?)<\/div>/g;
-	for (let match = re.exec(markdown); match; match = re.exec(markdown)) {
-		out.push({ id: match[1], body: match[2] });
-	}
-	return out;
-}
-
-/** `| Model | Input | Output | Cached Read | Cached Write | [Monthly limit] |` */
-export function parseRates(
-	markdown: string,
-	withLimit: boolean,
-): Array<{ name: string; limit?: number; variant: RateVariant }> {
-	const out: Array<{ name: string; limit?: number; variant: RateVariant }> = [];
-	for (const cells of tableRows(markdown)) {
-		if (cells.length < 5) continue;
-		const input = money(cells[1]);
-		const output = money(cells[2]);
-		if (input === undefined || output === undefined) continue;
-		const [cacheReadRaw, cacheWriteRaw] = [cells[3], cells[4]];
-		const cacheRead = FREE.test(cacheReadRaw ?? "") ? 0 : (money(cacheReadRaw) ?? 0);
-		const cacheWrite =
-			FREE.test(cacheWriteRaw ?? "") || DASH.test(cacheWriteRaw ?? "")
-				? 0
-				: (money(cacheWriteRaw) ?? 0);
-		const split = splitName(cells[0] ?? "");
-		const limit = withLimit
-			? FREE.test(cells[5] ?? "")
-				? undefined
-				: money(cells[5])
-			: undefined;
-		out.push({
-			name: split.name,
-			limit,
-			variant: {
-				peak: split.peak,
-				tierMaxTokens: split.tierMaxTokens,
-				tierMinTokens: split.tierMinTokens,
-				input,
-				output,
-				cacheRead,
-				cacheWrite,
-			},
-		});
-	}
-	return out;
-}
-
-type EndpointIndex = Map<string, { id: string; name: string }>;
-
-/** Normalized-prose-name -> id, so a rate row can be joined to a model id. */
-function endpointIndex(endpoints: Map<string, string>): EndpointIndex {
-	const index: EndpointIndex = new Map();
-	for (const [name, id] of endpoints) index.set(normalize(name), { id, name });
-	return index;
-}
-
-/** Join rates (by prose name) onto ids (from the endpoint table). */
-export function assemble(index: EndpointIndex, rates: ReturnType<typeof parseRates>): ZenModel[] {
-	const models = new Map<string, ZenModel>();
-	const unmatched: string[] = [];
-	for (const rate of rates) {
-		const hit = index.get(normalize(rate.name));
-		if (!hit) {
-			unmatched.push(rate.name);
-			continue;
-		}
-		const model = models.get(hit.id) ?? { id: hit.id, name: rate.name, variants: [] };
-		model.variants.push(rate.variant);
-		models.set(hit.id, model);
-	}
-	if (unmatched.length > 0)
-		console.warn(
-			`warning: ${unmatched.length} priced names had no model id: ${unmatched.slice(0, 6).join(", ")}`,
-		);
-	return [...models.values()].sort((a, b) => a.id.localeCompare(b.id));
-}
-
-/** One plan tab's `Monthly limit` column -> { model id: limit }, free models omitted. */
-export function allowances(
-	index: EndpointIndex,
-	rates: ReturnType<typeof parseRates>,
-): Record<string, number> {
-	const out: Record<string, number> = {};
-	const unmatched: string[] = [];
-	for (const rate of rates) {
-		if (rate.limit === undefined) continue;
-		const hit = index.get(normalize(rate.name));
-		if (!hit) {
-			unmatched.push(rate.name);
-			continue;
-		}
-		out[hit.id] = rate.limit;
-	}
-	if (unmatched.length > 0)
-		console.warn(
-			`warning: ${unmatched.length} limited names had no model id: ${unmatched.slice(0, 6).join(", ")}`,
-		);
-	return out;
-}
-
 async function readSource(url: string, override?: string): Promise<string> {
 	if (override) return Bun.file(override).text();
-	return (await fetch(url)).text();
+	const response = await fetch(url);
+	if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+	return response.text();
+}
+
+/** The plan table is the only source of plan prices; a dead page is a warning, not a stop. */
+async function planPrices(docsPath?: string): Promise<Map<string, number>> {
+	try {
+		const markdown = await readSource(GO_DOCS, docsPath);
+		const prices = parsePlanPrices(markdown);
+		if (prices.size >= 2) return prices;
+		console.warn(`warning: ${GO_DOCS}: no plan price table found — using PLAN_PRICE_FALLBACK`);
+	} catch (error) {
+		console.warn(
+			`warning: docs page unreadable (${(error as Error).message}) — using PLAN_PRICE_FALLBACK`,
+		);
+	}
+	return new Map();
+}
+
+/** Every id added to or dropped from a catalogue, plus each Go limit that moved. */
+function report(oldFile: ZenCatalog | null, catalog: ZenCatalog): void {
+	if (!oldFile) {
+		console.log(`  no previous core/zen.json; wrote ${catalog.go.models.length} go models`);
+		return;
+	}
+	const diff = (before: string[], after: string[], what: string) => {
+		const dropped = before.filter((id) => !after.includes(id));
+		const added = after.filter((id) => !before.includes(id));
+		if (dropped.length > 0) console.log(`  ${what} dropped: ${dropped.join(", ")}`);
+		if (added.length > 0) console.log(`  ${what} added: ${added.join(", ")}`);
+	};
+	diff(
+		oldFile.go.models.map((m) => m.id),
+		catalog.go.models.map((m) => m.id),
+		"go",
+	);
+	diff(
+		oldFile.zen.models.map((m) => m.id),
+		catalog.zen.models.map((m) => m.id),
+		"zen",
+	);
+	for (const [planId, plan] of Object.entries(catalog.go.plans)) {
+		const before = oldFile.go.plans[planId]?.allowanceByModel ?? {};
+		const moved = Object.entries(plan.allowanceByModel)
+			.filter(([id, limit]) => before[id] !== undefined && before[id] !== limit)
+			.map(([id, limit]) => `${id} ${before[id]} -> ${limit}`);
+		if (moved.length > 0) console.log(`  ${planId} limits moved: ${moved.join(", ")}`);
+	}
 }
 
 if (import.meta.main) {
@@ -301,66 +380,44 @@ if (import.meta.main) {
 		const i = args.indexOf(flag);
 		return i >= 0 ? args[i + 1] : undefined;
 	};
-	const [goMd, zenMd] = await Promise.all([
-		readSource(GO_URL, value("--go")),
-		readSource(ZEN_URL, value("--zen")),
+	const [goText, zenText, prices] = await Promise.all([
+		readSource(GO_API, value("--go")),
+		readSource(ZEN_API, value("--zen")),
+		planPrices(value("--docs")),
 	]);
+	const goPayload = JSON.parse(goText);
+	const zenPayload = JSON.parse(zenText);
 
-	// --- Go: shared rates + a plan map of per-model allowances ----------------
-	const goEndpoints = parseEndpoints(goMd);
-	const goIndex = endpointIndex(goEndpoints);
-	const prices = parsePlanPrices(goMd);
-
-	// Priced slots only: the doc carries a second `<PlanTabs syncKey="go-plan">`
-	// whose slots are request-count estimates (no rates), so an empty parse
-	// rejects them.
-	const planTabs = planSlots(goMd)
-		.map((slot) => ({ ...slot, slug: slugify(slot.id), rates: parseRates(slot.body, true) }))
-		.filter((slot) => slot.rates.length > 0);
-	if (planTabs.length < 2) {
-		throw new Error(
-			`go.mdx: expected one priced plan slot per plan, found ${planTabs.length} — docs layout changed`,
-		);
-	}
-
-	const goModels = assemble(goIndex, planTabs[0].rates);
-	const knownIds = new Set(goModels.map((model) => model.id));
-	const plans: Record<string, GoPlan> = {};
-	for (const tab of planTabs) {
-		const label = humanize(tab.id);
-		const priceUsd = prices.get(tab.slug);
-		if (priceUsd === undefined)
-			throw new Error(`go.mdx: no $/month price for plan "${label}" — docs layout changed`);
-		const allowanceByModel = allowances(goIndex, tab.rates);
-		if (Object.keys(allowanceByModel).length === 0) {
-			throw new Error(
-				`go.mdx: plan "${label}" listed no per-model limits — docs layout changed`,
+	const goModels = parseModels(goPayload, "go");
+	const plans = parsePlans(goPayload, goModels);
+	for (const [id, plan] of Object.entries(plans)) {
+		const price = prices.get(id) ?? PLAN_PRICE_FALLBACK[id];
+		if (price === undefined)
+			console.warn(
+				`warning: no $/month price for plan "${id}"; recording 0 — docs table changed`,
 			);
-		}
-		plans[tab.slug] = { label, priceUsd, allowanceByModel };
-		// Rates are shared: every plan must price the same model set.
-		const tabIds = new Set(
-			tab.rates
-				.map((rate) => goIndex.get(normalize(rate.name))?.id)
-				.filter((id): id is string => id !== undefined),
-		);
-		for (const id of knownIds) {
-			if (!tabIds.has(id)) console.warn(`warning: plan "${label}" lists no row for ${id}`);
-		}
+		plan.priceUsd = price ?? 0;
 	}
-
-	// --- Zen: rates only ------------------------------------------------------
-	const zenModels = assemble(endpointIndex(parseEndpoints(zenMd)), parseRates(zenMd, false));
-	if (goModels.length === 0 || zenModels.length === 0)
-		throw new Error("parsed no models — docs layout changed");
 
 	const catalog: ZenCatalog = {
 		extractedAt: new Date().toISOString(),
-		go: { windowShare: GO_WINDOW_SHARE, models: goModels, plans },
-		zen: { models: zenModels },
+		go: {
+			source: GO_API,
+			windowShare: GO_WINDOW_SHARE,
+			models: goModels,
+			plans,
+		},
+		zen: { source: ZEN_API, models: parseModels(zenPayload, "zen") },
 	};
+
+	const previous = (await Bun.file(OUT).exists())
+		? ((await Bun.file(OUT).json()) as ZenCatalog)
+		: null;
 	await writeFile(OUT, `${JSON.stringify(catalog, null, "\t")}\n`);
 	console.log(
-		`wrote core/zen.json: go ${goModels.length} models, plans ${Object.keys(plans).join(", ")}, zen ${zenModels.length} models`,
+		`wrote core/zen.json: go ${goModels.length} models, plans ${Object.entries(plans)
+			.map(([id, plan]) => `${id} $${plan.priceUsd}`)
+			.join(", ")}, zen ${catalog.zen.models.length} models`,
 	);
+	report(previous, catalog);
 }

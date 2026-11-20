@@ -14,6 +14,7 @@
 pub mod api_wallet;
 pub mod args;
 pub mod caps;
+pub mod catalogue;
 pub mod cli;
 pub mod db;
 pub mod events;

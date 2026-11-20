@@ -453,6 +453,17 @@ pub fn render_text(
         c(compact(report.month.input)),
         c(compact(report.month.output)),
     ));
+    // Which catalogue the LIMIT column is measured against. A baked seed and a
+    // cache read weeks ago must not look like a fresh fetch: the numbers moved
+    // upstream while the file did not, and that is the defect this line exists
+    // to make visible (see `ocuse::catalogue`).
+    let provenance = crate::ocuse::catalogue::provenance();
+    out.push_str(&format!(
+        "{}catalogue: {}{}\n",
+        ink.dim,
+        provenance.describe(),
+        ink.reset
+    ));
 
     // The three window rows. When the account answered, they are its own meters
     // — the only view that agrees with opencode.ai/console, and the reason this
@@ -719,6 +730,7 @@ pub fn compact_line(report: &Report, history: &[f64], colour: bool) -> String {
 ///   {five_hour} {five_hour_pct} {five_hour_bar}   (aliases {5h} {5h_pct} {5h_bar})
 ///   {weekly} {weekly_pct} {weekly_bar}            (aliases {wk} {wk_pct} {wk_bar})
 ///   {models}                       top model by period spend
+///   {catalog}                      where the limits came from: live, cache, builtin
 ///   | or newline                    literal separators
 /// Unknown placeholders are dropped. Percentages are one decimal; money reuses
 /// `cmduse_core::money`; bars reuse `report_render::bar` (ascii/colour aware).
@@ -767,6 +779,7 @@ pub fn statusline_template(
         "weekly_pct" | "wk_pct" => share_of(account.map(|a| &a.weekly)),
         "weekly_bar" | "wk_bar" => share_bar(account.map(|a| &a.weekly)),
         "models" => top_model(),
+        "catalog" => crate::ocuse::catalogue::provenance().describe(),
         _ => String::new(),
     })
 }
@@ -790,6 +803,11 @@ pub fn statusline_json(report: &Report, plan_id: &str) -> String {
         "weeklySpent": report.weekly.cost,
         "weeklyCap": serde_json::Value::Null,
         "model": report.models.first().map(|m| m.id.clone()),
+        // Which catalogue the per-model limits came from. Flat keys, matching
+        // `oduse`'s statusline, so a consumer reads one name on both binaries.
+        "catalogSource": crate::ocuse::catalogue::provenance().source.label(),
+        "catalogAt": crate::ocuse::catalogue::provenance().at,
+        "catalogAgeSecs": crate::ocuse::catalogue::provenance().age_secs,
         // The aliases keep their cmduse meaning; there is no credit pool here,
         // so the remainder is null rather than a fabricated zero.
         "fiveHourUsed": report.five_hour.cost,
@@ -863,6 +881,10 @@ pub fn render_json(report: &Report) -> String {
         // endpoint answered, and for `--no-api`. Consumers otherwise show the
         // local estimate without being able to tell the three apart.
         "accountError": report.account_error,
+        // Which catalogue priced the rows above: `{source: live|cache|builtin,
+        // at, ageSecs, error}`. A consumer must be able to tell a fresh fetch
+        // from the baked seed without knowing this binary's flags.
+        "catalog": crate::ocuse::catalogue::provenance().json(),
         "models": report.models.iter().map(model).collect::<Vec<_>>(),
     }))
     .expect("json")
@@ -879,8 +901,9 @@ fn shorten(path: &str) -> String {
 
 /// The catalogue: what each product costs and (for Go) what each plan allows.
 ///
-/// Both Go plans are listed because the docs define two — Go and Go Plus — that
-/// share one token price list but grant each model a different monthly limit.
+/// Every plan the endpoint publishes is listed — Go, Go Plus and Go Teams today
+/// — because they share one token price list but grant each model a different
+/// monthly limit.
 pub fn plans_text(colour: bool) -> String {
     let ink = Ink::new(colour);
     let catalog = crate::ocuse::zen::catalog();
@@ -888,10 +911,13 @@ pub fn plans_text(colour: bool) -> String {
         "{}OpenCode plans{} {}\n",
         ink.bold,
         ink.reset,
-        ink.dim_on(format!("(docs, extracted {})", catalog.extracted_at)),
+        ink.dim_on(format!(
+            "(catalogue {})",
+            crate::ocuse::catalogue::provenance().describe()
+        )),
     );
     out.push_str(&format!(
-        "{}windows (both plans): 5h {} · weekly {} · monthly {}{}\n",
+        "{}windows (every plan): 5h {} · weekly {} · monthly {}{}\n",
         ink.dim,
         ink.cyan_on(format!("{:.1}%", catalog.go.window_share.five_hour * 100.0)),
         ink.cyan_on(format!("{:.1}%", catalog.go.window_share.weekly * 100.0)),
@@ -899,12 +925,20 @@ pub fn plans_text(colour: bool) -> String {
         ink.reset,
     ));
     for plan in catalog.go.plans.values() {
+        // The endpoint publishes allowances, not prices; one price per plan
+        // comes from the docs article, and a plan it has not learned prints as
+        // unknown rather than as a made-up $0.
+        let price = if plan.price_usd > 0.0 {
+            format!("${:.2}/month", plan.price_usd)
+        } else {
+            "price unknown".to_string()
+        };
         out.push_str(&format!(
-            "\n{}{}{} — {}/month\n",
+            "\n{}{}{} — {}\n",
             ink.bold,
             plan.label,
             ink.reset,
-            ink.cyan_on(format!("${:.2}", plan.price_usd)),
+            ink.cyan_on(price),
         ));
         // Same widths as the rows below: limit 7, each rate 6, cache 8.
         out.push_str(&format!(
@@ -949,7 +983,7 @@ pub fn plans_text(colour: bool) -> String {
 }
 
 /// The Go/Zen catalogue as one JSON object — the machine twin of `plans_text`:
-/// both plans (label, price, per-model monthly allowances), the shared window
+/// every plan (label, price, per-model monthly allowances), the shared window
 /// shares, and the Go and Zen rate tables.
 pub fn plans_json() -> String {
     let catalog = crate::ocuse::zen::catalog();
@@ -968,6 +1002,7 @@ pub fn plans_json() -> String {
         .collect();
     serde_json::json!({
         "extractedAt": catalog.extracted_at,
+        "catalog": crate::ocuse::catalogue::provenance().json(),
         "windows": {
             "fiveHour": catalog.go.window_share.five_hour,
             "weekly": catalog.go.window_share.weekly,
@@ -1051,8 +1086,9 @@ pub fn models_text(plan_id: &str, gated: bool, colour: bool) -> String {
         ink.bold,
         ink.reset,
         ink.dim_on(format!(
-            "(plan {plan_id} · {granted}/{} granted)",
-            catalog.go.models.len()
+            "(plan {plan_id} · {granted}/{} granted · catalogue {})",
+            catalog.go.models.len(),
+            crate::ocuse::catalogue::provenance().label()
         )),
     );
     out.push_str(&format!(
@@ -1521,7 +1557,7 @@ mod tests {
             cost_usd: 30.0,
             ..Default::default()
         }];
-        crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None, None)
+        crate::ocuse::window::build(&rows, zen::catalog(), zen::DEFAULT_PLAN, now, None, None)
     }
 
     #[test]
@@ -1559,7 +1595,7 @@ mod tests {
             },
         ];
         let report =
-            crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
+            crate::ocuse::window::build(&rows, zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
         let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         assert!(
             text.contains("/tmp/opencode.db + pi"),
@@ -1594,7 +1630,7 @@ mod tests {
             ..Default::default()
         }];
         let report =
-            crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
+            crate::ocuse::window::build(&rows, zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
         let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         let mut lines = text.lines().skip_while(|line| !line.starts_with("MODEL "));
         let header = lines.next().expect("the table header");
@@ -1618,7 +1654,7 @@ mod tests {
         // A free row prints `—` and a >28-char id overflows the name field, so
         // pick a granted model whose id leaves the name column intact.
         let row = lines
-            .find(|line| line.starts_with("DeepSeek V4 Flash "))
+            .find(|line| line.starts_with("DeepSeek V4.1 Flash"))
             .expect("the model row");
         let header_ends = cell_ends(header);
         let row_ends = cell_ends(row);
@@ -2266,13 +2302,15 @@ mod tests {
     }
 
     #[test]
-    fn catalogue_json_carries_both_plans_and_windows() {
+    fn catalogue_json_carries_every_plan_and_windows() {
         let json: serde_json::Value = serde_json::from_str(&plans_json()).unwrap();
         assert_eq!(json["windows"]["fiveHour"], 0.2);
         assert_eq!(json["windows"]["monthly"], 1.0);
         assert_eq!(json["plans"][0]["id"], "go");
         assert_eq!(json["plans"][0]["allowanceByModel"]["glm-5.3-flash"], 60.0);
         assert_eq!(json["plans"][1]["priceUsd"], 40.0);
+        assert_eq!(json["plans"][2]["id"], "go-teams");
+        assert_eq!(json["plans"][2]["priceUsd"], 20.0);
         assert!(!json["models"].as_array().unwrap().is_empty());
         assert!(!json["zen"].as_array().unwrap().is_empty());
     }
@@ -2483,7 +2521,7 @@ mod tests {
             ..Default::default()
         }];
         let report =
-            crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
+            crate::ocuse::window::build(&rows, zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
         let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         let block = text
             .lines()
@@ -2514,7 +2552,7 @@ mod tests {
             ..Default::default()
         }];
         let report =
-            crate::ocuse::window::build(&rows, &zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
+            crate::ocuse::window::build(&rows, zen::catalog(), zen::DEFAULT_PLAN, now, None, None);
         for colour in [false, true] {
             let text = render_text(&report, "/tmp/opencode.db", 10, colour, DEFAULT_BAR_WIDTH);
             assert!(!text.contains("LIMIT EXCEEDED"), "colour={colour}: {text}");
@@ -2528,7 +2566,7 @@ mod tests {
         // A period with nothing to divide by omits the row rather than printing NaN.
         let empty = crate::ocuse::window::build(
             &[],
-            &zen::catalog(),
+            zen::catalog(),
             zen::DEFAULT_PLAN,
             1_800_000_000_000,
             None,
@@ -2652,7 +2690,7 @@ mod tests {
     fn statusline_without_caps_degrades_gracefully() {
         let empty = crate::ocuse::window::build(
             &[],
-            &zen::catalog(),
+            zen::catalog(),
             zen::DEFAULT_PLAN,
             1_800_000_000_000,
             None,

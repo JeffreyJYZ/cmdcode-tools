@@ -121,6 +121,8 @@ pub fn render_json(report: &Report, plan: &Plan) -> String {
     serde_json::to_string_pretty(&serde_json::json!({
         "source": "open-design",
         "generatedAt": report.now_ms,
+        // Which price table priced every figure below (live / cache / builtin).
+        "catalog": super::catalog_json(),
         "plan": plan.id,
         "caps": {
             // The plan's published set; `capPicks` says which one each window used.

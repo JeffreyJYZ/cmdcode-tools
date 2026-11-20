@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // What the store's turns cost under each of OpenCode Go's price sheets.
 //
-//   bun scripts/reprice.ts [--days N] [--since ISO] [--db PATH] [--plan go|go-plus]
+//   bun scripts/reprice.ts [--days N] [--since ISO] [--db PATH] [--plan go|go-plus|go-teams]
 //                          [--console-pct N] [--cap N] [--json]
 //
 // `ocuse` reads each turn's recorded `cost` — what opencode wrote. The console
