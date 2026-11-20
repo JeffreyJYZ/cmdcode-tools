@@ -40,19 +40,24 @@ export function readOutputSpeed(row: Rec): { value: number; source: SpeedSource 
 }
 
 /**
- * Keep the better measurement. A blank slot takes any figure; otherwise only a
- * better-ranked field replaces the incumbent, and an equal rank keeps it. Merging
- * a last-good catalogue *after* the live groups therefore replays a tier the
- * failed source alone published (its documented API median) while never
- * overwriting a live value from the same tier.
+ * Offer one measurement under the declared order: a blank slot takes any figure,
+ * a better-ranked field replaces the incumbent, and an equal rank keeps it.
+ * Returns whether the slot changed, so a caller can count what a store or a
+ * migration actually contributed.
+ */
+export function offerSpeed(into: Model, value: number | null, source: SpeedSource | null): boolean {
+	if (value === null) return false;
+	if (into.outputSpeed !== null && rankOf(source) >= rankOf(into.outputSpeedSource)) return false;
+	into.outputSpeed = value;
+	into.outputSpeedSource = source;
+	return true;
+}
+
+/**
+ * Keep the better measurement. Merging a last-good catalogue *after* the live
+ * groups therefore replays a tier the failed source alone published (its
+ * documented API median) while never overwriting a live value from the same tier.
  */
 export function takeSpeed(into: Model, from: Model): void {
-	if (from.outputSpeed === null) return;
-	if (
-		into.outputSpeed !== null &&
-		rankOf(from.outputSpeedSource) >= rankOf(into.outputSpeedSource)
-	)
-		return;
-	into.outputSpeed = from.outputSpeed;
-	into.outputSpeedSource = from.outputSpeedSource ?? null;
+	offerSpeed(into, from.outputSpeed, from.outputSpeedSource ?? null);
 }

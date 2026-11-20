@@ -1,7 +1,8 @@
 import type { Model } from "#~/model.ts";
 import { readCache, writeCache } from "./cache.ts";
 import { collectSources } from "./collect.ts";
-import { lastGoodNote, readLastGood, writeLastGood } from "./lastGood.ts";
+import { lastGoodNote, mergeStore, readLastGood, writeLastGood } from "./lastGood.ts";
+import { importMpcStore } from "./mpcStore.ts";
 import { mergeModels } from "./normalize.ts";
 
 export interface LoadOptions {
@@ -14,10 +15,10 @@ export interface LoadOptions {
 	/** Cache TTL in ms; 0 disables reads and writes. */
 	cacheTtlMs: number;
 	/**
-	 * Leave both stores untouched: no TTL cache, no last-good rewrite, and no
-	 * last-good replay. `aam check` sets it on the dispatch load, then reloads
-	 * with it set too — a diagnostic must describe the poisoned store, not paper
-	 * over it with the fallback it is meant to diagnose.
+	 * Leave both stores untouched: no TTL cache, no last-good rewrite, no
+	 * last-good replay and no legacy import. `aam check` sets it on the dispatch
+	 * load, then reloads with it set too — a diagnostic must describe the
+	 * poisoned store, not paper over it with the fallback it is meant to diagnose.
 	 */
 	noCacheWrite?: boolean;
 }
@@ -48,6 +49,10 @@ const SOURCE_ORDER = ["manifest", "leaderboard", "models", "api"];
  * replayed from the last-good catalogue — gaps only, never over a live figure —
  * and the run says `stale` with the replay's age rather than passing stored data
  * off as fresh.
+ *
+ * A healthy run still overlays the store's *better-ranked* tiers (an api-tier
+ * median the keyless sources cannot publish), because a fallback that only ever
+ * loses ground is how one keyless run used to wipe the API's real figure.
  */
 export async function loadCatalogue(options: LoadOptions): Promise<Catalogue> {
 	const ttl = options.cacheTtlMs;
@@ -60,10 +65,18 @@ export async function loadCatalogue(options: LoadOptions): Promise<Catalogue> {
 	const live = await collectSources(options);
 	const notes = [...live.notes];
 	let models = mergeModels(live.groups);
-	// Read the store only when it can be used: a healthy run never pays for parsing
-	// a catalogue it will not replay from.
-	const stored =
-		persist && (live.degraded || models.length === 0) ? await readLastGood() : undefined;
+	// The store is read on every persist run: it is both the replay source and the
+	// only place an api-tier figure survives a keyless run.
+	const stored = persist ? await readLastGood() : undefined;
+	const migration = persist ? await importMpcStore(models, stored) : undefined;
+	if (migration) {
+		notes.push(migration.note);
+		// A degraded run writes no live data, but repairing the fallback is not live
+		// data: it must survive, or the next run redoes the import and repeats the note.
+		if (migration.repaired && live.degraded && stored) {
+			await writeLastGood(stored.models, { fetchedAt: stored.fetchedAt });
+		}
+	}
 	if (models.length === 0) {
 		if (!stored) throw new Error(notes.join("; ") || "every source failed");
 		return {
@@ -78,6 +91,8 @@ export async function loadCatalogue(options: LoadOptions): Promise<Catalogue> {
 	if (live.degraded && stored) {
 		models = mergeModels([...live.groups, stored.models], true);
 		notes.push(lastGoodNote(stored));
+	} else if (stored) {
+		models = mergeStore(models, stored.models);
 	}
 
 	const catalogue: Catalogue = {
@@ -93,12 +108,14 @@ export async function loadCatalogue(options: LoadOptions): Promise<Catalogue> {
 	if (persist && !live.degraded) {
 		await writeLastGood(models);
 		if (ttl > 0) {
+			// The migration note belongs to the run that performed it; a cached replay
+			// of the same catalogue is not a second migration and must not say so.
 			await writeCache({
 				models,
 				sources: catalogue.sources,
 				indexVersion: live.indexVersion,
 				fetchedAt: catalogue.fetchedAt,
-				notes,
+				notes: live.notes,
 			});
 		}
 	}

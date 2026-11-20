@@ -11,11 +11,13 @@ let dir = "";
 beforeEach(() => {
 	dir = mkdtempSync(join(tmpdir(), "aa-models-"));
 	process.env.AA_CACHE_DIR = dir;
+	process.env.AA_LEGACY_DIR = join(dir, "mpc");
 });
 
 afterEach(() => {
 	globalThis.fetch = realFetch;
 	delete process.env.AA_CACHE_DIR;
+	delete process.env.AA_LEGACY_DIR;
 	rmSync(dir, { recursive: true, force: true });
 });
 

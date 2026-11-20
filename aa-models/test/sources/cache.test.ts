@@ -6,11 +6,13 @@ import pkg from "../../package.json" with { type: "json" };
 import {
 	CACHE_SCHEMA,
 	LOADER_REVISION,
+	cacheNote,
 	cachePath,
 	inspectCache,
 	readCache,
 	writeCache,
 } from "#~/sources/cache.ts";
+import { agePhrase, lastGoodNote } from "#~/sources/lastGood.ts";
 import { catalogue, model } from "../cli/fixture.ts";
 
 const MODELS = [model({ slug: "glm-5-3", intelligenceIndex: 60 })];
@@ -92,5 +94,34 @@ describe("cache identity", () => {
 		const state = await inspectCache(TTL);
 		expect(state.present).toBe(false);
 		expect(state.usable).toBe(false);
+	});
+});
+
+describe("age phrasing", () => {
+	test("just now carries no `old`, every other bucket does", () => {
+		expect(agePhrase(10_000)).toBe("just now");
+		expect(agePhrase(12 * 60_000)).toBe("12m old");
+		expect(agePhrase(3 * 3_600_000)).toBe("3h old");
+		expect(agePhrase(2 * 86_400_000)).toBe("2d old");
+	});
+
+	test("a fresh cache line and replay label never splice `now old`", async () => {
+		await writeCache(STORED);
+		const hit = await readCache(TTL);
+		expect(hit?.notes.some((note) => note.includes("now old"))).toBe(false);
+		expect(hit?.notes.some((note) => note.endsWith("models, just now"))).toBe(true);
+		const line = cacheNote({
+			path: cachePath(),
+			present: true,
+			ageMs: 10_000,
+			revision: LOADER_REVISION,
+			version: pkg.version,
+			usable: true,
+			reason: "served",
+		});
+		expect(line).toContain("· just now ·");
+		expect(lastGoodNote({ fetchedAt: Date.now() - 10_000, models: [] })).toBe(
+			"last good, just now",
+		);
 	});
 });

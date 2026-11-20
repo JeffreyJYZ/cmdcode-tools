@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import pkg from "../../package.json" with { type: "json" };
 import type { Model } from "#~/model.ts";
-import { ageLabel, cacheDir, writeJson } from "./lastGood.ts";
+import { ageLabel, agePhrase, cacheDir, writeJson } from "./lastGood.ts";
 
 /**
  * The identity a cache file carries.
@@ -13,7 +13,7 @@ import { ageLabel, cacheDir, writeJson } from "./lastGood.ts";
  * TTL — which is how a repaired key-merge kept serving 384 models. `CACHE_SCHEMA`
  * moves only when this payload's own fields change.
  */
-export const LOADER_REVISION = "2";
+export const LOADER_REVISION = "3";
 export const CACHE_SCHEMA = "aa-models/2";
 
 /** The catalogue as it lands on disk. `stale` is never persisted. */
@@ -122,10 +122,7 @@ export async function readCache(ttl: number): Promise<StoredCatalogue | null> {
 	const notes = Array.isArray(stored.notes) ? stored.notes : [];
 	return {
 		...stored,
-		notes: [
-			...notes,
-			`cache: ${stored.models.length} models, ${ageLabel(state.ageMs ?? 0)} old`,
-		],
+		notes: [...notes, `cache: ${stored.models.length} models, ${agePhrase(state.ageMs ?? 0)}`],
 	};
 }
 
@@ -142,8 +139,7 @@ export async function writeCache(catalogue: StoredCatalogue): Promise<void> {
 /** The cache line `aam check` prints, so a default run's numbers have a reason. */
 export function cacheNote(state: CacheState): string {
 	if (!state.present) return `cache: ${state.path} · nothing written yet`;
-	const age = ageLabel(state.ageMs ?? 0);
-	if (state.usable)
-		return `cache: ${state.path} · ${age} old · revision ${state.revision} · served`;
-	return `cache: ${state.path} · ${age} old · ${state.reason} · ignored`;
+	const age = agePhrase(state.ageMs ?? 0);
+	if (state.usable) return `cache: ${state.path} · ${age} · revision ${state.revision} · served`;
+	return `cache: ${state.path} · ${age} · ${state.reason} · ignored`;
 }

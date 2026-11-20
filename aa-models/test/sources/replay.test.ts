@@ -26,11 +26,14 @@ const route = (url: string, page: string) =>
 beforeEach(() => {
 	dir = mkdtempSync(join(tmpdir(), "aa-models-"));
 	process.env.AA_CACHE_DIR = dir;
+	// Never read the real `~/.cache/mpc` store: a migration would rewrite the seed.
+	process.env.AA_LEGACY_DIR = join(dir, "mpc");
 });
 
 afterEach(() => {
 	globalThis.fetch = realFetch;
 	delete process.env.AA_CACHE_DIR;
+	delete process.env.AA_LEGACY_DIR;
 	rmSync(dir, { recursive: true, force: true });
 });
 
