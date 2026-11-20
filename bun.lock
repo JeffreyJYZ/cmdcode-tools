@@ -7,7 +7,7 @@
     },
     "oc-cmd-compare": {
       "name": "@jeffreyjyz/mpc",
-      "version": "0.1.14",
+      "version": "0.1.15",
       "bin": {
         "mpc": "src/index.ts",
         "mpcdev": "src/index.ts",
@@ -68,10 +68,14 @@
     },
     "opencode-shell-rc": {
       "name": "@jeffreyjyz/opencode-shell-rc",
-      "version": "0.4.3",
+      "version": "0.5.1",
+      "bin": {
+        "shell-rc-migrate": "dist/migrate.js",
+      },
       "devDependencies": {
         "@opencode/plugin": "^2.0.11",
         "@types/bun": "latest",
+        "cac": "^7.0.0",
         "typescript": "^7",
       },
     },
