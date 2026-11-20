@@ -35,6 +35,7 @@ jobs:
                       build: true
                     - package: oc-cmd-compare
                     - package: reqshape
+                    - package: aa-models
                     - package: opencode-context
                       build: true
                     - package: opencode-shell-rc

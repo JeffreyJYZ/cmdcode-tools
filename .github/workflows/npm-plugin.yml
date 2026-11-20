@@ -17,11 +17,12 @@ name: Publish npm package
 #   session-dir-v*  opencode-session-dir   @jeffreyjyz/opencode-session-dir
 #   mpc-v*          oc-cmd-compare         @jeffreyjyz/mpc
 #   reqshape-v*     reqshape               @jeffreyjyz/reqshape
+#   aa-models-v*    aa-models              @jeffreyjyz/aa-models
 #
 # One-time setup on npmjs.com, PER PACKAGE (Settings → Trusted publishing):
 #   owner JeffreyJYZ, repo cmdcode-tools, workflow npm-plugin.yml
 # The workflow file name must be this bare file name for every package sharing
-# it, which is why one workflow publishes all six rather than one each. Until a
+# it, which is why one workflow publishes all seven rather than one each. Until a
 # package is registered, its OIDC exchange fails and nothing is published.
 # `workflow_dispatch` with `dry_run` still exercises the whole build.
 
@@ -34,6 +35,7 @@ on:
             - "session-dir-v*"
             - "mpc-v*"
             - "reqshape-v*"
+            - "aa-models-v*"
     workflow_dispatch:
         inputs:
             package:
@@ -47,6 +49,7 @@ on:
                     - opencode-session-dir
                     - oc-cmd-compare
                     - reqshape
+                    - aa-models
             dry_run:
                 description: Build and pack without publishing
                 type: boolean
@@ -93,11 +96,12 @@ jobs:
                       session-dir-v*) dir=opencode-session-dir;  tag="${ref#session-dir-v}" ;;
                       mpc-v*)         dir=oc-cmd-compare;        tag="${ref#mpc-v}" ;;
                       reqshape-v*)    dir=reqshape;              tag="${ref#reqshape-v}" ;;
+                      aa-models-v*)   dir=aa-models;             tag="${ref#aa-models-v}" ;;
                       *) echo "no package for tag $ref" >&2; exit 1 ;;
                     esac
                   fi
-                  # Only the four packages with a build step get one; mpc and reqshape
-                  # ship TypeScript source and run under bun.
+                  # Only the four packages with a build step get one; mpc, reqshape
+                  # and aa-models ship TypeScript source and run under bun.
                   case "$dir" in
                     opencode-plugin|opencode-shell-rc|opencode-context|opencode-session-dir)
                       build=true ;;

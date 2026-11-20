@@ -1,0 +1,206 @@
+{
+	"models": [
+		{
+			"id": "042e8a37-fcd0-40f4-8f41-99215fb68eda",
+			"slug": "claude-sonnet-5-5-medium",
+			"name": "Claude Sonnet 5.5 (Medium, Default Fallback)",
+			"shortName": "Claude Sonnet 5.5 (medium)",
+			"suffix": "Medium, Default Fallback",
+			"chartDefaultSelected": false,
+			"chartHighlighted": false,
+			"releaseDate": "2026-09-28",
+			"isReasoning": true,
+			"effort": {
+				"slug": "medium",
+				"label": "medium",
+				"level": 30
+			},
+			"release": {
+				"id": "8e7e4b26-267d-4a54-8547-c67b003f8c35",
+				"slug": "claude-sonnet-5-5",
+				"name": "Claude Sonnet 5.5"
+			},
+			"isOpenWeights": false,
+			"openSourceCategorization": "proprietary",
+			"parameters": null,
+			"sizeClass": "large",
+			"intelligenceIndex": 30.8195522148431,
+			"score": 319.753876498359,
+			"omniscienceAccuracy": 0.45766666666666667,
+			"omniscienceHallucinationRate": 0.5003073140749846,
+			"mlcrOverall": 0.177777777777778,
+			"gdpPdfAllPass": 0.202,
+			"gdpval": 1325.77,
+			"gdpvalInterval": {
+				"lower": 1305.26,
+				"upper": 1346.27
+			},
+			"itBenchSre": null,
+			"tau2": null,
+			"tauBanking": null,
+			"terminalbenchHard": null,
+			"terminalBench21": null,
+			"terminalBench40": 0.297979797979798,
+			"frontierCode": 0.293075666666667,
+			"frontierCode20": 0.109708080808081,
+			"terminalBenchScience": 0.161904761904762,
+			"healthbench": null,
+			"vialsScore": null,
+			"mkaClimbWsr": null,
+			"healthbenchProfessional": null,
+			"hleDiamond": 0.238,
+			"critptAgenticHard": 0.335,
+			"scicode": 0.528935185185185,
+			"lcr": 0.763333333333333,
+			"ifbench": null,
+			"hle": 0.39805375347544,
+			"gpqa": null,
+			"critpt": 0.168571428571429,
+			"apexAgents": null,
+			"mmmuPro": null,
+			"livecodebench": null,
+			"aime25": null,
+			"analystAgent": null,
+			"automationBenchPartialScore": 0.5490962996121462,
+			"intelligenceIndexCostPerTask": {
+				"total": 0.7806560352024481,
+				"input": 0.47319708746093625,
+				"nonCacheInput": 0.0178425178,
+				"cacheRead": 0.25021548679343536,
+				"cacheWrite": 0.20513908286750088,
+				"output": 0.3074589477415119,
+				"reasoning": 0.1436865351360329,
+				"answer": 0.16377241260547898
+			},
+			"intelligenceIndexTimePerTask": 226.18011253909975,
+			"intelligenceIndexOutputTokensPerTask": {
+				"reasoning": 14368.65351360329,
+				"answer": 16377.2412605479,
+				"output": 30745.89477415119
+			},
+			"briefcaseElo": 1437.63,
+			"briefcaseEloInterval": {
+				"lower": 1428.61,
+				"upper": 1446.65
+			},
+			"personalityBench": {
+				"indexScores": {
+					"expressiveness": 46.69230769230769,
+					"organization": 52.40384615384616,
+					"informativeness": 52.40384615384616,
+					"transparency": 82.86538461538461,
+					"warmth": 67.63461538461539,
+					"conviction": 42.88461538461539,
+					"imagination": 79.0576923076923,
+					"slop": 27.653846153846153
+				},
+				"indexIntervals": {
+					"expressiveness": {
+						"lower": 45,
+						"upper": 56
+					},
+					"organization": {
+						"lower": 40,
+						"upper": 62
+					},
+					"informativeness": {
+						"lower": 44,
+						"upper": 56
+					},
+					"transparency": {
+						"lower": 81,
+						"upper": 88
+					},
+					"warmth": {
+						"lower": 62,
+						"upper": 73
+					},
+					"conviction": {
+						"lower": 37,
+						"upper": 51
+					},
+					"imagination": {
+						"lower": 77,
+						"upper": 80
+					},
+					"slop": {
+						"lower": 26,
+						"upper": 30
+					}
+				}
+			},
+			"creator": {
+				"id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+				"slug": "anthropic",
+				"name": "Anthropic",
+				"logo": "/img/logos/anthropic.svg",
+				"color": "#cc785c",
+				"country": "us"
+			},
+			"inputModalityImage": true,
+			"inputModalitySpeech": false,
+			"inputModalityVideo": false
+		},
+		{
+			"id": "0081ab31-d10a-44a0-a10d-eee5533fec65",
+			"slug": "glm-4-5v",
+			"name": "GLM-4.5V (Non-reasoning)",
+			"shortName": "GLM-4.5V (non-reasoning)",
+			"suffix": "Non-reasoning",
+			"chartDefaultSelected": false,
+			"chartHighlighted": false,
+			"releaseDate": "2025-08-11",
+			"isReasoning": false,
+			"release": {
+				"id": "2e01f25b-377c-4e5f-808c-66cda0890c49",
+				"slug": "glm-4-5v",
+				"name": "GLM-4.5V"
+			},
+			"isOpenWeights": true,
+			"openSourceCategorization": "permissive",
+			"parameters": 108,
+			"sizeClass": "medium",
+			"intelligenceIndex": null,
+			"score": 166.444015949878,
+			"gdpval": null,
+			"itBenchSre": null,
+			"tau2": 0.195906432748538,
+			"tauBanking": null,
+			"terminalbenchHard": 0.0681818181818182,
+			"terminalBench21": null,
+			"terminalBench40": null,
+			"frontierCode": null,
+			"frontierCode20": null,
+			"terminalBenchScience": null,
+			"healthbench": null,
+			"vialsScore": null,
+			"mkaClimbWsr": null,
+			"healthbenchProfessional": null,
+			"hleDiamond": null,
+			"critptAgenticHard": null,
+			"scicode": null,
+			"lcr": 0,
+			"ifbench": 0.286394557823129,
+			"hle": 0.0347544022242817,
+			"gpqa": 0.572727272727273,
+			"critpt": 0,
+			"apexAgents": null,
+			"mmmuPro": 0.427745664739884,
+			"livecodebench": 0.352380952380952,
+			"aime25": 0.153333333333333,
+			"analystAgent": null,
+			"briefcaseElo": null,
+			"creator": {
+				"id": "67437eb6-7dc1-4e93-befd-22c8b8ec2065",
+				"slug": "zai",
+				"name": "Z AI",
+				"logo": "/img/logos/zai.svg",
+				"color": "#1c7ff8",
+				"country": "cn"
+			},
+			"inputModalityImage": true,
+			"inputModalitySpeech": false,
+			"inputModalityVideo": false
+		}
+	]
+}

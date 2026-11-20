@@ -1,0 +1,6 @@
+<!doctype html>
+<html>
+<body>
+<script>self.__next_f.push([1,"ansparency\":56.21153846153846,\"warmth\":100,\"conviction\":79.0576923076923,\"imagination\":90.48076923076923,\"slop\":54.30769230769231},\"indexIntervals\":{\"expressiveness\":{\"lower\":85,\"upper\":90},\"organization\":{\"lower\":74,\"upper\":97},\"informativeness\":{\"lower\":91,\"upper\":100},\"transparency\":{\"lower\":47,\"upper\":62},\"warmth\":{\"lower\":96,\"upper\":100},\"conviction\":{\"lower\":70,\"upper\":89},\"imagination\":{\"lower\":82,\"upper\":94},\"slop\":{\"lower\":53,\"upper\":61}}},\"creator\":{\"id\":\"e1694725-0192-4e54-b1b8-c97e816c6cbe\",\"slug\":\"meta\",\"name\":\"Meta\",\"logo\":\"/img/logos/meta.svg\",\"color\":\"#0089f4\",\"country\":\"us\"},\"inputModalityImage\":true,\"inputModalitySpeech\":true,\"inputModalityVideo\":true}],\"manifest\":{\"path\":\"/data/b2ca3023f67eb50f.txt\",\"key\":\"f56aeb465ff8d2d8ee086260b4448693051b4fbf2053db3de7b5bf7010d8c6c1\"},\"children\":\"$L33\"}]}],\"$L34\"]}]\n"])</script>
+</body>
+</html>
