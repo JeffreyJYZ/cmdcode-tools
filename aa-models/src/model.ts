@@ -1,14 +1,7 @@
-import {
-	asRecord,
-	asString,
-	creatorOf,
-	dig,
-	modalitiesOf,
-	positive,
-	priceOf,
-	walkEvals,
-} from "#~/sources/normalize.ts";
+import { creatorOf, modalitiesOf, collapse, priceOf } from "#~/sources/normalize.ts";
+import { asRecord, asString, dig, positive, walkEvals } from "#~/sources/row.ts";
 import { aaKeyVariants } from "#~/sources/keys.ts";
+import { type SpeedSource, readOutputSpeed } from "#~/sources/speed.ts";
 
 /** Release metadata as AA publishes it; every field stays null when absent. */
 export interface Release {
@@ -26,7 +19,16 @@ export interface Model {
 	keys: string[];
 	/** AA's Intelligence Index. null = listed but unmeasured, never 0 as a stand-in. */
 	intelligenceIndex: number | null;
+	/**
+	 * Median output tokens per second, from the declared field priority in
+	 * `sources/speed.ts` — one series, never the max across two.
+	 */
 	outputSpeed: number | null;
+	/**
+	 * Which AA field produced `outputSpeed` (`api` | `page` | `timescale`): the
+	 * merge keeps the better-ranked tier instead of the larger number.
+	 */
+	outputSpeedSource?: SpeedSource | null;
 	/** First-token latency in seconds, when published. */
 	latency: number | null;
 	contextWindow: number | null;
@@ -70,6 +72,7 @@ export function normalizeRow(raw: unknown, source: string): Model | null {
 	const label = asString(asRecord(row.effort)?.label) ?? asString(row.suffix);
 	const evals: Record<string, number> = {};
 	walkEvals(row, "", evals);
+	const speed = readOutputSpeed(row);
 
 	return {
 		slug: identity,
@@ -85,9 +88,8 @@ export function normalizeRow(raw: unknown, source: string): Model | null {
 		intelligenceIndex:
 			positive(row.intelligenceIndex) ??
 			positive(dig(row, /intelligence_index|intelligenceIndex/i)),
-		outputSpeed:
-			positive(row.outputSpeed) ??
-			positive(dig(row, /median_output_tokens_per_second|output_speed|outputSpeed/i)),
+		outputSpeed: speed?.value ?? null,
+		outputSpeedSource: speed?.source ?? null,
 		// AA's own value: seconds to the first visible token, so reasoning time counts
 		// (equal to `timeToFirstAnswerToken`; 368.9 s on claude-opus-5-5 Max, not ms).
 		latency:
@@ -122,29 +124,4 @@ export function normalizeRows(rows: unknown[], source: string): Model[] {
 		groups.set(model.slug, group);
 	}
 	return [...groups.values()].flatMap(collapse);
-}
-
-/** Highest score leads the model; every other row becomes a labelled variant. */
-function collapse(group: Array<{ model: Model; rowSlug: string }>): Model[] {
-	if (group.length === 1) return group.flatMap(({ model }) => [model]);
-	const rank = (model: Model) => model.intelligenceIndex ?? Number.NEGATIVE_INFINITY;
-	const [first, ...rest] = [...group].sort(
-		(a, b) =>
-			rank(b.model) - rank(a.model) ||
-			(b.model.outputSpeed ?? 0) - (a.model.outputSpeed ?? 0),
-	);
-	if (!first) return [];
-	const efforts = new Set(group.flatMap(({ model }) => model.reasoning.efforts));
-	return [
-		{
-			...first.model,
-			reasoning: { ...first.model.reasoning, efforts: [...efforts] },
-			variants: [first, ...rest].slice(1).map(({ model, rowSlug }) => ({
-				slug: rowSlug,
-				label: model.reasoning.efforts[0] ?? null,
-				intelligenceIndex: model.intelligenceIndex,
-				outputSpeed: model.outputSpeed,
-			})),
-		},
-	];
 }

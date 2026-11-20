@@ -1,12 +1,16 @@
 {
 	"name": "@jeffreyjyz/aa-models",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Artificial Analysis model catalogue as a CLI: list, filter, sort and emit the full record as JSON",
 	"license": "MIT",
 	"type": "module",
 	"bin": {
 		"aam": "src/index.ts",
 		"aamdev": "src/index.ts"
+	},
+	"exports": {
+		".": "./src/lib.ts",
+		"./package.json": "./package.json"
 	},
 	"imports": {
 		"#~/*": "./src/*"

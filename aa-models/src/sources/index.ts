@@ -1,9 +1,9 @@
 import type { Model } from "#~/model.ts";
-import { loadAaApi } from "./api.ts";
 import { readCache, writeCache } from "./cache.ts";
-import { ageLabel, readLastGood, writeLastGood } from "./lastGood.ts";
-import { loadLeaderboard } from "./leaderboard.ts";
-import { type SourceResult, mergeModels } from "./normalize.ts";
+import { collectSources } from "./collect.ts";
+import { lastGoodNote, mergeStore, readLastGood, writeLastGood } from "./lastGood.ts";
+import { importMpcStore } from "./mpcStore.ts";
+import { mergeModels } from "./normalize.ts";
 
 export interface LoadOptions {
 	/** AA API key; absent means keyless sources only. */
@@ -15,9 +15,10 @@ export interface LoadOptions {
 	/** Cache TTL in ms; 0 disables reads and writes. */
 	cacheTtlMs: number;
 	/**
-	 * Leave both stores untouched: no TTL cache, no last-good rewrite. `aam check`
-	 * sets it on the dispatch load so a poisoned cache is still there when the
-	 * command reports on it — a diagnostic must not repair what it diagnoses.
+	 * Leave both stores untouched: no TTL cache, no last-good rewrite, no
+	 * last-good replay and no legacy import. `aam check` sets it on the dispatch
+	 * load, then reloads with it set too — a diagnostic must describe the
+	 * poisoned store, not paper over it with the fallback it is meant to diagnose.
 	 */
 	noCacheWrite?: boolean;
 }
@@ -28,7 +29,10 @@ export interface Catalogue {
 	sources: string[];
 	indexVersion: string | null;
 	fetchedAt: string;
-	/** True when this came from the last-good fallback rather than a live fetch. */
+	/**
+	 * True when part of this came from the last-good fallback: a source failed and
+	 * its figures were replayed. The note beside it names the replay's age.
+	 */
 	stale: boolean;
 	/** Non-fatal problems, one line each, for the footer and `--json`. */
 	notes: string[];
@@ -40,6 +44,15 @@ const SOURCE_ORDER = ["manifest", "leaderboard", "models", "api"];
  * The one entry point: manifest leads (lane B), the keyless pages fill index,
  * speed, price and context, then the API when a key exists. Every source fails
  * soft into `notes`; only a total failure throws, naming the endpoints.
+ *
+ * A source that fails costs its columns, so whatever it alone supplied is
+ * replayed from the last-good catalogue — gaps only, never over a live figure —
+ * and the run says `stale` with the replay's age rather than passing stored data
+ * off as fresh.
+ *
+ * A healthy run still overlays the store's *better-ranked* tiers (an api-tier
+ * median the keyless sources cannot publish), because a fallback that only ever
+ * loses ground is how one keyless run used to wipe the API's real figure.
  */
 export async function loadCatalogue(options: LoadOptions): Promise<Catalogue> {
 	const ttl = options.cacheTtlMs;
@@ -49,82 +62,64 @@ export async function loadCatalogue(options: LoadOptions): Promise<Catalogue> {
 		if (cached) return { ...cached, stale: false };
 	}
 
-	const notes: string[] = [];
-	const groups: Model[][] = [];
-	const manifest = await loadManifest();
-	if (manifest?.models.length) groups.push(manifest.models);
-	if (manifest) notes.push(...manifest.notes);
-
-	try {
-		const web = await loadLeaderboard();
-		groups.push(web.models);
-		notes.push(...web.notes);
-	} catch (error) {
-		notes.push(`leaderboard: ${reason(error)}`);
-	}
-
-	let indexVersion: string | null = null;
-	if (options.apiKey && !options.noApi) {
-		try {
-			const api = await loadAaApi(options.apiKey);
-			if (api.models.length > 0) groups.push(api.models);
-			notes.push(...api.notes);
-			indexVersion = api.indexVersion;
-		} catch (error) {
-			notes.push(`api: ${reason(error)}`);
+	const live = await collectSources(options);
+	const notes = [...live.notes];
+	let models = mergeModels(live.groups);
+	// The store is read on every persist run: it is both the replay source and the
+	// only place an api-tier figure survives a keyless run.
+	const stored = persist ? await readLastGood() : undefined;
+	const migration = persist ? await importMpcStore(models, stored) : undefined;
+	if (migration) {
+		notes.push(migration.note);
+		// A degraded run writes no live data, but repairing the fallback is not live
+		// data: it must survive, or the next run redoes the import and repeats the note.
+		if (migration.repaired && live.degraded && stored) {
+			await writeLastGood(stored.models, { fetchedAt: stored.fetchedAt });
 		}
 	}
-
-	const models = mergeModels(groups);
 	if (models.length === 0) {
-		const last = await readLastGood();
-		if (!last) throw new Error(notes.join("; ") || "every source failed");
+		if (!stored) throw new Error(notes.join("; ") || "every source failed");
 		return {
-			models: last.models,
-			sources: sourcesOf(last.models),
+			models: stored.models,
+			sources: sourcesOf(stored.models),
 			indexVersion: null,
-			fetchedAt: new Date(last.fetchedAt).toISOString(),
+			fetchedAt: new Date(stored.fetchedAt).toISOString(),
 			stale: true,
-			notes: [...notes, `last good, ${ageLabel(Date.now() - last.fetchedAt)} old`],
+			notes: [...notes, lastGoodNote(stored)],
 		};
+	}
+	if (live.degraded && stored) {
+		models = mergeModels([...live.groups, stored.models], true);
+		notes.push(lastGoodNote(stored));
+	} else if (stored) {
+		models = mergeStore(models, stored.models);
 	}
 
 	const catalogue: Catalogue = {
 		models,
 		sources: sourcesOf(models),
-		indexVersion,
+		indexVersion: live.indexVersion,
 		fetchedAt: new Date().toISOString(),
-		stale: false,
+		stale: live.degraded && stored !== undefined,
 		notes,
 	};
-	if (persist) await writeLastGood(models);
-	if (persist && ttl > 0) {
-		await writeCache({
-			models,
-			sources: catalogue.sources,
-			indexVersion,
-			fetchedAt: catalogue.fetchedAt,
-			notes,
-		});
+	// A partial run never overwrites the store: its age is what a later replay
+	// reports, so it may only be stamped by a run that saw every source answer.
+	if (persist && !live.degraded) {
+		await writeLastGood(models);
+		if (ttl > 0) {
+			// The migration note belongs to the run that performed it; a cached replay
+			// of the same catalogue is not a second migration and must not say so.
+			await writeCache({
+				models,
+				sources: catalogue.sources,
+				indexVersion: live.indexVersion,
+				fetchedAt: catalogue.fetchedAt,
+				notes: live.notes,
+			});
+		}
 	}
 	return catalogue;
-}
-
-/**
- * Lane B owns the manifest loader. Resolved lazily so this module compiles and
- * runs before it lands: absence is a note, never a crash.
- */
-async function loadManifest(): Promise<SourceResult | null> {
-	const specifier = "./manifest.ts";
-	try {
-		const mod = (await import(specifier)) as { loadManifest?: () => Promise<SourceResult> };
-		if (typeof mod.loadManifest !== "function") {
-			return { models: [], notes: ["manifest: loader absent"] };
-		}
-		return await mod.loadManifest();
-	} catch (error) {
-		return { models: [], notes: [`manifest: ${reason(error)}`] };
-	}
 }
 
 function sourcesOf(models: Model[]): string[] {
@@ -132,8 +127,4 @@ function sourcesOf(models: Model[]): string[] {
 	const ordered = SOURCE_ORDER.filter((source) => seen.has(source));
 	for (const source of seen) if (!ordered.includes(source)) ordered.push(source);
 	return ordered;
-}
-
-function reason(error: unknown): string {
-	return error instanceof Error ? error.message : String(error);
 }

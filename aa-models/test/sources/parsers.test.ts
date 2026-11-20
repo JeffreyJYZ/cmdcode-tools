@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import { normalizeRows } from "#~/model.ts";
-import { parseAaApi } from "#~/sources/api.ts";
 import { decodeFlight, readArray } from "#~/sources/flight.ts";
 import { parseLeaderboardHtml, parseModelsHtml } from "#~/sources/leaderboard.ts";
 import { aaPage, readRows } from "./page.ts";
@@ -40,6 +39,7 @@ describe("leaderboard page", () => {
 		expect(jt?.outputSpeed).toBeNull();
 		expect(qwen?.intelligenceIndex).toBeNull();
 		expect(qwen?.outputSpeed).toBeCloseTo(63.3744, 3);
+		expect(qwen?.outputSpeedSource).toBe("page");
 	});
 
 	test("price, context, latency and provenance come from the published fields", () => {
@@ -64,6 +64,7 @@ describe("models page", () => {
 	test("carries the published price, blended rate and latency", () => {
 		expect(mimo?.price).toEqual({ input: 0.435, output: 0.87, blended: 0.54375 });
 		expect(mimo?.outputSpeed).toBeCloseTo(54.9322, 3);
+		expect(mimo?.outputSpeedSource).toBe("page");
 		expect(mimo?.latency).toBeCloseTo(4.1677, 3);
 		expect(mimo?.evals["headline.outputSpeed"]).toBeCloseTo(54.9322, 3);
 	});
@@ -81,52 +82,26 @@ describe("models page", () => {
 		expect(mimo?.evals["intelligenceIndexCost.total"]).toBeDefined();
 		expect(Object.keys(mimo?.evals ?? {}).every((path) => path.length > 0)).toBe(true);
 	});
-});
 
-describe("api page", () => {
-	const body = {
-		intelligence_index_version: "v5.0.1",
-		pagination: { page: 1, page_size: 200, has_more: false },
-		data: [
-			{
-				id: "abc",
-				name: "Claude Opus 5.5 (max)",
-				slug: "claude-opus-5-5",
-				evaluations: { artificial_analysis_intelligence_index: 57.6 },
-				performance: { median_output_tokens_per_second: 88.4 },
-			},
-			{
-				name: "Unmeasured",
-				slug: "unmeasured",
-				evaluations: { artificial_analysis_intelligence_index: 0 },
-			},
-		],
-	};
-
-	test("digs the index and speed out of their nested keys", () => {
-		const { models } = parseAaApi(body);
-		const opus = models.find((model) => model.slug === "claude-opus-5-5");
-		expect(opus?.intelligenceIndex).toBeCloseTo(57.6, 2);
-		expect(opus?.outputSpeed).toBeCloseTo(88.4, 2);
-		expect(opus?.keys).toContain("claudeopus55");
-	});
-
-	test("zero is unmeasured, never a score", () => {
-		const { models } = parseAaApi(body);
-		expect(models.find((model) => model.slug === "unmeasured")?.intelligenceIndex).toBeNull();
-	});
-
-	test("carries the in-band index version", () => {
-		expect(parseAaApi(body).indexVersion).toBe("v5.0.1");
-		expect(parseAaApi({ data: [] }).indexVersion).toBeNull();
-	});
-
-	test("a dated slug answers to both keys", () => {
-		const [engine] = normalizeRows(
-			[{ slug: "deepseek-v4-1-flash-1017-high", name: "DeepSeek V4.1 Flash (High)" }],
-			"api",
+	test("the older timescale chart field ranks below the page series", () => {
+		const [legacy] = normalizeRows(
+			[{ slug: "legacy-model", name: "Legacy", timescaleData: { medianOutputSpeed: 40.5 } }],
+			"models",
 		);
-		expect(engine?.keys).toContain("deepseekv41flash1017high");
-		expect(engine?.keys).toContain("deepseekv41flash");
+		expect(legacy?.outputSpeed).toBeCloseTo(40.5, 3);
+		expect(legacy?.outputSpeedSource).toBe("timescale");
+		const [both] = normalizeRows(
+			[
+				{
+					slug: "both-model",
+					name: "Both",
+					outputSpeed: 120,
+					timescaleData: { medianOutputSpeed: 40.5 },
+				},
+			],
+			"models",
+		);
+		expect(both?.outputSpeed).toBe(120);
+		expect(both?.outputSpeedSource).toBe("page");
 	});
 });

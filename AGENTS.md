@@ -43,6 +43,15 @@ cmduse/            cmd-usage, published to crates.io (bins: cmduse, cmdusedev,
                    read by cmduse's local reports and by ocuse/arkuse
   src/mcp.rs       `cmduse mcp` MCP stdio server (hand-rolled JSON-RPC; tool bodies
                    are the same *_output helpers the subcommands call)
+aa-models/         @jeffreyjyz/aa-models (bins aam, aamdev — `aa` would shadow
+                   macOS /usr/bin/aa): the Artificial Analysis catalogue CLI
+  src/sources/     manifest (encrypted RSC payload: the full covered set) →
+                   leaderboard → models page → API when AA_API_KEY is set; merged
+                   by slug, best score wins, a null score never becomes 0
+  src/sources/cache.ts  schema + LOADER_REVISION identity; a cache written by a
+                   different build is ignored, never migrated
+  src/filter.ts + where.ts  every filter flag; sort.ts keeps nulls last both ways
+  src/view/        columns, table, formats, help
 opencode-plugin/   @jeffreyjyz/opencode-command-code (dual opencode v1 (server())
                    + v2 (setup()) entrypoints; imports ../../core/{gating,conformance}.json;
                    usage rendering delegates to the cmduse CLI via src/cli.ts)
@@ -164,3 +173,6 @@ Tests must be hermetic: CI has no `cmduse` binary and no homebrew prefix, so any
 - **A stale `target/` after a repo move** carries a build script with the old `CARGO_MANIFEST_DIR`, which fails "read plans.json" pointing at the old path — `cargo clean -p cmduse-core`.
 - **A report is a claim, not evidence**, and so is a brief: verify load-bearing claims against the diff or a re-run.
 - **`bun run extract:catalog` rewrites all of `src/catalog.ts`, so a hand-added helper dies there** — accessors such as `modelContext()` live in the generator template, and a modality the bundle grows that the host cannot declare (`file`, 1.88.5) is filtered by `KNOWN_MODALITIES` rather than added to the union.
+- **A fallback store must remember where each value came from, or it can only degrade.** AA publishes throughput in three fields that measure different things (API `performance.median_output_tokens_per_second`, page `outputSpeed`, `timescaleData.medianOutputSpeed`); a store that keeps only the number let a later keyless run overwrite the api-tier figure with a page-tier one, and "max wins" on mixed fields silently changed a displayed number by 30%. Store the tier beside the value and merge by tier, never by size.
+- **A release must keep reading what the previous version wrote.** `aa-models` replaced mpc's `~/.cache/mpc/aa-last-good.json` with its own store and never migrated it, so the real API payload (169 scores, 439 speeds) sat unused while the tool reported page-tier numbers. Import the old form on first load, tag it with the provenance it actually had, and never delete another tool's file.
+- **Verifying a fix on a synthetic store proves the code path, not the machine.** Lane reports "now 229.62" and the live run still printed 160.63, because the fixture carried the api-tier value and `~/.cache` did not — re-run the real command on the real cache before believing a fallback works.
