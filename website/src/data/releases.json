@@ -1,5 +1,5 @@
 {
-	"generatedAt": "2026-11-18T10:20:04.236Z",
+	"generatedAt": "2026-11-20T06:12:24.442Z",
 	"github": [
 		{
 			"tag": "cmduse-v0.8.4",
@@ -304,6 +304,12 @@
 			"version": "0.1.14",
 			"date": "2026-11-18T05:59:41.701Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.14"
+		},
+		{
+			"package": "@jeffreyjyz/mpc",
+			"version": "0.1.15",
+			"date": "2026-11-20T05:23:15.965Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/mpc/v/0.1.15"
 		},
 		{
 			"package": "@jeffreyjyz/reqshape",
@@ -862,6 +868,12 @@
 			"version": "0.4.2",
 			"date": "2026-11-05T10:06:51.271Z",
 			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.4.2"
+		},
+		{
+			"package": "@jeffreyjyz/opencode-shell-rc",
+			"version": "0.4.3",
+			"date": "2026-11-20T04:52:15.788Z",
+			"url": "https://www.npmjs.com/package/@jeffreyjyz/opencode-shell-rc/v/0.4.3"
 		},
 		{
 			"package": "@jeffreyjyz/opencode-session-dir",
