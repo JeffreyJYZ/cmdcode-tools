@@ -165,6 +165,44 @@ pub fn rel_time(reset_at: Option<f64>, now: Option<u64>) -> String {
     duration(reset_s - now_s)
 }
 
+/// Time-weighted average of the caps in force over the *elapsed* part of a
+/// window. Each span is `(cap, from_secs, to_secs)`; only the part of a span
+/// that overlaps `[window_start, now]` counts. A cap replaced a third of the
+/// way in contributes for only that third, so $80 then $100 averages to
+/// $93.33 over the elapsed window — the denominator of a utilization blend,
+/// not a ceiling anyone published. `None` when no span overlaps: no allowance
+/// is known, so no share can be computed and the caller must fall back to the
+/// server's own figure. The caller converts epoch ms to seconds; this stays
+/// pure, with no clock and no I/O.
+pub fn weighted_allowance(spans: &[(f64, i64, i64)], window_start: i64, now: i64) -> Option<f64> {
+    if now <= window_start {
+        return None;
+    }
+    let mut weighted = 0.0;
+    let mut covered = 0i64;
+    for &(cap, from, to) in spans {
+        if cap <= 0.0 {
+            continue;
+        }
+        let start = from.max(window_start);
+        let end = to.min(now);
+        if end > start {
+            weighted += cap * (end - start) as f64;
+            covered += end - start;
+        }
+    }
+    (covered > 0).then_some(weighted / covered as f64)
+}
+
+/// `spend / allowance × 100`, multiply-rounded to one decimal like `pct`.
+/// `None` when the allowance is absent or not positive — no share may be
+/// invented from zero, and a negative denominator would flip the verdict.
+/// This is the one arithmetic the blended headline and the current-cap figure
+/// share, so the two can never disagree on rounding.
+pub fn share_of(spend: f64, allowance: f64) -> Option<f64> {
+    (allowance > 0.0).then(|| (spend / allowance * 1000.0).round() / 10.0)
+}
+
 /// Elapsed % of a rolling window, one decimal: window length = dur_secs, ends
 /// at reset_at. Multiplied-rounded like `pct` so both ports agree at .x5.
 pub fn elapsed_pct(reset_at: Option<f64>, dur_secs: u64, now: Option<u64>) -> Option<f64> {
@@ -432,6 +470,37 @@ mod tests {
         assert_eq!(compact(1_250), "1.3K"); // half-away, not half-even
         assert_eq!(compact(1_250_000), "1.3M");
         assert_eq!(compact(316_700_000), "316.7M");
+    }
+
+    #[test]
+    fn blended_percent_weights_each_cap_by_its_time_in_force() {
+        // The measured case: $80 for the first third of the elapsed window,
+        // $100 after. The allowance actually available was $93.33, so $70
+        // spent is 75% used — not the 70% today's $100 cap alone implies.
+        let spans = [(80.0, i64::MIN, 100), (100.0, 100, i64::MAX)];
+        let allowance = weighted_allowance(&spans, 0, 300).expect("an allowance");
+        assert!((allowance - 280.0 / 3.0).abs() < 1e-9, "{allowance}");
+        assert_eq!(share_of(70.0, allowance), Some(75.0));
+    }
+
+    #[test]
+    fn share_of_abstains_without_a_positive_allowance() {
+        assert_eq!(share_of(70.0, 100.0), Some(70.0));
+        assert_eq!(share_of(70.0, 0.0), None);
+        assert_eq!(share_of(70.0, -5.0), None);
+    }
+
+    #[test]
+    fn weighted_allowance_ignores_time_outside_the_elapsed_window() {
+        let spans = [(80.0, i64::MIN, 100), (100.0, 100, i64::MAX)];
+        // A cap that ended before the window opened is not part of the blend.
+        assert_eq!(weighted_allowance(&[(80.0, -200, -1)], 0, 300), None);
+        assert_eq!(weighted_allowance(&[], 0, 300), None);
+        // No elapsed time: nothing to weight, and no percentage to print.
+        assert_eq!(weighted_allowance(&spans, 300, 300), None);
+        // Future spans do not count either.
+        let future = [(100.0, 400, i64::MAX)];
+        assert_eq!(weighted_allowance(&future, 0, 300), None);
     }
 
     #[test]

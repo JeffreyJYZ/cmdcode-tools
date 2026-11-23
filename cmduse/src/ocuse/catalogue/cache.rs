@@ -14,14 +14,19 @@ use super::{Loaded, Options, Provenance, Source};
 use crate::ocuse::zen::Catalog;
 use std::path::{Path, PathBuf};
 
-/// `<cache dir>/ocuse-catalogue.json`.
-pub fn cache_path(opts: &Options) -> PathBuf {
-    let dir = opts
-        .cache_dir
+/// The cache directory: `--cache-dir` override, else `$CMDUSE_CACHE_DIR`,
+/// else `~/.cache/cmduse`. Shared with the cap-history file so the two live
+/// together and one `CMDUSE_CACHE_DIR` moves both.
+pub(super) fn cache_dir(opts: &Options) -> PathBuf {
+    opts.cache_dir
         .clone()
         .or_else(|| std::env::var_os("CMDUSE_CACHE_DIR").map(PathBuf::from))
-        .unwrap_or_else(|| PathBuf::from(cache_root()));
-    dir.join("ocuse-catalogue.json")
+        .unwrap_or_else(|| PathBuf::from(cache_root()))
+}
+
+/// `<cache dir>/ocuse-catalogue.json`.
+pub fn cache_path(opts: &Options) -> PathBuf {
+    cache_dir(opts).join("ocuse-catalogue.json")
 }
 
 /// `$CMDUSE_CACHE_DIR`, else `~/.cache/cmduse` — the shared cmduse cache root.

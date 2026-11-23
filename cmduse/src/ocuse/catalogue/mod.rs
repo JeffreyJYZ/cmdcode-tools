@@ -20,6 +20,7 @@
 mod cache;
 mod convert;
 mod fetch;
+mod history;
 mod payload;
 mod provenance;
 mod rates;
@@ -28,6 +29,7 @@ mod tests;
 #[cfg(test)]
 mod tests_cache;
 
+use crate::ocuse::window::{now_ms, CapChange};
 use crate::ocuse::zen::{self, Catalog};
 use std::path::PathBuf;
 use std::sync::OnceLock;
@@ -69,11 +71,24 @@ pub struct Loaded {
 }
 
 static LOADED: OnceLock<Loaded> = OnceLock::new();
+static CAP_CHANGES: OnceLock<Vec<CapChange>> = OnceLock::new();
 
 /// Resolve once, at startup. A second call keeps the first answer: the watch
-/// loop must not refetch on every tick.
+/// loop must not refetch on every tick. The same load samples the cap history:
+/// a live or cached catalogue can reveal a limit change, a baked seed never
+/// can (it is stale by design), so only the former may append to the file.
 pub fn init(opts: &Options) {
-    let _ = LOADED.set(resolve(opts));
+    let loaded = resolve(opts);
+    let changes = history::record(opts, &loaded, now_ms());
+    let _ = CAP_CHANGES.set(changes);
+    let _ = LOADED.set(loaded);
+}
+
+/// Cap changes sampled from the catalogue on this run, oldest first. Empty
+/// before [`init`] — library callers and tests get the server's percentage as
+/// the only available blend, which is exactly the fresh-install case.
+pub fn cap_changes() -> &'static [CapChange] {
+    CAP_CHANGES.get().map(Vec::as_slice).unwrap_or(&[])
 }
 
 /// The catalogue in force. Before [`init`] — library callers and every test —

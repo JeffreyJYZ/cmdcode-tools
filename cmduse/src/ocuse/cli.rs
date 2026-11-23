@@ -464,6 +464,9 @@ pub fn run() {
         report.period_end_ms = account_month
             .map(|(_, reset)| reset)
             .or_else(|| period_end(&report, &window_mode, period_inferred));
+        // The blend is only knowable once the catalogue (and its sampled cap
+        // history) has been resolved, which happens before the first build.
+        window::apply_cap_history(&mut report, crate::ocuse::catalogue::cap_changes());
         report
     };
 
@@ -810,6 +813,7 @@ mod tests {
             weekly: Default::default(),
             month: Default::default(),
             models: Vec::new(),
+            cap_blend: window::CapBlend::from_server(0.0),
         };
         // Month / --period-start: same day-of-month next month.
         assert_eq!(
