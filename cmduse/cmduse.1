@@ -739,12 +739,37 @@ Machine\-readable projection (one object): \fIsource\fR, \fIgeneratedAt\fR,
 \fIaccount\fR (the three account meters from Go's usage endpoint \(em
 \fIrolling\fR, \fIweekly\fR, \fImonthly\fR, each \fI{status, percent,
 resetsAt}\fR with \fIresetsAt\fR in epoch ms \(em or \fBnull\fR when the
-endpoint was not reached), \fItotals\fR (each of month, fiveHour,
+endpoint was not reached).  \fImonthly\fR also carries
+\fIpercentSource\fR (\fIblended\fR or \fIserver\fR), \fIserverPercent\fR
+(the endpoint's own figure, carried unchanged), \fIcurrentCap\fR and
+\fIcurrentCapPercent\fR (the separate, labelled today's-cap figure), and an
+optional \fInote\fR when the local blend and the console disagree by more than
+a point, or when no history exists and the server's figure and today's cap
+diverge.  \fIcurrentCap\fR and \fIcurrentCapPercent\fR always come from the
+published catalogue limit of the model actually used, so they are filled even
+on a fresh install.  \fIpercent\fR is the time\-weighted blend when cap history
+sampled a change, otherwise the server's figure; a basis move with no sampled
+span is explained without inventing the old value.  A top\-level
+\fIcapChanges\fR array lists \fI{model, from, to, at}\fR for limits that moved
+inside the period.
+\fItotals\fR (each of month, fiveHour,
 weekly carrying cost, requests, and tokens), the per\-model breakdown
 \fImodels\fR, and \fIcatalog\fR \(em \fI{source, at, ageSecs, error}\fR: which
 catalogue the limits came from (\fIlive\fR, \fIcache\fR or \fIbuiltin\fR), when
 it was fetched or generated (epoch ms), how old a cache answer is, and why a
-fetch failed.  A bare \fB\-\-json\fR also leaves the watch loop, so it prints
+fetch failed.  The account's monthly percentage is the share of the
+time\-weighted allowance actually in force over the elapsed window, not spend
+divided by today's cap: a $80 limit raised to $100 a third of the way in
+averages ~$93.33, so $70 spent reads 75% used.  With no cap history the
+endpoint's own figure stands and \fIpercentSource\fR is \fIserver\fR.  Cap
+moves are sampled into
+\fI~/.cache/cmduse/ocuse\-cap\-history.json\fR (\fB$CMDUSE_CACHE_DIR\fR moves
+it); a first run records only a baseline, a baked\-seed load writes nothing,
+and history is never rewritten.  The dashboard shows the current\-cap figure
+on its own labelled row and names any in\-period move.  No percentage is ever
+turned back into a dollar cap, and pace uses the published or weighted
+allowance \(em abstaining when there is none \(em rather than an inferred one.
+A bare \fB\-\-json\fR also leaves the watch loop, so it prints
 and exits rather than redrawing.
 .TP
 .B model [\fIid\fR]
@@ -803,7 +828,11 @@ Print one compact line: month spend, 5\-hour spend, and the top model.
 \fB\-\-json\fR prints one object: plan, period, monthSpent, monthCap,
 fiveHourSpent, fiveHourCap, weeklySpent, weeklyCap, model, plus
 \fIcatalogSource\fR, \fIcatalogAt\fR and \fIcatalogAgeSecs\fR \(em which
-catalogue the limits came from and how old it is.  The template placeholder
+catalogue the limits came from and how old it is.  The
+\fB{month_pct}\fR template placeholder, \fBstatusline \-\-json\fR's
+\fImonth_pct\fR/\fImonth_pct_source\fR, and the dashboard all print the same
+figure: the time\-weighted blend when one was computed, the server's number
+otherwise, and \fBnull\fR without an account.  The template placeholder
 \fB{catalog}\fR resolves to the same answer as text (\fIlive\fR,
 \fIcache, 3h old\fR, \fIbuiltin\fR).
 .TP

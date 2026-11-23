@@ -7,6 +7,7 @@
 // when there is no evidence. The inference is reported, never silent.
 use crate::ocuse::db::Row;
 use crate::ocuse::zen::Catalog;
+use serde::{Deserialize, Serialize};
 
 pub const FIVE_HOUR_SECS: i64 = 5 * 3600;
 pub const WEEKLY_SECS: i64 = 7 * 86_400;
@@ -76,6 +77,66 @@ pub fn over_window(model: &ModelUsage) -> Option<&'static str> {
     }
 }
 
+/// One observed allowance change, in epoch ms. The history file is a list of
+/// these; the blend reconstructs the time spans from the `from`/`to` values
+/// rather than trusting a single current cap.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CapChange {
+    pub model: String,
+    pub from: f64,
+    pub to: f64,
+    pub at: i64,
+}
+
+/// The period's utilization picture: a blended headline plus the current-cap
+/// figure it is so easily confused with. Both are percentages of a real
+/// allowance, never a ceiling inferred from a ratio.
+#[derive(Debug, Clone)]
+pub struct CapBlend {
+    /// The headline share of the time-weighted allowance, or the server's
+    /// figure when no cap history exists.
+    pub percent: f64,
+    /// `"blended"` when spans from history were used, `"server"` otherwise.
+    pub percent_source: &'static str,
+    /// The endpoint's own number, carried unchanged as corroboration.
+    pub server_percent: f64,
+    /// The latest allowance recorded for the model the blend describes.
+    pub current_cap: Option<f64>,
+    /// `spend / current_cap × 100` — the separate, labelled current-cap figure.
+    pub current_cap_percent: Option<f64>,
+    /// The time-weighted allowance used by the blend, for pace and pro-rata.
+    pub weighted_allowance: Option<f64>,
+    /// The spend the two percentages are shares of.
+    pub spend: f64,
+    /// The model whose cap history produced this picture.
+    pub model: Option<String>,
+    /// Changes that fell inside the period, for the output's explanation and
+    /// the top-level JSON `capChanges`.
+    pub changes: Vec<CapChange>,
+    /// A real signal: the local blend and the console disagree by more than a
+    /// point, so a cap moved somewhere the sampled history did not see.
+    pub note: Option<String>,
+}
+
+impl CapBlend {
+    /// The fresh-install case: no cap history, so the server's figure is the
+    /// only blend available. Every consumer labels it `percentSource: server`.
+    pub fn from_server(percent: f64) -> Self {
+        CapBlend {
+            percent,
+            percent_source: "server",
+            server_percent: percent,
+            current_cap: None,
+            current_cap_percent: None,
+            weighted_allowance: None,
+            spend: 0.0,
+            model: None,
+            changes: Vec::new(),
+            note: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Report {
     /// What the caller called this period ("calendar month", "all", "30d") for display.
@@ -108,6 +169,10 @@ pub struct Report {
     pub month: Totals,
     /// Sorted by month cost, descending.
     pub models: Vec<ModelUsage>,
+    /// The blended headline and its labelled current-cap companion. Set to the
+    /// server's figure by [`build`], then replaced from cap history by
+    /// [`apply_cap_history`] once the catalogue has been resolved.
+    pub cap_blend: CapBlend,
 }
 
 /// Civil date from a Unix day number (Howard Hinnant's algorithm) — avoids a
@@ -266,6 +331,7 @@ pub fn build(
         weekly: Totals::default(),
         month: Totals::default(),
         models: Vec::new(),
+        cap_blend: CapBlend::from_server(account.map(|a| a.monthly.percent).unwrap_or(0.0)),
     };
     let mut by_model: std::collections::BTreeMap<String, ModelUsage> = Default::default();
 
@@ -346,6 +412,154 @@ pub fn build(
             .then_with(|| a.id.cmp(&b.id))
     });
     report
+}
+
+/// Reconstruct the cap timeline from change entries. The first `from` is the
+/// allowance in force before the first recorded change; each `to` runs until
+/// the next change. `i64::MIN`/`MAX` are safe here because `weighted_allowance`
+/// clips every span to the elapsed window before doing any arithmetic.
+fn spans_from_changes(changes: &[&CapChange]) -> Vec<(f64, i64, i64)> {
+    let mut sorted: Vec<&CapChange> = changes.to_vec();
+    sorted.sort_by_key(|change| change.at);
+    let Some(first) = sorted.first() else {
+        return Vec::new();
+    };
+    let mut cap = first.from;
+    let mut from = i64::MIN;
+    let mut spans = Vec::new();
+    for change in sorted {
+        let at = change.at.div_euclid(1000);
+        if cap > 0.0 && at > from {
+            spans.push((cap, from, at));
+        }
+        cap = change.to;
+        from = at;
+    }
+    if cap > 0.0 {
+        spans.push((cap, from, i64::MAX));
+    }
+    spans
+}
+
+/// Name a model only when one model accounts for nearly all the period spend;
+/// with several meaningful spenders the gap has no single owner. The catalogue's
+/// display name is used when it has one, the id otherwise.
+fn focus_label(report: &Report, model: &ModelUsage) -> String {
+    let share = if report.month.cost > 0.0 {
+        model.month.cost / report.month.cost
+    } else {
+        0.0
+    };
+    if share < 0.9 {
+        return String::new();
+    }
+    crate::ocuse::catalogue::catalog()
+        .go
+        .models
+        .iter()
+        .find(|entry| entry.id == model.id)
+        .map(|entry| entry.name.clone())
+        .unwrap_or_else(|| model.id.clone())
+}
+
+/// Complete a report's utilization picture. The current-cap figure always comes
+/// from the **published catalogue limit** of the model actually used — history
+/// says when a limit moved, never what it is today — so it is filled even on a
+/// fresh install with no cap history at all. History is used only to replace the
+/// headline with a time-weighted blend; with no spans the endpoint's number
+/// stands, but a gap between it and today's cap is itself evidence the basis
+/// moved and is explained without inventing an unsampled old cap.
+pub fn apply_cap_history(report: &mut Report, changes: &[CapChange]) {
+    let start = report.since_ms.div_euclid(1000).max(0);
+    let now = report.now_ms.div_euclid(1000).max(0);
+    let in_window: Vec<CapChange> = changes
+        .iter()
+        .filter(|change| {
+            let at = change.at.div_euclid(1000);
+            at >= start && at <= now
+        })
+        .cloned()
+        .collect();
+    let server = report.cap_blend.server_percent;
+
+    // A model whose cap moved inside the window is the subject; otherwise the
+    // biggest spender that actually has a published limit. Free models publish
+    // none, so they cannot supply a current-cap figure.
+    let focus = report
+        .models
+        .iter()
+        .find(|model| in_window.iter().any(|change| change.model == model.id))
+        .or_else(|| {
+            report
+                .models
+                .iter()
+                .find(|model| model.limit.is_some_and(|limit| limit > 0.0))
+        });
+    let current_cap = focus.and_then(|model| model.limit.filter(|limit| *limit > 0.0));
+    let spend = focus.map(|model| model.month.cost).unwrap_or(0.0);
+    let current_cap_percent = current_cap.and_then(|cap| cmduse_core::share_of(spend, cap));
+
+    // With history, reconstruct the timeline and compute the blend over the
+    // elapsed window. The current-cap figure still comes from the catalogue
+    // above, not from the last recorded `to`.
+    let spans = focus
+        .map(|model| {
+            let model_changes: Vec<&CapChange> = changes
+                .iter()
+                .filter(|change| change.model == model.id)
+                .collect();
+            spans_from_changes(&model_changes)
+        })
+        .unwrap_or_default();
+    let allowance = cmduse_core::weighted_allowance(&spans, start, now);
+
+    let (percent, percent_source, weighted_allowance, note) = match allowance {
+        Some(allowance) => {
+            let blend = cmduse_core::share_of(spend, allowance).unwrap_or(server);
+            let note = ((blend - server).abs() > 1.0).then(|| {
+                format!(
+                    "local blend {blend:.1}% differs from the console's {server:.0}% by more than a point; the allowance may have moved outside the sampled window"
+                )
+            });
+            (blend, "blended", Some(allowance), note)
+        }
+        None => {
+            // No sampled spans: the server's figure is the only blend available.
+            // A real gap against today's cap means the basis moved inside the
+            // window somewhere we did not sample. Say so without inventing the
+            // old value, and name the model only when one dominates the spend.
+            let note = match (report.account.as_ref(), current_cap_percent) {
+                (Some(_), Some(today)) if (server - today).abs() > 1.0 => {
+                    let label = focus
+                        .map(|model| focus_label(report, model))
+                        .unwrap_or_default();
+                    let who = if label.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" ({label})")
+                    };
+                    Some(format!(
+                        "the allowance changed during this period{who}; the server meters {server:.0}%, today's cap implies {today:.1}%"
+                    ))
+                }
+                _ => None,
+            };
+            (server, "server", None, note)
+        }
+    };
+
+    report.cap_blend = CapBlend {
+        percent,
+        percent_source,
+        server_percent: server,
+        current_cap,
+        current_cap_percent,
+        weighted_allowance,
+        spend,
+        model: focus.map(|model| model.id.clone()),
+        changes: in_window,
+        note,
+    };
 }
 
 #[cfg(test)]
@@ -517,6 +731,74 @@ mod tests {
         // The month is untouched by the window cuts: it still sees every row in
         // the period, including the one the server's week excluded.
         assert!((report.month.cost - 12.0).abs() < 1e-9);
+    }
+
+    /// A fresh install has no cap history. The endpoint's number is then the
+    /// only blend available, and must be carried as the server's — never
+    /// repackaged as a locally computed percentage.
+    #[test]
+    fn an_empty_history_falls_back_to_the_server_percent() {
+        let now = days_from_civil(2026, 11, 20) * 86_400 * 1000;
+        let account = crate::ocuse::api::Usage {
+            rolling: meter("ok", 5.0, &iso(now / 1000 + 3_600)),
+            weekly: meter("ok", 40.0, &iso(now / 1000 + 7 * 86_400)),
+            monthly: meter("ok", 76.0, &iso(now / 1000 + 20 * 86_400)),
+        };
+        let mut report = build(
+            &[row(now / 1000 - 60, "glm-5.3-flash", 70.0)],
+            crate::ocuse::zen::catalog(),
+            crate::ocuse::zen::DEFAULT_PLAN,
+            now,
+            Some(now - 10 * 86_400_000),
+            Some(&account),
+        );
+        assert_eq!(report.cap_blend.percent, 76.0);
+        assert_eq!(report.cap_blend.percent_source, "server");
+        apply_cap_history(&mut report, &[]);
+        assert_eq!(report.cap_blend.percent, 76.0, "value unchanged");
+        assert_eq!(report.cap_blend.percent_source, "server");
+        assert_eq!(report.cap_blend.server_percent, 76.0);
+        // The current-cap figure comes from the catalogue's published limit,
+        // not from history, so it is filled even on a fresh install.
+        assert_eq!(report.cap_blend.current_cap, Some(60.0));
+        assert_eq!(report.cap_blend.current_cap_percent, Some(116.7));
+    }
+
+    /// Today's cap is published in the catalogue whether or not cap history has
+    /// ever sampled a change. The second labelled figure must therefore be
+    /// present on a real fresh-install run, not just after a recorded move.
+    #[test]
+    fn the_current_cap_figure_is_filled_without_history() {
+        let now = 1_800_000_000_000i64;
+        let mut report = build(
+            &[row(now / 1000 - 60, "deepseek-v4.1-flash", 69.873)],
+            crate::ocuse::zen::catalog(),
+            crate::ocuse::zen::DEFAULT_PLAN,
+            now,
+            Some(now - 30 * 86_400_000),
+            Some(&crate::ocuse::api::Usage {
+                rolling: meter("ok", 1.0, &iso(now / 1000 + 3_600)),
+                weekly: meter("ok", 3.0, &iso(now / 1000 + 7 * 86_400)),
+                monthly: meter("ok", 76.0, &iso(now / 1000 + 20 * 86_400)),
+            }),
+        );
+        report.cap_blend = CapBlend::from_server(76.0);
+        apply_cap_history(&mut report, &[]);
+        assert_eq!(
+            report.cap_blend.model.as_deref(),
+            Some("deepseek-v4.1-flash")
+        );
+        assert_eq!(
+            report.cap_blend.current_cap,
+            Some(100.0),
+            "published catalogue limit"
+        );
+        assert_eq!(report.cap_blend.current_cap_percent, Some(69.9));
+        // No spans: the headline stays the server's figure and says so.
+        assert_eq!(report.cap_blend.percent, 76.0);
+        assert_eq!(report.cap_blend.percent_source, "server");
+        assert!(report.cap_blend.weighted_allowance.is_none());
+        assert!(report.cap_blend.changes.is_empty());
     }
 
     #[test]

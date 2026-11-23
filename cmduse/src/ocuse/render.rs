@@ -8,7 +8,7 @@
 use crate::ocuse::window::{ModelUsage, Report, Totals};
 use crate::ocuse::zen;
 use crate::report_render::Fmt;
-use cmduse_core::{compact, duration, money, pct};
+use cmduse_core::{compact, duration, money, pct, share_of};
 
 /// Gauge width for the window bars when neither config nor `--bar-width` says
 /// otherwise — cmduse's own default.
@@ -92,20 +92,17 @@ impl Ink {
         }
     }
 
-    /// The share plus cmduse's gauge, and the row's only percentage in colour
-    /// mode — the body drops its own `x% of limit` so the figure is not printed
-    /// twice. The label is passed in because the endpoint's own percentage is
-    /// printed verbatim (`53`, never `53.0`). Empty when colour is off, so the
-    /// plain frame keeps its script-friendly layout and its own share.
-    fn bar_label(&self, pct_used: f64, label: &str) -> String {
+    /// The gauge alone, for a row whose dollar/cap pair already prints the
+    /// percentage. Printing it in both places read as the same figure twice.
+    fn gauge_only(&self, pct_used: f64) -> String {
         if !self.colour {
             return String::new();
         }
         format!(
-            "{}{label:>5}%{} {}",
+            "{}{}{}",
             self.for_pct(pct_used),
-            self.reset,
             crate::render::gauge(pct_used, 100.0, self.bar_width),
+            self.reset,
         )
     }
 }
@@ -115,12 +112,12 @@ impl Ink {
 /// go through this one builder, so the two branches cannot drift apart in which
 /// fields a window row carries or in the order it carries them.
 ///
-/// There is deliberately no cap *field* here: Go grants limits per model, so no
-/// account-wide pool exists to divide by, and summing the per-model limits into
-/// one ceiling read as a budget the console does not have (it meters each window
-/// on its own basis) — that is where `$215` came from. The money pair comes back
-/// the honest way instead: the server's own share back-solves the ceiling it is
-/// metering against, so `used / implied` divides to exactly the share beside it.
+/// There is deliberately no account-wide pool here: Go grants limits per model,
+/// and summing them read as a budget the console does not have — that is where
+/// `$215` came from. A cap is only ever the model's published allowance (or the
+/// time-weighted allowance for the month), carried in two roles: the published
+/// cap the dollar/percent pair divides against, and the allowance pace and
+/// pro-rata use. No percentage is ever read backwards into a dollar ceiling.
 struct RowSpec<'a> {
     label: &'a str,
     /// This store's own totals for the window.
@@ -129,10 +126,12 @@ struct RowSpec<'a> {
     /// estimate's rolling 5h/weekly windows: those are cut at `now - window`, so
     /// they have no boundary to measure an elapsed share against.
     reset: Option<(i64, u64)>,
-    /// The account's own share of the limit, when it answered — the console's
-    /// figure, and the reason the endpoint is read at all. `None` on the local
-    /// estimate, whose rows then show spend alone.
-    share_pct: Option<f64>,
+    /// The published allowance for this window (model limit × the window's
+    /// share). It is the only denominator printed beside the dollars.
+    display_cap: Option<f64>,
+    /// The allowance pace and the even-burn figure use — the weighted blend for
+    /// the month, the published cap for the two throttles. `None` abstains.
+    pace_cap: Option<f64>,
     /// The account's own verdict: a status it does not call `ok` rides beside
     /// the limit flag.
     status: Option<&'a str>,
@@ -157,19 +156,21 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
     };
     // cmduse's field order is importance order, so a clipped watch frame keeps
     // the actionable parts: limit flag, pace warning, elapsed share, then the
-    // informational pro-rata figure. Percentages come from core (one decimal);
-    // duration (never rel_time) formats the ETA.
+    // informational pro-rata figure. Duration (never rel_time) formats the ETA.
     let now_secs = (now_ms / 1000).max(0) as u64;
     let reset_at = spec.reset.map(|(at, _)| at as f64);
     let dur_secs = spec.reset.map(|(_, dur)| dur);
     let elapsed = dur_secs.and_then(|d| cmduse_core::elapsed_pct(reset_at, d, Some(now_secs)));
-    let share = spec.share_pct.map(|p| p.max(0.0));
-    // The ceiling the server's own share implies, in this store's dollars. No
-    // pool is invented here: the console's percentage *is* the fraction of the
-    // ceiling it meters against, so `spend / share` is the ceiling, and the pair
-    // below divides to exactly the percentage printed beside it.
-    let cap = share.and_then(|p| implied_cap(spec.used.cost, p));
-    let pace = cap
+    // A dollar figure and a percentage only ever appear with the published cap
+    // they divide against. There is no `spend / share` back-solve here: a blend
+    // has no single denominator, so inferring one from a percentage invents a
+    // ceiling exactly when the allowance moved.
+    let display_cap = spec.display_cap.filter(|cap| *cap > 0.0);
+    let pair = display_cap
+        .map(|cap| format!(" of {} ({})", cap_money(cap), pct(spec.used.cost, cap)))
+        .unwrap_or_default();
+    let pace_cap = spec.pace_cap.filter(|cap| *cap > 0.0);
+    let pace = pace_cap
         .and_then(|cap| {
             dur_secs.and_then(|d| {
                 cmduse_core::pace_eta(reset_at, d, spec.used.cost, cap, now_secs)
@@ -181,7 +182,7 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
     let thru = elapsed
         .map(|p| format!(" · {}window {p:.1}% elapsed{}", ink.dim, ink.reset))
         .unwrap_or_default();
-    let by_now = match (spec.pro_rata, elapsed, cap) {
+    let by_now = match (spec.pro_rata, elapsed, pace_cap) {
         (true, Some(p), Some(cap)) => format!(
             " · {}{} by now{}",
             ink.dim,
@@ -191,11 +192,7 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
         _ => String::new(),
     };
     let label = spec.label;
-    // The account's own share is labelled, because the money beside it is this
-    // store's spend and the two need not divide to each other (the server
-    // meters higher). Same placement cmduse uses for the flag: on the window
-    // it belongs to.
-    let flag = if share.is_some_and(|p| p >= 100.0) {
+    let flag = if display_cap.is_some_and(|cap| spec.used.cost >= cap) {
         format!(" {}{}LIMIT EXCEEDED{}", ink.red, ink.bold, ink.reset)
     } else if spec.status.is_some_and(|s| !s.eq_ignore_ascii_case("ok")) {
         format!(
@@ -208,31 +205,17 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
     } else {
         String::new()
     };
-    // No denominator is printed. `cap` is spent ÷ share, so printing it offered
-    // a ceiling of ~$40 beside a documented $80 monthly limit and read as "my
-    // limit is $40" — the console meters at roughly twice the cost this store
-    // records, so the two bases never meet. It stays a local value for the pace
-    // and the even-burn figure, both of which are ratios in this store's dollars.
-    let paren = match (share, ink.colour) {
-        // The gauge carries the share in colour mode; repeating it here read as
-        // `5% ━━━━━ 12.34 · 5% of limit`. The plain frame has no gauge, so it
-        // keeps the figure.
-        (Some(_), true) => String::new(),
-        (Some(p), false) => format!(" · {}% of limit", given_pct(p)),
-        (None, _) => String::new(),
-    };
     // Composed in pieces: the pair and the pro-rata figure are conditional, and
     // one format string for both branches is a placeholder count waiting to drift.
     let body = format!(
-        "{}{paren}{reset_text}{flag}{pace}{thru}{by_now}",
+        "{}{pair}{reset_text}{flag}{pace}{thru}{by_now}",
         money(spec.used.cost)
     );
     if ink.colour {
-        // The gauge bar belongs to the share that gates: the account's own
-        // when it answered. The local estimate has no share, so its rows
-        // carry no bar — spend alone, never a gauge against a pool.
-        let bar = match share {
-            Some(p) => format!("{} ", ink.bar_label(p, &given_pct(p))),
+        // The gauge carries the cap-derived share. With no published cap there
+        // is no bar: spend alone, never a gauge against an invented pool.
+        let bar = match display_cap.and_then(|cap| share_of(spec.used.cost, cap)) {
+            Some(p) => format!("{} ", ink.gauge_only(p)),
             None => String::new(),
         };
         format!(
@@ -244,6 +227,46 @@ fn window_line(ink: &Ink, spec: &RowSpec<'_>, now_ms: i64) -> String {
         // no SGR (the Ink helpers are empty strings when colour is off).
         format!("  {label:<8} {body}\n")
     }
+}
+
+/// A whole-dollar cap reads as `$100`, not `$100.00` — the published allowance
+/// is a round figure, and the pair `$69.87 of $100 (69.9%)` must show its cap as
+/// the source printed it. Cents are still shown for a non-round cap.
+fn cap_money(value: f64) -> String {
+    if (value - value.round()).abs() < f64::EPSILON {
+        format!("${}", value.round() as i64)
+    } else {
+        money(value)
+    }
+}
+
+/// The model caps a window row divides against. Go grants limits per model, so
+/// the account has no pool: the period's largest spender supplies its published
+/// cap and the 20/50/100% window shares. Cap history is *not* needed for this —
+/// today's limit is published in the catalogue in every run — it is only needed
+/// for the blended headline. `None` on both sides when no model publishes a
+/// cap: those rows show spend alone and abstain from pace.
+fn window_caps(report: &Report, label: &str) -> (Option<f64>, Option<f64>) {
+    let Some(limit) = report
+        .models
+        .first()
+        .and_then(|model| model.limit.filter(|limit| *limit > 0.0))
+    else {
+        return (None, None);
+    };
+    let shares = &crate::ocuse::catalogue::catalog().go.window_share;
+    let share = match label {
+        "5-hour" => shares.five_hour,
+        "Weekly" => shares.weekly,
+        _ => shares.monthly,
+    };
+    let display = limit * share;
+    let pace = if label == "Monthly" {
+        report.cap_blend.weighted_allowance.unwrap_or(display)
+    } else {
+        display
+    };
+    (Some(display), Some(pace))
 }
 
 /// A percentage exactly as the endpoint published it.
@@ -258,15 +281,6 @@ fn given_pct(value: f64) -> String {
     } else {
         format!("{:.1}", value)
     }
-}
-
-/// The ceiling a share implies, in this store's dollars: `spend / share`.
-///
-/// Kept for the pace and even-burn figures only — never printed, because it
-/// contradicts the documented allowance. `None` on a zero share, which would
-/// divide by it.
-fn implied_cap(spend: f64, share_pct: f64) -> Option<f64> {
-    (share_pct >= 0.05).then(|| spend * 100.0 / share_pct)
 }
 
 /// The account meter's own window boundary, when the endpoint gave one: its
@@ -436,15 +450,24 @@ pub fn render_text(
         .map(|ms| format!(" · ends {}", date_of(ms / 86_400_000)))
         .unwrap_or_default();
     // The period line leads with the one share the whole dashboard is about:
-    // how much of the account's monthly limit this period has eaten. It is the
-    // server's own number, so it prints as it arrived (`56`, never `56.0`) and
-    // is absent — not estimated — when no account answered, because Go's limits
-    // are per model and there is no period-wide pool to divide by.
-    let used = report
-        .account
-        .as_ref()
-        .map(|account| format!(" · {}% of limit", c(given_pct(account.monthly.percent))))
-        .unwrap_or_default();
+    // how much of the allowance this period has used. When cap history sampled
+    // a change, that is the time-weighted blend; a fresh install has no spans,
+    // so the endpoint's own figure stands and says so. The blend is a share of
+    // an average allowance, so no dollar cap is printed beside it — the
+    // published cap and its own percentage get the labelled row below.
+    let used = if report.account.is_none() {
+        String::new()
+    } else if report.cap_blend.percent_source == "blended" {
+        format!(
+            " · {} blended of limit",
+            c(format!("{:.1}%", report.cap_blend.percent))
+        )
+    } else {
+        format!(
+            " · {}% of limit (server)",
+            c(given_pct(report.cap_blend.server_percent))
+        )
+    };
     out.push_str(&format!(
         "period: {}{end} · {} requests · {} · {} in / {} out tokens{used}\n",
         report.period_label,
@@ -504,13 +527,15 @@ pub fn render_text(
                 ("Monthly", &account.monthly, &report.month, monthly_dur),
             ];
             for (label, meter, used, dur_secs) in rows {
+                let (display_cap, pace_cap) = window_caps(report, label);
                 out.push_str(&window_line(
                     &ink,
                     &RowSpec {
                         label,
                         used,
                         reset: meter_reset(meter, dur_secs),
-                        share_pct: Some(meter.percent),
+                        display_cap,
+                        pace_cap,
                         status: Some(meter.status.as_str()),
                         // The monthly window is the budget; the two throttles
                         // above it would read a pro-rata figure as a target.
@@ -552,7 +577,9 @@ pub fn render_text(
                     label: "5-hour",
                     used: &report.five_hour,
                     reset: None,
-                    share_pct: None,
+                    display_cap: window_caps(report, "5-hour").0,
+                    // No server reset: a rolling cut cannot sustain a pace claim.
+                    pace_cap: None,
                     status: None,
                     pro_rata: false,
                 },
@@ -564,28 +591,67 @@ pub fn render_text(
                     label: "Weekly",
                     used: &report.weekly,
                     reset: None,
-                    share_pct: None,
+                    display_cap: window_caps(report, "Weekly").0,
+                    pace_cap: None,
                     status: None,
                     pro_rata: false,
                 },
                 report.now_ms,
             ));
+            let (monthly_display, monthly_pace) = window_caps(report, "Monthly");
             out.push_str(&window_line(
                 &ink,
                 &RowSpec {
                     label: "Monthly",
                     used: &report.month,
                     reset: report.period_end_ms.zip(monthly_dur),
-                    share_pct: None,
+                    display_cap: monthly_display,
+                    pace_cap: monthly_pace,
                     status: None,
-                    // No account share, so no ceiling to pro-rate: this row keeps
-                    // its real reset and elapsed share and nothing invented.
-                    pro_rata: false,
+                    // The published cap is real even without an account, so the
+                    // monthly budget can still carry its even-burn figure.
+                    pro_rata: true,
                 },
                 report.now_ms,
             ));
         }
         None => {}
+    }
+
+    // The two percentages each say what they are a share of. The blend above
+    // answers "how used up am I"; this row answers "what would today's cap
+    // say" — a different question, with the published cap printed beside the
+    // dollars so the pair divides to exactly the percentage shown.
+    let blend = &report.cap_blend;
+    if let Some(cap) = blend.current_cap {
+        let own = blend
+            .current_cap_percent
+            .map(|p| format!(" ({p:.1}%)"))
+            .unwrap_or_default();
+        out.push_str(&format!(
+            "  {}today's limit{}  {} of {}{own} — current cap, not the period blend\n",
+            ink.dim,
+            ink.reset,
+            c(money(blend.spend)),
+            c(cap_money(cap)),
+        ));
+    }
+    // A blend and a current-cap figure only disagree because the allowance
+    // moved mid-period. Naming the move is what stops the two reading as a
+    // contradiction.
+    for change in &blend.changes {
+        if report.models.iter().any(|model| model.id == change.model) {
+            out.push_str(&format!(
+                "  {}allowance raised {} → {} during this period{}\n",
+                ink.dim,
+                cap_money(change.from),
+                cap_money(change.to),
+                ink.reset
+            ));
+        }
+    }
+    if let Some(note) = &blend.note {
+        out.push_str(&format!("  {}{note}{}\n", ink.dim, ink.reset));
     }
 
     // A model id wider than the field shoves its own row right, so the name
@@ -751,14 +817,21 @@ pub fn statusline_template(
     // placeholders degrade to the money-less dash instead of a ratio against a
     // summed ceiling that reads as a budget the console does not have.
     let account = report.account.as_ref();
+    let blend = &report.cap_blend;
+    let month_share = if account.is_none() {
+        "—".to_string()
+    } else {
+        pct(blend.percent, 100.0)
+    };
     let share_of = |meter: Option<&crate::ocuse::api::Meter>| match meter {
         Some(meter) => pct(meter.percent, 100.0),
         None => "—".into(),
     };
-    let share_bar = |meter: Option<&crate::ocuse::api::Meter>| match meter {
+    let meter_bar = |meter: Option<&crate::ocuse::api::Meter>| match meter {
         Some(meter) => crate::report_render::bar(meter.percent, bar_width, ascii, colours),
         None => String::new(),
     };
+    let share_bar = |percent: f64| crate::report_render::bar(percent, bar_width, ascii, colours);
     let top_model = || {
         report
             .models
@@ -770,14 +843,20 @@ pub fn statusline_template(
         "plan" => plan_id.to_string(),
         "period" => report.period_label.clone(),
         "month" => cash(report.month.cost),
-        "month_pct" => share_of(account.map(|a| &a.monthly)),
-        "month_bar" => share_bar(account.map(|a| &a.monthly)),
+        "month_pct" => month_share.clone(),
+        "month_bar" => {
+            if account.is_some() {
+                share_bar(blend.percent)
+            } else {
+                String::new()
+            }
+        }
         "five_hour" | "5h" => cash(report.five_hour.cost),
         "five_hour_pct" | "5h_pct" => share_of(account.map(|a| &a.rolling)),
-        "five_hour_bar" | "5h_bar" => share_bar(account.map(|a| &a.rolling)),
+        "five_hour_bar" | "5h_bar" => meter_bar(account.map(|a| &a.rolling)),
         "weekly" | "wk" => cash(report.weekly.cost),
         "weekly_pct" | "wk_pct" => share_of(account.map(|a| &a.weekly)),
-        "weekly_bar" | "wk_bar" => share_bar(account.map(|a| &a.weekly)),
+        "weekly_bar" | "wk_bar" => meter_bar(account.map(|a| &a.weekly)),
         "models" => top_model(),
         "catalog" => crate::ocuse::catalogue::provenance().describe(),
         _ => String::new(),
@@ -803,6 +882,16 @@ pub fn statusline_json(report: &Report, plan_id: &str) -> String {
         "weeklySpent": report.weekly.cost,
         "weeklyCap": serde_json::Value::Null,
         "model": report.models.first().map(|m| m.id.clone()),
+        // The monthly share is the same figure the template and the dashboard
+        // print: the local time-weighted blend when history sampled a cap move,
+        // the endpoint's own number on a fresh install. `null` without an
+        // account, matching the template's dash. The source field tells a
+        // consumer which of the two it is reading.
+        "month_pct": (report.account.is_some()).then_some(report.cap_blend.percent),
+        "month_pct_source": report
+            .account
+            .as_ref()
+            .map(|_| report.cap_blend.percent_source),
         // Which catalogue the per-model limits came from. Flat keys, matching
         // `oduse`'s statusline, so a consumer reads one name on both binaries.
         "catalogSource": crate::ocuse::catalogue::provenance().source.label(),
@@ -840,6 +929,33 @@ pub fn render_json(report: &Report) -> String {
             "resetsAt": m.reset_ms(),
         })
     };
+    let blend = &report.cap_blend;
+    let monthly = |m: &crate::ocuse::api::Meter| {
+        let mut base = meter(m);
+        if let Some(obj) = base.as_object_mut() {
+            // The headline stays a percent, but its meaning and provenance are
+            // explicit. `serverPercent` is carried unchanged beside it and is
+            // never overwritten by the local blend.
+            obj.insert("percent".into(), serde_json::json!(blend.percent));
+            obj.insert(
+                "percentSource".into(),
+                serde_json::json!(blend.percent_source),
+            );
+            obj.insert(
+                "serverPercent".into(),
+                serde_json::json!(blend.server_percent),
+            );
+            obj.insert("currentCap".into(), serde_json::json!(blend.current_cap));
+            obj.insert(
+                "currentCapPercent".into(),
+                serde_json::json!(blend.current_cap_percent),
+            );
+            if let Some(note) = &blend.note {
+                obj.insert("note".into(), serde_json::json!(note));
+            }
+        }
+        base
+    };
     serde_json::to_string_pretty(&serde_json::json!({
         "source": "opencode.db",
         // Every local client the figures came from — opencode's own store plus
@@ -874,7 +990,7 @@ pub fn render_json(report: &Report) -> String {
         "account": report.account.as_ref().map(|a| serde_json::json!({
             "rolling": meter(&a.rolling),
             "weekly": meter(&a.weekly),
-            "monthly": meter(&a.monthly),
+            "monthly": monthly(&a.monthly),
         })),
         // Why `account` is null, when that is worth saying — `HTTP 401
         // api_key_expired`, `no Go key`, a transport fault. `null` when the
@@ -885,6 +1001,9 @@ pub fn render_json(report: &Report) -> String {
         // at, ageSecs, error}`. A consumer must be able to tell a fresh fetch
         // from the baked seed without knowing this binary's flags.
         "catalog": crate::ocuse::catalogue::provenance().json(),
+        // Every allowance move sampled this run, in epoch ms. Empty on a fresh
+        // install — the server's percentage is then the only blend available.
+        "capChanges": &blend.changes,
         "models": report.models.iter().map(model).collect::<Vec<_>>(),
     }))
     .expect("json")
@@ -1560,6 +1679,164 @@ mod tests {
         crate::ocuse::window::build(&rows, zen::catalog(), zen::DEFAULT_PLAN, now, None, None)
     }
 
+    /// The headline is the time-weighted 75%, not the 70% today's cap implies;
+    /// the endpoint's agreeing 75 is corroboration, carried as `serverPercent`.
+    #[test]
+    fn the_current_cap_figure_is_shown_beside_the_blend_and_labelled() {
+        let report = blended_report();
+        assert_eq!(report.cap_blend.percent, 75.0, "the blend");
+        assert_eq!(report.cap_blend.percent_source, "blended");
+        assert_eq!(report.cap_blend.server_percent, 75.0, "kept unchanged");
+        assert_eq!(report.cap_blend.current_cap, Some(100.0));
+        assert_eq!(report.cap_blend.current_cap_percent, Some(70.0));
+
+        let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        assert!(text.contains("75.0% blended of limit"), "{text}");
+        assert!(
+            text.contains("$70.00 of $100 (70.0%)"),
+            "the current-cap pair, labelled: {text}"
+        );
+        assert!(text.contains("current cap, not the period blend"), "{text}");
+        let json: serde_json::Value = serde_json::from_str(&render_json(&report)).unwrap();
+        assert_eq!(json["account"]["monthly"]["percent"], 75.0);
+        assert_eq!(json["account"]["monthly"]["percentSource"], "blended");
+        assert_eq!(json["account"]["monthly"]["serverPercent"], 75.0);
+        assert_eq!(json["account"]["monthly"]["currentCap"], 100.0);
+        assert_eq!(json["account"]["monthly"]["currentCapPercent"], 70.0);
+    }
+
+    /// With no cap history the server's figure is the headline, but the gap
+    /// against today's published cap is itself evidence the basis moved. The
+    /// explanation names the model without inventing an unsampled old cap.
+    #[test]
+    fn a_server_cap_basis_that_moved_is_explained_without_history() {
+        let report = server_only_report();
+        assert_eq!(report.cap_blend.percent_source, "server");
+        assert_eq!(report.cap_blend.percent, 76.0);
+        assert_eq!(report.cap_blend.current_cap, Some(100.0));
+        assert_eq!(report.cap_blend.current_cap_percent, Some(69.9));
+        let note = report.cap_blend.note.as_deref().expect("an explanation");
+        assert!(
+            note.contains("allowance changed during this period"),
+            "{note}"
+        );
+        assert!(note.contains("76"), "{note}");
+        assert!(note.contains("69.9"), "{note}");
+        assert!(
+            note.contains("DeepSeek V4.1 Flash"),
+            "the single big spender: {note}"
+        );
+        assert!(!note.contains("80"), "no invented old cap: {note}");
+        assert!(!note.contains("→"), "no invented span: {note}");
+        assert!(report.cap_blend.changes.is_empty());
+
+        let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        assert!(text.contains("76% of limit (server)"), "{text}");
+        assert!(text.contains("$69.87 of $100 (69.9%)"), "{text}");
+        assert!(
+            text.contains("the allowance changed during this period (DeepSeek V4.1 Flash"),
+            "{text}"
+        );
+        assert!(
+            text.contains("the server meters 76%, today's cap implies 69.9%"),
+            "{text}"
+        );
+        assert!(
+            !text.contains("allowance raised"),
+            "no sampled move: {text}"
+        );
+        let json: serde_json::Value = serde_json::from_str(&render_json(&report)).unwrap();
+        assert_eq!(json["account"]["monthly"]["percentSource"], "server");
+        assert_eq!(json["account"]["monthly"]["currentCap"], 100.0);
+        assert_eq!(json["capChanges"].as_array().unwrap().len(), 0);
+        assert!(json["account"]["monthly"]["note"]
+            .as_str()
+            .unwrap()
+            .contains("allowance changed"));
+    }
+
+    /// `statusline --json`'s `month_pct` is the very same figure the template,
+    /// the dashboard and the main JSON print: the blend when history sampled a
+    /// change, the server's number otherwise, and null without an account.
+    #[test]
+    fn statusline_month_pct_follows_the_blend() {
+        let blended: serde_json::Value =
+            serde_json::from_str(&statusline_json(&blended_report(), "go")).unwrap();
+        assert_eq!(blended["month_pct"], 75.0);
+        assert_eq!(blended["month_pct_source"], "blended");
+        crate::report_render::assert_statusline_keys(&blended);
+
+        let server: serde_json::Value =
+            serde_json::from_str(&statusline_json(&server_only_report(), "go")).unwrap();
+        assert_eq!(server["month_pct"], 76.0);
+        assert_eq!(server["month_pct_source"], "server");
+        crate::report_render::assert_statusline_keys(&server);
+
+        let no_account: serde_json::Value =
+            serde_json::from_str(&statusline_json(&report(), "go")).unwrap();
+        assert_eq!(no_account["month_pct"], serde_json::Value::Null);
+        crate::report_render::assert_statusline_keys(&no_account);
+    }
+
+    /// The two figures disagree only because the allowance moved; the output
+    /// names the move so they do not read as a contradiction.
+    #[test]
+    fn a_mid_period_cap_rise_is_named_in_the_output() {
+        let text = render_text(
+            &blended_report(),
+            "/tmp/opencode.db",
+            10,
+            false,
+            DEFAULT_BAR_WIDTH,
+        );
+        assert!(text.contains("raised"), "{text}");
+        assert!(text.contains("80"), "{text}");
+        assert!(text.contains("100"), "{text}");
+        assert!(
+            text.contains("allowance raised $80 → $100 during this period"),
+            "{text}"
+        );
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&render_json(&blended_report())).unwrap()
+                ["capChanges"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1,
+            "the move is in JSON too"
+        );
+    }
+
+    /// No dollar/percent pair may multiply back to a cap the source never
+    /// published. Every published pair divides to its printed percentage, and
+    /// there is no `spend (share)` form anywhere in the frame.
+    #[test]
+    fn a_dollar_and_percent_never_imply_a_cap() {
+        let text = render_text(
+            &blended_report(),
+            "/tmp/opencode.db",
+            10,
+            false,
+            DEFAULT_BAR_WIDTH,
+        );
+        assert!(text.contains("$70.00 of $100 (70.0%)"), "{text}");
+        // $70 / $100 = 70%, so the pair's own arithmetic is self-contained.
+        // The blended headline deliberately prints no dollar beside it, so no
+        // reader can multiply $70 by 75% back into a $93.33 "cap".
+        assert!(!text.contains("$70.00 (75"), "{text}");
+        // The blended headline stands alone: no dollar denominator is printed
+        // beside it, because a blend has no single cap to print.
+        let headline = text
+            .lines()
+            .find(|line| line.contains("blended of limit"))
+            .expect("the headline");
+        let share_part = headline.split("tokens").nth(1).unwrap_or(headline);
+        assert!(!share_part.contains('$'), "headline share: {share_part}");
+        assert!(!text.contains("implied"), "{text}");
+        // The model table keeps its own published cap and its own USE pair.
+        assert!(text.contains("$100"), "{text}");
+    }
+
     #[test]
     fn text_shows_the_model_against_its_limit() {
         let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
@@ -1689,8 +1966,88 @@ mod tests {
             weekly: meter("ok", 59.0, "2027-01-18T00:00:00.000Z"),
             monthly: meter("ok", 29.0, "2027-02-15T08:00:00.000Z"),
         });
+        // `build` sees no account when this fixture attaches one afterwards,
+        // so seed the same server percentage it would have carried.
+        report.cap_blend = crate::ocuse::window::CapBlend::from_server(29.0);
         report.period_end_ms = Some(1_802_678_400_000); // 2027-02-15T08:00:00Z
         report.since_ms = crate::ocuse::window::prev_month(1_802_678_400_000);
+        report
+    }
+
+    /// A 30-day window with a third elapsed and $70 of DeepSeek spend, whose
+    /// cap rose $80 → $100 at the ten-day mark. The server's own figure (75) is
+    /// the blend that actually happened; the current cap alone would print
+    /// 70 and be wrong as a measure of how used up the account is.
+    fn blended_report() -> Report {
+        let now = 1_800_000_000_000i64; // 2027-01-15T08:00:00Z
+        let since = now - 30 * 86_400_000; // 30 days elapsed, the whole window
+        let rows = vec![Row {
+            at_ms: now - 60_000,
+            provider: "opencode-go".into(),
+            model: "deepseek-v4.1-flash".into(),
+            cost_usd: 70.0,
+            ..Default::default()
+        }];
+        let mut report = crate::ocuse::window::build(
+            &rows,
+            zen::catalog(),
+            zen::DEFAULT_PLAN,
+            now,
+            Some(since),
+            None,
+        );
+        // `build` does not attach the account itself (the CLI does), so set the
+        // meter and its server percentage the same way the CLI would.
+        let reset = cmduse_core::dates::iso_instant((now / 1000) as u64);
+        report.account = Some(crate::ocuse::api::Usage {
+            rolling: meter("ok", 5.0, "2027-01-15T12:31:00.000Z"),
+            weekly: meter("ok", 59.0, "2027-01-18T00:00:00.000Z"),
+            monthly: meter("ok", 75.0, &reset),
+        });
+        report.cap_blend = crate::ocuse::window::CapBlend::from_server(75.0);
+        report.period_end_ms = Some(now);
+        let rise = since + 10 * 86_400_000;
+        crate::ocuse::window::apply_cap_history(
+            &mut report,
+            &[crate::ocuse::window::CapChange {
+                model: "deepseek-v4.1-flash".into(),
+                from: 80.0,
+                to: 100.0,
+                at: rise,
+            }],
+        );
+        report
+    }
+
+    /// The real fresh-install case: the account answered 76%, the catalogue
+    /// publishes $100 for DeepSeek V4.1 Flash and $70 was spent against it
+    /// (69.9%), but no cap history has ever been sampled.
+    fn server_only_report() -> Report {
+        let now = 1_800_000_000_000i64;
+        let since = now - 30 * 86_400_000;
+        let rows = vec![Row {
+            at_ms: now - 60_000,
+            provider: "opencode-go".into(),
+            model: "deepseek-v4.1-flash".into(),
+            cost_usd: 69.873,
+            ..Default::default()
+        }];
+        let mut report = crate::ocuse::window::build(
+            &rows,
+            zen::catalog(),
+            zen::DEFAULT_PLAN,
+            now,
+            Some(since),
+            None,
+        );
+        report.account = Some(crate::ocuse::api::Usage {
+            rolling: meter("ok", 1.0, "2027-01-15T12:31:00.000Z"),
+            weekly: meter("ok", 3.0, "2027-01-18T00:00:00.000Z"),
+            monthly: meter("ok", 76.0, "2027-01-15T08:00:00.000Z"),
+        });
+        report.cap_blend = crate::ocuse::window::CapBlend::from_server(76.0);
+        report.period_end_ms = Some(now);
+        crate::ocuse::window::apply_cap_history(&mut report, &[]);
         report
     }
 
@@ -1703,24 +2060,20 @@ mod tests {
             false,
             DEFAULT_BAR_WIDTH,
         );
-        // The console's three shares, and its reset instants. Whole percents, as
-        // the endpoint publishes them: `"percent":53`, never `53.0`.
-        assert!(text.contains("· 5% of limit"), "{text}");
-        assert!(text.contains("· 59% of limit"), "{text}");
-        assert!(text.contains("· 29% of limit"), "{text}");
+        // The headline is the server's blend on a fresh install, labelled so it
+        // is never mistaken for a locally computed one. The window rows carry
+        // the *published* model cap beside this store's spend, never a ceiling
+        // inferred from the server's percentage.
+        assert!(text.contains("29% of limit (server)"), "{text}");
         assert!(text.contains("account meters"), "{text}");
         assert!(
             text.contains("resets 4h 31m"),
             "the 5h block's own end: {text}"
         );
-        // Every field that is true stays on the row: this store's own money and
-        // the server's share labelled beside it. No denominator is printed — it
-        // would have to be `spend / share`, which contradicted the documented
-        // allowance ($40 next to an $80 limit) because the console meters at
-        // roughly twice the cost this store records.
-        assert!(text.contains(".00 · 5% of limit"), "{text}");
-        assert!(text.contains(".00 · 29% of limit"), "{text}");
-        assert!(text.contains("of limit"), "{text}");
+        // glm-5.3-flash publishes $60: 5h = $12, weekly = $30, monthly = $60.
+        assert!(text.contains("$30.00 of $12 (250.0%)"), "{text}");
+        assert!(text.contains("$30.00 of $60 (50.0%)"), "{text}");
+        assert!(!text.contains("5% of limit"), "{text}");
         // The monthly window measures against the period bounds, like cmduse's:
         // an elapsed share, the server's reset, and the even-burn figure — which
         // only the budget window gets, because the two throttles above it would
@@ -1732,28 +2085,9 @@ mod tests {
         assert!(text.contains("the same cuts its percentages use"), "{text}");
     }
 
-    /// The denominator is the server's own percentage read backwards: whatever
-    /// this store spent, divided by the share the console prints, is the ceiling
-    /// that share is metering against. A share too small to imply one (the
-    /// endpoint rounds to one decimal, and sends 0.0 for a window it meters on
-    /// another basis) leaves the row with the share alone, never a division by
-    /// it.
-    #[test]
-    fn the_pair_is_the_ceiling_the_share_implies() {
-        // The $30 fixture spend at each of the fixture's shares.
-        assert_eq!(implied_cap(30.0, 5.0), Some(600.0));
-        assert_eq!(implied_cap(30.0, 59.0), Some(50.847457627118644));
-        // Under the display's precision there is no ceiling to print.
-        assert_eq!(implied_cap(20.45, 0.0), None);
-        assert_eq!(implied_cap(20.45, 0.04), None);
-        assert_eq!(implied_cap(20.45, 0.1), Some(20450.0));
-        assert_eq!(implied_cap(0.0, 1.0), Some(0.0));
-    }
-
-    /// The colour frame prints the share once. It used to read
-    /// `5% ━━━━━━ $30.00 · 5% of limit`: the gauge and the body each printed the
-    /// same percentage, and the gauge's own `{:.1}` also turned the endpoint's
-    /// whole `5` into `5.0`. The plain frame has no gauge, so it keeps the figure.
+    /// The colour frame puts the share on the gauge; the plain frame puts it
+    /// in the dollar/cap pair. Neither prints a second, server-derived share
+    /// that would multiply back to an unpublished ceiling.
     #[test]
     fn the_gauge_carries_the_share_and_the_body_does_not_repeat_it() {
         let colour = render_text(
@@ -1767,10 +2101,12 @@ mod tests {
             .lines()
             .find(|line| line.contains("5-hour"))
             .expect("a 5-hour row");
-        assert!(!five.contains("of limit"), "no repeated share: {five}");
-        assert!(
-            five.contains("    5%"),
-            "the endpoint's whole figure: {five}"
+        // The gauge bar is there, but the body does not print a second share.
+        assert!(five.contains("━"), "the gauge: {five}");
+        assert_eq!(
+            five.matches("250.0%").count(),
+            1,
+            "the share is printed once, in the dollar/cap pair: {five}"
         );
         let plain = render_text(
             &report_with_account(),
@@ -1779,18 +2115,79 @@ mod tests {
             false,
             DEFAULT_BAR_WIDTH,
         );
-        assert!(plain.contains("· 5% of limit"), "{plain}");
+        assert!(plain.contains("$30.00 of $12 (250.0%)"), "{plain}");
     }
 
-    /// A pace line needs a cap the burn can actually reach before the reset.
+    /// Pace uses the published/weighted allowance, never a cap inferred from a
+    /// percentage. With no allowance it abstains: no model with a published
+    /// limit means no ceiling, no pace line, no pro-rata figure.
+    #[test]
+    fn pace_uses_the_weighted_allowance_and_abstains_without_one() {
+        let now = 1_800_000_000_000i64;
+        let free = Row {
+            at_ms: now - 60_000,
+            provider: "opencode-go".into(),
+            model: "beam-free".into(), // a free model, no published limit
+            cost_usd: 5.0,
+            ..Default::default()
+        };
+        let mut no_cap = crate::ocuse::window::build(
+            &[free],
+            zen::catalog(),
+            zen::DEFAULT_PLAN,
+            now,
+            Some(now - 30 * 86_400_000),
+            None,
+        );
+        no_cap.account = Some(crate::ocuse::api::Usage {
+            rolling: meter("ok", 5.0, "2027-01-15T09:00:00.000Z"),
+            weekly: meter("ok", 59.0, "2027-01-18T00:00:00.000Z"),
+            monthly: meter("ok", 29.0, "2027-02-15T08:00:00.000Z"),
+        });
+        no_cap.cap_blend = crate::ocuse::window::CapBlend::from_server(29.0);
+        no_cap.period_end_ms = Some(now + 30 * 86_400_000);
+        let text = render_text(&no_cap, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        assert!(!text.contains("on pace to hit cap"), "{text}");
+        assert!(!text.contains("by now"), "{text}");
+
+        // With a cap history the monthly pace/pro-rata uses the weighted
+        // allowance, not today's limit: the $93.33 blend makes the $70 spend
+        // 75%, whereas today's $100 would read 70%.
+        let report = blended_report();
+        assert_eq!(report.cap_blend.weighted_allowance, Some(280.0 / 3.0));
+        let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
+        assert!(text.contains("by now"), "{text}");
+        let json: serde_json::Value = serde_json::from_str(&render_json(&report)).unwrap();
+        assert_eq!(json["account"]["monthly"]["percent"], 75.0);
+    }
+
     #[test]
     fn a_reachable_cap_gets_the_pace_line() {
-        let mut report = report_with_account();
-        if let Some(account) = &mut report.account {
-            // 90% of the ceiling this store's $30 implies ($33.33), one hour into
-            // a 5-hour window with four left: the burn reaches it well inside.
-            account.rolling = meter("ok", 90.0, "2027-01-15T12:00:00.000Z");
-        }
+        let now = 1_800_000_000_000i64;
+        let rows = vec![Row {
+            at_ms: now - 3_600_000,
+            provider: "opencode-go".into(),
+            model: "glm-5.3-flash".into(),
+            cost_usd: 10.0,
+            ..Default::default()
+        }];
+        let mut report = crate::ocuse::window::build(
+            &rows,
+            zen::catalog(),
+            zen::DEFAULT_PLAN,
+            now,
+            Some(now - 30 * 86_400_000),
+            None,
+        );
+        report.account = Some(crate::ocuse::api::Usage {
+            rolling: meter("ok", 5.0, "2027-01-15T09:00:00.000Z"),
+            weekly: meter("ok", 59.0, "2027-01-18T00:00:00.000Z"),
+            monthly: meter("ok", 29.0, "2027-02-15T08:00:00.000Z"),
+        });
+        report.cap_blend = crate::ocuse::window::CapBlend::from_server(29.0);
+        report.period_end_ms = Some(now + 30 * 86_400_000);
+        // $10 spent inside a 5-hour block four hours in, against the model's
+        // published $12 cap: the $2 left is reached in 48m, inside the 1h left.
         let text = render_text(&report, "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         assert!(text.contains("on pace to hit cap in"), "{text}");
     }
@@ -1800,8 +2197,9 @@ mod tests {
         let text = render_text(&report(), "/tmp/opencode.db", 10, false, DEFAULT_BAR_WIDTH);
         assert!(text.contains("estimated locally"), "{text}");
         assert!(text.contains("no pool"), "no aggregate ceiling: {text}");
-        // Spend alone: no pair, no share, no countdown without a boundary.
-        assert!(!text.contains("of limit"), "{text}");
+        // The rows carry the model's published cap, not a pool inferred from a
+        // percentage, and no countdown without a boundary.
+        assert!(text.contains("$30.00 of $60 (50.0%)"), "{text}");
         assert!(!text.contains("resets"), "{text}");
         assert!(!text.contains("elapsed"), "{text}");
         // Nothing claims to be the account's own view.
