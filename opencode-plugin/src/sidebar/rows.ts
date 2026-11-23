@@ -52,6 +52,89 @@ export function clip(text: string, width: number = ROW_WIDTH): string {
 	return text.length <= width ? text : `${text.slice(0, width - 1)}…`;
 }
 
+/** What a word-boundary wrap produced: the lines, and whether all text landed. */
+export interface Wrapped {
+	lines: string[];
+	/** Every word of the input is on some line. False means the caller must
+	 *  switch to a compact form — `wrap` never drops words with an ellipsis. */
+	complete: boolean;
+}
+
+/**
+ * Wrap prose at word boundaries into at most `maxLines` lines of at most `width`
+ * columns. No ellipsis is ever emitted: a line ends either at a word boundary or
+ * at the end of the text. A single word wider than `width` is hard-split (still
+ * without an ellipsis), because losing its tail would be worse than a mid-word
+ * break. `complete` is false when the text did not fit in `maxLines`, so a caller
+ * that must say the whole thing can fall back to a shorter form.
+ */
+export function wrap(text: string, width: number = ROW_WIDTH, maxLines: number = 2): Wrapped {
+	const words = text.trim().split(/\s+/).filter(Boolean);
+	if (words.length === 0) return { lines: [], complete: true };
+	const lines: string[] = [];
+	let line = "";
+	for (const word of words) {
+		const candidate = line ? `${line} ${word}` : word;
+		if (candidate.length <= width) {
+			line = candidate;
+			continue;
+		}
+		// Need a new line. If the last one already used the slot, the text did
+		// not fit; return only complete lines rather than a truncated one.
+		if (line) lines.push(line);
+		line = "";
+		if (lines.length >= maxLines) return { lines, complete: false };
+		if (word.length > width) {
+			let rest = word;
+			while (rest.length > width) {
+				lines.push(rest.slice(0, width));
+				rest = rest.slice(width);
+				if (lines.length >= maxLines) return { lines, complete: false };
+			}
+			line = rest;
+		} else {
+			line = word;
+		}
+	}
+	if (line) {
+		if (lines.length >= maxLines) return { lines, complete: false };
+		lines.push(line);
+	}
+	return { lines, complete: true };
+}
+
+/**
+ * Append wrapped prose as muted continuation rows. Every family needs the same
+ * "wrap, then emit one `""`-label row per line" loop; keeping it here means a
+ * sentence is wrapped once, at word boundaries, with no ellipsis anywhere.
+ */
+export function mutedWrap(
+	rows: SidebarRow[],
+	text: string,
+	width: number = valueWidth(""),
+	maxLines: number = 2,
+): void {
+	for (const line of wrap(text, width, maxLines).lines) rows.push(["", line, "muted"]);
+}
+
+/**
+ * A deal badge is upstream prose with no length contract. Bound it to two panel
+ * lines: wrap at word boundaries first, and if that will not fit, drop the
+ * trailing clause — the promotion always leads with its news — and retry. A
+ * clause is cut only at a separator; a single word wider than the panel is the
+ * one case `wrap` hard-splits, so a word is never lost to an ellipsis.
+ */
+function boundedDeal(text: string, width: number): string[] {
+	let candidate = text.trim();
+	for (;;) {
+		const wrapped = wrap(candidate, width, 2);
+		if (wrapped.complete) return wrapped.lines;
+		const cut = Math.max(candidate.lastIndexOf(" · "), candidate.lastIndexOf(", "));
+		if (cut <= 0) return [clip(candidate, width)];
+		candidate = candidate.slice(0, cut);
+	}
+}
+
 /**
  * Whether a usage-API reason is worth a row in the panel.
  *
@@ -344,8 +427,22 @@ export function usageRows(usage: Usage | undefined, now = Date.now()): SidebarRo
 	const rows: SidebarRow[] = [];
 	if (usage.plan) {
 		const credits =
-			typeof usage.monthlyCap === "number" ? ` · $${usage.monthlyCap}/mo credits` : "";
-		rows.push(["Plan", `${usage.plan}${credits}`, "base", true]);
+			typeof usage.monthlyCap === "number" ? `$${usage.monthlyCap}/mo credits` : "";
+		const full = credits ? `${usage.plan} · ${credits}` : usage.plan;
+		if (full.length <= valueWidth("Plan")) {
+			rows.push(["Plan", full, "base", true]);
+		} else {
+			// The plan name is an identity: never shorten it to fit the credit
+			// figure beside it. A banner gets the whole row; the bound number
+			// drops to a muted continuation under it.
+			rows.push([clip(usage.plan, ROW_WIDTH), "", "base", true]);
+			if (credits)
+				rows.push([
+					"",
+					" ".repeat("Plan".length) + clip(credits, valueWidth("Plan")),
+					"muted",
+				]);
+		}
 	}
 	// The Command Code half gets its reason from `cmduse -1 --json`, which exits
 	// 0 with defaults on a failed account call. `requireSnapshot` throws on a
@@ -424,7 +521,9 @@ export function modelRows(
 	const name = meta?.name ?? fallbackName;
 	if (!name) return [];
 	const rows: SidebarRow[] = [
-		["Model", clip(name, valueWidth("Model")), "strong", true],
+		name.length <= valueWidth("Model")
+			? ["Model", name, "strong", true]
+			: [clip(name, ROW_WIDTH), "", "strong", true],
 		...localUsageRows(usage, session),
 	];
 	// Everything below is catalog data; without it the block is just the model
@@ -438,14 +537,17 @@ export function modelRows(
 	if (typeof meta.allowance === "number")
 		rows.push(["Allowance", allowanceLabel(meta.allowance, meta.free), "base"]);
 	if (meta.deal) {
-		// The badge is the news; the expiry is compacted to fit ("Sep 30" rather
-		// than "Ends September 30, 2026"), because the sidebar has 37 columns.
+		// The badge is the news; its expiry is compacted ("Sep 30" rather than
+		// "Ends September 30, 2026") and the whole string wrapped to two lines.
+		// An upstream badge has no length contract, so it needs a bound: past
+		// two lines the trailing clause is dropped, never cut mid-word.
 		const ends = meta.deal.ends?.match(/([A-Z][a-z]{2})[a-z]*\s+(\d{1,2})/);
-		rows.push([
-			"Deal",
-			ends ? `${meta.deal.badge} · ends ${ends[1]} ${ends[2]}` : meta.deal.badge,
-			"ok",
-		]);
+		const expiry = ends ? `ends ${ends[1]} ${ends[2]}` : "";
+		const full = expiry ? `${meta.deal.badge} · ${expiry}` : meta.deal.badge;
+		const lines = boundedDeal(full, valueWidth("Deal"));
+		rows.push(["Deal", lines[0] ?? "", "ok"]);
+		for (const line of lines.slice(1))
+			rows.push(["", " ".repeat("Deal".length) + line, "muted"]);
 	}
 	if (meta.rates) {
 		// In/out leads; the cache rates ride on an indented continuation, since

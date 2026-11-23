@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { FIVE_HOUR_SECS, WEEKLY_SECS } from "../src/constants/sidebar";
-import { type ModelMeta, rowWidth, usageRows } from "../src/sidebar/rows";
+import { FIVE_HOUR_SECS, ROW_WIDTH, WEEKLY_SECS } from "../src/constants/sidebar";
+import { type ModelMeta, parts, rowWidth, usageRows, wrap } from "../src/sidebar/rows";
 import { parseZenJson, rollingReset, zenRows } from "../src/sidebar/zen";
 
 const sample = JSON.stringify({
@@ -475,12 +475,15 @@ describe("the account's own meters", () => {
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		const head = rows.findIndex((row) => row[1] === "by model · this month");
 		expect(head).toBeGreaterThan(-1);
-		// Highest spend first, each against its own documented limit, labelled
-		// `now` so the share is not read as the meter's time-weighted one.
-		expect(rows[head + 1]?.[1]).toBe("$17/$60 · 28.3% now");
-		expect(rows[head + 2]?.[1]).toBe("$1.50/$15 · 10.0% now");
-		for (const row of rows.slice(head, head + 3)) {
-			expect((row[0] ?? "").length + 2 + (row[1] ?? "").length).toBeLessThanOrEqual(37);
+		// Highest spend first, each against its own documented limit. The name
+		// stays whole; the `now` share rides on a muted continuation under the
+		// value column, so it cannot read as the meter's time-weighted one.
+		expect(rows[head + 1]?.[1]).toBe("$17/$60");
+		expect(rows[head + 2]?.[1]?.trim()).toBe("28.3% now");
+		expect(rows[head + 3]?.[1]).toBe("$1.50/$15");
+		expect(rows[head + 4]?.[1]?.trim()).toBe("10.0% now");
+		for (const row of rows.slice(head, head + 5)) {
+			expect(parts(row).join("").length).toBeLessThanOrEqual(ROW_WIDTH);
 		}
 	});
 
@@ -641,22 +644,32 @@ describe("the share's basis is named beside it", () => {
 
 	test("the model row reads now, never a bare (70.0%)", () => {
 		const rows = zenRows(parseZenJson(JSON.stringify(reportedBody())), meta);
-		const modelRow = rows.find((row) => row[1]?.startsWith("$69.98/$100"));
-		expect(modelRow?.[1]).toBe("$69.98/$100 · 70.0% now");
+		const at = rows.findIndex((row) => row[1] === "$69.98/$100");
+		expect(rows[at]?.[1]).toBe("$69.98/$100");
+		expect(rows[at + 1]?.[2]).toBe("muted");
+		expect(rows[at + 1]?.[1]?.trim()).toBe("70.0% now");
 		expect(rows.some((row) => (row[1] ?? "").includes("(70.0%)"))).toBe(false);
 	});
 
 	test("the note renders when present and nothing when absent", () => {
 		const withNote = zenRows(parseZenJson(JSON.stringify(reportedBody())), meta);
+		// The long CLI prose becomes its compact panel form: same fact, two lines.
+		expect(
+			withNote.some((row) => row[2] === "muted" && row[1] === "limit changed mid-period"),
+		).toBe(true);
 		expect(
 			withNote.some(
-				(row) => row[2] === "muted" && (row[1] ?? "").includes("the allowance changed"),
+				(row) => row[2] === "muted" && row[1]?.trim() === "76% server · 70.0% now",
 			),
 		).toBe(true);
+		expect(withNote.some((row) => (row[1] ?? "").includes("the allowance changed"))).toBe(
+			false,
+		);
 		const body = reportedBody() as unknown as Record<string, Record<string, unknown>>;
 		delete (body.account as { monthly: Record<string, unknown> }).monthly.note;
 		const without = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		expect(without.some((row) => (row[1] ?? "").includes("the allowance changed"))).toBe(false);
+		expect(without.some((row) => (row[1] ?? "").includes("changed mid-period"))).toBe(false);
 	});
 
 	test("an empty capChanges array invents no cap change", () => {
@@ -679,6 +692,86 @@ describe("the share's basis is named beside it", () => {
 		// The line stays inside the panel's width, like every other row.
 		for (const row of rows) {
 			expect(rowWidth(row)).toBeLessThanOrEqual(37);
+		}
+	});
+
+	test("a_note_never_ends_in_an_ellipsis", () => {
+		const note = reportedBody().account.monthly.note ?? "";
+		expect(note.length).toBeGreaterThan(100);
+		// At the wrapper's own line budget every word still lands, whole.
+		const all = wrap(note, ROW_WIDTH, 4);
+		expect(all.complete).toBe(true);
+		expect(all.lines.join(" ")).toBe(note);
+		expect(all.lines.some((line) => line.includes("…"))).toBe(false);
+		for (const line of all.lines) expect(line.length).toBeLessThanOrEqual(ROW_WIDTH);
+		// The panel drops to its compact two-line form rather than clipping, so
+		// no rendered line ends in an ellipsis either.
+		const rows = zenRows(parseZenJson(JSON.stringify(reportedBody())), meta);
+		for (const row of rows) {
+			expect(row[1].endsWith("…")).toBe(false);
+			expect(parts(row).join("").length).toBeLessThanOrEqual(ROW_WIDTH);
+		}
+	});
+
+	test("a_long_note_falls_back_to_the_compact_two_line_form", () => {
+		const rows = zenRows(parseZenJson(JSON.stringify(reportedBody())), meta);
+		const lines = rows.filter((row) => row[2] === "muted").map((row) => row[1]);
+		expect(lines).toContain("limit changed mid-period");
+		expect(lines).toContain("76% server · 70.0% now");
+		expect(lines.some((line) => line.includes("the allowance changed"))).toBe(false);
+		// Two lines, not the CLI's four: both figures are already on screen.
+		expect(rows.some((row) => (row[1] ?? "").includes("today's cap implies"))).toBe(false);
+	});
+
+	test("a_model_row_keeps_its_full_name", () => {
+		const rows = zenRows(parseZenJson(JSON.stringify(reportedBody())), meta);
+		const at = rows.findIndex((row) => row[1] === "$69.98/$100");
+		expect(rows[at]?.[0]).toBe("deepseek-v4.1-flash");
+		expect(rows[at + 1]?.[1]?.trim()).toBe("70.0% now");
+		expect(rows.some((row) => (row[0] ?? "").includes("…"))).toBe(false);
+		// The longest id in the Go allowance catalogue survives too when the
+		// value is short — the value's width, never a percentage, sets the budget.
+		const long = reportedBody();
+		const first = long.models[0];
+		if (!first) throw new Error("the reported fixture must carry a model");
+		first.id = "muse-spark-1.3-contributor";
+		first.limit = 6;
+		first.month.cost = 1.5;
+		const longRows = zenRows(parseZenJson(JSON.stringify(long)), meta);
+		expect(longRows.find((row) => row[1] === "$1.50/$6")?.[0]).toBe(
+			"muse-spark-1.3-contributor",
+		);
+	});
+
+	test("a_cap_change_line_wraps_instead_of_clipping", () => {
+		const body = reportedBody();
+		body.capChanges.push({
+			model: "deepseek-v4.1-flash",
+			from: 123_456_789,
+			to: 987_654_321,
+			at: Date.UTC(2026, 10, 19),
+		});
+		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
+		const at = rows.findIndex((row) => (row[1] ?? "").startsWith("limit $123456789"));
+		expect(rows[at]?.[1]).toBe("limit $123456789→$987654321 on");
+		expect(rows[at + 1]?.[1]).toBe("2026-11-19");
+		expect(rows.slice(at, at + 2).some((row) => row[1].includes("…"))).toBe(false);
+		for (const row of rows.slice(at, at + 2)) {
+			expect(parts(row).join("").length).toBeLessThanOrEqual(ROW_WIDTH);
+		}
+	});
+
+	test("every_rendered_line_fits_the_panel_width", () => {
+		const body = reportedBody();
+		body.capChanges.push({
+			model: "deepseek-v4.1-flash",
+			from: 123_456_789,
+			to: 987_654_321,
+			at: Date.UTC(2026, 10, 19),
+		});
+		for (const row of zenRows(parseZenJson(JSON.stringify(body)), meta)) {
+			expect(parts(row).join("").length).toBeLessThanOrEqual(ROW_WIDTH);
+			expect(rowWidth(row)).toBeLessThanOrEqual(ROW_WIDTH);
 		}
 	});
 });
