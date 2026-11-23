@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { FIVE_HOUR_SECS, WEEKLY_SECS } from "../src/constants/sidebar";
-import { type ModelMeta, usageRows } from "../src/sidebar/rows";
+import { type ModelMeta, rowWidth, usageRows } from "../src/sidebar/rows";
 import { parseZenJson, rollingReset, zenRows } from "../src/sidebar/zen";
 
 const sample = JSON.stringify({
@@ -475,9 +475,10 @@ describe("the account's own meters", () => {
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		const head = rows.findIndex((row) => row[1] === "by model · this month");
 		expect(head).toBeGreaterThan(-1);
-		// Highest spend first, each against its own documented limit.
-		expect(rows[head + 1]?.[1]).toBe("$17/$60 (28.3%)");
-		expect(rows[head + 2]?.[1]).toBe("$1.50/$15 (10.0%)");
+		// Highest spend first, each against its own documented limit, labelled
+		// `now` so the share is not read as the meter's time-weighted one.
+		expect(rows[head + 1]?.[1]).toBe("$17/$60 · 28.3% now");
+		expect(rows[head + 2]?.[1]).toBe("$1.50/$15 · 10.0% now");
 		for (const row of rows.slice(head, head + 3)) {
 			expect((row[0] ?? "").length + 2 + (row[1] ?? "").length).toBeLessThanOrEqual(37);
 		}
@@ -490,9 +491,12 @@ describe("the account's own meters", () => {
 		// store's own and named `local`, on the same basis as the `Period` row —
 		// never a figure derived from the share (that printed $43.20 beside a
 		// $21.81 period for the same month).
-		expect(find("5-hour")?.[1]).toBe("5% of limit · $0.50 local");
-		expect(find("Weekly")?.[1]).toBe("59% of limit · $1.50 local");
-		expect(find("Monthly")?.[1]).toBe("29% of limit · $17 local");
+		expect(find("5-hour")?.[1]).toBe("5% of limit (server)");
+		expect(find("Weekly")?.[1]).toBe("59% of limit (server)");
+		expect(find("Monthly")?.[1]).toBe("29% of limit (server)");
+		// The local dollars moved to a muted continuation beside the reset, so
+		// they cannot be read as the share's denominator.
+		expect(rows.some((row) => row[1] === "$0.50 local" && row[2] === "muted")).toBe(true);
 		expect(find("Allowance")?.[1]).toBe("$60/mo");
 		// Every row stays inside the sidebar's budget: label + 2 + value.
 		for (const label of ["5-hour", "Weekly", "Monthly", "Period"]) {
@@ -514,7 +518,7 @@ describe("the account's own meters", () => {
 		};
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		const five = rows.findIndex((row) => row[0] === "5-hour");
-		expect(rows[five]).toEqual(["5-hour", "100% of limit · $0.50 local", "crit"]);
+		expect(rows[five]).toEqual(["5-hour", "100% of limit (server)", "crit"]);
 		expect(rows[five + 1]?.[1]).toContain("LIMIT EXCEEDED");
 	});
 
@@ -546,5 +550,135 @@ describe("the account's own meters", () => {
 			"error sending request for url (https://opencode.ai/zen/go/v1/usage): connection closed before message completed";
 		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
 		expect(rows.some((row) => row[1].includes("usage API"))).toBe(false);
+	});
+});
+
+// The reported panel: a 76% server meter above a 69.98/100 per-model row. The
+// two answer different questions and the fix is to say which is which. Fixtures
+// are plain `ocuse -1 --json` bodies — no spawn, no clock beyond a relative now.
+describe("the share's basis is named beside it", () => {
+	const reportedBody = () => {
+		const now = Date.now();
+		const flash = {
+			id: "deepseek-v4.1-flash",
+			provider: "opencode-go",
+			limit: 100,
+			fiveHour: { requests: 1, cost: 0.5 },
+			weekly: { requests: 3, cost: 1.5 },
+			month: { requests: 58, cost: 69.98 },
+		};
+		return {
+			source: "opencode.db",
+			periodStart: now - 3 * 24 * 3_600_000,
+			periodEndAt: now + 27 * 24 * 3_600_000,
+			account: {
+				rolling: { status: "ok", percent: 12, resetsAt: now + 4 * 3_600_000 },
+				weekly: { status: "ok", percent: 40, resetsAt: now + 2 * 24 * 3_600_000 },
+				monthly: {
+					status: "ok",
+					percent: 76,
+					percentSource: "server",
+					serverPercent: 76,
+					currentCap: 100,
+					currentCapPercent: 69.9,
+					note: "the allowance changed during this period (DeepSeek V4.1 Flash); the server meters 76%, today's cap implies 69.9%",
+					resetsAt: now + 27 * 24 * 3_600_000,
+				},
+			},
+			capChanges: [] as Array<{ model: string; from: number; to: number; at: number }>,
+			totals: {
+				fiveHour: { requests: 1, cost: 0.5 },
+				weekly: { requests: 3, cost: 1.5 },
+				month: { requests: 58, cost: 69.98 },
+			},
+			models: [
+				flash,
+				{
+					id: "z-ai/glm-5.3-flash",
+					provider: "opencode-go",
+					limit: 60,
+					fiveHour: { requests: 0, cost: 0 },
+					weekly: { requests: 0, cost: 0 },
+					month: { requests: 4, cost: 1.5 },
+				},
+			],
+		};
+	};
+
+	test("parseZenJson carries the meter basis, note and cap changes", () => {
+		const body = reportedBody();
+		body.capChanges.push({
+			model: "deepseek-v4.1-flash",
+			from: 80,
+			to: 100,
+			at: Date.UTC(2026, 10, 19),
+		});
+		const usage = parseZenJson(JSON.stringify(body));
+		expect(usage.account?.monthly.percentSource).toBe("server");
+		expect(usage.account?.monthly.serverPercent).toBe(76);
+		expect(usage.account?.monthly.currentCap).toBe(100);
+		expect(usage.account?.monthly.currentCapPercent).toBe(69.9);
+		expect(usage.account?.monthly.note).toContain("today's cap implies 69.9%");
+		expect(usage.capChanges).toEqual([
+			{ model: "deepseek-v4.1-flash", from: 80, to: 100, at: Date.UTC(2026, 10, 19) },
+		]);
+	});
+
+	test("the meter row carries server for a server payload", () => {
+		const rows = zenRows(parseZenJson(JSON.stringify(reportedBody())), meta);
+		expect(rows.find((row) => row[0] === "Monthly")?.[1]).toBe("76% of limit (server)");
+		// One percentage only: the current-cap figure is not repeated here.
+		expect(rows.find((row) => row[0] === "Monthly")?.[1]).not.toContain("69.9");
+	});
+
+	test("the meter row carries blended for a blended payload", () => {
+		const body = reportedBody() as unknown as Record<string, unknown>;
+		const account = body.account as { monthly: Record<string, unknown> };
+		account.monthly.percentSource = "blended";
+		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
+		expect(rows.find((row) => row[0] === "Monthly")?.[1]).toBe("76% of limit (blended)");
+	});
+
+	test("the model row reads now, never a bare (70.0%)", () => {
+		const rows = zenRows(parseZenJson(JSON.stringify(reportedBody())), meta);
+		const modelRow = rows.find((row) => row[1]?.startsWith("$69.98/$100"));
+		expect(modelRow?.[1]).toBe("$69.98/$100 · 70.0% now");
+		expect(rows.some((row) => (row[1] ?? "").includes("(70.0%)"))).toBe(false);
+	});
+
+	test("the note renders when present and nothing when absent", () => {
+		const withNote = zenRows(parseZenJson(JSON.stringify(reportedBody())), meta);
+		expect(
+			withNote.some(
+				(row) => row[2] === "muted" && (row[1] ?? "").includes("the allowance changed"),
+			),
+		).toBe(true);
+		const body = reportedBody() as unknown as Record<string, Record<string, unknown>>;
+		delete (body.account as { monthly: Record<string, unknown> }).monthly.note;
+		const without = zenRows(parseZenJson(JSON.stringify(body)), meta);
+		expect(without.some((row) => (row[1] ?? "").includes("the allowance changed"))).toBe(false);
+	});
+
+	test("an empty capChanges array invents no cap change", () => {
+		const rows = zenRows(parseZenJson(JSON.stringify(reportedBody())), meta);
+		expect(rows.some((row) => (row[1] ?? "").includes("limit $"))).toBe(false);
+	});
+
+	test("a capChanges entry renders the same day it happened", () => {
+		const body = reportedBody();
+		body.capChanges.push({
+			model: "deepseek-v4.1-flash",
+			from: 80,
+			to: 100,
+			at: Date.UTC(2026, 10, 19),
+		});
+		const rows = zenRows(parseZenJson(JSON.stringify(body)), meta);
+		expect(
+			rows.some((row) => row[2] === "muted" && row[1] === "limit $80→$100 on 2026-11-19"),
+		).toBe(true);
+		// The line stays inside the panel's width, like every other row.
+		for (const row of rows) {
+			expect(rowWidth(row)).toBeLessThanOrEqual(37);
+		}
 	});
 });
