@@ -52,10 +52,23 @@ export interface ZenModel {
 export interface ZenMeter {
 	/** The server's own word; anything but "ok" reads as over the limit. */
 	status: string;
-	/** Percent of the window's limit already used — the console's number. */
+	/** Percent of the window's limit already used — the console's number, or a
+	 *  time-weighted blend when the allowance moved inside the period. */
 	percent: number;
 	/** Reset instant, epoch ms. */
 	resetsAt?: number;
+	/** The basis of `percent`: `blended` when cap history sampled a move, `server`
+	 *  for the endpoint's own figure. The meter row names it so the one share on
+	 *  that row cannot be read as spend ÷ today's cap. */
+	percentSource?: string;
+	/** The endpoint's own number, carried unchanged beside the headline. */
+	serverPercent?: number;
+	/** Today's published allowance and `spend / currentCap × 100` — a different
+	 *  question from the time-weighted `percent`, so never printed on the same
+	 *  row. `note` says why the two disagree when the source can. */
+	currentCap?: number;
+	currentCapPercent?: number;
+	note?: string;
 }
 
 /** The account's three meters, under the endpoint's own names: `rolling` is the
@@ -90,8 +103,21 @@ export interface ZenUsage {
 	 * from an expired one — and only the expired one is something to act on.
 	 */
 	accountError?: string;
+	/** Allowance moves sampled this period (`ocuse`'s `capChanges`). Empty on a
+	 *  fresh install, where only the server's figure is available. Rendered as a
+	 *  muted line so the blend above it is explainable. Optional for hand-built
+	 *  snapshots; `parseZenJson` always supplies `[]`. */
+	capChanges?: CapChange[];
 	/** Keyed by canonical model key, the same normalisation the CC side matches on. */
 	models: Map<string, ZenModel>;
+}
+
+/** One observed allowance change, epoch ms — `ocuse`'s top-level `capChanges`. */
+export interface CapChange {
+	model: string;
+	from: number;
+	to: number;
+	at: number;
 }
 
 function totals(value: unknown): ZenTotals {
@@ -112,6 +138,12 @@ function meter(value: unknown): ZenMeter {
 		status: typeof v.status === "string" ? v.status : "ok",
 		percent: typeof v.percent === "number" ? v.percent : 0,
 		resetsAt: typeof v.resetsAt === "number" ? v.resetsAt : undefined,
+		percentSource: typeof v.percentSource === "string" ? v.percentSource : undefined,
+		serverPercent: typeof v.serverPercent === "number" ? v.serverPercent : undefined,
+		currentCap: typeof v.currentCap === "number" ? v.currentCap : undefined,
+		currentCapPercent:
+			typeof v.currentCapPercent === "number" ? v.currentCapPercent : undefined,
+		note: typeof v.note === "string" && v.note ? v.note : undefined,
 	};
 }
 
@@ -134,6 +166,19 @@ export function parseZenJson(text: string): ZenUsage {
 			weekly: totals(raw.weekly),
 			month: totals(raw.month),
 		});
+	}
+	const capChanges: CapChange[] = [];
+	for (const raw of (Array.isArray(body.capChanges) ? body.capChanges : []) as Array<
+		Record<string, unknown>
+	>) {
+		if (
+			typeof raw.model === "string" &&
+			typeof raw.from === "number" &&
+			typeof raw.to === "number" &&
+			typeof raw.at === "number"
+		) {
+			capChanges.push({ model: raw.model, from: raw.from, to: raw.to, at: raw.at });
+		}
 	}
 	const top = (body.totals ?? {}) as Record<string, unknown>;
 	return {
@@ -162,6 +207,7 @@ export function parseZenJson(text: string): ZenUsage {
 			typeof body.accountError === "string" && body.accountError
 				? body.accountError
 				: undefined,
+		capChanges,
 		totals: {
 			fiveHour: totals(top.fiveHour),
 			weekly: totals(top.weekly),
@@ -203,6 +249,19 @@ export interface ZenWindowStarts {
 export function rollingReset(startMs: number | undefined, durSecs: number): number | undefined {
 	if (typeof startMs !== "number" || !Number.isFinite(startMs)) return undefined;
 	return startMs + durSecs * 1000;
+}
+
+/**
+ * One sampled allowance move as a muted continuation line: `limit $80→$100 on
+ * 2026-11-19`. The date is UTC, the same day the CLI names, and the compact form
+ * keeps it inside the panel even for a long model id (the `note` above names the
+ * model when the source can). Never built when `capChanges` is empty.
+ */
+function capChangeLine(change: CapChange): string {
+	const date = Number.isFinite(change.at)
+		? new Date(change.at).toISOString().slice(0, 10)
+		: "unknown date";
+	return `limit ${money(change.from)}→${money(change.to)} on ${date}`;
 }
 
 /**
@@ -249,15 +308,18 @@ function zenWindow(
 
 /**
  * One of the account's own meters as a panel row: the console's percentage —
- * the authentic figure, the one that gates — then this store's own recorded
- * spend, named `local`, and the reset.
+ * the authentic figure, the one that gates — with its basis named beside it,
+ * then this store's own recorded spend on a muted continuation, then the reset.
  *
- * The percentage stays the only percentage. The dollars are **this store's**,
- * labelled, and no figure is derived from the share: `percent × cap` printed
- * `$43.20` on the Monthly row while the `Period` row three lines below said
- * `$21.81` for the same month, because the console meters a different scale.
- * Two dollar figures that cannot agree, with nothing saying which is which, are
- * worse than one.
+ * The percentage stays the only percentage on the row, and the basis (`blended`
+ * or `server`, the CLI's own words) says which question it answers. Without it
+ * the figure reads as spend ÷ today's cap, which is a different number and the
+ * one the model rows print. The dollars are **this store's**, labelled `local`
+ * on their own line so they cannot be mistaken for the share's denominator:
+ * `percent × cap` printed `$43.20` on the Monthly row while the `Period` row
+ * three lines below said `$21.81` for the same month, because the console meters
+ * a different scale. Two dollar figures that cannot agree, with nothing saying
+ * which is which, are worse than one.
  *
  * The pace line is computed in the console's own units (`percent` against 100),
  * so `cap in …` answers when the *meter* runs out, not when our reconstruction
@@ -274,9 +336,14 @@ function zenMeterRows(
 	// The endpoint publishes whole percents (`"percent":53`); a tenth here would
 	// claim a precision the console's own rounding does not have.
 	const pctText = Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
-	// `local` because the share is account-wide while the dollars are this store's
-	// the dollars reading as one model's.
-	const local = typeof spent === "number" ? ` · ${money(spent)} local` : "";
+	// Name the basis on this row: `blended` when history sampled a cap move,
+	// `server` for the endpoint's own figure. The word is the CLI's own, and it
+	// keeps the share from being read as today's-cap spend ÷ limit.
+	const basis = meter.percentSource === "blended" ? "blended" : "server";
+	// `local` because the share is account-wide while the dollars are this store's.
+	// On its own muted continuation so it never claims the row's percentage as
+	// its own denominator (and so the value column still fits).
+	const local = typeof spent === "number" ? `${money(spent)} local` : undefined;
 	return windowRows(
 		label,
 		{
@@ -289,8 +356,8 @@ function zenMeterRows(
 		},
 		now,
 		durSecs,
-		undefined,
-		() => `${pctText}% of limit${local}`,
+		local,
+		() => `${pctText}% of limit (${basis})`,
 	);
 }
 
@@ -415,15 +482,30 @@ export function zenRows(
 			),
 		);
 	}
+	if (usage.account) {
+		// The monthly meter above is a share of a *time-weighted* allowance when
+		// the cap moved mid-period. Its note and the sampled moves say why it
+		// differs from the current-cap figure the model rows print — without them
+		// the two percentages sit adjacent and read as a contradiction. The CLI
+		// prints the same two lines, dimmed; the panel uses its muted continuation.
+		if (usage.account.monthly.note) {
+			rows.push(["", clip(usage.account.monthly.note, valueWidth("")), "muted"]);
+		}
+		for (const change of usage.capChanges ?? []) {
+			rows.push(["", clip(capChangeLine(change), valueWidth("")), "muted"]);
+		}
+	}
 	rows.push([
 		"Period",
 		`${count(usage.totals.month.requests)} requests · ${money(usage.totals.month.cost)}`,
 		"base",
 	]);
 	// Per-model usage for the period, the way the console's Go page lays it out —
-	// the top few by spend, each against its documented allowance. The console
-	// numbers here are its own scale; these are this store's, which is why the
-	// percent can differ from the account meter above.
+	// the top few by spend, each against its documented allowance. This is spend
+	// ÷ *today's* cap, a different question from the blended/server share in the
+	// meter above, so the share is labelled `now`. An unlabelled `(70.0%)` here,
+	// next to a `76% of limit` meter, read as a contradiction; the two answer
+	// different things. The values are this store's, on the period's own scale.
 	const ranked = [...usage.models.values()]
 		.sort((a, b) => b.month.cost - a.month.cost)
 		.slice(0, 3);
@@ -433,7 +515,7 @@ export function zenRows(
 			const allowance = entry.limit;
 			const share =
 				typeof allowance === "number" && allowance > 0
-					? ` (${((entry.month.cost / allowance) * 100).toFixed(1)}%)`
+					? ` · ${((entry.month.cost / allowance) * 100).toFixed(1)}% now`
 					: "";
 			const value =
 				typeof allowance === "number" && allowance > 0
