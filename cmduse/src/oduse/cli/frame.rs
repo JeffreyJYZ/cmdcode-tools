@@ -33,13 +33,16 @@ pub fn dashboard(ctx: &Ctx) {
         } else {
             print!(
                 "{}",
-                render::render_text(
-                    &report,
-                    ctx.plan,
-                    ctx.db_path,
-                    ctx.rows_cap(15),
-                    ctx.colours,
-                    bar_width,
+                crate::wrap_text(
+                    &render::render_text(
+                        &report,
+                        ctx.plan,
+                        ctx.db_path,
+                        ctx.rows_cap(15),
+                        ctx.colours,
+                        bar_width,
+                    ),
+                    ctx.width,
                 )
             );
         }
@@ -55,6 +58,8 @@ pub fn dashboard(ctx: &Ctx) {
         rows: ctx.rows_cap(15),
         colour: ctx.colours,
         bar_width,
+        width: ctx.args.width,
+        machine: ctx.args.json || ctx.args.csv,
         interval,
         burst_on,
         burst_cap,

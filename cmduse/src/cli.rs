@@ -34,6 +34,9 @@ pub struct Args {
     pub watch: bool,
     pub plain: bool,
     pub bar_width: Option<usize>,
+    /// Watch-frame wrap width in columns (`--width`). Distinct from the
+    /// progress bar's `bar_width` and from the config key of the same name.
+    pub width: Option<usize>,
     pub bursts: Option<usize>,
     pub help: bool,
     pub config_set: Option<ConfigSet>,
@@ -196,6 +199,15 @@ pub(crate) fn parse_args_from(
                 match v.parse::<usize>() {
                     Ok(n) if (5..=200).contains(&n) => a.bar_width = Some(n),
                     _ => return Err(format!("-w needs a number 5–200 (got '{v}')")),
+                }
+            }
+            // Watch-frame wrap width, shared by all four binaries. Machine
+            // formats never enter the watch loop, so `--json`/`--csv` ignore it.
+            Long("width") => {
+                let v = need_value(&mut parser, "--width needs a number 1–1000")?;
+                match v.parse::<usize>() {
+                    Ok(n) if (1..=1000).contains(&n) => a.width = Some(n),
+                    _ => return Err(format!("--width needs a number 1–1000 (got '{v}')")),
                 }
             }
             Short('b') | Long("bursts") => {
@@ -474,6 +486,9 @@ Options:
   -i, --interval <dur>  Refresh interval (default: config or 5s). Accepts a
                         unit suffix: 30s, 5m, 1h (bare number = seconds)
   -w, --bar-width <n>   Progress bar width in chars (default: config or 20)
+      --width <n>       Watch frame wrap width in columns (default: tty,
+                        COLUMNS, then 100). Wraps whole words; no effect on
+                        --json/--csv
   -b, --bursts <n>      Spend-burst sparkline samples (default: 40; hide when
                         idle via config burst_on=false)
       --json            Machine-readable JSON output where supported
@@ -527,6 +542,9 @@ Options:
   -i, --interval <dur>  Refresh interval (default: config or 5s). Accepts a
                         unit suffix: 30s, 5m, 1h (bare number = seconds)
   -w, --bar-width <n>   Progress bar width in chars (default: config or 20)
+      --width <n>       Watch frame wrap width in columns (default: tty,
+                        COLUMNS, then 100). Wraps whole words; no effect on
+                        --json/--csv
   -b, --bursts <n>      Spend-burst sparkline samples (default: 40; hide when
                         idle via config burst_on=false)
       --json            Machine-readable JSON output where supported
@@ -587,6 +605,9 @@ Options:
   -i, --interval <dur>  Refresh interval (default: config or 5s). Accepts a
                         unit suffix: 30s, 5m, 1h (bare number = seconds)
   -w, --bar-width <n>   Progress bar width in chars (default: config or 20)
+      --width <n>       Watch frame wrap width in columns (default: tty,
+                        COLUMNS, then 100). Wraps whole words; no effect on
+                        --json/--csv
   -b, --bursts <n>      AFP-burst sparkline samples (default: 40; hide when
                         idle via config burst_on=false)
       --json            Machine-readable JSON output where supported

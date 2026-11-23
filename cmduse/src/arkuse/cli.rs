@@ -151,6 +151,7 @@ pub fn run() {
             std::process::exit(2);
         }
     };
+    let width = crate::one_shot_width(&args);
     if args.help {
         cli::usage(Binary::Arkuse);
         return;
@@ -195,7 +196,7 @@ pub fn run() {
         if args.json {
             print!("{}", render::plans_json());
         } else {
-            print!("{}", render::plans_text(colours));
+            print!("{}", crate::wrap_text(&render::plans_text(colours), width));
         }
         return;
     }
@@ -236,7 +237,10 @@ pub fn run() {
         if args.json {
             print!("{}", render::models_json(&tier, args.gated));
         } else {
-            print!("{}", render::models_text(&tier, args.gated, colours));
+            print!(
+                "{}",
+                crate::wrap_text(&render::models_text(&tier, args.gated, colours), width)
+            );
         }
         return;
     }
@@ -392,50 +396,44 @@ pub fn run() {
             return;
         }
         Some(SubCmd::Daily) => {
-            print!(
-                "{}",
-                render::bucket_text(
-                    &read_since(now - days * 86_400_000),
-                    &catalog,
-                    now,
-                    days * 86_400_000,
-                    86_400_000,
-                    tz_secs,
-                    colours,
-                    fmt,
-                    args.rows_cap(usize::MAX),
-                )
+            let text = render::bucket_text(
+                &read_since(now - days * 86_400_000),
+                &catalog,
+                now,
+                days * 86_400_000,
+                86_400_000,
+                tz_secs,
+                colours,
+                fmt,
+                args.rows_cap(usize::MAX),
             );
+            print!("{}", crate::wrap_text(&text, width));
             return;
         }
         Some(SubCmd::Hours) => {
-            print!(
-                "{}",
-                render::bucket_text(
-                    &read_since(now - hours * 3_600_000),
-                    &catalog,
-                    now,
-                    hours * 3_600_000,
-                    3_600_000,
-                    tz_secs,
-                    colours,
-                    fmt,
-                    args.rows_cap(usize::MAX),
-                )
+            let text = render::bucket_text(
+                &read_since(now - hours * 3_600_000),
+                &catalog,
+                now,
+                hours * 3_600_000,
+                3_600_000,
+                tz_secs,
+                colours,
+                fmt,
+                args.rows_cap(usize::MAX),
             );
+            print!("{}", crate::wrap_text(&text, width));
             return;
         }
         Some(SubCmd::Session) => {
-            print!(
-                "{}",
-                render::session_text(
-                    &read_since(report_window),
-                    &catalog,
-                    args.rows_cap(20),
-                    colours,
-                    fmt
-                )
+            let text = render::session_text(
+                &read_since(report_window),
+                &catalog,
+                args.rows_cap(20),
+                colours,
+                fmt,
             );
+            print!("{}", crate::wrap_text(&text, width));
             return;
         }
         Some(SubCmd::Mcp) => {
@@ -455,20 +453,15 @@ pub fn run() {
         }
         Some(SubCmd::Model) => {
             let report = build_at(now, account.as_ref(), account_error.as_deref());
-            if fmt == Fmt::Table {
+            let text = if fmt == Fmt::Table {
                 match &model_id {
-                    Some(id) => print!("{}", render::model_text(&report, id, colours)),
-                    None => print!(
-                        "{}",
-                        render::models_period_text(&report, args.rows_cap(usize::MAX), colours)
-                    ),
+                    Some(id) => render::model_text(&report, id, colours),
+                    None => render::models_period_text(&report, args.rows_cap(usize::MAX), colours),
                 }
             } else {
-                print!(
-                    "{}",
-                    render::model_report(&report, model_id.as_deref(), fmt)
-                );
-            }
+                render::model_report(&report, model_id.as_deref(), fmt)
+            };
+            print!("{}", crate::wrap_text(&text, width));
             return;
         }
         // served above: plans and models need no store read
@@ -497,7 +490,10 @@ pub fn run() {
         } else {
             print!(
                 "{}",
-                render::render_text(&report, &db_path, rows, colours, bar_width)
+                crate::wrap_text(
+                    &render::render_text(&report, &db_path, rows, colours, bar_width),
+                    width
+                )
             );
         }
         return;
@@ -593,7 +589,8 @@ pub fn run() {
             Some(u) => format!("{u}{text}\n{status}"),
             None => format!("{text}\n{status}"),
         };
-        prev_lines = crate::redraw_frame(&mut out, &frame, prev_lines, cols_opt);
+        let width = crate::watch_width(&args, cols_opt);
+        prev_lines = crate::redraw_frame(&mut out, &frame, prev_lines, width);
         let _ = out.flush();
         crate::refresh_tick(interval, |remaining| {
             let msg = format!(

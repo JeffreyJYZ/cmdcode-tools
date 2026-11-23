@@ -248,6 +248,18 @@ Refresh interval (1\(en86400 seconds).  Accepts a unit suffix:
 .B \-w, \-\-bar\-width \fIn\fR
 Progress bar width (5\(en200).  Overrides config \fBbar_width\fR.
 .TP
+.B \-\-width \fIn\fR
+Wrap the live watch frame and one\-shot text at N UTF\-8 bytes of visible text
+(1\(en1000) on word boundaries.  ASCII costs one byte per column; a multibyte
+glyph costs its encoded bytes, so byte\-counting tools such as \fBawk length\fR
+agree with the flag and no row is wider on screen.  Continuation rows repeat the
+original left margin and colour, and no glyph is dropped; a line that fits is
+byte\-identical.  Without the flag the width comes from the terminal, then
+\fBCOLUMNS\fR, then 100, re\-resolved on every refresh.
+One\-shot text output uses the same width.  Table rows are left byte\-identical
+because a table column cannot be reflowed; use \fB\-\-rows\fR to shorten a table.
+\fB\-\-json\fR and \fB\-\-csv\fR ignore it.  All four binaries accept it.
+.TP
 .B \-b, \-\-bursts \fIn\fR
 Show the spend\-burst sparkline for this run with N samples (5\(en240);
 implies it on regardless of config.

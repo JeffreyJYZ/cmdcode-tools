@@ -87,12 +87,16 @@ pub fn run() {
     // statusline and MCP all read the same table and the same provenance.
     let catalog = od::install(catalogue::resolve(catalog_settings, now / 1000));
 
+    // One width for every one-shot text output, resolved exactly like the watch
+    // frame. Machine formats get None and bypass the wrapper altogether.
+    let width = crate::one_shot_width(&args);
+
     // `plans` needs neither the store nor a plan id: the catalogue is static.
     if let Some(SubCmd::Plans) = args.subcmd {
         if args.json {
             print!("{}", render::plans_json());
         } else {
-            print!("{}", render::plans_text(colours));
+            print!("{}", crate::wrap_text(&render::plans_text(colours), width));
         }
         return;
     }
@@ -116,7 +120,10 @@ pub fn run() {
         if args.json {
             print!("{}", render::models_json(&plan_id));
         } else {
-            print!("{}", render::models_text(&plan_id, colours));
+            print!(
+                "{}",
+                crate::wrap_text(&render::models_text(&plan_id, colours), width)
+            );
         }
         return;
     }
@@ -153,6 +160,7 @@ pub fn run() {
         tz_secs: args.tz.unwrap_or(0),
         colours,
         fmt: args::output_fmt(&args),
+        width,
         period: &period,
         wallet: resolved.wallet,
         wallet_error: resolved.error,

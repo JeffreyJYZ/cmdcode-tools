@@ -71,6 +71,12 @@ Two related non-`clip` cases:
 - **Model-id columns.** ocuse sizes the name field to the longest displayed id with a floor of 28 (`cmduse/src/ocuse/render.rs:657-667`), as does oduse (`cmduse/src/oduse/render/model_table.rs:13-21`); arkuse hard-codes `{:<28}` (`cmduse/src/arkuse/render.rs:362-367`, `:402-407`, `:656`, `:1357-1368`, `:1389`), so a long ARK model id pushes its numbers right instead of clipping them.
 - **`ocuse -1` at a narrow width:** there is no terminal-width flag — `--bar-width` sets the gauge only (`cmduse/src/ocuse/cli.rs:40`, `cmduse/src/lib.rs:165`). Width comes from `stty size < /dev/tty` (`cmduse/src/lib.rs:393-411`); when piped there is no tty, so `cols = 0`, `cols_opt = None` and `clip_to_width` returns the line unchanged (`cmduse/src/lib.rs:417`). `COLUMNS` is never read anywhere in `cmduse/src`. Measured: `COLUMNS=40 ocuse -1 --no-api` and `COLUMNS=200 ocuse -1 --no-api` produced byte-identical output (2,126 bytes, longest line 122 columns — the Monthly window line). With a real tty under 40 columns, `compact_frame()` (`cmduse/src/ocuse/cli.rs:196-199`) switches to the one-line `compact_line()` (`cmduse/src/ocuse/render.rs:757-787`) and drops the note and table entirely.
 
+**Resolved by lane V.** Watch mode no longer clips: `redraw_frame` wraps every frame line at
+`--width` columns (else tty, `COLUMNS`, 100) with word boundaries, keeping the margin and colour
+on continuation rows. One-shot text uses the same `wrap_line` and width through `wrap_text`;
+aligned table rows stay byte-identical. The 110-character note survives whole. See `lane-v.md`
+for both proofs.
+
 ## 4. Ranked fix list
 
 1. **OpenDesign identity** — `opencode-plugin/src/sidebar/od-rows-parts.ts:78-89`. The per-model value still carries the percentage, so the id is cut to ~16 columns. Apply the Go lane's pattern: value without the share, share as an indented continuation, id whole. Highest visual impact after the two reported Go strings.

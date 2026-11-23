@@ -21,6 +21,10 @@ pub struct Loop<'a> {
     pub rows: usize,
     pub colour: bool,
     pub bar_width: usize,
+    /// `--width` for the shared watch wrap; `None` = resolve from tty/COLUMNS.
+    pub width: Option<usize>,
+    /// Machine formats never reach the watch loop, so they must never wrap.
+    pub machine: bool,
     pub interval: u64,
     pub burst_on: bool,
     pub burst_cap: usize,
@@ -159,7 +163,8 @@ pub fn run(mut config: Loop<'_>) {
             Some(u) => format!("{u}{text}\n{status}"),
             None => format!("{text}\n{status}"),
         };
-        prev_lines = crate::redraw_frame(&mut out, &frame, prev_lines, cols_opt);
+        let width = crate::frame_width(config.width, config.machine, cols_opt);
+        prev_lines = crate::redraw_frame(&mut out, &frame, prev_lines, width);
         let _ = out.flush();
         crate::refresh_tick(interval, |remaining| {
             let msg = format!(

@@ -88,12 +88,13 @@ pub fn run() {
     let fmt = output_fmt(&args);
     let colors = !args.plain && render::color_enabled();
     let tz = args.tz.unwrap_or(0);
+    let width = one_shot_width(&args);
 
     // offline local reports — no API, no key needed
     match args.subcmd {
         Some(cli::SubCmd::Daily) => {
             match daily_output(args.last, tz, args.local, fmt, rows_cap(&args, usize::MAX)) {
-                Ok(text) => print!("{text}"),
+                Ok(text) => print!("{}", wrap_text(&text, width)),
                 Err(e) => {
                     eprintln!("error: {e}");
                     std::process::exit(1);
@@ -103,7 +104,7 @@ pub fn run() {
         }
         Some(cli::SubCmd::Hours) => {
             match hourly_output(args.hours, tz, args.local, fmt, rows_cap(&args, usize::MAX)) {
-                Ok(text) => print!("{text}"),
+                Ok(text) => print!("{}", wrap_text(&text, width)),
                 Err(e) => {
                     eprintln!("error: {e}");
                     std::process::exit(1);
@@ -112,35 +113,32 @@ pub fn run() {
             return;
         }
         Some(cli::SubCmd::Model) => {
-            print!(
-                "{}",
-                match args.model_id.as_deref() {
-                    Some(id) =>
-                        model_detail_output(id, args.since.as_deref(), args.last, tz, fmt, colors),
-                    None => model_output(
-                        args.since.as_deref(),
-                        args.last,
-                        tz,
-                        fmt,
-                        colors,
-                        rows_cap(&args, usize::MAX)
-                    ),
+            let text = match args.model_id.as_deref() {
+                Some(id) => {
+                    model_detail_output(id, args.since.as_deref(), args.last, tz, fmt, colors)
                 }
-            );
-            return;
-        }
-        Some(cli::SubCmd::Session) => {
-            print!(
-                "{}",
-                session_output(
+                None => model_output(
                     args.since.as_deref(),
                     args.last,
                     tz,
                     fmt,
                     colors,
-                    rows_cap(&args, 20)
-                )
+                    rows_cap(&args, usize::MAX),
+                ),
+            };
+            print!("{}", wrap_text(&text, width));
+            return;
+        }
+        Some(cli::SubCmd::Session) => {
+            let text = session_output(
+                args.since.as_deref(),
+                args.last,
+                tz,
+                fmt,
+                colors,
+                rows_cap(&args, 20),
             );
+            print!("{}", wrap_text(&text, width));
             return;
         }
         Some(cli::SubCmd::Statusline) => {
@@ -190,9 +188,9 @@ pub fn run() {
         if args.json {
             println!("{}", render::render_json(&s));
         } else if args.plain || !render::color_enabled() {
-            print!("{}", render::render_plain(&s));
+            print!("{}", wrap_text(&render::render_plain(&s), width));
         } else {
-            print!("{}", render::render(&s, bar_width));
+            print!("{}", wrap_text(&render::render(&s, bar_width), width));
         }
         return;
     }
@@ -322,7 +320,8 @@ pub fn run() {
             Some(u) => format!("{u}{text}{spark}{status_line}"),
             None => format!("{text}{spark}{status_line}"),
         };
-        prev_lines = redraw_frame(&mut out, &frame, prev_lines, (cols > 0).then_some(cols));
+        let width = watch_width(&args, (cols > 0).then_some(cols));
+        prev_lines = redraw_frame(&mut out, &frame, prev_lines, width);
         out.flush().ok();
         // countdown: rewrite just the status line each second (cursor already on it)
         refresh_tick(interval, |remaining| {
@@ -410,16 +409,12 @@ pub fn term_size() -> Option<(usize, usize)> {
     Some((rows, cols))
 }
 
-/// Keep a frame line from auto-wrapping: count visible columns ignoring SGR
-/// escapes and control chars, and drop trailing visible chars that would
-/// push past `cols`. Appends a reset so a truncated color run can't leak.
-pub fn clip_to_width(line: &str, cols: Option<usize>) -> String {
-    let Some(cols) = cols else { return line.into() };
-    if cols == 0 {
-        return String::new();
-    }
+/// Visible columns of a rendered line: SGR escapes and control chars are zero
+/// width. Shared by the clip guard and the word wrapper so the two cannot
+/// disagree on what "fits" means.
+fn visible_columns(s: &str) -> usize {
     let mut vis = 0usize;
-    let mut cs = line.chars().peekable();
+    let mut cs = s.chars().peekable();
     while let Some(&c) = cs.peek() {
         match c {
             '\x1b' => {
@@ -439,6 +434,18 @@ pub fn clip_to_width(line: &str, cols: Option<usize>) -> String {
             }
         }
     }
+    vis
+}
+
+/// Keep a frame line from auto-wrapping: count visible columns ignoring SGR
+/// escapes and control chars, and drop trailing visible chars that would
+/// push past `cols`. Appends a reset so a truncated color run can't leak.
+pub fn clip_to_width(line: &str, cols: Option<usize>) -> String {
+    let Some(cols) = cols else { return line.into() };
+    if cols == 0 {
+        return String::new();
+    }
+    let vis = visible_columns(line);
     if vis <= cols {
         return line.into();
     }
@@ -473,6 +480,286 @@ pub fn clip_to_width(line: &str, cols: Option<usize>) -> String {
     }
 }
 
+/// UTF-8 byte length of the visible chars in a line. Wrapping budgets bytes,
+/// not just display columns: `awk length` and other byte-counting tools then
+/// agree with `--width`, and a line that fits in bytes also fits on screen.
+/// A line with multibyte glyphs is therefore a little narrower on screen.
+fn visible_bytes(s: &str) -> usize {
+    let mut vis = 0usize;
+    let mut cs = s.chars().peekable();
+    while let Some(&c) = cs.peek() {
+        match c {
+            '\x1b' => {
+                cs.next();
+                for e in cs.by_ref() {
+                    if e.is_ascii_alphabetic() {
+                        break;
+                    }
+                }
+            }
+            c if (c as u32) < 0x20 => {
+                cs.next();
+            }
+            _ => {
+                vis += c.len_utf8();
+                cs.next();
+            }
+        }
+    }
+    vis
+}
+
+/// `COLUMNS` as a positive integer: the fallback when there is no tty.
+pub fn columns_env() -> Option<usize> {
+    std::env::var("COLUMNS")
+        .ok()
+        .and_then(|v| v.parse::<usize>().ok())
+        .filter(|&n| n > 0)
+}
+
+/// Resolve the watch-frame wrap width. Priority: an explicit `--width`, the
+/// terminal's own column count, `COLUMNS`, then 100. `None` from a source means
+/// "no answer", never "zero columns", so a missing source cannot blank a frame.
+pub fn resolve_width(
+    explicit: Option<usize>,
+    tty_cols: Option<usize>,
+    columns: Option<usize>,
+) -> usize {
+    explicit
+        .filter(|&n| n > 0)
+        .or_else(|| tty_cols.filter(|&n| n > 0))
+        .or_else(|| columns.filter(|&n| n > 0))
+        .unwrap_or(100)
+}
+
+/// Width the watch loop wraps at, given the tty columns already queried this
+/// refresh. Machine formats never enter the watch loop, so `--json`/`--csv`
+/// ignore `--width` entirely and get `None` (no wrap, byte-identical output).
+pub fn frame_width(
+    explicit: Option<usize>,
+    machine: bool,
+    tty_cols: Option<usize>,
+) -> Option<usize> {
+    if machine {
+        return None;
+    }
+    Some(resolve_width(explicit, tty_cols, columns_env()))
+}
+
+/// `frame_width` driven by parsed args, for the three binaries whose watch loop
+/// owns them directly.
+pub fn watch_width(args: &cli::Args, tty_cols: Option<usize>) -> Option<usize> {
+    frame_width(args.width, args.json || args.csv, tty_cols)
+}
+
+/// The same resolution for one-shot text output: `--width` → tty → `COLUMNS` →
+/// 100, with `--json`/`--csv` still returning `None` so machine formats never
+/// get a newline inserted into a record.
+pub fn one_shot_width(args: &cli::Args) -> Option<usize> {
+    watch_width(args, term_size().map(|(_, c)| c))
+}
+
+/// A table row is aligned by two or more runs of spaces (or drawn with box
+/// characters). Reflowing it would break the columns, so those rows are left
+/// byte-identical; a prose line has at most one padded label gap.
+fn table_row(line: &str) -> bool {
+    let t = line.trim();
+    if t.is_empty() {
+        return false;
+    }
+    if t.contains('│') || t.contains('┌') || t.contains('└') || t.starts_with('+') {
+        return true;
+    }
+    let mut gaps = 0usize;
+    let mut run = 0usize;
+    for c in t.chars() {
+        if c.is_whitespace() {
+            run += 1;
+        } else {
+            if run >= 2 {
+                gaps += 1;
+            }
+            run = 0;
+        }
+    }
+    if run >= 2 {
+        gaps += 1;
+    }
+    gaps >= 2
+}
+
+/// Wrap a whole one-shot text output line by line at `width`, preserving the
+/// trailing newline byte-for-byte. Table rows are emitted unchanged.
+pub fn wrap_text(text: &str, width: Option<usize>) -> String {
+    let mut out = String::with_capacity(text.len());
+    for (i, line) in text.split('\n').enumerate() {
+        if i > 0 {
+            out.push('\n');
+        }
+        if table_row(line) {
+            out.push_str(line);
+        } else {
+            out.push_str(&wrap_line(line, width).join("\n"));
+        }
+    }
+    out
+}
+
+/// Wrap one rendered frame line at `width` visible columns. Continuation lines
+/// repeat the original left margin and the colour still active at the break, so
+/// a wrapped explanation reads as one indented block. Words are never split and
+/// no ellipsis is added: a line that does not fit keeps every glyph, just on
+/// more rows. A line that already fits is returned byte-identical; `None` means
+/// "no width known" and leaves the line unchanged, as before.
+pub fn wrap_line(line: &str, width: Option<usize>) -> Vec<String> {
+    let Some(width) = width.filter(|&w| w > 0) else {
+        return vec![line.into()];
+    };
+    if visible_bytes(line) <= width {
+        return vec![line.into()];
+    }
+
+    enum Tok {
+        Escape(String),
+        Cr,
+        Control(char),
+        Space(String),
+        Word(String),
+    }
+
+    let chars: Vec<char> = line.chars().collect();
+    let mut toks: Vec<Tok> = Vec::new();
+    let mut i = 0;
+    while i < chars.len() {
+        let c = chars[i];
+        if c == '\x1b' {
+            let start = i;
+            i += 1;
+            while i < chars.len() && !chars[i].is_ascii_alphabetic() {
+                i += 1;
+            }
+            if i < chars.len() {
+                i += 1;
+            }
+            toks.push(Tok::Escape(chars[start..i].iter().collect()));
+        } else if c == '\r' {
+            toks.push(Tok::Cr);
+            i += 1;
+        } else if (c as u32) < 0x20 {
+            toks.push(Tok::Control(c));
+            i += 1;
+        } else if c.is_whitespace() {
+            let start = i;
+            while i < chars.len()
+                && chars[i].is_whitespace()
+                && chars[i] != '\x1b'
+                && (chars[i] as u32) >= 0x20
+            {
+                i += 1;
+            }
+            toks.push(Tok::Space(chars[start..i].iter().collect()));
+        } else {
+            let start = i;
+            while i < chars.len()
+                && !chars[i].is_whitespace()
+                && chars[i] != '\x1b'
+                && (chars[i] as u32) >= 0x20
+            {
+                i += 1;
+            }
+            toks.push(Tok::Word(chars[start..i].iter().collect()));
+        }
+    }
+
+    // The renderer's left margin is the leading whitespace, skipping any SGR
+    // that precedes it. Repeating it keeps wrapped prose in the same column.
+    let mut margin = String::new();
+    for t in &toks {
+        match t {
+            Tok::Space(s) => margin.push_str(s),
+            Tok::Escape(_) => {}
+            _ => break,
+        }
+    }
+    let margin_cols = margin.len();
+
+    let mut lines: Vec<String> = Vec::new();
+    let mut cur = String::new();
+    let mut cur_cols = 0usize;
+    let mut has_content = false;
+    let mut style = String::new();
+    let mut pending = String::new();
+
+    for tok in toks {
+        match tok {
+            Tok::Space(s) => pending.push_str(&s),
+            Tok::Escape(e) => {
+                cur.push_str(&pending);
+                cur_cols += pending.len();
+                pending.clear();
+                let sgr = e.starts_with("\x1b[") && e.ends_with('m');
+                cur.push_str(&e);
+                if sgr {
+                    if e == "\x1b[0m" || e == "\x1b[m" {
+                        style.clear();
+                    } else {
+                        style.push_str(&e);
+                    }
+                }
+            }
+            Tok::Cr => {
+                cur.push_str(&pending);
+                cur_cols += pending.len();
+                pending.clear();
+                cur.push('\r');
+            }
+            Tok::Control(c) => {
+                cur.push_str(&pending);
+                cur_cols += pending.len();
+                pending.clear();
+                cur.push(c);
+            }
+            Tok::Word(w) => {
+                let wc = w.len();
+                let pc = pending.len();
+                if has_content && cur_cols + pc + wc > width {
+                    // Break at the separator, never inside the word. Close the
+                    // colour on the old row and reopen it on the continuation.
+                    if !style.is_empty() {
+                        cur.push_str("\x1b[0m");
+                    }
+                    lines.push(std::mem::take(&mut cur));
+                    cur = margin.clone();
+                    cur_cols = margin_cols;
+                    if !style.is_empty() {
+                        cur.push_str(&style);
+                    }
+                    cur.push_str(&w);
+                    cur_cols += wc;
+                    has_content = true;
+                } else {
+                    cur.push_str(&pending);
+                    cur_cols += pc;
+                    cur.push_str(&w);
+                    cur_cols += wc;
+                    has_content = true;
+                }
+                pending.clear();
+            }
+        }
+    }
+    cur.push_str(&pending);
+    if !lines.is_empty() && !style.is_empty() {
+        // Only wrapped frames carry a trailing reset; a single-line frame must
+        // stay byte-identical to today's output.
+        cur.push_str("\x1b[0m");
+    }
+    if !cur.is_empty() {
+        lines.push(cur);
+    }
+    lines
+}
+
 /// In-place terminal redraw of one frame. Assumes the cursor parks on the
 /// previous frame's last line (no trailing newline). Returns the new frame's
 /// line count so the caller can pass it back as `prev_lines`.
@@ -480,16 +767,21 @@ pub fn redraw_frame(
     out: &mut impl Write,
     frame: &str,
     prev_lines: usize,
-    cols: Option<usize>,
+    width: Option<usize>,
 ) -> usize {
     if prev_lines > 0 {
         // move cursor up to top of previous frame (we're ON its last line)
         write!(out, "\x1b[{}F", prev_lines - 1).ok();
     }
-    let lines: Vec<&str> = frame.lines().collect();
+    // Wrap, never cut: a long note keeps every word on a continuation line
+    // with the same margin and colour. The count below is the wrapped count,
+    // so the shrink/clear math stays in step with what is on screen.
+    let lines: Vec<String> = frame
+        .lines()
+        .flat_map(|line| wrap_line(line, width))
+        .collect();
     let n = lines.len();
     for (i, line) in lines.iter().enumerate() {
-        let line = clip_to_width(line, cols);
         if i + 1 < n {
             write!(out, "\x1b[2K\r{line}\n").ok();
         } else {
@@ -616,7 +908,13 @@ fn plans_cmd(args: &cli::Args) {
     if args.json {
         print!("{}", render::plans_json(&current));
     } else {
-        print!("{}", render::plans_table(&current, render::color_enabled()));
+        print!(
+            "{}",
+            wrap_text(
+                &render::plans_table(&current, render::color_enabled()),
+                one_shot_width(args)
+            )
+        );
     }
 }
 
