@@ -25,3 +25,12 @@ Scope: `opencode-plugin/` only. No commit, no tag, no publish, no `AGENTS.md` ed
 ## Gate notes
 
 `bun test` (370 pass), `bun check`, `bun fmt --check`, `bunx biome lint`, `bun run build` all green. `biome lint` prints an info about `biome.json`'s `$schema` 2.6.3 vs CLI 2.6.8 — pre-existing, exit 0. `dist/` is gitignored; build embedded version `0.5.40` in `dist/index.js`.
+
+## Lane S — wrap, never truncate (2026-11-23)
+
+- `wrap(text, width = ROW_WIDTH, maxLines = 2)` sits in `rows.ts` beside `clip`. It returns `{ lines, complete }`, breaks only at word boundaries, and never emits `…`. A single word wider than the width is hard-split, not truncated.
+- The note wraps at `valueWidth("")` (35). If it cannot fit in two lines, the panel falls back to `limit changed mid-period` plus `<pct> <server|blended> · <now share>`. The CLI keeps the full sentence. The `now` share comes from `ranked[0]`, the row printed below — not from the active model, which differs when the session model is not the top spender.
+- `capChangeLine` goes through the same wrapper. Neither the note nor the cap-change line uses `clip` any more.
+- By-model rows: whole id as the label, money as the value, `X% now` on a muted continuation. `parts()` already indents continuations by two — the same width as `: ` — so the extra indent is the label's own length and the share lands under the value column. Clip the id only when the value leaves too little room, and then to that room.
+- At the reported `$70.15/$100` (11 columns) the id budget is 24: `deepseek-v4.1-flash` (19) is the longest Go allowance id that survives; the two 26-column `muse-spark-*-contributor` ids survive when the value is short.
+- Version `0.5.41`, `dist/` rebuilt (`dist/index.js` carries the string), pin untouched. Gate green: 375 tests, `bun check`, `bun fmt --check`, `bunx biome lint` (schema info only, exit 0), `bun run build`.

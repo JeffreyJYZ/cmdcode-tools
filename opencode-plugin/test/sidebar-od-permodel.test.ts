@@ -102,7 +102,8 @@ describe("odRows with per-model caps", () => {
 		expect(note?.[1]).toBe("of $120 · Flash caps");
 		// And the per-model table divides each model by its own allowance.
 		const head = rows.findIndex((row) => row[1] === "by model · this period");
-		expect(rows[head + 1]).toEqual(["deepseek-v4.1-flash", "$88/$120 (73.3%)", "base"]);
+		expect(rows[head + 1]).toEqual(["deepseek-v4.1-flash", "$88/$120", "base"]);
+		expect(rows[head + 2]?.[1]?.trim()).toBe("73.3% now");
 	});
 
 	test("the caveats no longer claim the headline set is the meter", () => {

@@ -162,8 +162,10 @@ describe("odRows", () => {
 		const rows = rowsOf(JSON.parse(odSnapshot()));
 		const head = rows.findIndex((row) => row[1] === "by model · this period");
 		expect(head).toBeGreaterThan(-1);
-		expect(rows[head + 1]).toEqual(["deepseek-v4.1-flash", "$88/$220 (40.0%)", "base"]);
-		expect(rows[head + 2]?.[1]).toBe("$10.40/$220 (4.7%)");
+		expect(rows[head + 1]).toEqual(["deepseek-v4.1-flash", "$88/$220", "base"]);
+		expect(rows[head + 2]?.[1]?.trim()).toBe("40.0% now");
+		expect(rows[head + 3]).toEqual(["glm-5.3-flash", "$10.40/$220", "base"]);
+		expect(rows[head + 4]?.[1]?.trim()).toBe("4.7% now");
 	});
 
 	test("a published plan-model allowance rides as a row with no meter", () => {

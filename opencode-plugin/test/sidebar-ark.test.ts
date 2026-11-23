@@ -166,9 +166,11 @@ describe("arkRows", () => {
 
 	test("an unread model still gets a per-model row", () => {
 		const rows = arkRows(parseArkJson(withAccount()), "glm-5.3");
-		expect(rows.find((row) => row[0] === "AFP (this model)")?.[1]).toBe(
-			"no usage in this period",
-		);
+		// The reason is a sentence, so it sits on a continuation rather than
+		// overflowing a 16-column label's value slot.
+		expect(rows.find((row) => row[0] === "AFP (this model)")?.[1]).toBe("");
+		expect(rows.some((row) => row[1] === "no usage in this period")).toBe(true);
+		for (const row of rows) expect(rowWidth(row)).toBeLessThanOrEqual(ROW_WIDTH);
 	});
 
 	test("every row fits the 42-column sidebar", () => {

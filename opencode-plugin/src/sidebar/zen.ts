@@ -14,7 +14,7 @@
 // implementation. The rolling 5-hour/weekly windows get their reset from the
 // oldest request still inside them (see `rollingReset`), so they carry the same
 // continuation the CommandCode panel shows.
-import { FIVE_HOUR_SECS, GO_WINDOW_SHARE, WEEKLY_SECS } from "../constants/sidebar";
+import { FIVE_HOUR_SECS, GO_WINDOW_SHARE, ROW_WIDTH, WEEKLY_SECS } from "../constants/sidebar";
 import {
 	actionableAccountError,
 	allowanceLabel,
@@ -25,11 +25,13 @@ import {
 	type ModelUsage,
 	modelKey,
 	money,
+	mutedWrap,
 	rate,
 	type SidebarRow,
 	separator,
 	valueWidth,
 	windowRows,
+	wrap,
 } from "./rows";
 
 export interface ZenTotals {
@@ -264,6 +266,37 @@ function capChangeLine(change: CapChange): string {
 	return `limit ${money(change.from)}→${money(change.to)} on ${date}`;
 }
 
+/** The console's own whole percent, without a spurious decimal. Shared with the
+ *  compact note so the figure above it and the figure in the note cannot drift. */
+function meterPctText(pct: number): string {
+	return Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
+}
+
+/** The per-model `spend ÷ today's cap` figure, as the by-model row prints it.
+ *  When the meter's note cannot fit, its compact form reuses this exact text so
+ *  the share named in the note is the one shown below it. */
+function nowShare(model: ZenModel | undefined): string | undefined {
+	const allowance = model?.limit;
+	if (!model || typeof allowance !== "number" || allowance <= 0) return undefined;
+	return `${((model.month.cost / allowance) * 100).toFixed(1)}% now`;
+}
+
+/** The note's compact panel form: that the limit moved, then the two shares —
+ *  the meter's above and the per-model `now` below. The full CLI sentence stays
+ *  in the CLI, where there is width for it; here it would need four lines. */
+function compactNote(meter: ZenMeter, now: string | undefined): string[] {
+	const basis = meter.percentSource === "blended" ? "blended" : "server";
+	const nowText =
+		now ??
+		(typeof meter.currentCapPercent === "number"
+			? `${meter.currentCapPercent.toFixed(1)}% now`
+			: undefined);
+	return [
+		"limit changed mid-period",
+		`${meterPctText(meter.percent)}% ${basis}${nowText ? ` · ${nowText}` : ""}`,
+	];
+}
+
 /**
  * One window on the Go/Zen panel. With a cap it goes through the shared
  * `windowRows`, so the over-cap flag, tone, `cap in …`, `elapsed` and `resets`
@@ -335,7 +368,7 @@ function zenMeterRows(
 	const pct = meter.percent;
 	// The endpoint publishes whole percents (`"percent":53`); a tenth here would
 	// claim a precision the console's own rounding does not have.
-	const pctText = Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
+	const pctText = meterPctText(pct);
 	// Name the basis on this row: `blended` when history sampled a cap move,
 	// `server` for the endpoint's own figure. The word is the CLI's own, and it
 	// keeps the share from being read as today's-cap spend ÷ limit.
@@ -482,6 +515,12 @@ export function zenRows(
 			),
 		);
 	}
+	// The by-model table is built once, before the note: the note's compact form
+	// must name the same `now` share the rows below print, not the active model's
+	// (they are different when the session's model is not the top spender).
+	const ranked = [...usage.models.values()]
+		.sort((a, b) => b.month.cost - a.month.cost)
+		.slice(0, 3);
 	if (usage.account) {
 		// The monthly meter above is a share of a *time-weighted* allowance when
 		// the cap moved mid-period. Its note and the sampled moves say why it
@@ -489,10 +528,20 @@ export function zenRows(
 		// the two percentages sit adjacent and read as a contradiction. The CLI
 		// prints the same two lines, dimmed; the panel uses its muted continuation.
 		if (usage.account.monthly.note) {
-			rows.push(["", clip(usage.account.monthly.note, valueWidth("")), "muted"]);
+			const wrapped = wrap(usage.account.monthly.note, valueWidth(""));
+			if (wrapped.complete) {
+				// Short notes keep the CLI's own sentence, whole.
+				for (const line of wrapped.lines) rows.push(["", line, "muted"]);
+			} else {
+				// The 110-character CLI prose needs four lines here. Say the same
+				// thing in two: the limit moved, and the two shares on screen.
+				for (const line of compactNote(usage.account.monthly, nowShare(ranked[0]))) {
+					rows.push(["", line, "muted"]);
+				}
+			}
 		}
 		for (const change of usage.capChanges ?? []) {
-			rows.push(["", clip(capChangeLine(change), valueWidth("")), "muted"]);
+			mutedWrap(rows, capChangeLine(change), valueWidth(""));
 		}
 	}
 	rows.push([
@@ -506,28 +555,39 @@ export function zenRows(
 	// meter above, so the share is labelled `now`. An unlabelled `(70.0%)` here,
 	// next to a `76% of limit` meter, read as a contradiction; the two answer
 	// different things. The values are this store's, on the period's own scale.
-	const ranked = [...usage.models.values()]
-		.sort((a, b) => b.month.cost - a.month.cost)
-		.slice(0, 3);
 	if (ranked.length > 1) {
 		rows.push(["", "by model · this month", "muted"]);
 		for (const entry of ranked) {
 			const allowance = entry.limit;
-			const share =
-				typeof allowance === "number" && allowance > 0
-					? ` · ${((entry.month.cost / allowance) * 100).toFixed(1)}% now`
-					: "";
+			const share = nowShare(entry);
 			const value =
 				typeof allowance === "number" && allowance > 0
-					? `${money(entry.month.cost)}/${money(allowance)}${share}`
+					? `${money(entry.month.cost)}/${money(allowance)}`
 					: money(entry.month.cost);
-			rows.push([clip(entry.id, valueWidth("") - value.length - 1), value, "base"]);
+			// The id is the row's identity: keep it whole. Clip only when even the
+			// id alone cannot sit beside the value, and then only to the room the
+			// value leaves — never to make a percentage fit.
+			const name = clip(entry.id, Math.max(4, ROW_WIDTH - value.length - 2));
+			rows.push([name, value, "base"]);
+			if (share) {
+				// Under the value column, not the label. `parts()` already indents
+				// a continuation by two, which is exactly the `: ` a value follows,
+				// so the extra indent is the label's own width.
+				const indent = Math.min(name.length, Math.max(0, ROW_WIDTH - 2 - share.length));
+				rows.push(["", " ".repeat(indent) + share, "muted"]);
+			}
 		}
 	}
 	rows.push(separator());
 	const name = meta?.name ?? fallbackName;
 	if (!name) return rows;
-	rows.push(["Model", clip(name, valueWidth("Model")), "strong", true]);
+	// The name is the row's identity: keep the whole string, even when it cannot
+	// sit beside the `Model` label. Only a name wider than the panel is clipped.
+	rows.push(
+		name.length <= valueWidth("Model")
+			? ["Model", name, "strong", true]
+			: [clip(name, ROW_WIDTH), "", "strong", true],
+	);
 	// The store-backed rows, exactly where `modelRows` puts them: this model's
 	// requests, then this conversation's own totals.
 	rows.push(...localUsageRows(modelUsage, session));

@@ -293,17 +293,19 @@ function localRows(
 export function arkRows(usage: ArkUsage | undefined, fallbackName?: string): SidebarRow[] {
 	if (!usage) return [];
 	const now = Date.now();
-	const rows: SidebarRow[] = [
-		[
-			"Plan",
-			clip(
-				`${usage.plan} · AFP plan${usage.profile ? ` · ${usage.profile}` : ""}`,
-				valueWidth("Plan"),
-			),
-			"base",
-			true,
-		],
-	];
+	const planText = `${usage.plan} · AFP plan`;
+	const fullPlan = usage.profile ? `${planText} · ${usage.profile}` : planText;
+	const planRow: SidebarRow =
+		planText.length <= valueWidth("Plan")
+			? ["Plan", planText, "base", true]
+			: [clip(usage.plan, ROW_WIDTH), "", "base", true];
+	const rows: SidebarRow[] =
+		fullPlan.length <= valueWidth("Plan") ? [["Plan", fullPlan, "base", true]] : [planRow];
+	if (usage.profile && fullPlan.length > valueWidth("Plan")) {
+		// A profile is an identity too: give it its own muted line, whole,
+		// instead of clipping its tail to make the plan headline fit.
+		rows.push(["", clip(usage.profile, valueWidth("")), "muted"]);
+	}
 	// The reason the plan's own numbers are missing belongs here, not buried
 	// below: an expired profile means every window below is this store's guess.
 	// Transport faults are excluded — they heal on the next poll, and printing
@@ -366,7 +368,12 @@ export function arkRows(usage: ArkUsage | undefined, fallbackName?: string): Sid
 	rows.push(separator());
 	if (!fallbackName) return rows;
 	const model = usage.models.get(fallbackName);
-	rows.push(["Model", clip(fallbackName, valueWidth("Model")), "strong", true]);
+	// The model id is the identity: never abbreviate it to fit the label slot.
+	rows.push(
+		fallbackName.length <= valueWidth("Model")
+			? ["Model", fallbackName, "strong", true]
+			: [clip(fallbackName, ROW_WIDTH), "", "strong", true],
+	);
 	rows.push([
 		"AFP (this model)",
 		model
@@ -374,9 +381,14 @@ export function arkRows(usage: ArkUsage | undefined, fallbackName?: string): Sid
 					`${afp(model.month.afp)} · ${count(model.month.requests)} req`,
 					valueWidth("AFP (this model)"),
 				)
-			: "no usage in this period",
+			: "",
 		"base",
 	]);
+	if (!model) {
+		// The label already takes 16 columns; this sentence takes 23. Keep the
+		// whole reason on a continuation instead of overflowing the panel.
+		rows.push(["", "no usage in this period", "muted"]);
+	}
 	if (model && usage.summary.afp > 0) {
 		const share = (model.month.afp / usage.summary.afp) * 100;
 		rows.push([

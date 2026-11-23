@@ -76,17 +76,33 @@ export function modelRows(
 	const rows: SidebarRow[] = [["", "by model · this period", "muted"]];
 	for (const entry of ranked) {
 		let value = `${count(entry.month.requests)} req · unpriced`;
+		let share: string | undefined;
 		if (entry.priced) {
 			const cap = capFor(entry);
-			value =
-				typeof cap === "number" && cap > 0
-					? `${money(entry.month.credits)}/${money(cap)} (${((entry.month.credits / cap) * 100).toFixed(1)}%)`
-					: money(entry.month.credits);
+			if (typeof cap === "number" && cap > 0) {
+				// The value is spend, not spend plus a share: the share used to
+				// consume the id's width and cut `deepseek-v4.1-flash` down to
+				// ~16 columns. Like the Go panel, it rides on a continuation.
+				value = `${money(entry.month.credits)}/${money(cap)}`;
+				share = `${((entry.month.credits / cap) * 100).toFixed(1)}% now`;
+			} else {
+				value = money(entry.month.credits);
+			}
 		}
-		// Label + 2 + value must fit; a floor keeps a freak value from turning the
-		// clip width negative, which would return the whole id plus an ellipsis.
-		const idWidth = Math.max(4, ROW_WIDTH - value.length - 2);
-		rows.push([clip(entry.id, idWidth), value, "base"]);
+		if (entry.id.length + 2 + value.length <= ROW_WIDTH) {
+			rows.push([entry.id, value, "base"]);
+		} else {
+			// The id is the identity: keep it whole on its own row and move the
+			// number below, rather than abbreviating the id to fit a figure.
+			rows.push([clip(entry.id, ROW_WIDTH), "", "base"]);
+			rows.push(["", value, "muted"]);
+		}
+		if (share) {
+			// Under the value column, not the label: `parts()` already indents a
+			// continuation by the `: ` a value follows, so add the id's own width.
+			const indent = Math.min(entry.id.length, Math.max(0, ROW_WIDTH - 2 - share.length));
+			rows.push(["", " ".repeat(indent) + share, "muted"]);
+		}
 	}
 	return rows;
 }
