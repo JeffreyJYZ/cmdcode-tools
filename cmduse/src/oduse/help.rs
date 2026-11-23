@@ -22,6 +22,9 @@ Options:
   -i, --interval <dur>  Refresh interval (default: config or 5s). Accepts a
                         unit suffix: 30s, 5m, 1h (bare number = seconds)
   -w, --bar-width <n>   Progress bar width in chars (default: config or 20)
+      --width <n>       Watch frame wrap width in columns (default: tty,
+                        COLUMNS, then 100). Wraps whole words; no effect on
+                        --json/--csv
   -b, --bursts <n>      Spend-burst sparkline samples (default: 40; hide when
                         idle via config burst_on=false)
       --json            Machine-readable JSON output where supported

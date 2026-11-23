@@ -121,6 +121,156 @@ fn clip_keeps_leading_carriage_return_when_truncated() {
 }
 
 #[test]
+fn watch_lines_wrap_instead_of_cutting() {
+    // The 110-character allowance note at a 40-column terminal: three lines,
+    // every word kept, no ellipsis. The old clip_to_width dropped the tail.
+    let text = "the allowance changed during this period from $55 to $70 for deepseek because the plan limit moved again today";
+    assert_eq!(text.chars().count(), 110);
+    let lines = crate::wrap_line(text, Some(40));
+    assert_eq!(lines.len(), 3, "wrapped lines: {lines:?}");
+    assert_eq!(lines.join(" "), text, "no character lost");
+    assert!(!lines.join(" ").contains('…'));
+    assert!(
+        lines.iter().all(|l| crate::visible_columns(l) <= 40),
+        "a wrapped row must fit: {lines:?}"
+    );
+}
+
+#[test]
+fn a_line_that_fits_is_byte_identical() {
+    let line = "  Monthly  $70.15 / $100 · 70.1% used";
+    assert_eq!(crate::wrap_line(line, Some(120)), vec![line.to_string()]);
+    assert_eq!(crate::wrap_line(line, None), vec![line.to_string()]);
+}
+
+#[test]
+fn width_comes_from_the_terminal_then_columns_then_100() {
+    assert_eq!(crate::resolve_width(Some(40), Some(80), Some(60)), 40);
+    assert_eq!(crate::resolve_width(None, Some(80), Some(60)), 80);
+    assert_eq!(crate::resolve_width(None, None, Some(60)), 60);
+    assert_eq!(crate::resolve_width(None, None, None), 100);
+    // a zero/absent answer is not a width; it must fall through
+    assert_eq!(crate::resolve_width(None, Some(0), Some(60)), 60);
+}
+
+#[test]
+fn json_and_csv_ignore_width() {
+    let mut args = crate::cli::Args {
+        width: Some(40),
+        ..Default::default()
+    };
+    assert_eq!(crate::watch_width(&args, Some(80)), Some(40));
+    args.json = true;
+    assert_eq!(crate::watch_width(&args, Some(80)), None);
+    args.json = false;
+    args.csv = true;
+    assert_eq!(crate::watch_width(&args, Some(80)), None);
+}
+
+#[test]
+fn wrapped_lines_keep_the_margin_and_colour() {
+    let text = "the allowance changed during this period from $55 to $70 for deepseek because the plan limit moved again today";
+    let line = format!("  \x1b[2m{text}\x1b[0m");
+    let lines = crate::wrap_line(&line, Some(40));
+    assert!(lines.len() > 1, "must wrap: {lines:?}");
+    for wrapped in &lines {
+        assert!(
+            wrapped.starts_with("  \x1b[2m"),
+            "margin + dim reopened: {wrapped:?}"
+        );
+    }
+    assert!(
+        lines[..lines.len() - 1]
+            .iter()
+            .all(|l| l.ends_with("\x1b[0m")),
+        "each wrapped row closes its colour: {lines:?}"
+    );
+    let last = lines.last().unwrap();
+    assert!(last.contains("today"), "tail word survived: {last:?}");
+}
+
+#[test]
+fn redraw_wraps_a_long_frame_line_without_losing_words() {
+    let mut buf = Vec::new();
+    let frame = format!("short\n{}", "word ".repeat(30));
+    let n = redraw_frame(&mut buf, &frame, 0, Some(40));
+    assert!(n > 2, "long line must become several rows: {n}");
+    let out = String::from_utf8(buf).unwrap();
+    assert!(!out.contains('…'));
+    assert_eq!(out.matches("word").count(), 30, "every word drawn once");
+}
+
+#[test]
+fn one_shot_prose_wraps_but_table_rows_do_not() {
+    let table = "  Model                              Reqs     Tokens       Cost";
+    let prose =
+        "Monthly: 74.2% ($51.94 / $70.00) · resets in 11d 18h · on pace to hit cap in 6d 8h";
+    let text = format!("{prose}\n{table}\n");
+    let out = crate::wrap_text(&text, Some(40));
+    assert!(
+        out.contains(table),
+        "table row left byte-identical: {out:?}"
+    );
+    assert!(
+        out.lines().count() > 2,
+        "prose became several rows: {out:?}"
+    );
+    for line in out.lines() {
+        if line != table {
+            assert!(
+                crate::visible_columns(line) <= 40,
+                "wrapped row fits: {line:?}"
+            );
+        }
+    }
+    assert!(out.ends_with('\n'), "trailing newline preserved");
+    assert_eq!(crate::wrap_text(&text, None), text, "no width: unchanged");
+}
+
+#[test]
+fn margin_counts_against_the_wrap_budget() {
+    // The two-space indent is part of the width, not extra: every wrapped row
+    // stays within the byte budget INCLUDING its margin.
+    let line = format!("  {}", "word ".repeat(20));
+    let lines = crate::wrap_line(&line, Some(40));
+    assert!(lines.len() > 1);
+    for wrapped in &lines {
+        assert!(wrapped.starts_with("  "), "margin kept: {wrapped:?}");
+        assert!(wrapped.len() <= 40, "margin inside budget: {wrapped:?}");
+    }
+}
+
+#[test]
+fn multibyte_glyphs_are_budgeted_in_bytes() {
+    // `·` is two bytes: awk length counts 41 for a 40-character row. The wrap
+    // budget is bytes so byte-counting scripts and the flag agree.
+    let line = format!(
+        "period: {} · 73.9K requests · $70.63 · 267.9M in",
+        "2026-12-13"
+    );
+    let lines = crate::wrap_line(&line, Some(40));
+    for wrapped in &lines {
+        assert!(wrapped.len() <= 40, "byte budget: {wrapped:?}");
+        assert!(
+            crate::visible_columns(wrapped) <= 40,
+            "column budget: {wrapped:?}"
+        );
+    }
+}
+
+#[test]
+fn one_shot_width_matches_watch_resolution() {
+    // Both paths call the same frame_width; explicit wins, machine formats bypass.
+    let mut args = crate::cli::Args {
+        width: Some(40),
+        ..Default::default()
+    };
+    assert_eq!(crate::one_shot_width(&args), Some(40));
+    args.json = true;
+    assert_eq!(crate::one_shot_width(&args), None);
+}
+
+#[test]
 fn mcp_missing_method_with_id_is_error() {
     use serde_json::json;
     let msg = json!({"jsonrpc":"2.0","id":1});

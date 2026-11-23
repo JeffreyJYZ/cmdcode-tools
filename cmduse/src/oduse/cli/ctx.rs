@@ -30,6 +30,8 @@ pub struct Ctx<'a> {
     pub tz_secs: i64,
     pub colours: bool,
     pub fmt: Fmt,
+    /// Shared one-shot wrap width (`--width` → tty → COLUMNS → 100).
+    pub width: Option<usize>,
     pub period: &'a Period,
     pub wallet: Option<Wallet>,
     pub wallet_error: Option<String>,

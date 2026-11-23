@@ -30,9 +30,8 @@ pub fn subcommand(ctx: &Ctx) -> bool {
                 );
             }
         }
-        Some(SubCmd::Daily) => print!(
-            "{}",
-            render::bucket_text(
+        Some(SubCmd::Daily) => {
+            let text = render::bucket_text(
                 &ctx.read(ctx.now - ctx.days * 86_400_000).rows,
                 ctx.catalog,
                 ctx.now,
@@ -42,11 +41,11 @@ pub fn subcommand(ctx: &Ctx) -> bool {
                 ctx.colours,
                 ctx.fmt,
                 ctx.rows_cap(usize::MAX),
-            )
-        ),
-        Some(SubCmd::Hours) => print!(
-            "{}",
-            render::bucket_text(
+            );
+            print!("{}", crate::wrap_text(&text, ctx.width));
+        }
+        Some(SubCmd::Hours) => {
+            let text = render::bucket_text(
                 &ctx.read(ctx.now - ctx.hours * 3_600_000).rows,
                 ctx.catalog,
                 ctx.now,
@@ -56,18 +55,19 @@ pub fn subcommand(ctx: &Ctx) -> bool {
                 ctx.colours,
                 ctx.fmt,
                 ctx.rows_cap(usize::MAX),
-            )
-        ),
-        Some(SubCmd::Session) => print!(
-            "{}",
-            render::session_text(
+            );
+            print!("{}", crate::wrap_text(&text, ctx.width));
+        }
+        Some(SubCmd::Session) => {
+            let text = render::session_text(
                 &ctx.read(ctx.report_window).rows,
                 ctx.catalog,
                 ctx.rows_cap(20),
                 ctx.colours,
                 ctx.fmt,
-            )
-        ),
+            );
+            print!("{}", crate::wrap_text(&text, ctx.width));
+        }
         Some(SubCmd::Mcp) => {
             // stdio JSON-RPC; stdout carries protocol only, so nothing else may
             // print. The wallet is handed in, resolved once for the whole run.
@@ -86,24 +86,22 @@ pub fn subcommand(ctx: &Ctx) -> bool {
         }
         Some(SubCmd::Model) => {
             let report = ctx.report(ctx.now);
-            if ctx.fmt == Fmt::Table {
+            let text = if ctx.fmt == Fmt::Table {
                 match ctx.model_id {
-                    Some(id) => print!("{}", render::model_text(&report, id, ctx.colours)),
-                    None => print!(
-                        "{}",
-                        render::render_text(
-                            &report,
-                            ctx.plan,
-                            ctx.db_path,
-                            ctx.rows_cap(usize::MAX),
-                            ctx.colours,
-                            ctx.bar_width(),
-                        )
+                    Some(id) => render::model_text(&report, id, ctx.colours),
+                    None => render::render_text(
+                        &report,
+                        ctx.plan,
+                        ctx.db_path,
+                        ctx.rows_cap(usize::MAX),
+                        ctx.colours,
+                        ctx.bar_width(),
                     ),
                 }
             } else {
-                print!("{}", render::model_report(&report, ctx.model_id, ctx.fmt));
-            }
+                render::model_report(&report, ctx.model_id, ctx.fmt)
+            };
+            print!("{}", crate::wrap_text(&text, ctx.width));
         }
         // served in `run`: the catalogues need no store read
         Some(SubCmd::Plans) | Some(SubCmd::Models) => {}

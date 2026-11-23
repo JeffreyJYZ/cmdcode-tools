@@ -50,6 +50,7 @@ cmduse -p -1                 # plain output, no ANSI (for scripts/pipes)
 cmduse -i 30                 # refresh every 30s
 cmduse -i 5m                 # duration suffixes: s, m, h, d
 cmduse -w 40                 # 40-char progress bars (--bar-width)
+cmduse --width 40            # wrap the live watch frame at 40 columns
 cmduse -b 60                 # 60 spend-burst samples (--bursts)
 cmduse -W                    # force watch mode (the default; conflicts with -1)
 cmduse watch                 # explicit watch mode (same as bare cmduse)
@@ -81,6 +82,22 @@ cmduse daily --csv           # CSV output for daily/hourly/model/session
 All four binaries accept `--rows` (`0` = every row). It caps the text report
 table only — `--json` and `--csv` always carry every row, and a trimmed table
 ends with `… N more`.
+
+All four binaries also accept `--width <n>` (1–1000): the live watch frame and
+one-shot text wrap at that many UTF-8 bytes of visible text (ASCII is one byte
+per column; a multibyte glyph costs its encoded bytes, so byte-counting tools
+such as `awk length` agree with the flag and no row is wider on screen).
+Lines wrap on word boundaries, keep the original
+left margin and colour on every continuation row, and lose no characters — the
+old per-line clip cut a long note mid-sentence with no ellipsis. A line that
+already fits is unchanged. The width comes from `--width`, else the terminal's
+own column count, else `COLUMNS`, else 100; it is re-resolved each refresh so a
+resize follows live. `--json`/`--csv` ignore it entirely.
+
+One-shot text output uses the same width and wrapper, including the dashboard
+and the prose around report tables. Table rows are left byte-identical: a
+column is aligned data, not a word, so reflowing it would break the table.
+Do not rely on `--width` to narrow a table; pass `--rows` to shorten one.
 
 Color: SGR escapes are suppressed when stdout is not a terminal or when `NO_COLOR` is set non-empty. The live dashboard's spinner goes straight to /dev/tty, so it only runs when stdout is a terminal — `--plain`, or any piped or redirected run, never writes to the terminal at all. `-p`/`--plain` is parsed globally, so every subcommand accepts it; on reports it is a no-op rather than an error, and `--json`/`--csv` remain the machine-readable paths.
 
